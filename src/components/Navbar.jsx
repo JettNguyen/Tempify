@@ -7,6 +7,7 @@ export default function Navbar() {
 
   const initial = (profile?.email || user?.email || '').split('@')[0][0]?.toUpperCase() ?? '?'
   const isSubscribed = profile?.is_subscribed
+  const isAdmin = user?.email === import.meta.env.VITE_ADMIN_EMAIL
 
   return (
     <nav style={{
@@ -54,6 +55,11 @@ export default function Navbar() {
             {isSubscribed && (
               <Link to="/explore" style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
                 Explore
+              </Link>
+            )}
+            {isAdmin && (
+              <Link to="/admin" style={{ color: 'var(--amber)', fontSize: '14px' }}>
+                Admin
               </Link>
             )}
             <Link to="/profile" className="btn-press" style={{ display: 'flex', alignItems: 'center' }} title="Your profile">
