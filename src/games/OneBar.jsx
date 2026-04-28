@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { getPuzzle } from '../lib/puzzles'
@@ -13,7 +14,7 @@ const SECONDS_PER_REVEAL = 3
 
 export default function OneBar() {
   const { user } = useAuth()
-  const { markComplete } = useCompletion(user?.id)
+  const { markComplete, isComplete, completions } = useCompletion(user?.id)
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -30,6 +31,26 @@ export default function OneBar() {
       .catch(() => setError('No puzzle found for today.'))
       .finally(() => setLoading(false))
   }, [])
+
+  // Restore completed state if user already played today
+  useEffect(() => {
+    if (!puzzle || done) return
+    if (isComplete('one-bar')) {
+      const stored = completions['one-bar']
+      const count = stored?.attempts || 1
+      const wasCorrect = stored?.completed ?? false
+      // Build a placeholder attempts array so the progress bar renders correctly
+      const fake = Array.from({ length: count }, (_, i) => ({
+        title: i === count - 1 && wasCorrect ? puzzle.answer : '—',
+        artist: '',
+        correct: i === count - 1 && wasCorrect,
+      }))
+      setAttempts(fake)
+      setCorrect(wasCorrect)
+      setRevealSeconds(Math.min(BASE_SECONDS + (count - 1) * SECONDS_PER_REVEAL, 21))
+      setDone(true)
+    }
+  }, [puzzle, completions])
 
   function buildEmojiGrid() {
     return attempts.map((a) => (a.correct ? '🟩' : '⬜')).join('')
@@ -66,6 +87,12 @@ export default function OneBar() {
 
   return (
     <GameShell>
+      <Link
+        to="/"
+        style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
+      >
+        ← Back
+      </Link>
       <div style={{ marginBottom: '1.5rem' }}>
         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
           one bar

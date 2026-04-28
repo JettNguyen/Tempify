@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { getPuzzle } from '../lib/puzzles'
@@ -8,7 +9,7 @@ import ResultCard from '../components/ResultCard'
 
 export default function TheFlip() {
   const { user } = useAuth()
-  const { markComplete } = useCompletion(user?.id)
+  const { markComplete, isComplete, completions } = useCompletion(user?.id)
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -23,6 +24,15 @@ export default function TheFlip() {
       .catch(() => setError('No puzzle found for today.'))
       .finally(() => setLoading(false))
   }, [])
+
+  // Restore completed state if user already played today
+  useEffect(() => {
+    if (!puzzle || done) return
+    if (isComplete('the-flip')) {
+      setCorrect(completions['the-flip']?.completed ?? false)
+      setDone(true)
+    }
+  }, [puzzle, completions])
 
   async function handleGuess(pick) {
     if (done) return
@@ -46,6 +56,12 @@ export default function TheFlip() {
 
   return (
     <GameShell>
+      <Link
+        to="/"
+        style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
+      >
+        ← Back
+      </Link>
       <div style={{ marginBottom: '1.5rem' }}>
         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
           the flip

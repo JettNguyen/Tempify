@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { GENRES } from '../lib/genres'
 import { searchSongs } from '../lib/itunes'
+import { searchRecordings } from '../lib/musicbrainz'
 
 const GAMES = [
   { slug: 'one-bar',        short: 'One Bar' },
@@ -39,7 +40,7 @@ const BLANK = {
   verdict: 'hit', peakPosition: '1', weeksAtOne: '', hint: '',
   // who-sampled-it
   sourceSong: '', sourceArtist: '', sourceYear: '',
-  sampleArtist: '', sampleYear: '', correctArtist: '',
+  sampleArtist: '', sampleYear: '', sampleAudioUrl: '', correctArtist: '',
   opt2Title: '', opt2Artist: '', opt3Title: '', opt3Artist: '',
   opt4Title: '', opt4Artist: '',
   // era
@@ -48,6 +49,50 @@ const BLANK = {
   vATitle: '', vAArtist: '', vAYear: '', vAAudio: '',
   vBTitle: '', vBArtist: '', vBYear: '', vBAudio: '',
   flipAnswer: 'A',
+}
+
+function parseRow(p) {
+  const m = p.metadata || {}
+  return {
+    date:          p.scheduled_date,
+    game:          p.game_slug,
+    audioUrl:      p.audio_url || '',
+    answer:        p.answer || '',
+    genre:         p.genre || '',
+    artist:        m.artist || '',
+    year:          m.year ? String(m.year) : '',
+    // drop-or-flop
+    verdict:       m.verdict || 'hit',
+    peakPosition:  m.peak_position ? String(m.peak_position) : '1',
+    weeksAtOne:    m.weeks_at_one ? String(m.weeks_at_one) : '',
+    hint:          m.hint || '',
+    // who-sampled-it
+    sourceSong:    m.source_song || '',
+    sourceArtist:  m.source_artist || '',
+    sourceYear:    m.source_year ? String(m.source_year) : '',
+    sampleArtist:   m.sample_artist || '',
+    sampleYear:     m.sample_year ? String(m.sample_year) : '',
+    sampleAudioUrl: m.sample_audio_url || '',
+    correctArtist:  m.options?.[0]?.artist || '',
+    opt2Title:     m.options?.[1]?.title || '',
+    opt2Artist:    m.options?.[1]?.artist || '',
+    opt3Title:     m.options?.[2]?.title || '',
+    opt3Artist:    m.options?.[2]?.artist || '',
+    opt4Title:     m.options?.[3]?.title || '',
+    opt4Artist:    m.options?.[3]?.artist || '',
+    // era
+    songTitle:     m.title || '',
+    // the-flip
+    vATitle:       m.version_a?.title || '',
+    vAArtist:      m.version_a?.artist || '',
+    vAYear:        m.version_a?.year ? String(m.version_a.year) : '',
+    vAAudio:       m.version_a?.audio_url || '',
+    vBTitle:       m.version_b?.title || '',
+    vBArtist:      m.version_b?.artist || '',
+    vBYear:        m.version_b?.year ? String(m.version_b.year) : '',
+    vBAudio:       m.version_b?.audio_url || '',
+    flipAnswer:    p.answer || 'A',
+  }
 }
 
 function buildRow(f) {
@@ -71,6 +116,7 @@ function buildRow(f) {
     case 'who-sampled-it':
       meta = {
         sample_artist: f.sampleArtist, sample_year: Number(f.sampleYear),
+        sample_audio_url: f.sampleAudioUrl || null,
         source_song: f.sourceSong, source_artist: f.sourceArtist,
         source_year: Number(f.sourceYear),
         options: [
@@ -136,11 +182,33 @@ function OneBarFields({ f, set }) {
 }
 
 function DropOrFlopFields({ f, set }) {
+  const bbQuery = [f.answer, f.artist].filter(Boolean).join(' ')
+  const bbUrl = bbQuery
+    ? `https://www.billboard.com/search/#q=${encodeURIComponent(bbQuery)}`
+    : 'https://www.billboard.com/charts/hot-100'
+
   return (
     <>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
         <Field label="Artist"><Input value={f.artist} onChange={v => set('artist', v)} /></Field>
         <Field label="Year"><Input value={f.year} onChange={v => set('year', v)} type="number" /></Field>
+      </div>
+      <div style={{ marginBottom: '0.75rem' }}>
+        <a
+          href={bbUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-block', fontSize: '12px', color: 'var(--amber)',
+            padding: '5px 12px', border: '1px solid var(--amber)',
+            borderRadius: '999px', textDecoration: 'none',
+          }}
+        >
+          Look up on Billboard →
+        </a>
+        <span style={{ fontSize: '11px', color: 'var(--text-dim)', marginLeft: '8px' }}>
+          No public API — look up peak position manually
+        </span>
       </div>
       <Field label="Verdict">
         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -170,50 +238,141 @@ function DropOrFlopFields({ f, set }) {
 }
 
 function WhoSampledFields({ f, set }) {
+  const wsQuery = [f.sourceSong, f.sourceArtist].filter(Boolean).join(' ')
+  const wsUrl = wsQuery
+    ? `https://www.whosampled.com/search/?q=${encodeURIComponent(wsQuery)}`
+    : 'https://www.whosampled.com'
+
+  const sectionHead = (label) => (
+    <p style={{
+      fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em',
+      color: 'var(--text-dim)', textTransform: 'uppercase',
+      marginBottom: '0.6rem',
+    }}>{label}</p>
+  )
+
+  const divider = (label) => (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '0.75rem',
+      margin: '1rem 0',
+    }}>
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+      <span style={{ fontSize: '11px', color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>{label}</span>
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+    </div>
+  )
+
   return (
     <>
-      <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '0.75rem' }}>
-        Song that <em>contains</em> the sample
-      </p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem', marginBottom: '0.75rem' }}>
-        <Field label="Source song title"><Input value={f.sourceSong} onChange={v => set('sourceSong', v)} /></Field>
-        <Field label="Source artist"><Input value={f.sourceArtist} onChange={v => set('sourceArtist', v)} /></Field>
-        <Field label="Year"><Input value={f.sourceYear} onChange={v => set('sourceYear', v)} type="number" /></Field>
-      </div>
-      <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '0.75rem' }}>
-        Original sample (the correct answer is the Answer field above)
-      </p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: '0.75rem', marginBottom: '0.75rem' }}>
-        <Field label="Correct sample artist"><Input value={f.correctArtist} onChange={v => set('correctArtist', v)} /></Field>
-        <Field label="Year"><Input value={f.sampleYear} onChange={v => set('sampleYear', v)} type="number" /></Field>
-      </div>
-      <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>3 wrong options</p>
-      {[
-        ['opt2Title','opt2Artist'],
-        ['opt3Title','opt3Artist'],
-        ['opt4Title','opt4Artist'],
-      ].map(([t, a], i) => (
-        <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.5rem' }}>
-          <Input value={f[t]} onChange={v => set(t, v)} placeholder={`Option ${i+2} title`} />
-          <Input value={f[a]} onChange={v => set(a, v)} placeholder="Artist" />
+      {/* ── A: The song players hear ── */}
+      <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
+        {sectionHead('A — The newer song (players hear this)')}
+        <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '0.75rem' }}>
+          Use iTunes search above to fill audio URL automatically.
+        </p>
+        <Field label="Audio URL">
+          <Input value={f.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
+        </Field>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem' }}>
+          <Field label="Song title"><Input value={f.sourceSong} onChange={v => set('sourceSong', v)} placeholder="e.g. Stronger" /></Field>
+          <Field label="Artist"><Input value={f.sourceArtist} onChange={v => set('sourceArtist', v)} placeholder="e.g. Kanye West" /></Field>
+          <Field label="Year"><Input value={f.sourceYear} onChange={v => set('sourceYear', v)} type="number" placeholder="2007" /></Field>
         </div>
-      ))}
+      </div>
+
+      {divider('↓ sampled ↓')}
+
+      {/* ── B: The original sampled track ── */}
+      <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
+        {sectionHead('B — The original sampled track (correct answer)')}
+        <div style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <a
+            href={wsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-block', fontSize: '12px', color: 'var(--amber)',
+              padding: '4px 10px', border: '1px solid var(--amber)',
+              borderRadius: '999px', textDecoration: 'none',
+            }}
+          >
+            Look up on WhoSampled →
+          </a>
+          <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
+            Fill section A first, then click
+          </span>
+        </div>
+        <SongSearch
+          placeholder="Search iTunes for the original sample…"
+          onSelect={song => {
+            if (song.title)      set('answer', song.title)
+            if (song.artist)     set('correctArtist', song.artist)
+            if (song.year)       set('sampleYear', String(song.year))
+            if (song.previewUrl) set('sampleAudioUrl', song.previewUrl)
+          }}
+        />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem', marginBottom: '0.5rem' }}>
+          <Field label="Song title (= the answer)"><Input value={f.answer} onChange={v => set('answer', v)} placeholder="e.g. Harder, Better, Faster, Stronger" /></Field>
+          <Field label="Artist"><Input value={f.correctArtist} onChange={v => set('correctArtist', v)} placeholder="e.g. Daft Punk" /></Field>
+          <Field label="Year"><Input value={f.sampleYear} onChange={v => set('sampleYear', v)} type="number" placeholder="2001" /></Field>
+        </div>
+        <Field label="Sample audio URL">
+          <Input value={f.sampleAudioUrl} onChange={v => set('sampleAudioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/…" />
+        </Field>
+      </div>
+
+      {divider('3 wrong answer choices')}
+
+      {/* ── C: Decoy options ── */}
+      <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)' }}>
+        {sectionHead('C — Decoy options (plausible songs from same era)')}
+        {[
+          ['opt2Title', 'opt2Artist', 2],
+          ['opt3Title', 'opt3Artist', 3],
+          ['opt4Title', 'opt4Artist', 4],
+        ].map(([t, a, n]) => (
+          <div key={n} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: n < 4 ? '0.5rem' : 0 }}>
+            <Input value={f[t]} onChange={v => set(t, v)} placeholder={`Wrong option ${n} — title`} />
+            <Input value={f[a]} onChange={v => set(a, v)} placeholder="Artist" />
+          </div>
+        ))}
+      </div>
     </>
   )
 }
 
+function yearToDecade(year) {
+  const y = parseInt(year, 10)
+  if (!y || y < 1960) return null
+  if (y < 1970) return '60s'
+  if (y < 1980) return '70s'
+  if (y < 1990) return '80s'
+  if (y < 2000) return '90s'
+  if (y < 2010) return '00s'
+  if (y < 2020) return '10s'
+  return '20s'
+}
+
 function EraFields({ f, set }) {
+  function handleYear(v) {
+    set('year', v)
+    const decade = yearToDecade(v)
+    if (decade) set('answer', decade)
+  }
+
   return (
     <>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem', marginBottom: '0.75rem' }}>
         <Field label="Song title"><Input value={f.songTitle} onChange={v => set('songTitle', v)} /></Field>
         <Field label="Artist"><Input value={f.artist} onChange={v => set('artist', v)} /></Field>
-        <Field label="Year"><Input value={f.year} onChange={v => set('year', v)} type="number" /></Field>
+        <Field label="Year">
+          <Input value={f.year} onChange={handleYear} type="number" />
+        </Field>
       </div>
-      <Field label="Correct decade (also set as Answer above)">
+      <Field label="Correct decade — auto-set from year, or click to override">
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {DECADES.map(d => (
-            <button key={d} type="button" onClick={() => { set('answer', d) }} style={{
+            <button key={d} type="button" onClick={() => set('answer', d)} style={{
               padding: '6px 12px', borderRadius: '999px', border: '1px solid',
               borderColor: f.answer === d ? 'var(--amber)' : 'var(--border)',
               background: f.answer === d ? 'var(--amber-glow)' : 'transparent',
@@ -227,39 +386,162 @@ function EraFields({ f, set }) {
   )
 }
 
+function MBSearch({ label, onPick }) {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [open, setOpen] = useState(false)
+  const [searching, setSearching] = useState(false)
+  const debounce = useRef(null)
+  const wrap = useRef(null)
+
+  useEffect(() => {
+    function close(e) { if (wrap.current && !wrap.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
+
+  function handleChange(e) {
+    const val = e.target.value
+    setQuery(val)
+    clearTimeout(debounce.current)
+    if (val.trim().length < 3) { setResults([]); setOpen(false); return }
+    debounce.current = setTimeout(async () => {
+      setSearching(true)
+      try {
+        const hits = await searchRecordings(val)
+        setResults(hits)
+        setOpen(hits.length > 0)
+      } catch {
+        setResults([])
+      } finally {
+        setSearching(false)
+      }
+    }, 400)
+  }
+
+  function pick(r) {
+    onPick(r)
+    setQuery('')
+    setResults([])
+    setOpen(false)
+  }
+
+  return (
+    <div ref={wrap} style={{ position: 'relative', marginBottom: '0.5rem' }}>
+      <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>{label}</p>
+      <div style={{ position: 'relative' }}>
+        <input
+          value={query}
+          onChange={handleChange}
+          placeholder="Search MusicBrainz for release year…"
+          style={{ ...inputStyle, paddingRight: searching ? '32px' : undefined }}
+        />
+        {searching && (
+          <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: 'var(--text-dim)' }}>…</span>
+        )}
+      </div>
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+          background: '#111', border: '1px solid var(--border)',
+          borderRadius: '8px', overflow: 'hidden', zIndex: 50,
+        }}>
+          {results.map((r) => (
+            <button
+              key={r.mbid}
+              type="button"
+              onClick={() => pick(r)}
+              style={{
+                width: '100%', textAlign: 'left', padding: '9px 12px',
+                background: 'transparent', border: 'none',
+                borderBottom: '1px solid var(--border)', cursor: 'pointer',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>{r.title}</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '8px' }}>{r.artist}{r.year ? ` · ${r.year}` : ''}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function FlipFields({ f, set }) {
+  const versions = [
+    { ver: 'A', t: 'vATitle', a: 'vAArtist', y: 'vAYear', u: 'vAAudio' },
+    { ver: 'B', t: 'vBTitle', a: 'vBArtist', y: 'vBYear', u: 'vBAudio' },
+  ]
+
+  useEffect(() => {
+    const yA = parseInt(f.vAYear, 10)
+    const yB = parseInt(f.vBYear, 10)
+    if (yA && yB) set('flipAnswer', yA <= yB ? 'A' : 'B')
+  }, [f.vAYear, f.vBYear])
+
+  const yA = parseInt(f.vAYear, 10)
+  const yB = parseInt(f.vBYear, 10)
+  const autoAnswer = yA && yB ? (yA <= yB ? 'A' : 'B') : null
+
   return (
     <>
-      {[['A', 'vATitle','vAArtist','vAYear','vAAudio'], ['B','vBTitle','vBArtist','vBYear','vBAudio']].map(([ver, t, a, y, u]) => (
-        <div key={ver} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-          <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>Version {ver}</p>
+      <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '1rem' }}>
+        Search iTunes for each version — fills title, artist, year, and audio automatically.
+      </p>
+      {versions.map(({ ver, t, a, y, u }) => (
+        <div key={ver} style={{
+          padding: '1rem', background: '#0d0d0d', borderRadius: '8px',
+          border: '1px solid var(--border)', marginBottom: '0.75rem',
+        }}>
+          <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
+            Version {ver}
+          </p>
+          <SongSearch
+            placeholder={`Search iTunes for version ${ver}…`}
+            onSelect={song => {
+              if (song.title)      set(t, song.title)
+              if (song.artist)     set(a, song.artist)
+              if (song.year)       set(y, String(song.year))
+              if (song.previewUrl) set(u, song.previewUrl)
+            }}
+          />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            <Input value={f[t]} onChange={v => set(t, v)} placeholder="Song title" />
-            <Input value={f[a]} onChange={v => set(a, v)} placeholder="Artist" />
-            <Input value={f[y]} onChange={v => set(y, v)} placeholder="Year" type="number" />
+            <Field label="Title"><Input value={f[t]} onChange={v => set(t, v)} placeholder="Song title" /></Field>
+            <Field label="Artist"><Input value={f[a]} onChange={v => set(a, v)} placeholder="Artist" /></Field>
+            <Field label="Year"><Input value={f[y]} onChange={v => set(y, v)} placeholder="Year" type="number" /></Field>
           </div>
-          <Input value={f[u]} onChange={v => set(u, v)} placeholder="Audio URL" />
+          <Field label="Audio URL">
+            <Input value={f[u]} onChange={v => set(u, v)} placeholder="https://audio-ssl.itunes.apple.com/…" />
+          </Field>
         </div>
       ))}
-      <Field label="Which version came first?">
+
+      <div style={{ padding: '0.75rem 1rem', background: '#0d0d0d', borderRadius: '8px', border: `1px solid ${autoAnswer ? 'var(--amber)' : 'var(--border)'}` }}>
+        <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>
+          Which came first?{autoAnswer && <span style={{ color: 'var(--amber)', marginLeft: '6px' }}>auto-detected from years</span>}
+        </p>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {['A','B'].map(v => (
+          {['A', 'B'].map(v => (
             <button key={v} type="button" onClick={() => set('flipAnswer', v)} style={{
               flex: 1, padding: '7px', borderRadius: '6px', border: '1px solid',
               borderColor: f.flipAnswer === v ? 'var(--amber)' : 'var(--border)',
               background: f.flipAnswer === v ? 'var(--amber-glow)' : 'transparent',
               color: f.flipAnswer === v ? 'var(--amber)' : 'var(--text-muted)',
               fontSize: '13px', cursor: 'pointer',
-            }}>Version {v}</button>
+            }}>
+              Version {v}{f['v' + v + 'Year'] ? ` (${f['v' + v + 'Year']})` : ''}
+            </button>
           ))}
         </div>
-      </Field>
+      </div>
     </>
   )
 }
 
 // ─── iTunes song search ──────────────────────────────────────────────────────
-function SongSearch({ onSelect }) {
+function SongSearch({ onSelect, placeholder = 'Search for a song...' }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [open, setOpen] = useState(false)
@@ -299,7 +581,7 @@ function SongSearch({ onSelect }) {
       <input
         value={query}
         onChange={handleChange}
-        placeholder="Search for a song..."
+        placeholder={placeholder}
         style={{ ...inputStyle, background: '#0a0a0a', border: '1px solid var(--amber)' }}
       />
       {open && (
@@ -349,28 +631,30 @@ export default function Admin() {
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState(null)
   const [deletingId, setDeletingId] = useState(null)
-
-  if (loading) return null
-  if (!user || !adminEmail || user.email !== adminEmail) return <Navigate to="/" replace />
+  const [editingId, setEditingId] = useState(null)
 
   const today = new Date().toISOString().split('T')[0]
   const startDate = addDays(today, weekOffset * 14)
   const dates = dateRange(startDate, 14)
   const endDate = dates[dates.length - 1]
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const isAdmin = !loading && !!user && !!adminEmail && user.email === adminEmail
+
   const fetchSchedule = useCallback(async () => {
+    if (!isAdmin) return
     const { data } = await supabase
       .from('puzzles')
-      .select('id, game_slug, scheduled_date, answer, genre')
+      .select('id, game_slug, scheduled_date, answer, genre, audio_url, metadata')
       .gte('scheduled_date', startDate)
       .lte('scheduled_date', endDate)
       .order('scheduled_date')
     setPuzzles(data || [])
-  }, [startDate, endDate])
+  }, [isAdmin, startDate, endDate])
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => { fetchSchedule() }, [fetchSchedule])
+
+  if (loading) return null
+  if (!isAdmin) return <Navigate to="/" replace />
 
   // Build a lookup: "date|game_slug" → puzzle row
   const scheduled = {}
@@ -379,7 +663,15 @@ export default function Admin() {
   function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
 
   function openForm(date, gameSlug) {
+    setEditingId(null)
     setForm({ ...BLANK, date, game: gameSlug })
+    setShowForm(true)
+    setTimeout(() => document.getElementById('admin-form')?.scrollIntoView({ behavior: 'smooth' }), 50)
+  }
+
+  function openEdit(puzzle) {
+    setEditingId(puzzle.id)
+    setForm(parseRow(puzzle))
     setShowForm(true)
     setTimeout(() => document.getElementById('admin-form')?.scrollIntoView({ behavior: 'smooth' }), 50)
   }
@@ -441,12 +733,16 @@ export default function Admin() {
     const missing = validateForm(form)
     if (missing.length) { setError(`Missing: ${missing.join(', ')}`); return }
     setSaving(true)
-    const { error: err } = await supabase.from('puzzles').insert(buildRow(form))
+    const row = buildRow(form)
+    const { error: err } = editingId
+      ? await supabase.from('puzzles').update(row).eq('id', editingId)
+      : await supabase.from('puzzles').insert(row)
     setSaving(false)
     if (err) { setError(err.message); return }
     await fetchSchedule()
     setForm(BLANK)
     setShowForm(false)
+    setEditingId(null)
   }
 
   return (
@@ -497,13 +793,18 @@ export default function Admin() {
                             display: 'inline-block', width: '7px', height: '7px',
                             borderRadius: '50%', background: 'var(--green)', flexShrink: 0,
                           }} />
-                          <span style={{ color: 'var(--text-muted)', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80px' }} title={existing.answer}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60px' }} title={existing.answer}>
                             {existing.answer}
                           </span>
                           <button
+                            onClick={() => openEdit(existing)}
+                            style={{ marginLeft: 'auto', color: 'var(--text-dim)', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+                            title="Edit"
+                          >✎</button>
+                          <button
                             onClick={() => handleDelete(existing.id)}
                             disabled={deletingId === existing.id}
-                            style={{ marginLeft: 'auto', color: 'var(--text-dim)', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+                            style={{ color: 'var(--text-dim)', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
                             title="Delete"
                           >✕</button>
                         </div>
@@ -539,23 +840,38 @@ export default function Admin() {
           borderRadius: '10px',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>Add puzzle</p>
-            <button onClick={() => setShowForm(false)} style={{ color: 'var(--text-dim)', fontSize: '18px', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+            <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>
+              {editingId ? 'Edit puzzle' : 'Add puzzle'}
+            </p>
+            <button onClick={() => { setShowForm(false); setEditingId(null) }} style={{ color: 'var(--text-dim)', fontSize: '18px', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
           </div>
 
           <form onSubmit={handleSubmit}>
             {/* iTunes search — auto-fills audio URL, title, artist, year, genre */}
             <SongSearch onSelect={song => {
-              setForm(f => ({
-                ...f,
-                audioUrl:  song.previewUrl || f.audioUrl,
-                answer:    song.title,
-                artist:    song.artist,
-                year:      song.year ? String(song.year) : f.year,
-                songTitle: song.title,
-                genre:     song.genre || f.genre,
-                vAAudio:   song.previewUrl || f.vAAudio,
-              }))
+              setForm(f => {
+                const base = {
+                  audioUrl:  song.previewUrl || f.audioUrl,
+                  genre:     song.genre || f.genre,
+                }
+                if (f.game === 'who-sampled-it') {
+                  // iTunes search fills the featured (newer) song, not the answer
+                  return {
+                    ...f, ...base,
+                    sourceSong:   song.title,
+                    sourceArtist: song.artist,
+                    sourceYear:   song.year ? String(song.year) : f.sourceYear,
+                  }
+                }
+                return {
+                  ...f, ...base,
+                  answer:    song.title,
+                  artist:    song.artist,
+                  year:      song.year ? String(song.year) : f.year,
+                  songTitle: song.title,
+                  vAAudio:   song.previewUrl || f.vAAudio,
+                }
+              })
             }} />
 
             {/* Date + game */}
@@ -585,12 +901,14 @@ export default function Admin() {
               </div>
             </Field>
 
-            {/* Audio URL + Answer — common to all games */}
-            <Field label={form.game === 'the-flip' ? 'Audio URL (Version A)' : 'Audio URL'}>
-              <Input value={form.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
-            </Field>
+            {/* Audio URL + Answer — common to most games; who-sampled-it handles these internally */}
+            {form.game !== 'who-sampled-it' && (
+              <Field label={form.game === 'the-flip' ? 'Audio URL (Version A)' : 'Audio URL'}>
+                <Input value={form.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
+              </Field>
+            )}
 
-            {form.game !== 'the-flip' && form.game !== 'era' && (
+            {form.game !== 'the-flip' && form.game !== 'era' && form.game !== 'who-sampled-it' && (
               <Field label="Answer (song title)">
                 <Input value={form.answer} onChange={v => set('answer', v)} placeholder="Exact song title" />
               </Field>
@@ -615,9 +933,9 @@ export default function Admin() {
                 borderRadius: '999px', color: '#0f0f0f', fontSize: '13px',
                 fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1,
               }}>
-                {saving ? 'Saving…' : 'Add puzzle'}
+                {saving ? 'Saving…' : editingId ? 'Save changes' : 'Add puzzle'}
               </button>
-              <button type="button" onClick={() => { setForm(BLANK); setShowForm(false) }} style={{
+              <button type="button" onClick={() => { setForm(BLANK); setShowForm(false); setEditingId(null) }} style={{
                 padding: '9px 20px', background: 'transparent', border: '1px solid var(--border)',
                 borderRadius: '999px', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',
               }}>Cancel</button>

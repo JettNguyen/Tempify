@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { getPuzzle } from '../lib/puzzles'
@@ -8,7 +9,7 @@ import ResultCard from '../components/ResultCard'
 
 export default function WhoSampledIt() {
   const { user } = useAuth()
-  const { markComplete } = useCompletion(user?.id)
+  const { markComplete, isComplete, completions } = useCompletion(user?.id)
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -23,6 +24,17 @@ export default function WhoSampledIt() {
       .catch(() => setError('No puzzle found for today.'))
       .finally(() => setLoading(false))
   }, [])
+
+  // Restore completed state if user already played today
+  useEffect(() => {
+    if (!puzzle || done) return
+    if (isComplete('who-sampled-it')) {
+      const wasCorrect = completions['who-sampled-it']?.completed ?? false
+      setChosen(wasCorrect ? puzzle.answer : null)
+      setCorrect(wasCorrect)
+      setDone(true)
+    }
+  }, [puzzle, completions])
 
   async function handleGuess(option) {
     if (done) return
@@ -45,6 +57,12 @@ export default function WhoSampledIt() {
 
   return (
     <GameShell>
+      <Link
+        to="/"
+        style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
+      >
+        ← Back
+      </Link>
       <div style={{ marginBottom: '1.5rem' }}>
         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
           who sampled it
@@ -104,15 +122,25 @@ export default function WhoSampledIt() {
       </div>
 
       {done && (
-        <ResultCard
-          correct={correct}
-          answer={puzzle.answer}
-          artist={puzzle.metadata?.sample_artist}
-          detail={`Originally released in ${puzzle.metadata?.sample_year}`}
-          emojiGrid={correct ? '🟩' : '⬜'}
-          gameSlug="who-sampled-it"
-          nextGame={{ path: '/game/era', label: 'Era' }}
-        />
+        <>
+          {puzzle.metadata?.sample_audio_url && (
+            <div style={{ marginTop: '1.5rem' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                The original sample
+              </p>
+              <AudioPlayer src={puzzle.metadata.sample_audio_url} />
+            </div>
+          )}
+          <ResultCard
+            correct={correct}
+            answer={puzzle.answer}
+            artist={puzzle.metadata?.sample_artist}
+            detail={`Originally released in ${puzzle.metadata?.sample_year}`}
+            emojiGrid={correct ? '🟩' : '⬜'}
+            gameSlug="who-sampled-it"
+            nextGame={{ path: '/game/era', label: 'Era' }}
+          />
+        </>
       )}
     </GameShell>
   )

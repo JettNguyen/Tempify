@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { getPuzzle } from '../lib/puzzles'
@@ -10,7 +11,7 @@ const DECADES = ['60s', '70s', '80s', '90s', '00s', '10s', '20s']
 
 export default function Era() {
   const { user } = useAuth()
-  const { markComplete } = useCompletion(user?.id)
+  const { markComplete, isComplete, completions } = useCompletion(user?.id)
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -25,6 +26,17 @@ export default function Era() {
       .catch(() => setError('No puzzle found for today.'))
       .finally(() => setLoading(false))
   }, [])
+
+  // Restore completed state if user already played today
+  useEffect(() => {
+    if (!puzzle || done) return
+    if (isComplete('era')) {
+      const wasCorrect = completions['era']?.completed ?? false
+      setChosen(wasCorrect ? puzzle.answer : null)
+      setCorrect(wasCorrect)
+      setDone(true)
+    }
+  }, [puzzle, completions])
 
   async function handleGuess(decade) {
     if (done) return
@@ -45,6 +57,12 @@ export default function Era() {
 
   return (
     <GameShell>
+      <Link
+        to="/"
+        style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
+      >
+        ← Back
+      </Link>
       <div style={{ marginBottom: '1.5rem' }}>
         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
           era
