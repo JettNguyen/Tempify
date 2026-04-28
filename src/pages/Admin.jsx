@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { GENRES } from '../lib/genres'
+import { searchSongs } from '../lib/itunes'
 
 const GAMES = [
   { slug: 'one-bar',        short: 'One Bar' },
@@ -144,7 +145,10 @@ function DropOrFlopFields({ f, set }) {
       <Field label="Verdict">
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           {['hit', 'miss'].map(v => (
-            <button key={v} type="button" onClick={() => set('verdict', v)} style={{
+            <button key={v} type="button" onClick={() => {
+              set('verdict', v)
+              if (v === 'miss') set('peakPosition', '0')
+            }} style={{
               flex: 1, padding: '7px', borderRadius: '6px', border: '1px solid',
               borderColor: f.verdict === v ? 'var(--amber)' : 'var(--border)',
               background: f.verdict === v ? 'var(--amber-glow)' : 'transparent',
@@ -254,6 +258,85 @@ function FlipFields({ f, set }) {
   )
 }
 
+// ─── iTunes song search ──────────────────────────────────────────────────────
+function SongSearch({ onSelect }) {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [open, setOpen] = useState(false)
+  const debounce = useRef(null)
+  const wrap = useRef(null)
+
+  useEffect(() => {
+    function close(e) { if (wrap.current && !wrap.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
+
+  function handleChange(e) {
+    const val = e.target.value
+    setQuery(val)
+    clearTimeout(debounce.current)
+    if (val.trim().length < 2) { setResults([]); setOpen(false); return }
+    debounce.current = setTimeout(async () => {
+      const hits = await searchSongs(val)
+      setResults(hits)
+      setOpen(hits.length > 0)
+    }, 280)
+  }
+
+  function pick(song) {
+    onSelect(song)
+    setQuery('')
+    setResults([])
+    setOpen(false)
+  }
+
+  return (
+    <div ref={wrap} style={{ position: 'relative', marginBottom: '1.25rem' }}>
+      <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>
+        Search iTunes — fills in audio URL, title, artist & year automatically
+      </p>
+      <input
+        value={query}
+        onChange={handleChange}
+        placeholder="Search for a song..."
+        style={{ ...inputStyle, background: '#0a0a0a', border: '1px solid var(--amber)' }}
+      />
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+          background: '#111', border: '1px solid var(--border)',
+          borderRadius: '8px', overflow: 'hidden', zIndex: 50,
+        }}>
+          {results.map(song => (
+            <button
+              key={song.id}
+              type="button"
+              onClick={() => pick(song)}
+              style={{
+                width: '100%', textAlign: 'left', padding: '10px 12px',
+                background: 'transparent', border: 'none',
+                borderBottom: '1px solid var(--border)', cursor: 'pointer',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>
+                {song.title}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '1px' }}>
+                {song.artist}
+                {song.year ? ` · ${song.year}` : ''}
+                {song.previewUrl ? '' : ' · no preview'}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main page ───────────────────────────────────────────────────────────────
 export default function Admin() {
   const { user, loading } = useAuth()
@@ -308,10 +391,55 @@ export default function Admin() {
     setDeletingId(null)
   }
 
+  function validateForm(f) {
+    const err = []
+    if (!f.date) err.push('Date')
+    switch (f.game) {
+      case 'one-bar':
+        if (!f.audioUrl) err.push('Audio URL')
+        if (!f.answer)   err.push('Song title')
+        if (!f.artist)   err.push('Artist')
+        if (!f.year)     err.push('Year')
+        break
+      case 'drop-or-flop':
+        if (!f.audioUrl)                          err.push('Audio URL')
+        if (!f.answer)                            err.push('Song title')
+        if (!f.artist)                            err.push('Artist')
+        if (!f.year)                              err.push('Year')
+        if (f.verdict === 'hit' && !f.peakPosition) err.push('Peak position')
+        break
+      case 'who-sampled-it':
+        if (!f.audioUrl)     err.push('Audio URL')
+        if (!f.answer)       err.push('Sample song title')
+        if (!f.correctArtist) err.push('Correct sample artist')
+        if (!f.sampleYear)   err.push('Sample year')
+        if (!f.sourceSong)   err.push('Source song')
+        if (!f.sourceArtist) err.push('Source artist')
+        if (!f.sourceYear)   err.push('Source year')
+        if (!f.opt2Title || !f.opt2Artist) err.push('Option 2')
+        if (!f.opt3Title || !f.opt3Artist) err.push('Option 3')
+        if (!f.opt4Title || !f.opt4Artist) err.push('Option 4')
+        break
+      case 'era':
+        if (!f.audioUrl)  err.push('Audio URL')
+        if (!f.answer)    err.push('Decade')
+        if (!f.songTitle) err.push('Song title')
+        if (!f.artist)    err.push('Artist')
+        if (!f.year)      err.push('Year')
+        break
+      case 'the-flip':
+        if (!f.vATitle || !f.vAArtist || !f.vAYear || !f.vAAudio) err.push('Version A (all fields)')
+        if (!f.vBTitle || !f.vBArtist || !f.vBYear || !f.vBAudio) err.push('Version B (all fields)')
+        break
+    }
+    return err
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
-    if (!form.date || !form.answer) { setError('Date and Answer are required.'); return }
+    const missing = validateForm(form)
+    if (missing.length) { setError(`Missing: ${missing.join(', ')}`); return }
     setSaving(true)
     const { error: err } = await supabase.from('puzzles').insert(buildRow(form))
     setSaving(false)
@@ -416,6 +544,20 @@ export default function Admin() {
           </div>
 
           <form onSubmit={handleSubmit}>
+            {/* iTunes search — auto-fills audio URL, title, artist, year, genre */}
+            <SongSearch onSelect={song => {
+              setForm(f => ({
+                ...f,
+                audioUrl:  song.previewUrl || f.audioUrl,
+                answer:    song.title,
+                artist:    song.artist,
+                year:      song.year ? String(song.year) : f.year,
+                songTitle: song.title,
+                genre:     song.genre || f.genre,
+                vAAudio:   song.previewUrl || f.vAAudio,
+              }))
+            }} />
+
             {/* Date + game */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
               <Field label="Date">

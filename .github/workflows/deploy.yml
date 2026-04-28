@@ -24,6 +24,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run database migrations
+        run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL }}"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

@@ -7,7 +7,9 @@ export default function Navbar() {
 
   const initial = (profile?.email || user?.email || '').split('@')[0][0]?.toUpperCase() ?? '?'
   const isSubscribed = profile?.is_subscribed
-  const isAdmin = user?.email === import.meta.env.VITE_ADMIN_EMAIL
+  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.trim()
+  const currentEmail = (profile?.email || user?.email || '').trim()
+  const isAdmin = !!adminEmail && currentEmail === adminEmail
 
   return (
     <nav style={{

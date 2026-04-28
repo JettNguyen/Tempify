@@ -34,8 +34,8 @@ export function AuthProvider({ children }) {
       .eq('id', userId)
       .single()
     // Admin always has premium access regardless of subscription status in DB
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL
-    if (data && adminEmail && data.email === adminEmail) {
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.trim()
+    if (data && adminEmail && data.email?.trim() === adminEmail) {
       data.is_subscribed = true
     }
     setProfile(data)
