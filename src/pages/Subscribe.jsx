@@ -1,29 +1,17 @@
-import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Subscribe() {
   const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
 
-  async function handleSubscribe() {
-    setLoading(true)
-    const priceId = import.meta.env.VITE_STRIPE_PRICE_ID
-    const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-
-    // Use Stripe Checkout redirect model
-    // In production, you'd call your backend to create a Checkout session.
-    // This is a client-side redirect to Stripe's hosted checkout.
-    const params = new URLSearchParams({
-      'line_items[0][price]': priceId,
-      'line_items[0][quantity]': '1',
-      mode: 'subscription',
-      success_url: window.location.origin + '/Tempify/success',
-      cancel_url: window.location.origin + '/Tempify/subscribe',
-    })
-
-    // For the redirect model without a backend, we link to your Stripe payment link directly.
-    // Replace with your actual Stripe payment link URL.
-    window.location.href = `https://buy.stripe.com/placeholder?prefilled_email=${encodeURIComponent(user?.email || '')}`
+  function handleSubscribe() {
+    const link = import.meta.env.VITE_STRIPE_PAYMENT_LINK
+    if (!link) {
+      console.warn('VITE_STRIPE_PAYMENT_LINK is not set.')
+      return
+    }
+    const url = new URL(link)
+    if (user?.email) url.searchParams.set('prefilled_email', user.email)
+    window.location.href = url.toString()
   }
 
   return (
@@ -48,8 +36,8 @@ export default function Subscribe() {
           Every day, going back forever.
         </h1>
         <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: 1.7 }}>
-          Unlock the full archive and replay any date from the beginning. Streaks are saved across
-          all five games, and your history is always there when you come back.
+          Unlock the full archive, browse by genre, and get recommendations based on
+          what you actually play. Streaks carry across all five games.
         </p>
 
         <div style={{
@@ -70,7 +58,6 @@ export default function Subscribe() {
 
         <button
           onClick={handleSubscribe}
-          disabled={loading}
           className="btn-press"
           style={{
             width: '100%',
@@ -81,11 +68,10 @@ export default function Subscribe() {
             color: '#0f0f0f',
             fontSize: '15px',
             fontWeight: 500,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1,
+            cursor: 'pointer',
           }}
         >
-          {loading ? 'Redirecting...' : 'Subscribe — $3/mo'}
+          Subscribe — $3/mo
         </button>
 
         {!user && (

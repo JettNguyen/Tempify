@@ -1,18 +1,12 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import Avatar from './Avatar'
 
 export default function Navbar() {
-  const { user, profile, signOut } = useAuth()
-  const navigate = useNavigate()
+  const { user, profile } = useAuth()
 
-  const initials = profile?.email
-    ? profile.email.slice(0, 2).toUpperCase()
-    : user?.email?.slice(0, 2).toUpperCase() ?? '?'
-
-  async function handleSignOut() {
-    await signOut()
-    navigate('/')
-  }
+  const initial = (profile?.email || user?.email || '').split('@')[0][0]?.toUpperCase() ?? '?'
+  const isSubscribed = profile?.is_subscribed
 
   return (
     <nav style={{
@@ -54,40 +48,26 @@ export default function Navbar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         {user ? (
           <>
-            <Link
-              to="/dashboard"
-              style={{ color: 'var(--text-muted)', fontSize: '14px' }}
-            >
+            <Link to="/dashboard" style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
               Dashboard
             </Link>
-            <button
-              onClick={handleSignOut}
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-primary)',
-                fontSize: '12px',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-              title="Sign out"
-              className="btn-press"
-            >
-              {initials}
-            </button>
+            {isSubscribed && (
+              <Link to="/explore" style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+                Explore
+              </Link>
+            )}
+            <Link to="/profile" className="btn-press" style={{ display: 'flex', alignItems: 'center' }} title="Your profile">
+              <Avatar
+                iconKey={profile?.avatar_icon}
+                color={profile?.avatar_color}
+                initial={initial}
+                size={32}
+              />
+            </Link>
           </>
         ) : (
           <>
-            <Link
-              to="/login"
-              style={{ color: 'var(--text-muted)', fontSize: '14px' }}
-            >
+            <Link to="/login" style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
               Log in
             </Link>
             <Link

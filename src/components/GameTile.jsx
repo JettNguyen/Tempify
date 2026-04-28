@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
+import { GENRE_COLORS } from '../lib/genres'
 
-export default function GameTile({ name, description, path, complete, featured }) {
+export default function GameTile({ name, description, path, complete, featured, genre }) {
+  const genreStyle = genre && GENRE_COLORS[genre]
+
   return (
     <Link
       to={path}
@@ -18,7 +21,6 @@ export default function GameTile({ name, description, path, complete, featured }
       onMouseEnter={(e) => e.currentTarget.style.background = '#1e1e1e'}
       onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface)'}
     >
-      {/* Waveform decoration for the featured tile */}
       {featured && (
         <svg
           aria-hidden="true"
@@ -34,15 +36,7 @@ export default function GameTile({ name, description, path, complete, featured }
           }}
         >
           {[4,10,18,28,14,22,36,16,30,8,20,32,12,24,40,16,28,8,18,10,6,14,20,12,16,8,4,10,16,6].map((h, i) => (
-            <rect
-              key={i}
-              x={i * 11}
-              y={(60 - h) / 2}
-              width="7"
-              height={h}
-              rx="3"
-              fill="var(--text-primary)"
-            />
+            <rect key={i} x={i * 11} y={(60 - h) / 2} width="7" height={h} rx="3" fill="var(--text-primary)" />
           ))}
         </svg>
       )}
@@ -57,39 +51,23 @@ export default function GameTile({ name, description, path, complete, featured }
           }}>
             {name}
           </div>
-          <div style={{
-            fontSize: '13px',
-            color: 'var(--text-muted)',
-            lineHeight: 1.5,
-          }}>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
             {description}
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-          {/* Completion indicator */}
-          {complete ? (
-            <span style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: 'var(--green)',
-              display: 'inline-block',
-            }} title="Completed today" />
-          ) : (
-            <span style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: 'var(--amber)',
-              display: 'inline-block',
-            }} title="Not played yet" />
-          )}
-        </div>
+        <span style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: complete ? 'var(--green)' : 'var(--amber)',
+          display: 'inline-block',
+          flexShrink: 0,
+          marginTop: '4px',
+        }} title={complete ? 'Completed today' : 'Not played yet'} />
       </div>
 
-      {/* Play button */}
-      <div style={{ marginTop: '1.25rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1.25rem' }}>
         <span
           className="btn-press"
           style={{
@@ -109,6 +87,19 @@ export default function GameTile({ name, description, path, complete, featured }
           </svg>
           Play
         </span>
+
+        {genreStyle && (
+          <span style={{
+            fontSize: '11px',
+            padding: '4px 9px',
+            borderRadius: '999px',
+            background: genreStyle.bg,
+            color: genreStyle.text,
+            fontWeight: 500,
+          }}>
+            {genre}
+          </span>
+        )}
       </div>
     </Link>
   )

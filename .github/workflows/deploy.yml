@@ -41,6 +41,8 @@ jobs:
           VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
           VITE_STRIPE_PRICE_ID: ${{ secrets.VITE_STRIPE_PRICE_ID }}
           VITE_STRIPE_CUSTOMER_PORTAL_URL: ${{ secrets.VITE_STRIPE_CUSTOMER_PORTAL_URL }}
+          VITE_STRIPE_PAYMENT_LINK: ${{ secrets.VITE_STRIPE_PAYMENT_LINK }}
+          VITE_ADMIN_EMAIL: ${{ secrets.VITE_ADMIN_EMAIL }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
