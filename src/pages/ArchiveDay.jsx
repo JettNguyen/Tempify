@@ -13,7 +13,7 @@ function gameMeta(date) {
   return {
     'one-bar':        { name: 'One Bar',        description: 'Name the song from a tiny clip.',             path: `/game/one-bar${q}`,        featured: true },
     'drop-or-flop':   { name: 'Hit or Miss',    description: 'Did it ever chart on the Hot 100?',          path: `/game/drop-or-flop${q}` },
-    'who-sampled-it': { name: 'Who Sampled It', description: 'Hear the sample, find the source.',          path: `/game/who-sampled-it${q}` },
+    'who-sampled-it': { name: 'Sampled',        description: 'Hear the sample, find the source.',          path: `/game/who-sampled-it${q}` },
     'era':            { name: 'Era',             description: 'Guess which decade the song is from.',       path: `/game/era${q}` },
     'cover-or-not':   { name: 'Cover or Not',   description: 'Is this song a cover of an earlier track?',  path: `/game/cover-or-not${q}` },
   }

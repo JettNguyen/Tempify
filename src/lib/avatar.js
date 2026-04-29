@@ -48,3 +48,34 @@ export async function saveAvatar(userId, { icon, color }) {
     .eq('id', userId)
   if (error) throw error
 }
+
+export async function saveProfileSettings(userId, { username, leaderboardVisibility }) {
+  const { error } = await supabase
+    .from('users')
+    .update({
+      username: username || null,
+      leaderboard_visibility: leaderboardVisibility,
+    })
+    .eq('id', userId)
+  if (error) throw error
+}
+
+export async function checkUsernameAvailable(username, currentUserId) {
+  const { data } = await supabase
+    .from('users')
+    .select('id')
+    .eq('username', username.toLowerCase().trim())
+    .neq('id', currentUserId)
+    .single()
+  return !data
+}
+
+// Returns the email for a given username, or null if not found
+export async function getEmailByUsername(username) {
+  const { data } = await supabase
+    .from('users')
+    .select('email')
+    .eq('username', username.toLowerCase().trim())
+    .single()
+  return data?.email ?? null
+}

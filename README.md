@@ -4,19 +4,19 @@
 <img src=./public/favicon.svg style=width:150px>
 </p>
 
-Five music games, one new track each day.
+Five music games, new ones each day.
 
 **[Tempify](https://JettNguyen.github.io/Tempify/)** &nbsp;·&nbsp; Free to play, no account required
 
 ---
 
-## The games
+## The Games
 
-**One Bar**: You get a half-second clip. Name the song within up to 6 attempts. Every wrong guess unlocks another half a second of the clip.
+**One Bar**: Name the song with a half-second clip within up to 6 attempts. Every wrong guess unlocks another half a second.
 
-**Drop or Flop**: Did this song chart or disappear without a trace?
+**Hit or Miss**: Did this song ender the Hot 100 or disappear without a trace?
 
-**Who Sampled It**: A famous track plays. Pick which song it sampled from four options.
+**Sampled**: Pick which song it sampled from four options.
 
 **Era**: No hints, no context. Just the music. Guess the decade.
 

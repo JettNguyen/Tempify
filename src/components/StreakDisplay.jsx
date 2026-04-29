@@ -3,7 +3,7 @@ import './StreakDisplay.css'
 const GAMES = [
   { slug: 'one-bar', name: 'One Bar' },
   { slug: 'drop-or-flop', name: 'Hit or Miss' },
-  { slug: 'who-sampled-it', name: 'Who Sampled It' },
+  { slug: 'who-sampled-it', name: 'Sampled' },
   { slug: 'era', name: 'Era' },
   { slug: 'cover-or-not', name: 'Cover or Not' },
 ]

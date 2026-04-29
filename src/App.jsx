@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/Navbar'
+import UsernameSetupModal from './components/UsernameSetupModal'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Archive from './pages/Archive'
@@ -9,6 +10,7 @@ import Explore from './pages/Explore'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Profile from './pages/Profile'
+import PublicProfile from './pages/PublicProfile'
 import Subscribe from './pages/Subscribe'
 import Success from './pages/Success'
 import Admin from './pages/Admin'
@@ -23,6 +25,7 @@ export default function App() {
     <BrowserRouter basename={import.meta.env.BASE_URL} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <Navbar />
+        <UsernameSetupModal />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/game/one-bar" element={<OneBar />} />
@@ -35,11 +38,13 @@ export default function App() {
           <Route path="/archive/:date" element={<ArchiveDay />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/u/:username" element={<PublicProfile />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/subscribe" element={<Subscribe />} />
           <Route path="/success" element={<Success />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

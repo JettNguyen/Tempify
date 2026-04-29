@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
@@ -11,7 +11,7 @@ import './Archive.css'
 const GAMES = [
   { slug: 'one-bar',        name: 'One Bar',        path: '/game/one-bar' },
   { slug: 'drop-or-flop',   name: 'Hit or Miss',    path: '/game/drop-or-flop' },
-  { slug: 'who-sampled-it', name: 'Who Sampled It', path: '/game/who-sampled-it' },
+  { slug: 'who-sampled-it', name: 'Sampled',        path: '/game/who-sampled-it' },
   { slug: 'era',            name: 'Era',            path: '/game/era' },
   { slug: 'cover-or-not',   name: 'Cover or Not',   path: '/game/cover-or-not' },
 ]
@@ -56,7 +56,6 @@ export default function Explore() {
   }, [user])
 
   useEffect(() => {
-    if (!user) return
     setFetching(true)
     supabase.from('puzzles')
       .select('id, game_slug, scheduled_date, answer, genre, metadata')
@@ -66,12 +65,11 @@ export default function Explore() {
         setAllPuzzles(data || [])
         setFetching(false)
       })
-  }, [user, todayStr])
+  }, [todayStr])
 
   if (loading) return null
-  if (!user) return <Navigate to="/login" state={{ from: '/explore' }} replace />
 
-  const isSubscribed = profile?.is_subscribed
+  const isSubscribed = Boolean(user && profile?.is_subscribed)
 
   function toggleGenre(g) {
     setActiveGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])

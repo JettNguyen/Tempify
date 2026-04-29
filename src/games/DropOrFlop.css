@@ -16,8 +16,15 @@
 }
 
 .drop-or-flop__song {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
   margin-top: 1.25rem;
   margin-bottom: 1.5rem;
+}
+
+.drop-or-flop__song .track-artwork {
+  margin-bottom: 0;
 }
 
 .drop-or-flop__song-name {

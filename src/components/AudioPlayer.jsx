@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import './AudioPlayer.css'
 
-const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, onPlay, autoPlay }, ref) {
+const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, onPlay }, ref) {
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -56,13 +56,6 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
     }
   }, [src])
 
-  useEffect(() => {
-    if (autoPlay && audioRef.current) {
-      audioRef.current.play().catch(() => {})
-      setPlaying(true)
-    }
-  }, [])
-
   function togglePlay() {
     const audio = audioRef.current
     if (!audio) return
@@ -78,6 +71,14 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
 
   const effectiveDuration = maxDuration || duration
   const progress = effectiveDuration > 0 ? Math.min(currentTime / effectiveDuration, 1) : 0
+
+  function handleSeek(event) {
+    const audio = audioRef.current
+    if (!audio || !isFinite(effectiveDuration) || effectiveDuration <= 0) return
+    const nextTime = Math.min(Number(event.target.value), effectiveDuration)
+    audio.currentTime = nextTime
+    setCurrentTime(nextTime)
+  }
 
   function fmt(s) {
     if (!isFinite(s)) return '0:00'
@@ -111,12 +112,22 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
         </button>
 
         <div className="audio-player__progress">
-          <div className="audio-player__track">
-            <div
+          <label className="audio-player__track" aria-label="Audio position">
+            <span
               className="audio-player__fill"
               style={{ width: `${progress * 100}%` }}
             />
-          </div>
+            <input
+              className="audio-player__scrubber"
+              type="range"
+              min="0"
+              max={effectiveDuration > 0 && isFinite(effectiveDuration) ? effectiveDuration : 0}
+              step="0.01"
+              value={Math.min(currentTime, effectiveDuration || 0)}
+              onChange={handleSeek}
+              disabled={!src || !isFinite(effectiveDuration) || effectiveDuration <= 0}
+            />
+          </label>
           <div className="audio-player__times">
             <span className="audio-player__time">{fmt(currentTime)}</span>
             <span className="audio-player__time audio-player__time--total">

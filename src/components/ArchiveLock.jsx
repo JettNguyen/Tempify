@@ -10,12 +10,12 @@ export default function ArchiveLock() {
           <path d="M5 8V5a3 3 0 0 1 6 0v3"/>
         </svg>
       </div>
-      <p className="archive-lock__title">Archive is for subscribers</p>
+      <p className="archive-lock__title">Upgrade to premium to unlock the archive</p>
       <p className="archive-lock__body">
-        Play back any day with a Tempify subscription.
+        Browse every past puzzle, replay older days, and keep the full Tempify catalog open.
       </p>
       <Link to="/subscribe" className="archive-lock__cta btn-press">
-        See plans
+        Upgrade
       </Link>
     </div>
   )

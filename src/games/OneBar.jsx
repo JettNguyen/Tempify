@@ -105,7 +105,7 @@ export default function OneBar() {
         </h1>
       </div>
 
-      <AudioPlayer src={puzzle.audio_url} maxDuration={revealSeconds} />
+      <AudioPlayer src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} />
 
       <div className="one-bar__progress">
         <div className="one-bar__bars">
@@ -148,8 +148,14 @@ export default function OneBar() {
           correct={correct}
           answer={puzzle.answer}
           artist={puzzle.metadata?.artist}
+          artwork={{
+            title: puzzle.answer,
+            artist: puzzle.metadata?.artist,
+            src: puzzle.metadata?.artwork_url,
+          }}
           emojiGrid={buildEmojiGrid()}
           gameSlug="one-bar"
+          puzzleDate={dateParam}
           nextGame={{ path: '/game/drop-or-flop', label: 'Hit or Miss' }}
         />
       )}

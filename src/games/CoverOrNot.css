@@ -19,6 +19,17 @@
   margin-bottom: 1.25rem;
 }
 
+.cover-or-not__song-track {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.cover-or-not__song-track .track-artwork {
+  margin-bottom: 0;
+}
+
 .cover-or-not__song-name {
   font-size: 14px;
   font-weight: 500;
@@ -45,14 +56,6 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-}
-
-.cover-or-not__original-card {
-  margin-top: 1.25rem;
-  padding: 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
 }
 
 .cover-or-not__original-label {

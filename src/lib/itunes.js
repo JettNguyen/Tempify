@@ -92,6 +92,8 @@ export async function searchSongs(query) {
       year: track.releaseDate ? new Date(track.releaseDate).getFullYear() : null,
       genre: mapGenre(track.primaryGenreName),
       previewUrl: track.previewUrl,
+      artworkUrl: track.artworkUrl100?.replace('100x100bb', '600x600bb') ?? null,
+      trackViewUrl: track.trackViewUrl,
     }))
     const results = deduplicate(tracks).slice(0, 8)
     cache.set(key, results)
@@ -99,4 +101,10 @@ export async function searchSongs(query) {
   } catch {
     return []
   }
+}
+
+export async function findArtwork({ title, artist }) {
+  const query = [title, artist].filter(Boolean).join(' ')
+  const [match] = await searchSongs(query)
+  return match?.artworkUrl ?? null
 }

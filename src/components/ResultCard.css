@@ -28,6 +28,16 @@
   margin-bottom: 2px;
 }
 
+.result-card__answer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.result-card__answer-row .track-artwork {
+  margin-bottom: 0;
+}
+
 .result-card__artist {
   font-size: 13px;
   color: var(--text-muted);
@@ -37,6 +47,12 @@
   font-size: 13px;
   color: var(--text-muted);
   margin-top: 0.25rem;
+}
+
+.result-card__extra {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
 }
 
 .result-card__emoji {
@@ -52,4 +68,31 @@
   gap: 0.75rem;
   margin-top: 1.25rem;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.result-card__next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  background: var(--amber);
+  color: #0f0f0f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 420px) {
+  .result-card__actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .result-card__next,
+  .result-card__actions .share-btn {
+    width: 100%;
+  }
 }

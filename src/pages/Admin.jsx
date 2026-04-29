@@ -41,10 +41,11 @@ const BLANK = {
   // drop-or-flop
   verdict: 'hit', peakPosition: '1', weeksAtOne: '', hint: '',
   // who-sampled-it
-  sourceSong: '', sourceArtist: '', sourceYear: '',
-  sampleArtist: '', sampleYear: '', sampleAudioUrl: '', correctArtist: '',
-  opt2Title: '', opt2Artist: '', opt3Title: '', opt3Artist: '',
-  opt4Title: '', opt4Artist: '',
+  sourceSong: '', sourceArtist: '', sourceYear: '', sourceArtworkUrl: '', sourceItunesUrl: '',
+  sampleArtist: '', sampleYear: '', sampleAudioUrl: '', sampleArtworkUrl: '', correctArtist: '', correctItunesUrl: '',
+  opt2Title: '', opt2Artist: '', opt2AudioUrl: '', opt2ArtworkUrl: '', opt2ItunesUrl: '',
+  opt3Title: '', opt3Artist: '', opt3AudioUrl: '', opt3ArtworkUrl: '', opt3ItunesUrl: '',
+  opt4Title: '', opt4Artist: '', opt4AudioUrl: '', opt4ArtworkUrl: '', opt4ItunesUrl: '',
   // era
   songTitle: '',
   // cover-or-not
@@ -72,16 +73,29 @@ function parseRow(p) {
     sourceSong:    m.source_song || '',
     sourceArtist:  m.source_artist || '',
     sourceYear:    m.source_year ? String(m.source_year) : '',
+    sourceArtworkUrl: m.source_artwork_url || '',
+    sourceItunesUrl:  m.source_itunes_url || '',
     sampleArtist:   m.sample_artist || '',
     sampleYear:     m.sample_year ? String(m.sample_year) : '',
     sampleAudioUrl: m.sample_audio_url || '',
+    sampleArtworkUrl: m.sample_artwork_url || m.options?.[0]?.artwork_url || '',
     correctArtist:  m.options?.[0]?.artist || '',
+    correctItunesUrl: m.options?.[0]?.itunes_url || '',
     opt2Title:     m.options?.[1]?.title || '',
     opt2Artist:    m.options?.[1]?.artist || '',
+    opt2AudioUrl:  m.options?.[1]?.audio_url || '',
+    opt2ArtworkUrl: m.options?.[1]?.artwork_url || '',
+    opt2ItunesUrl: m.options?.[1]?.itunes_url || '',
     opt3Title:     m.options?.[2]?.title || '',
     opt3Artist:    m.options?.[2]?.artist || '',
+    opt3AudioUrl:  m.options?.[2]?.audio_url || '',
+    opt3ArtworkUrl: m.options?.[2]?.artwork_url || '',
+    opt3ItunesUrl: m.options?.[2]?.itunes_url || '',
     opt4Title:     m.options?.[3]?.title || '',
     opt4Artist:    m.options?.[3]?.artist || '',
+    opt4AudioUrl:  m.options?.[3]?.audio_url || '',
+    opt4ArtworkUrl: m.options?.[3]?.artwork_url || '',
+    opt4ItunesUrl: m.options?.[3]?.itunes_url || '',
     // era
     songTitle:     m.title || '',
     // cover-or-not
@@ -118,13 +132,16 @@ function buildRow(f) {
       meta = {
         sample_artist: f.sampleArtist, sample_year: Number(f.sampleYear),
         sample_audio_url: f.sampleAudioUrl || null,
+        sample_artwork_url: f.sampleArtworkUrl || null,
         source_song: f.sourceSong, source_artist: f.sourceArtist,
         source_year: Number(f.sourceYear),
+        source_artwork_url: f.sourceArtworkUrl || null,
+        source_itunes_url: f.sourceItunesUrl || null,
         options: [
-          { title: f.answer,    artist: f.correctArtist },
-          { title: f.opt2Title, artist: f.opt2Artist },
-          { title: f.opt3Title, artist: f.opt3Artist },
-          { title: f.opt4Title, artist: f.opt4Artist },
+          { title: f.answer,    artist: f.correctArtist, audio_url: f.sampleAudioUrl || null, artwork_url: f.sampleArtworkUrl || null, itunes_url: f.correctItunesUrl || null },
+          { title: f.opt2Title, artist: f.opt2Artist, audio_url: f.opt2AudioUrl || null, artwork_url: f.opt2ArtworkUrl || null, itunes_url: f.opt2ItunesUrl || null },
+          { title: f.opt3Title, artist: f.opt3Artist, audio_url: f.opt3AudioUrl || null, artwork_url: f.opt3ArtworkUrl || null, itunes_url: f.opt3ItunesUrl || null },
+          { title: f.opt4Title, artist: f.opt4Artist, audio_url: f.opt4AudioUrl || null, artwork_url: f.opt4ArtworkUrl || null, itunes_url: f.opt4ItunesUrl || null },
         ],
       }
       break
@@ -306,10 +323,15 @@ function WhoSampledFields({ f, set, setGenre }) {
             if (song.artist)     set('sourceArtist', song.artist)
             if (song.year)       set('sourceYear', String(song.year))
             if (song.genre)      setGenre(song.genre)
+            if (song.artworkUrl) set('sourceArtworkUrl', song.artworkUrl)
+            if (song.trackViewUrl) set('sourceItunesUrl', song.trackViewUrl)
           }}
         />
         <Field label="Audio URL">
           <Input value={f.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
+        </Field>
+        <Field label="iTunes link">
+          <Input value={f.sourceItunesUrl} onChange={v => set('sourceItunesUrl', v)} placeholder="https://music.apple.com/..." />
         </Field>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem' }}>
           <Field label="Song title"><Input value={f.sourceSong} onChange={v => set('sourceSong', v)} placeholder="e.g. Stronger" /></Field>
@@ -347,6 +369,8 @@ function WhoSampledFields({ f, set, setGenre }) {
             if (song.artist)     set('correctArtist', song.artist)
             if (song.year)       set('sampleYear', String(song.year))
             if (song.previewUrl) set('sampleAudioUrl', song.previewUrl)
+            if (song.artworkUrl) set('sampleArtworkUrl', song.artworkUrl)
+            if (song.trackViewUrl) set('correctItunesUrl', song.trackViewUrl)
           }}
         />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem', marginBottom: '0.5rem' }}>
@@ -357,6 +381,9 @@ function WhoSampledFields({ f, set, setGenre }) {
         <Field label="Sample audio URL">
           <Input value={f.sampleAudioUrl} onChange={v => set('sampleAudioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/…" />
         </Field>
+        <Field label="iTunes link">
+          <Input value={f.correctItunesUrl} onChange={v => set('correctItunesUrl', v)} placeholder="https://music.apple.com/..." />
+        </Field>
       </div>
 
       {divider('3 wrong answer choices')}
@@ -365,13 +392,31 @@ function WhoSampledFields({ f, set, setGenre }) {
       <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)' }}>
         {sectionHead('C — Decoy options (plausible songs from same era)')}
         {[
-          ['opt2Title', 'opt2Artist', 2],
-          ['opt3Title', 'opt3Artist', 3],
-          ['opt4Title', 'opt4Artist', 4],
-        ].map(([t, a, n]) => (
-          <div key={n} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: n < 4 ? '0.5rem' : 0 }}>
-            <Input value={f[t]} onChange={v => set(t, v)} placeholder={`Wrong option ${n} — title`} />
-            <Input value={f[a]} onChange={v => set(a, v)} placeholder="Artist" />
+          { n: 2, title: 'opt2Title', artist: 'opt2Artist', audio: 'opt2AudioUrl', artwork: 'opt2ArtworkUrl', itunes: 'opt2ItunesUrl' },
+          { n: 3, title: 'opt3Title', artist: 'opt3Artist', audio: 'opt3AudioUrl', artwork: 'opt3ArtworkUrl', itunes: 'opt3ItunesUrl' },
+          { n: 4, title: 'opt4Title', artist: 'opt4Artist', audio: 'opt4AudioUrl', artwork: 'opt4ArtworkUrl', itunes: 'opt4ItunesUrl' },
+        ].map(opt => (
+          <div key={opt.n} style={{ marginBottom: opt.n < 4 ? '1rem' : 0 }}>
+            <SongSearch
+              placeholder={`Search iTunes for wrong option ${opt.n}...`}
+              onSelect={song => {
+                set(opt.title, song.title || '')
+                set(opt.artist, song.artist || '')
+                if (song.previewUrl) set(opt.audio, song.previewUrl)
+                if (song.artworkUrl) set(opt.artwork, song.artworkUrl)
+                if (song.trackViewUrl) set(opt.itunes, song.trackViewUrl)
+              }}
+            />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <Input value={f[opt.title]} onChange={v => set(opt.title, v)} placeholder={`Wrong option ${opt.n} - title`} />
+              <Input value={f[opt.artist]} onChange={v => set(opt.artist, v)} placeholder="Artist" />
+            </div>
+            <Field label={`Wrong option ${opt.n} sample audio URL`}>
+              <Input value={f[opt.audio]} onChange={v => set(opt.audio, v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
+            </Field>
+            <Field label={`Wrong option ${opt.n} iTunes link`}>
+              <Input value={f[opt.itunes]} onChange={v => set(opt.itunes, v)} placeholder="https://music.apple.com/..." />
+            </Field>
           </div>
         ))}
       </div>
@@ -780,6 +825,12 @@ export default function Admin() {
         if (!f.opt2Title || !f.opt2Artist) err.push('Option 2')
         if (!f.opt3Title || !f.opt3Artist) err.push('Option 3')
         if (!f.opt4Title || !f.opt4Artist) err.push('Option 4')
+        if (!f.opt2AudioUrl) err.push('Option 2 sample audio URL')
+        if (!f.opt3AudioUrl) err.push('Option 3 sample audio URL')
+        if (!f.opt4AudioUrl) err.push('Option 4 sample audio URL')
+        if (!f.opt2ItunesUrl) err.push('Option 2 iTunes link')
+        if (!f.opt3ItunesUrl) err.push('Option 3 iTunes link')
+        if (!f.opt4ItunesUrl) err.push('Option 4 iTunes link')
         break
       case 'era':
         if (!f.audioUrl)  err.push('Audio URL')

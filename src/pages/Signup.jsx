@@ -1,37 +1,68 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { checkUsernameAvailable, saveProfileSettings } from '../lib/avatar'
 import './Login.css'
 
 export default function Signup() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [sent, setSent] = useState(false)
+  const [username, setUsername] = useState('')
+  const [usernameStatus, setUsernameStatus] = useState(null) // null | 'checking' | 'available' | 'taken' | 'invalid'
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState(null)
+  const [sent, setSent]         = useState(false)
+  const debounce = useRef(null)
+
+  function handleUsernameChange(val) {
+    setUsername(val)
+    setUsernameStatus(null)
+    clearTimeout(debounce.current)
+    const trimmed = val.trim().toLowerCase()
+    if (!trimmed) return
+    if (!/^[a-z0-9_]{2,20}$/.test(trimmed)) {
+      setUsernameStatus('invalid')
+      return
+    }
+    setUsernameStatus('checking')
+    debounce.current = setTimeout(async () => {
+      const available = await checkUsernameAvailable(trimmed, 'none')
+      setUsernameStatus(available ? 'available' : 'taken')
+    }, 400)
+  }
 
   async function handleSignup(e) {
     e.preventDefault()
     setError(null)
+
+    const trimmedUsername = username.trim().toLowerCase()
+    if (!trimmedUsername) { setError('Please choose a username.'); return }
+    if (usernameStatus !== 'available') { setError('Please choose a valid, available username.'); return }
+
     setLoading(true)
-    const { error: err } = await supabase.auth.signUp({
+    const { data, error: err } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.origin + '/Tempify/' },
+      options: { emailRedirectTo: window.location.origin + import.meta.env.BASE_URL },
     })
-    setLoading(false)
-    if (err) {
-      setError(err.message)
-    } else {
-      setSent(true)
+    if (err) { setError(err.message); setLoading(false); return }
+
+    // Save username immediately — works even before email confirmation
+    if (data?.user?.id) {
+      await saveProfileSettings(data.user.id, {
+        username: trimmedUsername,
+        leaderboardVisibility: 'followers',
+      })
     }
+
+    setLoading(false)
+    setSent(true)
   }
 
   async function handleGoogleSignup() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/Tempify/' },
+      options: { redirectTo: window.location.origin + import.meta.env.BASE_URL },
     })
   }
 
@@ -48,6 +79,13 @@ export default function Signup() {
       </div>
     )
   }
+
+  const usernameHint = {
+    checking:  { text: 'Checking…',   color: 'var(--text-dim)' },
+    available: { text: '✓ Available', color: 'var(--green)' },
+    taken:     { text: '✕ Already taken', color: '#ef4444' },
+    invalid:   { text: '2–20 characters: letters, numbers, underscores only', color: '#ef4444' },
+  }[usernameStatus]
 
   return (
     <div className="auth-page">
@@ -69,11 +107,30 @@ export default function Signup() {
         </div>
 
         <form onSubmit={handleSignup} className="auth-form">
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={e => handleUsernameChange(e.target.value)}
+              required
+              className="auth-input"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            {usernameHint && (
+              <p style={{ fontSize: '11px', color: usernameHint.color, marginTop: '3px' }}>
+                {usernameHint.text}
+              </p>
+            )}
+          </div>
+
           <input
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             required
             className="auth-input"
           />
@@ -81,7 +138,7 @@ export default function Signup() {
             type="password"
             placeholder="Password (min 8 characters)"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             minLength={8}
             required
             className="auth-input"
@@ -89,8 +146,8 @@ export default function Signup() {
 
           {error && <p className="auth-error">{error}</p>}
 
-          <button type="submit" disabled={loading} className="auth-submit btn-press">
-            {loading ? 'Creating account...' : 'Create account'}
+          <button type="submit" disabled={loading || usernameStatus !== 'available'} className="auth-submit btn-press">
+            {loading ? 'Creating account…' : 'Create account'}
           </button>
         </form>
       </div>

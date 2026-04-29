@@ -19,10 +19,27 @@
   margin-bottom: 0.5rem;
 }
 
+.who-sampled__source-track {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.who-sampled__source-track .track-artwork {
+  margin-bottom: 0;
+}
+
+.who-sampled__source-title {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-bottom: 0.15rem;
+}
+
 .who-sampled__source-label {
   font-size: 13px;
   color: var(--text-muted);
-  margin-bottom: 0.75rem;
 }
 
 .who-sampled__options {
@@ -40,6 +57,13 @@
   border-radius: 8px;
   cursor: pointer;
   transition: border-color 150ms ease;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.who-sampled__option .track-artwork {
+  margin-bottom: 0;
 }
 
 .who-sampled__option--answer {

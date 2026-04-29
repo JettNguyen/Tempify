@@ -8,7 +8,7 @@ export default function ShareButton({ emojiGrid, gameSlug }) {
     const gameName = {
       'one-bar': 'One Bar',
       'drop-or-flop': 'Hit or Miss',
-      'who-sampled-it': 'Who Sampled It',
+      'who-sampled-it': 'Sampled',
       'era': 'Era',
       'cover-or-not': 'Cover or Not',
     }[gameSlug] || 'Tempify'

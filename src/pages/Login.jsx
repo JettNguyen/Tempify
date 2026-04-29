@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { getEmailByUsername } from '../lib/avatar'
 import './Login.css'
 
 export default function Login() {
@@ -8,15 +9,29 @@ export default function Login() {
   const location = useLocation()
   const from = location.state?.from || '/'
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [identifier, setIdentifier] = useState('') // email or username
+  const [password, setPassword]     = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState(null)
 
   async function handleEmailLogin(e) {
     e.preventDefault()
     setError(null)
     setLoading(true)
+
+    let email = identifier.trim()
+
+    // If no @ it's a username — look up the real email
+    if (!email.includes('@')) {
+      const found = await getEmailByUsername(email)
+      if (!found) {
+        setError('No account found with that username.')
+        setLoading(false)
+        return
+      }
+      email = found
+    }
+
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (err) {
@@ -29,7 +44,7 @@ export default function Login() {
   async function handleGoogleLogin() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/Tempify/' },
+      options: { redirectTo: window.location.origin + import.meta.env.BASE_URL },
     })
   }
 
@@ -54,18 +69,21 @@ export default function Login() {
 
         <form onSubmit={handleEmailLogin} className="auth-form">
           <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Username or email"
+            value={identifier}
+            onChange={e => setIdentifier(e.target.value)}
             required
             className="auth-input"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
           <input
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             required
             className="auth-input"
           />
@@ -73,7 +91,7 @@ export default function Login() {
           {error && <p className="auth-error">{error}</p>}
 
           <button type="submit" disabled={loading} className="auth-submit btn-press">
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
       </div>

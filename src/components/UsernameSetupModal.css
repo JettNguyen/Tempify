@@ -1,0 +1,116 @@
+.username-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+  backdrop-filter: blur(4px);
+}
+
+.username-modal__card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 380px;
+  animation: slideUp 0.2s ease;
+}
+
+.username-modal__eyebrow {
+  font-size: 11px;
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.username-modal__title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.4rem;
+}
+
+.username-modal__sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.username-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.username-modal__input-wrap {
+  display: flex;
+  align-items: center;
+  background: #111;
+  border: 1px solid var(--amber);
+  border-radius: 8px;
+  padding: 0 12px;
+  gap: 4px;
+}
+
+.username-modal__at {
+  color: var(--amber);
+  font-size: 15px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.username-modal__input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 10px 0;
+  font-size: 15px;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.username-modal__input:focus,
+.username-modal__input:focus-visible {
+  outline: none;
+}
+
+.username-modal__input::placeholder {
+  color: var(--text-dim);
+}
+
+.username-modal__error {
+  font-size: 12px;
+  color: #ef4444;
+}
+
+.username-modal__hint {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.username-modal__btn {
+  margin-top: 0.5rem;
+  padding: 11px;
+  background: var(--amber);
+  color: #0f0f0f;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 80ms;
+}
+
+.username-modal__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
