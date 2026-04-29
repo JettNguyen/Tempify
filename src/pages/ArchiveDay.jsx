@@ -12,14 +12,14 @@ function gameMeta(date) {
   const q = `?date=${date}`
   return {
     'one-bar':        { name: 'One Bar',        description: 'Name the song from a tiny clip.',             path: `/game/one-bar${q}`,        featured: true },
-    'drop-or-flop':   { name: 'Hit or Miss',    description: 'Did it ever chart on the Hot 100?',          path: `/game/drop-or-flop${q}` },
-    'who-sampled-it': { name: 'Sampled',        description: 'Hear the sample, find the source.',          path: `/game/who-sampled-it${q}` },
+    'hit-or-miss':    { name: 'Hit or Miss',    description: 'Did it ever chart on the Hot 100?',          path: `/game/hit-or-miss${q}` },
+    'sampled':        { name: 'Sampled',        description: 'Hear the sample, find the source.',          path: `/game/sampled${q}` },
     'era':            { name: 'Era',             description: 'Guess which decade the song is from.',       path: `/game/era${q}` },
     'cover-or-not':   { name: 'Cover or Not',   description: 'Is this song a cover of an earlier track?',  path: `/game/cover-or-not${q}` },
   }
 }
 
-const GAME_ORDER = ['one-bar', 'drop-or-flop', 'who-sampled-it', 'era', 'cover-or-not']
+const GAME_ORDER = ['one-bar', 'hit-or-miss', 'sampled', 'era', 'cover-or-not']
 
 export default function ArchiveDay() {
   const { date } = useParams()
@@ -60,12 +60,8 @@ export default function ArchiveDay() {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
   })
 
-  // Build a slug→puzzle map, normalize the-flip → cover-or-not
   const puzzleMap = {}
-  puzzles.forEach(p => {
-    const slug = p.game_slug === 'the-flip' ? 'cover-or-not' : p.game_slug
-    puzzleMap[slug] = p
-  })
+  puzzles.forEach(p => { puzzleMap[p.game_slug] = p })
 
   const GAME_META = gameMeta(date)
 

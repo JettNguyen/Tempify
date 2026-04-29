@@ -10,8 +10,8 @@ import './Archive.css'
 
 const GAMES = [
   { slug: 'one-bar',        name: 'One Bar',        path: '/game/one-bar' },
-  { slug: 'drop-or-flop',   name: 'Hit or Miss',    path: '/game/drop-or-flop' },
-  { slug: 'who-sampled-it', name: 'Sampled',        path: '/game/who-sampled-it' },
+  { slug: 'hit-or-miss',    name: 'Hit or Miss',    path: '/game/hit-or-miss' },
+  { slug: 'sampled',        name: 'Sampled',        path: '/game/sampled' },
   { slug: 'era',            name: 'Era',            path: '/game/era' },
   { slug: 'cover-or-not',   name: 'Cover or Not',   path: '/game/cover-or-not' },
 ]
@@ -20,7 +20,7 @@ const FIRST_PUZZLE_DATE = '2026-04-28'
 
 function getDisplayAnswer(puzzle) {
   const slug = puzzle.game_slug
-  if (slug === 'cover-or-not' || slug === 'the-flip') {
+  if (slug === 'cover-or-not') {
     if (puzzle.answer === 'cover' || puzzle.answer === 'a') return puzzle.metadata?.song_title || 'Cover'
     if (puzzle.answer === 'original' || puzzle.answer === 'b') return puzzle.metadata?.song_title || 'Original'
     return puzzle.metadata?.song_title ?? puzzle.answer
@@ -82,8 +82,7 @@ export default function Explore() {
   const byGame = {}
   GAMES.forEach(g => { byGame[g.slug] = [] })
   filtered.forEach(p => {
-    const slug = p.game_slug === 'the-flip' ? 'cover-or-not' : p.game_slug
-    if (byGame[slug]) byGame[slug].push(p)
+    if (byGame[p.game_slug]) byGame[p.game_slug].push(p)
   })
 
   // Calendar

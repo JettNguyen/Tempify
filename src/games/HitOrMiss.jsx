@@ -8,9 +8,9 @@ import { saveScore, updateStreak } from '../lib/scores'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
 import TrackArtwork from '../components/TrackArtwork'
-import './DropOrFlop.css'
+import './HitOrMiss.css'
 
-export default function DropOrFlop() {
+export default function HitOrMiss() {
   const { user, profile } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
@@ -27,7 +27,7 @@ export default function DropOrFlop() {
   const { stop, display } = useGameTimer(!done)
 
   useEffect(() => {
-    getPuzzle('drop-or-flop', dateParam)
+    getPuzzle('hit-or-miss', dateParam)
       .then(setPuzzle)
       .catch(() => setError('No puzzle found for today.'))
       .finally(() => setLoading(false))
@@ -35,9 +35,9 @@ export default function DropOrFlop() {
 
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('drop-or-flop')) {
+    if (isComplete('hit-or-miss')) {
       stop()
-      setCorrect(completions['drop-or-flop']?.completed ?? false)
+      setCorrect(completions['hit-or-miss']?.completed ?? false)
       setDone(true)
     }
   }, [puzzle, completions])
@@ -50,10 +50,10 @@ export default function DropOrFlop() {
     setChosen(verdict)
     setCorrect(isCorrect)
     setDone(true)
-    markComplete('drop-or-flop', 1)
+    markComplete('hit-or-miss', 1)
     if (user) {
-      await saveScore({ userId: user.id, gameSlug: 'drop-or-flop', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
-      if (isCorrect) await updateStreak(user.id, 'drop-or-flop', profile?.is_subscribed)
+      await saveScore({ userId: user.id, gameSlug: 'hit-or-miss', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
+      if (isCorrect) await updateStreak(user.id, 'hit-or-miss', profile?.is_subscribed)
     }
   }
 
@@ -73,7 +73,7 @@ export default function DropOrFlop() {
         {!done && <p className="game-timer">{display}</p>}
       </div>
 
-      <div className="drop-or-flop__song">
+      <div className="hit-or-miss__song">
         <TrackArtwork
           title={puzzle.answer}
           artist={puzzle.metadata?.artist}
@@ -81,15 +81,15 @@ export default function DropOrFlop() {
           size="medium"
         />
         <div>
-          <p className="drop-or-flop__song-name">{puzzle.answer}</p>
-          <p className="drop-or-flop__song-artist">{puzzle.metadata?.artist}</p>
+          <p className="hit-or-miss__song-name">{puzzle.answer}</p>
+          <p className="hit-or-miss__song-artist">{puzzle.metadata?.artist}</p>
         </div>
       </div>
 
       <AudioPlayer src={puzzle.audio_url} />
 
       {!done && (
-        <div className="stagger-list drop-or-flop__choices">
+        <div className="stagger-list hit-or-miss__choices">
           <ChoiceButton label="Hit" onClick={() => handleGuess('hit')} />
           <ChoiceButton label="Miss" onClick={() => handleGuess('miss')} />
         </div>
@@ -108,10 +108,10 @@ export default function DropOrFlop() {
           }
           detail={puzzle.metadata?.hint}
           emojiGrid={correct ? '🟩' : '⬜'}
-          gameSlug="drop-or-flop"
+          gameSlug="hit-or-miss"
           puzzleDate={dateParam}
           timeSeconds={finalTime}
-          nextGame={{ path: '/game/who-sampled-it', label: 'Sampled' }}
+          nextGame={{ path: '/game/sampled', label: 'Sampled' }}
         />
       )}
     </GameShell>
@@ -120,7 +120,7 @@ export default function DropOrFlop() {
 
 function ChoiceButton({ label, onClick }) {
   return (
-    <button onClick={onClick} className="drop-or-flop__choice-btn btn-press btn-hover">
+    <button onClick={onClick} className="hit-or-miss__choice-btn btn-press btn-hover">
       {label}
     </button>
   )

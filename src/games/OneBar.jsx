@@ -156,7 +156,7 @@ export default function OneBar() {
           emojiGrid={buildEmojiGrid()}
           gameSlug="one-bar"
           puzzleDate={dateParam}
-          nextGame={{ path: '/game/drop-or-flop', label: 'Hit or Miss' }}
+          nextGame={{ path: '/game/hit-or-miss', label: 'Hit or Miss' }}
         />
       )}
     </GameShell>

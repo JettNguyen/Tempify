@@ -10,8 +10,8 @@ import './PublicProfile.css'
 
 const GAME_NAMES = {
   'one-bar': 'One Bar',
-  'drop-or-flop': 'Hit or Miss',
-  'who-sampled-it': 'Sampled',
+  'hit-or-miss': 'Hit or Miss',
+  'sampled': 'Sampled',
   'era': 'Era',
   'cover-or-not': 'Cover or Not',
 }

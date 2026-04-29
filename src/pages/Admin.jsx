@@ -10,8 +10,8 @@ import { todayEST } from '../lib/date'
 
 const GAMES = [
   { slug: 'one-bar',        short: 'One Bar' },
-  { slug: 'drop-or-flop',   short: 'Hit or Miss' },
-  { slug: 'who-sampled-it', short: 'Sampled' },
+  { slug: 'hit-or-miss',    short: 'Hit or Miss' },
+  { slug: 'sampled',        short: 'Sampled' },
   { slug: 'era',            short: 'Era' },
   { slug: 'cover-or-not',   short: 'Cover/Not' },
 ]
@@ -38,9 +38,9 @@ const BLANK = {
   date: '', game: 'one-bar', audioUrl: '', answer: '', genre: '',
   // shared
   artist: '', year: '',
-  // drop-or-flop
+  // hit-or-miss
   verdict: 'hit', peakPosition: '1', weeksAtOne: '', hint: '',
-  // who-sampled-it
+  // sampled
   sourceSong: '', sourceArtist: '', sourceYear: '', sourceArtworkUrl: '', sourceItunesUrl: '',
   sampleArtist: '', sampleYear: '', sampleAudioUrl: '', sampleArtworkUrl: '', correctArtist: '', correctItunesUrl: '',
   opt2Title: '', opt2Artist: '', opt2AudioUrl: '', opt2ArtworkUrl: '', opt2ItunesUrl: '',
@@ -64,12 +64,12 @@ function parseRow(p) {
     genre:         p.genre || '',
     artist:        m.artist || '',
     year:          m.year ? String(m.year) : '',
-    // drop-or-flop
+    // hit-or-miss
     verdict:       m.verdict || 'hit',
     peakPosition:  m.peak_position ? String(m.peak_position) : '1',
     weeksAtOne:    m.weeks_at_one ? String(m.weeks_at_one) : '',
     hint:          m.hint || '',
-    // who-sampled-it
+    // sampled
     sourceSong:    m.source_song || '',
     sourceArtist:  m.source_artist || '',
     sourceYear:    m.source_year ? String(m.source_year) : '',
@@ -119,7 +119,7 @@ function buildRow(f) {
     case 'one-bar':
       meta = { artist: f.artist, year: Number(f.year) }
       break
-    case 'drop-or-flop':
+    case 'hit-or-miss':
       meta = {
         artist: f.artist, year: Number(f.year),
         verdict: f.verdict,
@@ -128,7 +128,7 @@ function buildRow(f) {
         hint: f.hint || null,
       }
       break
-    case 'who-sampled-it':
+    case 'sampled':
       meta = {
         sample_artist: f.sampleArtist, sample_year: Number(f.sampleYear),
         sample_audio_url: f.sampleAudioUrl || null,
@@ -206,7 +206,7 @@ function OneBarFields({ f, set }) {
   )
 }
 
-function DropOrFlopFields({ f, set }) {
+function HitOrMissFields({ f, set }) {
   const [bbStatus, setBbStatus] = useState(null) // null | 'hot100' | 'bb200' | 'miss'
   const [bb200Peak, setBb200Peak] = useState(null)
   const lastLookup = useRef('')
@@ -807,14 +807,14 @@ export default function Admin() {
         if (!f.artist)   err.push('Artist')
         if (!f.year)     err.push('Year')
         break
-      case 'drop-or-flop':
+      case 'hit-or-miss':
         if (!f.audioUrl)                          err.push('Audio URL')
         if (!f.answer)                            err.push('Song title')
         if (!f.artist)                            err.push('Artist')
         if (!f.year)                              err.push('Year')
         if (f.verdict === 'hit' && !f.peakPosition) err.push('Peak position')
         break
-      case 'who-sampled-it':
+      case 'sampled':
         if (!f.audioUrl)     err.push('Audio URL')
         if (!f.answer)       err.push('Sample song title')
         if (!f.correctArtist) err.push('Correct sample artist')
@@ -986,8 +986,8 @@ export default function Admin() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* iTunes search — hidden for who-sampled-it and cover-or-not (they have their own search) */}
-            {form.game !== 'who-sampled-it' && form.game !== 'cover-or-not' && (
+            {/* iTunes search — hidden for sampled and cover-or-not (they have their own search) */}
+            {form.game !== 'sampled' && form.game !== 'cover-or-not' && (
               <SongSearch onSelect={song => {
                 setForm(f => ({
                   ...f,
@@ -1040,14 +1040,14 @@ export default function Admin() {
               </div>
             </Field>
 
-            {/* Audio URL + Answer — common to most games; who-sampled-it handles these internally */}
-            {form.game !== 'who-sampled-it' && form.game !== 'cover-or-not' && (
+            {/* Audio URL + Answer — common to most games; sampled handles these internally */}
+            {form.game !== 'sampled' && form.game !== 'cover-or-not' && (
               <Field label="Audio URL">
                 <Input value={form.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
               </Field>
             )}
 
-            {form.game !== 'cover-or-not' && form.game !== 'era' && form.game !== 'who-sampled-it' && (
+            {form.game !== 'cover-or-not' && form.game !== 'era' && form.game !== 'sampled' && (
               <Field label="Answer (song title)">
                 <Input value={form.answer} onChange={v => set('answer', v)} placeholder="Exact song title" />
               </Field>
@@ -1056,8 +1056,8 @@ export default function Admin() {
             {/* Game-specific fields */}
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
               {form.game === 'one-bar'        && <OneBarFields    f={form} set={set} />}
-              {form.game === 'drop-or-flop'   && <DropOrFlopFields f={form} set={set} />}
-              {form.game === 'who-sampled-it' && <WhoSampledFields f={form} set={set} setGenre={v => set('genre', v)} />}
+              {form.game === 'hit-or-miss'     && <HitOrMissFields f={form} set={set} />}
+              {form.game === 'sampled'         && <WhoSampledFields f={form} set={set} setGenre={v => set('genre', v)} />}
               {form.game === 'era'            && <EraFields        f={form} set={set} />}
               {form.game === 'cover-or-not'    && <FlipFields       f={form} set={set} />}
             </div>

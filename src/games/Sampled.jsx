@@ -8,9 +8,9 @@ import { saveScore, updateStreak } from '../lib/scores'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
 import TrackArtwork from '../components/TrackArtwork'
-import './WhoSampledIt.css'
+import './Sampled.css'
 
-export default function WhoSampledIt() {
+export default function Sampled() {
   const { user, profile } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
@@ -29,7 +29,7 @@ export default function WhoSampledIt() {
   const { stop, display } = useGameTimer(!done)
 
   useEffect(() => {
-    getPuzzle('who-sampled-it', dateParam)
+    getPuzzle('sampled', dateParam)
       .then(p => {
         setPuzzle(p)
         const opts = p?.metadata?.options || []
@@ -41,9 +41,9 @@ export default function WhoSampledIt() {
 
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('who-sampled-it')) {
+    if (isComplete('sampled')) {
       stop()
-      const wasCorrect = completions['who-sampled-it']?.completed ?? false
+      const wasCorrect = completions['sampled']?.completed ?? false
       setChosen(wasCorrect ? puzzle.answer : null)
       setCorrect(wasCorrect)
       setDone(true)
@@ -59,10 +59,10 @@ export default function WhoSampledIt() {
     setChosen(option.title)
     setCorrect(isCorrect)
     setDone(true)
-    markComplete('who-sampled-it', 1)
+    markComplete('sampled', 1)
     if (user) {
-      await saveScore({ userId: user.id, gameSlug: 'who-sampled-it', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
-      if (isCorrect) await updateStreak(user.id, 'who-sampled-it', profile?.is_subscribed)
+      await saveScore({ userId: user.id, gameSlug: 'sampled', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
+      if (isCorrect) await updateStreak(user.id, 'sampled', profile?.is_subscribed)
     }
   }
 
@@ -80,8 +80,8 @@ export default function WhoSampledIt() {
         {!done && <p className="game-timer">{display}</p>}
       </div>
 
-      <div className="who-sampled__source">
-        <div className="who-sampled__source-track">
+      <div className="sampled__source">
+        <div className="sampled__source-track">
           <TrackArtwork
             title={puzzle.metadata?.source_song}
             artist={puzzle.metadata?.source_artist}
@@ -89,8 +89,8 @@ export default function WhoSampledIt() {
             size="medium"
           />
           <div>
-            <p className="who-sampled__source-title">{puzzle.metadata?.source_song}</p>
-            <p className="who-sampled__source-label">
+            <p className="sampled__source-title">{puzzle.metadata?.source_song}</p>
+            <p className="sampled__source-label">
               {puzzle.metadata?.source_artist} ({puzzle.metadata?.source_year})
             </p>
           </div>
@@ -98,16 +98,16 @@ export default function WhoSampledIt() {
         <AudioPlayer ref={sourceRef} src={puzzle.audio_url} />
       </div>
 
-      <div className="stagger-list who-sampled__options">
+      <div className="stagger-list sampled__options">
         {shuffledOptions.map((option) => {
           const isChosen = chosen === option.title
           const isAnswer = option.title === puzzle.answer
 
-          let optionClass = 'who-sampled__option btn-press'
+          let optionClass = 'sampled__option btn-press'
           if (done) {
-            if (isAnswer) optionClass += ' who-sampled__option--answer'
-            else if (isChosen) optionClass += ' who-sampled__option--wrong'
-            else optionClass += ' who-sampled__option--faded'
+            if (isAnswer) optionClass += ' sampled__option--answer'
+            else if (isChosen) optionClass += ' sampled__option--wrong'
+            else optionClass += ' sampled__option--faded'
           } else {
             optionClass += ' btn-hover'
           }
@@ -116,8 +116,8 @@ export default function WhoSampledIt() {
             <button key={option.title} onClick={() => handleGuess(option)} disabled={done} className={optionClass}>
               <TrackArtwork title={option.title} artist={option.artist} src={option.artwork_url} size="small" />
               <div>
-                <div className="who-sampled__option-title">{option.title}</div>
-                <div className="who-sampled__option-artist">{option.artist}</div>
+                <div className="sampled__option-title">{option.title}</div>
+                <div className="sampled__option-artist">{option.artist}</div>
               </div>
             </button>
           )
@@ -127,8 +127,8 @@ export default function WhoSampledIt() {
       {done && (
         <>
           {puzzle.metadata?.sample_audio_url && (
-            <div className="who-sampled__original">
-              <p className="who-sampled__original-label">The original sample</p>
+            <div className="sampled__original">
+              <p className="sampled__original-label">The original sample</p>
               <AudioPlayer src={puzzle.metadata.sample_audio_url} />
             </div>
           )}
@@ -143,7 +143,7 @@ export default function WhoSampledIt() {
             }}
             detail={`Originally released in ${puzzle.metadata?.sample_year}`}
             emojiGrid={correct ? '🟩' : '⬜'}
-            gameSlug="who-sampled-it"
+            gameSlug="sampled"
             puzzleDate={dateParam}
             timeSeconds={finalTime}
             nextGame={{ path: '/game/era', label: 'Era' }}

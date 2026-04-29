@@ -15,10 +15,10 @@ import Subscribe from './pages/Subscribe'
 import Success from './pages/Success'
 import Admin from './pages/Admin'
 import OneBar from './games/OneBar'
-import DropOrFlop from './games/DropOrFlop'
-import WhoSampledIt from './games/WhoSampledIt'
+import HitOrMiss from './games/HitOrMiss'
+import Sampled from './games/Sampled'
 import Era from './games/Era'
-import CoverOrNot from './games/TheFlip'
+import CoverOrNot from './games/CoverOrNot'
 
 export default function App() {
   return (
@@ -29,8 +29,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/game/one-bar" element={<OneBar />} />
-          <Route path="/game/drop-or-flop" element={<DropOrFlop />} />
-          <Route path="/game/who-sampled-it" element={<WhoSampledIt />} />
+          <Route path="/game/hit-or-miss" element={<HitOrMiss />} />
+          <Route path="/game/sampled" element={<Sampled />} />
           <Route path="/game/era" element={<Era />} />
           <Route path="/game/cover-or-not" element={<CoverOrNot />} />
           <Route path="/dashboard" element={<Dashboard />} />
