@@ -106,7 +106,7 @@ export default function Navbar() {
             {isAdmin && (
               <Link to="/admin" className={`${linkClass('/admin')} navbar__link--admin`}>Admin</Link>
             )}
-            <Link to="/profile" className="btn-press" title="Your profile">
+            <Link to={profile?.username ? `/u/${profile.username}` : '/profile'} className="btn-press" title="Your profile">
               <Avatar iconKey={profile?.avatar_icon} color={profile?.avatar_color} initial={initial} size={32} />
             </Link>
           </>

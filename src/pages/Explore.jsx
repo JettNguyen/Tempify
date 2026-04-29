@@ -217,8 +217,14 @@ export default function Explore() {
                     return (
                       <Link key={p.id} to={gameLink} className={`explore-game-card card-hover btn-press${played ? ' explore-game-card--played' : ''}`}>
                         <div className="explore-game-card__date">{dateStr}</div>
-                        <div className="explore-game-card__answer">{answer}</div>
-                        {artistLine && <div className="explore-game-card__artist">{artistLine}</div>}
+                        {played ? (
+                          <>
+                            <div className="explore-game-card__answer">{answer}</div>
+                            {artistLine && <div className="explore-game-card__artist">{artistLine}</div>}
+                          </>
+                        ) : (
+                          <div className="explore-game-card__unplayed">Play to reveal</div>
+                        )}
                         <div className="explore-game-card__footer">
                           {genreColors && (
                             <span className="explore-game-card__genre" style={{ background: genreColors.bg, color: genreColors.text }}>

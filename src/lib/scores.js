@@ -250,7 +250,38 @@ export async function searchUsers(query) {
   const { data } = await supabase
     .from('users')
     .select('id, username, avatar_icon, avatar_color')
+    .not('username', 'is', null)
     .or(`username.ilike.%${q}%,email.ilike.%${q}%`)
     .limit(10)
+  return (data || []).filter(u => u.username)
+}
+
+export async function getFollowerProfiles(userId) {
+  const { data: follows } = await supabase
+    .from('follows')
+    .select('follower_id')
+    .eq('following_id', userId)
+  const ids = (follows || []).map(f => f.follower_id)
+  if (!ids.length) return []
+  const { data } = await supabase
+    .from('users')
+    .select('id, username, avatar_icon, avatar_color')
+    .in('id', ids)
+    .not('username', 'is', null)
+  return data || []
+}
+
+export async function getFollowingProfiles(userId) {
+  const { data: follows } = await supabase
+    .from('follows')
+    .select('following_id')
+    .eq('follower_id', userId)
+  const ids = (follows || []).map(f => f.following_id)
+  if (!ids.length) return []
+  const { data } = await supabase
+    .from('users')
+    .select('id, username, avatar_icon, avatar_color')
+    .in('id', ids)
+    .not('username', 'is', null)
   return data || []
 }
