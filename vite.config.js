@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ command }) => ({
   plugins: [react()],
-  base: command === 'build' ? '/Tempify/' : '/',
+  base: '/',
   server: {
     proxy: {
       // Proxies /itunes/* → https://itunes.apple.com/* in dev to avoid CORS
