@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import { GENRES } from '../lib/genres'
 import { searchSongs } from '../lib/itunes'
 import { searchRecordings } from '../lib/musicbrainz'
+import { lookupBillboardPeak } from '../lib/billboard'
+import { todayEST } from '../lib/date'
 
 const GAMES = [
   { slug: 'one-bar',        short: 'One Bar' },
@@ -182,10 +184,27 @@ function OneBarFields({ f, set }) {
 }
 
 function DropOrFlopFields({ f, set }) {
-  const bbQuery = [f.answer, f.artist].filter(Boolean).join(' ')
-  const bbUrl = bbQuery
-    ? `https://www.billboard.com/search/#q=${encodeURIComponent(bbQuery)}`
-    : 'https://www.billboard.com/charts/hot-100'
+  const [bbStatus, setBbStatus] = useState(null) // null | 'hit' | 'miss'
+  const lastLookup = useRef('')
+
+  useEffect(() => {
+    const key = `${f.answer}|||${f.artist}`
+    if (!f.answer || !f.artist || key === lastLookup.current) return
+    lastLookup.current = key
+
+    lookupBillboardPeak(f.answer, f.artist).then(result => {
+      if (result) {
+        set('verdict', 'hit')
+        set('peakPosition', String(result.peak))
+        set('weeksAtOne', String(result.weeksAtOne))
+        setBbStatus('hit')
+      } else {
+        set('verdict', 'miss')
+        set('peakPosition', '0')
+        setBbStatus('miss')
+      }
+    })
+  }, [f.answer, f.artist])
 
   return (
     <>
@@ -193,23 +212,13 @@ function DropOrFlopFields({ f, set }) {
         <Field label="Artist"><Input value={f.artist} onChange={v => set('artist', v)} /></Field>
         <Field label="Year"><Input value={f.year} onChange={v => set('year', v)} type="number" /></Field>
       </div>
-      <div style={{ marginBottom: '0.75rem' }}>
-        <a
-          href={bbUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: 'inline-block', fontSize: '12px', color: 'var(--amber)',
-            padding: '5px 12px', border: '1px solid var(--amber)',
-            borderRadius: '999px', textDecoration: 'none',
-          }}
-        >
-          Look up on Billboard →
-        </a>
-        <span style={{ fontSize: '11px', color: 'var(--text-dim)', marginLeft: '8px' }}>
-          No public API — look up peak position manually
-        </span>
-      </div>
+      {bbStatus && (
+        <p style={{ fontSize: '11px', marginBottom: '0.5rem', color: bbStatus === 'hit' ? 'var(--green)' : 'var(--text-dim)' }}>
+          {bbStatus === 'hit'
+            ? `Found on Hot 100 — peak #${f.peakPosition}${Number(f.weeksAtOne) > 0 ? `, ${f.weeksAtOne}w at #1` : ''} (edit below if wrong)`
+            : 'Not found in Hot 100 dataset — set as miss or enter manually'}
+        </p>
+      )}
       <Field label="Verdict">
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           {['hit', 'miss'].map(v => (
@@ -237,7 +246,7 @@ function DropOrFlopFields({ f, set }) {
   )
 }
 
-function WhoSampledFields({ f, set }) {
+function WhoSampledFields({ f, set, setGenre }) {
   const wsQuery = [f.sourceSong, f.sourceArtist].filter(Boolean).join(' ')
   const wsUrl = wsQuery
     ? `https://www.whosampled.com/search/?q=${encodeURIComponent(wsQuery)}`
@@ -267,9 +276,16 @@ function WhoSampledFields({ f, set }) {
       {/* ── A: The song players hear ── */}
       <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
         {sectionHead('A — The newer song (players hear this)')}
-        <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '0.75rem' }}>
-          Use iTunes search above to fill audio URL automatically.
-        </p>
+        <SongSearch
+          placeholder="Search iTunes for the newer song…"
+          onSelect={song => {
+            if (song.previewUrl) set('audioUrl', song.previewUrl)
+            if (song.title)      set('sourceSong', song.title)
+            if (song.artist)     set('sourceArtist', song.artist)
+            if (song.year)       set('sourceYear', String(song.year))
+            if (song.genre)      setGenre(song.genre)
+          }}
+        />
         <Field label="Audio URL">
           <Input value={f.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
         </Field>
@@ -633,7 +649,7 @@ export default function Admin() {
   const [deletingId, setDeletingId] = useState(null)
   const [editingId, setEditingId] = useState(null)
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayEST()
   const startDate = addDays(today, weekOffset * 14)
   const dates = dateRange(startDate, 14)
   const endDate = dates[dates.length - 1]
@@ -734,6 +750,22 @@ export default function Admin() {
     if (missing.length) { setError(`Missing: ${missing.join(', ')}`); return }
     setSaving(true)
     const row = buildRow(form)
+
+    // Guard against duplicates on insert
+    if (!editingId) {
+      const { data: existing } = await supabase
+        .from('puzzles')
+        .select('id')
+        .eq('game_slug', form.game)
+        .eq('scheduled_date', form.date)
+        .limit(1)
+      if (existing?.length > 0) {
+        setSaving(false)
+        setError(`A ${form.game} puzzle already exists for ${form.date}. Use the ✎ button to edit it instead.`)
+        return
+      }
+    }
+
     const { error: err } = editingId
       ? await supabase.from('puzzles').update(row).eq('id', editingId)
       : await supabase.from('puzzles').insert(row)
@@ -847,32 +879,21 @@ export default function Admin() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* iTunes search — auto-fills audio URL, title, artist, year, genre */}
-            <SongSearch onSelect={song => {
-              setForm(f => {
-                const base = {
+            {/* iTunes search — hidden for who-sampled-it (it has its own search in Section A) */}
+            {form.game !== 'who-sampled-it' && (
+              <SongSearch onSelect={song => {
+                setForm(f => ({
+                  ...f,
                   audioUrl:  song.previewUrl || f.audioUrl,
                   genre:     song.genre || f.genre,
-                }
-                if (f.game === 'who-sampled-it') {
-                  // iTunes search fills the featured (newer) song, not the answer
-                  return {
-                    ...f, ...base,
-                    sourceSong:   song.title,
-                    sourceArtist: song.artist,
-                    sourceYear:   song.year ? String(song.year) : f.sourceYear,
-                  }
-                }
-                return {
-                  ...f, ...base,
                   answer:    song.title,
                   artist:    song.artist,
                   year:      song.year ? String(song.year) : f.year,
                   songTitle: song.title,
                   vAAudio:   song.previewUrl || f.vAAudio,
-                }
-              })
-            }} />
+                }))
+              }} />
+            )}
 
             {/* Date + game */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
@@ -918,7 +939,7 @@ export default function Admin() {
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
               {form.game === 'one-bar'        && <OneBarFields    f={form} set={set} />}
               {form.game === 'drop-or-flop'   && <DropOrFlopFields f={form} set={set} />}
-              {form.game === 'who-sampled-it' && <WhoSampledFields f={form} set={set} />}
+              {form.game === 'who-sampled-it' && <WhoSampledFields f={form} set={set} setGenre={v => set('genre', v)} />}
               {form.game === 'era'            && <EraFields        f={form} set={set} />}
               {form.game === 'the-flip'       && <FlipFields       f={form} set={set} />}
             </div>

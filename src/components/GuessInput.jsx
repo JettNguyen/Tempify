@@ -36,7 +36,7 @@ export default function GuessInput({ onGuess, disabled, placeholder = 'Search fo
       setResults(hits)
       setOpen(hits.length > 0)
       setLoading(false)
-    }, 280)
+    }, 180)
   }
 
   function selectResult(song) {

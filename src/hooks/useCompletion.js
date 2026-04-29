@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { todayEST } from '../lib/date'
 
-const today = () => new Date().toISOString().split('T')[0]
-const storageKey = () => `tempify_completions_${today()}`
+const storageKey = () => `tempify_completions_${todayEST()}`
 
 function readLocal() {
   try {
@@ -32,7 +32,7 @@ export function useCompletion(userId) {
       .from('scores')
       .select('game_slug, attempts, completed')
       .eq('user_id', userId)
-      .eq('date_played', today())
+      .eq('date_played', todayEST())
 
     if (data) {
       const map = {}

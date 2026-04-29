@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import { todayEST } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
 import ArchiveLock from '../components/ArchiveLock'
 
@@ -119,7 +120,7 @@ export default function Explore() {
   if (!user) return <Navigate to="/login" state={{ from: '/explore' }} replace />
 
   const isSubscribed = profile?.is_subscribed
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayEST()
 
   // Derive top genres from user's play history
   // eslint-disable-next-line react-hooks/rules-of-hooks

@@ -4,6 +4,9 @@ const BASE = import.meta.env.DEV
   ? '/itunes'
   : 'https://itunes.apple.com'
 
+// Session-level cache: query string → results array
+const cache = new Map()
+
 // Map iTunes genre names to our curated GENRES list
 const GENRE_MAP = {
   'pop':                'Pop',
@@ -43,15 +46,45 @@ function mapGenre(itunesGenre) {
   return GENRE_MAP[itunesGenre.toLowerCase()] ?? null
 }
 
+// Variant suffixes that make the same song look like a different result
+const VARIANT_RE = /\s*[\(\[]\s*(feat\.|ft\.|featuring|remix|remixed|remaster|remastered|live|edit|version|radio\s*edit|acoustic|instrumental|deluxe|extended|mix|reprise|cover|tribute|explicit|clean|mono|stereo|single\s*version|original\s*mix|bonus)\b.*[\)\]]\s*$/gi
+
+function stripVariant(title) {
+  return title.replace(VARIANT_RE, '').trim()
+}
+
+function deduplicate(tracks) {
+  const seen = new Map()
+  for (const t of tracks) {
+    const key = `${stripVariant(t.title).toLowerCase()}|||${t.artist.toLowerCase()}`
+    const existing = seen.get(key)
+    if (!existing) {
+      seen.set(key, t)
+    } else {
+      // Prefer: has preview > shorter title (fewer variant words) > original order
+      const betterPreview = !existing.previewUrl && t.previewUrl
+      const shorter = t.title.length < existing.title.length
+      if (betterPreview || (!existing.previewUrl && shorter)) {
+        seen.set(key, t)
+      }
+    }
+  }
+  return Array.from(seen.values())
+}
+
 export async function searchSongs(query) {
   if (!query || query.trim().length < 2) return []
 
-  const url = `${BASE}/search?term=${encodeURIComponent(query)}&entity=song&limit=8`
+  const key = query.trim().toLowerCase()
+  if (cache.has(key)) return cache.get(key)
+
+  // Fetch more than we need so deduplication still leaves enough results
+  const url = `${BASE}/search?term=${encodeURIComponent(query)}&entity=song&limit=20`
   try {
     const res = await fetch(url)
     if (!res.ok) return []
     const json = await res.json()
-    return (json.results || []).map((track) => ({
+    const tracks = (json.results || []).map((track) => ({
       id: track.trackId,
       title: track.trackName,
       artist: track.artistName,
@@ -60,6 +93,9 @@ export async function searchSongs(query) {
       genre: mapGenre(track.primaryGenreName),
       previewUrl: track.previewUrl,
     }))
+    const results = deduplicate(tracks).slice(0, 8)
+    cache.set(key, results)
+    return results
   } catch {
     return []
   }

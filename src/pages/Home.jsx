@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { supabase } from '../lib/supabase'
+import { todayEST } from '../lib/date'
 import GameTile from '../components/GameTile'
 
 const GAMES = [
@@ -14,7 +15,7 @@ const GAMES = [
 ]
 
 const dateLabel = () =>
-  new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' })
 
 export default function Home() {
   const { user } = useAuth()
@@ -23,7 +24,7 @@ export default function Home() {
 
   // Prefetch today's puzzle genres so tiles can show the label without navigating in
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayEST()
     supabase
       .from('puzzles')
       .select('game_slug, genre')

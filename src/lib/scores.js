@@ -1,11 +1,11 @@
 import { supabase } from './supabase'
+import { todayEST, yesterdayEST } from './date'
 
 export async function saveScore({ userId, gameSlug, attempts, completed }) {
-  const today = new Date().toISOString().split('T')[0]
   await supabase.from('scores').insert({
     user_id: userId,
     game_slug: gameSlug,
-    date_played: today,
+    date_played: todayEST(),
     attempts,
     completed,
   })
@@ -36,7 +36,7 @@ export async function getScoresForMonth(userId, year, month) {
 }
 
 export async function updateStreak(userId, gameSlug) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayEST()
 
   const { data: existing } = await supabase
     .from('streaks')
@@ -56,11 +56,7 @@ export async function updateStreak(userId, gameSlug) {
     return
   }
 
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = yesterday.toISOString().split('T')[0]
-
-  const continued = existing.last_played_date === yesterdayStr
+  const continued = existing.last_played_date === yesterdayEST()
   const newCurrent = continued ? existing.current_streak + 1 : 1
   const newLongest = Math.max(newCurrent, existing.longest_streak)
 
