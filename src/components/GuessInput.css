@@ -1,0 +1,64 @@
+.guess-input {
+  position: relative;
+  width: 100%;
+}
+
+.guess-input__field-wrap {
+  position: relative;
+}
+
+.guess-input__field {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+
+.guess-input__field:disabled {
+  opacity: 0.5;
+}
+
+.guess-input__searching {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.guess-input__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 50;
+}
+
+.guess-input__option {
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.guess-input__option-title {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.guess-input__option-artist {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}

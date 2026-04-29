@@ -5,13 +5,14 @@ import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
 import ArchiveLock from '../components/ArchiveLock'
+import './Explore.css'
 
 const GAME_LABELS = {
   'one-bar':        'One Bar',
   'drop-or-flop':   'Drop or Flop',
   'who-sampled-it': 'Who Sampled It',
   'era':            'Era',
-  'the-flip':       'The Flip',
+  'cover-or-not':   'Cover or Not',
 }
 
 const PAGE_SIZE = 20
@@ -42,7 +43,7 @@ function GenrePill({ genre, active, onClick }) {
 
 function PuzzleCard({ puzzle, played }) {
   const artist = puzzle.metadata?.artist
-    ?? puzzle.metadata?.version_a?.artist
+    ?? puzzle.metadata?.song_artist
     ?? puzzle.metadata?.source_artist
     ?? null
   const genreColors = puzzle.genre ? GENRE_COLORS[puzzle.genre] : null
@@ -53,49 +54,25 @@ function PuzzleCard({ puzzle, played }) {
   return (
     <Link
       to={`/archive/${puzzle.scheduled_date}`}
-      className="card-hover card-lift btn-press"
-      style={{
-        display: 'block',
-        padding: '1rem 1.25rem',
-        border: '1px solid var(--border)',
-        borderRadius: '10px',
-      }}
+      className="explore-puzzle-card card-hover card-lift btn-press"
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-            <span style={{
-              fontSize: '10px', fontWeight: 500, padding: '2px 7px',
-              borderRadius: '999px', background: 'var(--bg)',
-              border: '1px solid var(--border)', color: 'var(--text-dim)',
-              whiteSpace: 'nowrap',
-            }}>
-              {GAME_LABELS[puzzle.game_slug]}
-            </span>
+      <div className="explore-puzzle-inner">
+        <div className="explore-puzzle-left">
+          <div className="explore-puzzle-tags">
+            <span className="explore-game-tag">{GAME_LABELS[puzzle.game_slug]}</span>
             {genreColors && (
-              <span style={{
-                fontSize: '10px', fontWeight: 500, padding: '2px 7px',
-                borderRadius: '999px',
-                background: genreColors.bg, color: genreColors.text,
-                whiteSpace: 'nowrap',
-              }}>
+              <span
+                style={{ fontSize: '10px', fontWeight: 500, padding: '2px 7px', borderRadius: '999px', background: genreColors.bg, color: genreColors.text, whiteSpace: 'nowrap' }}
+              >
                 {puzzle.genre}
               </span>
             )}
-            {played && (
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--green)', display: 'inline-block', flexShrink: 0 }} title="Played" />
-            )}
+            {played && <span className="explore-played-dot" title="Played" />}
           </div>
-          <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: artist ? '2px' : 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {puzzle.answer}
-          </p>
-          {artist && (
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{artist}</p>
-          )}
+          <p className="explore-puzzle-answer">{puzzle.answer}</p>
+          {artist && <p className="explore-puzzle-artist">{artist}</p>}
         </div>
-        <span style={{ fontSize: '11px', color: 'var(--text-dim)', flexShrink: 0, paddingTop: '2px' }}>
-          {dateStr}
-        </span>
+        <span className="explore-puzzle-date">{dateStr}</span>
       </div>
     </Link>
   )
@@ -117,7 +94,6 @@ export default function Explore() {
   const isSubscribed = profile?.is_subscribed
   const today = todayEST()
 
-  // Derive top genres from user's play history
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!user) return
@@ -130,11 +106,9 @@ export default function Explore() {
 
       if (!scores?.length) return
 
-      // Build set of "date|slug" keys
       const keys = scores.map(s => `${s.date_played}|${s.game_slug}`)
       setPlayedSlugs(new Set(keys))
 
-      // Fetch the puzzles the user completed to get their genres
       const dates = [...new Set(scores.map(s => s.date_played))]
       const { data: played } = await supabase
         .from('puzzles')
@@ -144,7 +118,6 @@ export default function Explore() {
 
       if (!played?.length) return
 
-      // Count genre frequency
       const freq = {}
       played.forEach(p => {
         const key = `${p.scheduled_date}|${p.game_slug}`
@@ -175,7 +148,7 @@ export default function Explore() {
         .select('id, game_slug, scheduled_date, answer, genre, metadata')
         .lt('scheduled_date', today)
         .order('scheduled_date', { ascending: false })
-        .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE)  // fetch one extra to detect more
+        .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
       if (activeGenre !== 'all') q = q.eq('genre', activeGenre)
 
@@ -193,52 +166,38 @@ export default function Explore() {
 
   return (
     <div className="page-shell-wide">
-      <div style={{ marginBottom: '2rem' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>explore</p>
-        <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-          Browse by genre
-        </h1>
+      <div className="explore-header">
+        <p className="explore-eyebrow">explore</p>
+        <h1 className="explore-title">Browse by genre</h1>
       </div>
 
-      {/* Genre filter pills */}
-      <div style={{
-        display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px',
-        marginBottom: '2rem', scrollbarWidth: 'none',
-      }}>
+      <div className="explore-pills">
         <GenrePill genre="All" active={activeGenre === 'all'} onClick={() => setActiveGenre('all')} />
         {GENRES.map(g => (
           <GenrePill key={g} genre={g} active={activeGenre === g} onClick={() => setActiveGenre(g)} />
         ))}
       </div>
 
-      {/* Recommendations — only shown on "All" tab when user has history */}
       {activeGenre === 'all' && topGenres.length > 0 && (
-        <div style={{ marginBottom: '2rem' }}>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-            based on what you play
-          </p>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div className="explore-recs">
+          <p className="explore-recs-label">based on what you play</p>
+          <div className="explore-recs-list">
             {topGenres.map(([genre, count]) => {
               const colors = GENRE_COLORS[genre]
               return (
                 <button
                   key={genre}
                   onClick={() => setActiveGenre(genre)}
-                  className="btn-press btn-hover"
+                  className="explore-rec-btn btn-press btn-hover"
                   style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: '1px solid',
                     borderColor: colors?.text ?? 'var(--border)',
                     background: colors?.bg ?? 'var(--surface)',
-                    cursor: 'pointer',
-                    textAlign: 'left',
                   }}
                 >
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: colors?.text ?? 'var(--text-primary)', marginBottom: '1px' }}>
+                  <div className="explore-rec-btn__name" style={{ color: colors?.text ?? 'var(--text-primary)' }}>
                     {genre}
                   </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                  <div className="explore-rec-btn__count">
                     {count} {count === 1 ? 'game' : 'games'} played
                   </div>
                 </button>
@@ -248,18 +207,17 @@ export default function Explore() {
         </div>
       )}
 
-      {/* Content — locked for free users */}
       {!isSubscribed ? (
         <ArchiveLock />
       ) : fetching && puzzles.length === 0 ? (
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Loading...</p>
+        <p className="explore-empty">Loading...</p>
       ) : puzzles.length === 0 ? (
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+        <p className="explore-empty">
           No {activeGenre !== 'all' ? activeGenre + ' ' : ''}games in the archive yet.
         </p>
       ) : (
         <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="explore-puzzle-list">
             {puzzles.map(p => (
               <PuzzleCard
                 key={p.id}
@@ -270,7 +228,7 @@ export default function Explore() {
           </div>
 
           {hasMore && (
-            <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <div className="explore-load-more">
               <button
                 onClick={() => setPage(n => n + 1)}
                 disabled={fetching}

@@ -1,0 +1,132 @@
+.auth-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.auth-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+.auth-link {
+  color: var(--text-primary);
+}
+
+.auth-google-btn {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  margin-bottom: 1.25rem;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.auth-divider__line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-divider__text {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+
+.auth-error {
+  font-size: 12px;
+  color: #ef4444;
+}
+
+.auth-submit {
+  width: 100%;
+  padding: 10px;
+  background: var(--amber);
+  border-radius: 8px;
+  color: #0f0f0f;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 0.25rem;
+  cursor: pointer;
+}
+
+.auth-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 1rem;
+  text-align: center;
+}
+
+/* Sent / confirmation state */
+.auth-sent {
+  max-width: 400px;
+  text-align: center;
+}
+
+.auth-sent-icon {
+  font-size: 20px;
+  margin-bottom: 1rem;
+}
+
+.auth-sent-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.auth-sent-body {
+  font-size: 13px;
+  color: var(--text-muted);
+}

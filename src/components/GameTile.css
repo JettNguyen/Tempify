@@ -1,0 +1,89 @@
+.game-tile {
+  display: block;
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+.game-tile--featured {
+  padding: 2rem 1.75rem;
+}
+
+.game-tile__waveform {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 180px;
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+.game-tile__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.game-tile__body {
+  flex: 1;
+}
+
+.game-tile--featured .game-tile__body {
+  padding-right: 120px;
+}
+
+.game-tile__name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.game-tile__description {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.game-tile__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  margin-top: 4px;
+  background: var(--amber);
+}
+
+.game-tile__dot--complete {
+  background: var(--green);
+}
+
+.game-tile__footer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+.game-tile__play-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--amber);
+  padding: 6px 14px;
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+}
+
+.game-tile__genre-pill {
+  font-size: 11px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-weight: 500;
+}

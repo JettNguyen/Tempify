@@ -1,0 +1,27 @@
+.home-header {
+  margin-bottom: 2rem;
+}
+
+.home-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.home-title {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.home-no-account {
+  margin-top: 2.5rem;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.home-no-account a {
+  color: var(--text-muted);
+}

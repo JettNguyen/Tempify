@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
+import './AudioPlayer.css'
 
 const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, onPlay, autoPlay }, ref) {
   const audioRef = useRef(null)
@@ -8,7 +9,6 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
 
   const limit = maxDuration || Infinity
 
-  // Expose pause() to parent via ref
   useImperativeHandle(ref, () => ({
     pause() {
       if (audioRef.current) {
@@ -47,7 +47,6 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
     }
   }, [maxDuration])
 
-  // Reset when src changes
   useEffect(() => {
     setPlaying(false)
     setCurrentTime(0)
@@ -57,7 +56,6 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
     }
   }, [src])
 
-  // Auto-play on mount (e.g. sample audio reveal)
   useEffect(() => {
     if (autoPlay && audioRef.current) {
       audioRef.current.play().catch(() => {})
@@ -89,33 +87,15 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
   }
 
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: '10px',
-      padding: '1rem 1.25rem',
-    }}>
-      {label && (
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-          {label}
-        </p>
-      )}
+    <div className="audio-player">
+      {label && <p className="audio-player__label">{label}</p>}
 
       <audio ref={audioRef} src={src} preload="metadata" />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="audio-player__controls">
         <button
           onClick={togglePlay}
-          className={`btn-press audio-play-btn${playing ? ' playing' : ''}`}
-          style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            background: 'var(--amber)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className={`audio-player__play-btn btn-press audio-play-btn${playing ? ' playing' : ''}`}
           aria-label={playing ? 'Pause' : 'Play'}
         >
           {playing ? (
@@ -130,27 +110,16 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
           )}
         </button>
 
-        <div style={{ flex: 1 }}>
-          <div style={{
-            height: '3px',
-            background: 'var(--border)',
-            borderRadius: '2px',
-            overflow: 'hidden',
-            marginBottom: '6px',
-          }}>
-            <div style={{
-              height: '100%',
-              width: `${progress * 100}%`,
-              background: 'var(--amber)',
-              borderRadius: '2px',
-              transition: 'width 100ms linear',
-            }} />
+        <div className="audio-player__progress">
+          <div className="audio-player__track">
+            <div
+              className="audio-player__fill"
+              style={{ width: `${progress * 100}%` }}
+            />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              {fmt(currentTime)}
-            </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
+          <div className="audio-player__times">
+            <span className="audio-player__time">{fmt(currentTime)}</span>
+            <span className="audio-player__time audio-player__time--total">
               {effectiveDuration > 0 && isFinite(effectiveDuration)
                 ? fmt(effectiveDuration)
                 : '--:--'}

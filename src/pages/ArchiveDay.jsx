@@ -3,13 +3,14 @@ import { useParams, Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getPuzzlesForDate } from '../lib/puzzles'
 import ArchiveLock from '../components/ArchiveLock'
+import './ArchiveDay.css'
 
 const GAME_NAMES = {
   'one-bar': 'One Bar',
   'drop-or-flop': 'Drop or Flop',
   'who-sampled-it': 'Who Sampled It',
   'era': 'Era',
-  'the-flip': 'The Flip',
+  'cover-or-not': 'Cover or Not',
 }
 
 const GAME_PATHS = {
@@ -17,7 +18,7 @@ const GAME_PATHS = {
   'drop-or-flop': '/game/drop-or-flop',
   'who-sampled-it': '/game/who-sampled-it',
   'era': '/game/era',
-  'the-flip': '/game/the-flip',
+  'cover-or-not': '/game/cover-or-not',
 }
 
 export default function ArchiveDay() {
@@ -51,45 +52,31 @@ export default function ArchiveDay() {
 
   return (
     <div className="page-shell-wide">
-      <Link
-        to="/archive"
-        style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
-      >
-        ← Archive
-      </Link>
+      <Link to="/archive" className="archive-day-back">← Archive</Link>
 
-      <div style={{ marginBottom: '2rem' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>archive</p>
-        <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-          {formatted}
-        </h1>
+      <div className="archive-day-header">
+        <p className="archive-day-eyebrow">archive</p>
+        <h1 className="archive-day-title">{formatted}</h1>
       </div>
 
-      {/* Lock for past dates if not subscribed */}
       {isPast && !isSubscribed ? (
         <ArchiveLock />
       ) : fetching ? (
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Loading...</p>
+        <p className="archive-day-empty">Loading...</p>
       ) : puzzles.length === 0 ? (
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No puzzles found for this date.</p>
+        <p className="archive-day-empty">No puzzles found for this date.</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="archive-puzzle-list">
           {puzzles.map((puzzle) => (
             <Link
               key={puzzle.id}
               to={GAME_PATHS[puzzle.game_slug] || '/'}
-              className="card-hover card-lift btn-press"
-              style={{
-                display: 'block',
-                padding: '1.25rem 1.5rem',
-                border: '1px solid var(--border)',
-                borderRadius: '10px',
-              }}
+              className="archive-puzzle-card card-hover card-lift btn-press"
             >
-              <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+              <div className="archive-puzzle-name">
                 {GAME_NAMES[puzzle.game_slug] || puzzle.game_slug}
               </div>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+              <div className="archive-puzzle-answer">
                 {puzzle.answer}
                 {puzzle.metadata?.artist && ` — ${puzzle.metadata.artist}`}
               </div>

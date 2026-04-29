@@ -13,7 +13,7 @@ const GAMES = [
   { slug: 'drop-or-flop',   short: 'Drop/Flop' },
   { slug: 'who-sampled-it', short: 'Sampled' },
   { slug: 'era',            short: 'Era' },
-  { slug: 'the-flip',       short: 'Flip' },
+  { slug: 'cover-or-not',   short: 'Cover/Not' },
 ]
 
 const DECADES = ['60s','70s','80s','90s','00s','10s','20s']
@@ -47,10 +47,10 @@ const BLANK = {
   opt4Title: '', opt4Artist: '',
   // era
   songTitle: '',
-  // the-flip
-  vATitle: '', vAArtist: '', vAYear: '', vAAudio: '',
-  vBTitle: '', vBArtist: '', vBYear: '', vBAudio: '',
-  flipAnswer: 'A',
+  // cover-or-not
+  coverSongTitle: '', coverSongArtist: '', coverSongYear: '',
+  isCover: 'cover',
+  originalTitle: '', originalArtist: '', originalYear: '', originalAudio: '',
 }
 
 function parseRow(p) {
@@ -84,16 +84,15 @@ function parseRow(p) {
     opt4Artist:    m.options?.[3]?.artist || '',
     // era
     songTitle:     m.title || '',
-    // the-flip
-    vATitle:       m.version_a?.title || '',
-    vAArtist:      m.version_a?.artist || '',
-    vAYear:        m.version_a?.year ? String(m.version_a.year) : '',
-    vAAudio:       m.version_a?.audio_url || '',
-    vBTitle:       m.version_b?.title || '',
-    vBArtist:      m.version_b?.artist || '',
-    vBYear:        m.version_b?.year ? String(m.version_b.year) : '',
-    vBAudio:       m.version_b?.audio_url || '',
-    flipAnswer:    p.answer || 'A',
+    // cover-or-not
+    coverSongTitle:  m.song_title || '',
+    coverSongArtist: m.song_artist || '',
+    coverSongYear:   m.song_year ? String(m.song_year) : '',
+    isCover:         p.answer || 'cover',
+    originalTitle:   m.original_title || '',
+    originalArtist:  m.original_artist || '',
+    originalYear:    m.original_year ? String(m.original_year) : '',
+    originalAudio:   m.original_audio_url || '',
   }
 }
 
@@ -133,12 +132,19 @@ function buildRow(f) {
       answer = f.answer // decade string like "90s"
       meta = { title: f.songTitle, artist: f.artist, year: Number(f.year), decade: f.answer }
       break
-    case 'the-flip':
-      answer = f.flipAnswer
-      audioUrl = f.vAAudio // unused by game but required by schema
+    case 'cover-or-not':
+      answer = f.isCover
+      audioUrl = f.audioUrl
       meta = {
-        version_a: { title: f.vATitle, artist: f.vAArtist, year: Number(f.vAYear), audio_url: f.vAAudio },
-        version_b: { title: f.vBTitle, artist: f.vBArtist, year: Number(f.vBYear), audio_url: f.vBAudio },
+        song_title:  f.coverSongTitle,
+        song_artist: f.coverSongArtist,
+        song_year:   f.coverSongYear ? Number(f.coverSongYear) : null,
+        ...(f.isCover === 'cover' ? {
+          original_title:     f.originalTitle,
+          original_artist:    f.originalArtist,
+          original_year:      f.originalYear ? Number(f.originalYear) : null,
+          original_audio_url: f.originalAudio || null,
+        } : {}),
       }
       break
   }
@@ -486,72 +492,76 @@ function MBSearch({ label, onPick }) {
 }
 
 function FlipFields({ f, set }) {
-  const versions = [
-    { ver: 'A', t: 'vATitle', a: 'vAArtist', y: 'vAYear', u: 'vAAudio' },
-    { ver: 'B', t: 'vBTitle', a: 'vBArtist', y: 'vBYear', u: 'vBAudio' },
-  ]
-
-  useEffect(() => {
-    const yA = parseInt(f.vAYear, 10)
-    const yB = parseInt(f.vBYear, 10)
-    if (yA && yB) set('flipAnswer', yA <= yB ? 'A' : 'B')
-  }, [f.vAYear, f.vBYear])
-
-  const yA = parseInt(f.vAYear, 10)
-  const yB = parseInt(f.vBYear, 10)
-  const autoAnswer = yA && yB ? (yA <= yB ? 'A' : 'B') : null
-
   return (
     <>
       <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '1rem' }}>
-        Search iTunes for each version — fills title, artist, year, and audio automatically.
+        Search iTunes for the cover version — fills title, artist, year, and audio automatically.
       </p>
-      {versions.map(({ ver, t, a, y, u }) => (
-        <div key={ver} style={{
-          padding: '1rem', background: '#0d0d0d', borderRadius: '8px',
-          border: '1px solid var(--border)', marginBottom: '0.75rem',
-        }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
-            Version {ver}
-          </p>
-          <SongSearch
-            placeholder={`Search iTunes for version ${ver}…`}
-            onSelect={song => {
-              if (song.title)      set(t, song.title)
-              if (song.artist)     set(a, song.artist)
-              if (song.year)       set(y, String(song.year))
-              if (song.previewUrl) set(u, song.previewUrl)
-            }}
-          />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            <Field label="Title"><Input value={f[t]} onChange={v => set(t, v)} placeholder="Song title" /></Field>
-            <Field label="Artist"><Input value={f[a]} onChange={v => set(a, v)} placeholder="Artist" /></Field>
-            <Field label="Year"><Input value={f[y]} onChange={v => set(y, v)} placeholder="Year" type="number" /></Field>
-          </div>
-          <Field label="Audio URL">
-            <Input value={f[u]} onChange={v => set(u, v)} placeholder="https://audio-ssl.itunes.apple.com/…" />
-          </Field>
-        </div>
-      ))}
 
-      <div style={{ padding: '0.75rem 1rem', background: '#0d0d0d', borderRadius: '8px', border: `1px solid ${autoAnswer ? 'var(--amber)' : 'var(--border)'}` }}>
-        <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>
-          Which came first?{autoAnswer && <span style={{ color: 'var(--amber)', marginLeft: '6px' }}>auto-detected from years</span>}
+      {/* The cover song */}
+      <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
+        <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
+          Cover song
         </p>
+        <SongSearch
+          placeholder="Search iTunes for the cover…"
+          onSelect={song => {
+            if (song.title)      set('coverSongTitle', song.title)
+            if (song.artist)     set('coverSongArtist', song.artist)
+            if (song.year)       set('coverSongYear', String(song.year))
+            if (song.previewUrl) set('audioUrl', song.previewUrl)
+          }}
+        />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem', marginBottom: '0.5rem' }}>
+          <Field label="Title"><Input value={f.coverSongTitle} onChange={v => set('coverSongTitle', v)} placeholder="Song title" /></Field>
+          <Field label="Artist"><Input value={f.coverSongArtist} onChange={v => set('coverSongArtist', v)} placeholder="Artist" /></Field>
+          <Field label="Year"><Input value={f.coverSongYear} onChange={v => set('coverSongYear', v)} placeholder="Year" type="number" /></Field>
+        </div>
+      </div>
+
+      {/* Is it a cover? */}
+      <div style={{ padding: '0.75rem 1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
+        <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>Is this song a cover?</p>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {['A', 'B'].map(v => (
-            <button key={v} type="button" onClick={() => set('flipAnswer', v)} style={{
+          {['cover', 'original'].map(v => (
+            <button key={v} type="button" onClick={() => set('isCover', v)} style={{
               flex: 1, padding: '7px', borderRadius: '6px', border: '1px solid',
-              borderColor: f.flipAnswer === v ? 'var(--amber)' : 'var(--border)',
-              background: f.flipAnswer === v ? 'var(--amber-glow)' : 'transparent',
-              color: f.flipAnswer === v ? 'var(--amber)' : 'var(--text-muted)',
-              fontSize: '13px', cursor: 'pointer',
+              borderColor: f.isCover === v ? 'var(--amber)' : 'var(--border)',
+              background: f.isCover === v ? 'var(--amber-glow)' : 'transparent',
+              color: f.isCover === v ? 'var(--amber)' : 'var(--text-muted)',
+              fontSize: '13px', cursor: 'pointer', textTransform: 'capitalize',
             }}>
-              Version {v}{f['v' + v + 'Year'] ? ` (${f['v' + v + 'Year']})` : ''}
+              {v}
             </button>
           ))}
         </div>
       </div>
+
+      {/* Original song — only if cover */}
+      {f.isCover === 'cover' && (
+        <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)' }}>
+          <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
+            Original song
+          </p>
+          <SongSearch
+            placeholder="Search iTunes for the original…"
+            onSelect={song => {
+              if (song.title)      set('originalTitle', song.title)
+              if (song.artist)     set('originalArtist', song.artist)
+              if (song.year)       set('originalYear', String(song.year))
+              if (song.previewUrl) set('originalAudio', song.previewUrl)
+            }}
+          />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem', marginBottom: '0.5rem' }}>
+            <Field label="Title"><Input value={f.originalTitle} onChange={v => set('originalTitle', v)} placeholder="Original title" /></Field>
+            <Field label="Artist"><Input value={f.originalArtist} onChange={v => set('originalArtist', v)} placeholder="Original artist" /></Field>
+            <Field label="Year"><Input value={f.originalYear} onChange={v => set('originalYear', v)} placeholder="Year" type="number" /></Field>
+          </div>
+          <Field label="Original audio URL (optional)">
+            <Input value={f.originalAudio} onChange={v => set('originalAudio', v)} placeholder="https://audio-ssl.itunes.apple.com/… (optional)" />
+          </Field>
+        </div>
+      )}
     </>
   )
 }
@@ -735,9 +745,12 @@ export default function Admin() {
         if (!f.artist)    err.push('Artist')
         if (!f.year)      err.push('Year')
         break
-      case 'the-flip':
-        if (!f.vATitle || !f.vAArtist || !f.vAYear || !f.vAAudio) err.push('Version A (all fields)')
-        if (!f.vBTitle || !f.vBArtist || !f.vBYear || !f.vBAudio) err.push('Version B (all fields)')
+      case 'cover-or-not':
+        if (!f.audioUrl)        err.push('Audio URL')
+        if (!f.coverSongTitle)  err.push('Song title')
+        if (!f.coverSongArtist) err.push('Song artist')
+        if (f.isCover === 'cover' && !f.originalTitle)  err.push('Original title')
+        if (f.isCover === 'cover' && !f.originalArtist) err.push('Original artist')
         break
     }
     return err
@@ -879,8 +892,8 @@ export default function Admin() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* iTunes search — hidden for who-sampled-it (it has its own search in Section A) */}
-            {form.game !== 'who-sampled-it' && (
+            {/* iTunes search — hidden for who-sampled-it and cover-or-not (they have their own search) */}
+            {form.game !== 'who-sampled-it' && form.game !== 'cover-or-not' && (
               <SongSearch onSelect={song => {
                 setForm(f => ({
                   ...f,
@@ -923,13 +936,13 @@ export default function Admin() {
             </Field>
 
             {/* Audio URL + Answer — common to most games; who-sampled-it handles these internally */}
-            {form.game !== 'who-sampled-it' && (
-              <Field label={form.game === 'the-flip' ? 'Audio URL (Version A)' : 'Audio URL'}>
+            {form.game !== 'who-sampled-it' && form.game !== 'cover-or-not' && (
+              <Field label="Audio URL">
                 <Input value={form.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
               </Field>
             )}
 
-            {form.game !== 'the-flip' && form.game !== 'era' && form.game !== 'who-sampled-it' && (
+            {form.game !== 'cover-or-not' && form.game !== 'era' && form.game !== 'who-sampled-it' && (
               <Field label="Answer (song title)">
                 <Input value={form.answer} onChange={v => set('answer', v)} placeholder="Exact song title" />
               </Field>
@@ -941,7 +954,7 @@ export default function Admin() {
               {form.game === 'drop-or-flop'   && <DropOrFlopFields f={form} set={set} />}
               {form.game === 'who-sampled-it' && <WhoSampledFields f={form} set={set} setGenre={v => set('genre', v)} />}
               {form.game === 'era'            && <EraFields        f={form} set={set} />}
-              {form.game === 'the-flip'       && <FlipFields       f={form} set={set} />}
+              {form.game === 'cover-or-not'    && <FlipFields       f={form} set={set} />}
             </div>
 
             {error && (

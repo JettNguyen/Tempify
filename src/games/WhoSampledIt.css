@@ -1,0 +1,77 @@
+.who-sampled__header {
+  margin-bottom: 1.5rem;
+}
+
+.who-sampled__eyebrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.who-sampled__title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.who-sampled__source {
+  margin-bottom: 0.5rem;
+}
+
+.who-sampled__source-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.who-sampled__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.who-sampled__option {
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.who-sampled__option--answer {
+  border-color: var(--green);
+}
+
+.who-sampled__option--wrong {
+  border-color: #ef44441a;
+}
+
+.who-sampled__option--faded {
+  opacity: 0.5;
+}
+
+.who-sampled__option-title {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.who-sampled__option-artist {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.who-sampled__original {
+  margin-top: 1.5rem;
+}
+
+.who-sampled__original-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}

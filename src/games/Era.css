@@ -1,0 +1,48 @@
+.era__header {
+  margin-bottom: 1.5rem;
+}
+
+.era__eyebrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.era__title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.era__decades {
+  display: flex;
+  gap: 6px;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.era__decade-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.era__decade-btn--answer {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.era__decade-btn--faded {
+  color: var(--text-dim);
+}
+
+.era__decade-btn--done {
+  cursor: default;
+}

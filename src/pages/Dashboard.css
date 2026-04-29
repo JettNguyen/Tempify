@@ -1,0 +1,138 @@
+.dashboard-greeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.dashboard-title {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.dashboard-badge {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+
+.dashboard-badge--subscribed {
+  background: var(--amber-glow);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.dashboard-section {
+  margin-bottom: 2.5rem;
+}
+
+.dashboard-section-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-streak-placeholder {
+  height: 80px;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.dashboard-empty {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.dashboard-empty a {
+  color: var(--text-muted);
+}
+
+.dashboard-score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.dashboard-score-row:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+
+.dashboard-score-left {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dashboard-score-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 1px;
+  background: var(--text-dim);
+}
+
+.dashboard-score-dot--complete {
+  background: var(--green);
+}
+
+.dashboard-score-name {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.dashboard-score-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.dashboard-score-attempts {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.dashboard-billing-link {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+}
+
+.dashboard-upsell {
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.dashboard-upsell-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-upsell-body {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-upsell-btn {
+  display: inline-block;
+  background: var(--amber);
+  color: #0f0f0f;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 999px;
+}

@@ -6,6 +6,7 @@ import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
+import './Era.css'
 
 const DECADES = ['60s', '70s', '80s', '90s', '00s', '10s', '20s']
 
@@ -27,7 +28,6 @@ export default function Era() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Restore completed state if user already played today
   useEffect(() => {
     if (!puzzle || done) return
     if (isComplete('era')) {
@@ -57,45 +57,27 @@ export default function Era() {
 
   return (
     <GameShell>
-      <Link
-        to="/"
-        style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
-      >
-        ← Back
-      </Link>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-          era
-        </p>
-        <h1 style={{ fontSize: '18px', fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4 }}>
-          What decade is this song from?
-        </h1>
+      <Link to="/" className="game-back-link">← Back</Link>
+
+      <div className="game-header">
+        <p className="game-header__eyebrow">era</p>
+        <h1 className="game-header__title">What decade is this song from?</h1>
       </div>
 
       <AudioPlayer src={puzzle.audio_url} />
 
-      <div className="stagger-list" style={{
-        display: 'flex',
-        gap: '6px',
-        marginTop: '1.25rem',
-        flexWrap: 'wrap',
-      }}>
+      <div className="stagger-list era__decades">
         {DECADES.map((decade) => {
           const isChosen = chosen === decade
           const isAnswer = decade === puzzle.answer
 
-          let bg = 'transparent'
-          let border = 'var(--border)'
-          let color = 'var(--text-primary)'
-
+          let cls = 'era__decade-btn btn-press'
           if (done) {
-            if (isAnswer) {
-              border = 'var(--amber)'
-              color = 'var(--amber)'
-            } else {
-              color = 'var(--text-dim)'
-              border = 'var(--border)'
-            }
+            cls += ' era__decade-btn--done'
+            if (isAnswer) cls += ' era__decade-btn--answer'
+            else cls += ' era__decade-btn--faded'
+          } else {
+            cls += ' btn-hover'
           }
 
           return (
@@ -103,18 +85,7 @@ export default function Era() {
               key={decade}
               onClick={() => handleGuess(decade)}
               disabled={done}
-              className={`btn-press${done ? '' : ' btn-hover'}`}
-              style={{
-                padding: '8px 16px',
-                background: bg,
-                border: `1px solid ${border}`,
-                borderRadius: '999px',
-                color,
-                fontSize: '13px',
-                fontWeight: 500,
-                cursor: done ? 'default' : 'pointer',
-                transition: 'color 150ms ease, border-color 150ms ease',
-              }}
+              className={cls}
             >
               {decade}
             </button>
@@ -129,7 +100,7 @@ export default function Era() {
           artist={`${puzzle.metadata?.artist} · ${puzzle.metadata?.year}`}
           emojiGrid={correct ? '🟩' : '⬜'}
           gameSlug="era"
-          nextGame={{ path: '/game/the-flip', label: 'The Flip' }}
+          nextGame={{ path: '/game/cover-or-not', label: 'Cover or Not' }}
         />
       )}
     </GameShell>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
@@ -7,10 +7,11 @@ import { saveScore, updateStreak } from '../lib/scores'
 import AudioPlayer from '../components/AudioPlayer'
 import GuessInput from '../components/GuessInput'
 import ResultCard from '../components/ResultCard'
+import './OneBar.css'
 
 const MAX_ATTEMPTS = 6
 const BASE_SECONDS = 0.5
-const SECONDS_PER_REVEAL = 1.5
+const SECONDS_PER_REVEAL = 0.5
 
 export default function OneBar() {
   const { user } = useAuth()
@@ -19,6 +20,8 @@ export default function OneBar() {
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const guessInputRef = useRef(null)
 
   const [attempts, setAttempts] = useState([])
   const [done, setDone] = useState(false)
@@ -32,14 +35,12 @@ export default function OneBar() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Restore completed state if user already played today
   useEffect(() => {
     if (!puzzle || done) return
     if (isComplete('one-bar')) {
       const stored = completions['one-bar']
       const count = stored?.attempts || 1
       const wasCorrect = stored?.completed ?? false
-      // Build a placeholder attempts array so the progress bar renders correctly
       const fake = Array.from({ length: count }, (_, i) => ({
         title: i === count - 1 && wasCorrect ? puzzle.answer : '—',
         artist: '',
@@ -56,11 +57,17 @@ export default function OneBar() {
     return attempts.map((a) => (a.correct ? '🟩' : '⬜')).join('')
   }
 
+  function stripVariants(title) {
+    return title.replace(/\s*[\(\[]\s*(feat\.|ft\.|featuring|remix|remixed|remaster|remastered|live|edit|version|radio\s*edit|acoustic|instrumental|deluxe|extended|mix|reprise|cover|tribute|explicit|clean|mono|stereo|single\s*version|original\s*mix|bonus)\b.*[\)\]]\s*$/gi, '').trim()
+  }
+
   async function handleGuess(song) {
     if (done || attempts.length >= MAX_ATTEMPTS) return
 
-    const isCorrect =
-      song.title.toLowerCase().trim() === puzzle.answer.toLowerCase().trim()
+    const titleMatch = stripVariants(song.title).toLowerCase() === puzzle.answer.toLowerCase().trim()
+    const artistMatch = !puzzle.metadata?.artist ||
+      song.artist.toLowerCase().trim() === puzzle.metadata.artist.toLowerCase().trim()
+    const isCorrect = titleMatch && artistMatch
 
     const newAttempts = [...attempts, { title: song.title, artist: song.artist, correct: isCorrect }]
     setAttempts(newAttempts)
@@ -74,7 +81,7 @@ export default function OneBar() {
         if (isCorrect) await updateStreak(user.id, 'one-bar')
       }
     } else {
-      // Reveal more audio
+      guessInputRef.current?.clear()
       setRevealSeconds(Math.min(BASE_SECONDS + newAttempts.length * SECONDS_PER_REVEAL, 21))
     }
   }
@@ -87,49 +94,30 @@ export default function OneBar() {
 
   return (
     <GameShell>
-      <Link
-        to="/"
-        style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
-      >
-        ← Back
-      </Link>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-          one bar
-        </p>
-        <h1 style={{ fontSize: '18px', fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+      <Link to="/" className="game-back-link">← Back</Link>
+
+      <div className="one-bar__header">
+        <p className="one-bar__eyebrow">one bar</p>
+        <h1 className="one-bar__title">
           Name the song from a short clip. Each wrong guess unlocks a bit more.
         </h1>
       </div>
 
       <AudioPlayer src={puzzle.audio_url} maxDuration={revealSeconds} />
 
-      <div style={{ marginTop: '0.5rem', marginBottom: '1.25rem' }}>
-        <div style={{
-          display: 'flex',
-          gap: '4px',
-          marginTop: '0.75rem',
-        }}>
+      <div className="one-bar__progress">
+        <div className="one-bar__bars">
           {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => {
             const attempt = attempts[i]
             return (
               <div
                 key={i}
-                style={{
-                  flex: 1,
-                  height: '4px',
-                  borderRadius: '2px',
-                  background: attempt
-                    ? attempt.correct
-                      ? 'var(--green)'
-                      : 'var(--text-dim)'
-                    : 'var(--border)',
-                }}
+                className={`one-bar__bar${attempt ? attempt.correct ? ' one-bar__bar--correct' : ' one-bar__bar--used' : ''}`}
               />
             )
           })}
         </div>
-        <p style={{ fontSize: '12px', color: 'var(--text-dim)', marginTop: '0.5rem' }}>
+        <p className="one-bar__progress-label">
           {done
             ? correct
               ? `Got it in ${attempts.length} ${attempts.length === 1 ? 'guess' : 'guesses'}`
@@ -139,23 +127,14 @@ export default function OneBar() {
       </div>
 
       {!done && (
-        <GuessInput onGuess={handleGuess} disabled={done} />
+        <GuessInput ref={guessInputRef} onGuess={handleGuess} disabled={done} />
       )}
 
-      {/* Previous guesses */}
       {attempts.length > 0 && !done && (
-        <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div className="one-bar__guesses">
           {attempts.map((a, i) => (
-            <div key={i} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '13px',
-              color: 'var(--text-muted)',
-              padding: '6px 0',
-              borderBottom: '1px solid var(--border)',
-            }}>
-              <span style={{ color: 'var(--text-dim)' }}>✕</span>
+            <div key={i} className="one-bar__guess-row">
+              <span className="one-bar__guess-x">✕</span>
               <span>{a.title} — {a.artist}</span>
             </div>
           ))}

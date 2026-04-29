@@ -1,0 +1,63 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(52px + env(safe-area-inset-top));
+  background: var(--bg);
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: env(safe-area-inset-top);
+  padding-left: max(1.25rem, env(safe-area-inset-left));
+  padding-right: max(1.25rem, env(safe-area-inset-right));
+  z-index: 100;
+}
+
+.navbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.navbar__logo {
+  width: 25px;
+  height: 25px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.navbar__wordmark {
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+}
+
+.navbar__links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navbar__link {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.navbar__link--admin {
+  color: var(--amber);
+}
+
+.navbar__signup {
+  background: var(--amber);
+  color: #0f0f0f;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 15px;
+  border-radius: 999px;
+  display: inline-block;
+  line-height: 1;
+}

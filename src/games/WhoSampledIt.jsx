@@ -6,6 +6,7 @@ import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
+import './WhoSampledIt.css'
 
 export default function WhoSampledIt() {
   const { user } = useAuth()
@@ -26,7 +27,6 @@ export default function WhoSampledIt() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Restore completed state if user already played today
   useEffect(() => {
     if (!puzzle || done) return
     if (isComplete('who-sampled-it')) {
@@ -59,37 +59,32 @@ export default function WhoSampledIt() {
 
   return (
     <GameShell>
-      <Link
-        to="/"
-        style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
-      >
-        ← Back
-      </Link>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-          who sampled it
-        </p>
-        <h1 style={{ fontSize: '18px', fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4 }}>
-          This song samples a classic. Which one?
-        </h1>
+      <Link to="/" className="game-back-link">← Back</Link>
+
+      <div className="game-header">
+        <p className="game-header__eyebrow">who sampled it</p>
+        <h1 className="game-header__title">This song samples a classic. Which one?</h1>
       </div>
 
-      <div style={{ marginBottom: '0.5rem' }}>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+      <div className="who-sampled__source">
+        <p className="who-sampled__source-label">
           {puzzle.metadata?.source_song} — {puzzle.metadata?.source_artist} ({puzzle.metadata?.source_year})
         </p>
         <AudioPlayer ref={sourceRef} src={puzzle.audio_url} />
       </div>
 
-      <div className="stagger-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1.25rem' }}>
+      <div className="stagger-list who-sampled__options">
         {options.map((option) => {
           const isChosen = chosen === option.title
           const isAnswer = option.title === puzzle.answer
 
-          let borderColor = 'var(--border)'
+          let optionClass = 'who-sampled__option btn-press'
           if (done) {
-            if (isAnswer) borderColor = 'var(--green)'
-            else if (isChosen && !isAnswer) borderColor = '#ef44441a'
+            if (isAnswer) optionClass += ' who-sampled__option--answer'
+            else if (isChosen) optionClass += ' who-sampled__option--wrong'
+            else optionClass += ' who-sampled__option--faded'
+          } else {
+            optionClass += ' btn-hover'
           }
 
           return (
@@ -97,24 +92,10 @@ export default function WhoSampledIt() {
               key={option.title}
               onClick={() => handleGuess(option)}
               disabled={done}
-              className={`btn-press${done ? '' : ' btn-hover'}`}
-              style={{
-                width: '100%',
-                textAlign: 'left',
-                padding: '14px 16px',
-                border: `1px solid ${borderColor}`,
-                borderRadius: '8px',
-                cursor: done ? 'default' : 'pointer',
-                transition: 'border-color 150ms ease',
-                opacity: done && !isAnswer && !isChosen ? 0.5 : 1,
-              }}
+              className={optionClass}
             >
-              <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>
-                {option.title}
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                {option.artist}
-              </div>
+              <div className="who-sampled__option-title">{option.title}</div>
+              <div className="who-sampled__option-artist">{option.artist}</div>
             </button>
           )
         })}
@@ -123,10 +104,8 @@ export default function WhoSampledIt() {
       {done && (
         <>
           {puzzle.metadata?.sample_audio_url && (
-            <div style={{ marginTop: '1.5rem' }}>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                The original sample
-              </p>
+            <div className="who-sampled__original">
+              <p className="who-sampled__original-label">The original sample</p>
               <AudioPlayer src={puzzle.metadata.sample_audio_url} autoPlay />
             </div>
           )}

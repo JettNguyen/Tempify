@@ -1,0 +1,82 @@
+.subscribe-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.subscribe-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.subscribe-eyebrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.subscribe-title {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+
+.subscribe-body {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+  line-height: 1.7;
+}
+
+.subscribe-price-box {
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.subscribe-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 0.25rem;
+}
+
+.subscribe-price {
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.subscribe-price-unit {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.subscribe-fine-print {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.subscribe-cta {
+  width: 100%;
+  padding: 12px;
+  background: var(--amber);
+  border-radius: 8px;
+  color: #0f0f0f;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.subscribe-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 1rem;
+  text-align: center;
+}

@@ -1,0 +1,133 @@
+.profile-back {
+  font-size: 13px;
+  color: var(--text-muted);
+  display: inline-block;
+  margin-bottom: 2rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.profile-email {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.profile-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+
+.profile-badge--subscribed {
+  background: var(--amber-glow);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.profile-section {
+  border-top: 1px solid var(--border);
+  padding-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.profile-section-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.profile-picker-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 0.75rem;
+}
+
+.profile-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.profile-icon-btn {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 80ms ease, border-color 80ms ease;
+}
+
+.profile-icon-btn--active {
+  background: var(--amber-glow);
+  border-color: var(--amber);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .profile-icon-btn:not(.profile-icon-btn--active):hover {
+    background: #222222;
+  }
+}
+
+.profile-icon {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+.profile-icon--active {
+  color: var(--amber);
+}
+
+.profile-color-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1.75rem;
+}
+
+.profile-save-btn {
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: default;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.profile-save-btn--dirty {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: #0f0f0f;
+  cursor: pointer;
+}
+
+.profile-signout-section {
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+}
+
+.profile-signout-btn {
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  border: none;
+}

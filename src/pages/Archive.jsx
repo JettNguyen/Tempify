@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import ArchiveLock from '../components/ArchiveLock'
+import './Archive.css'
 
 function getDaysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate()
@@ -59,45 +60,24 @@ export default function Archive() {
 
   return (
     <div className="page-shell-wide">
-      <div style={{ marginBottom: '2rem' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>archive</p>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            {monthName}
-          </h1>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <div className="archive-header">
+        <p className="archive-eyebrow">archive</p>
+        <div className="archive-month-row">
+          <h1 className="archive-month-title">{monthName}</h1>
+          <div className="archive-month-nav">
             <NavButton onClick={prevMonth} label="←" />
             <NavButton onClick={nextMonth} label="→" disabled={isCurrentMonth} />
           </div>
         </div>
       </div>
 
-      {/* Day-of-week headers */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(7, 1fr)',
-        gap: '4px',
-        marginBottom: '4px',
-      }}>
+      <div className="archive-weekdays">
         {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-          <div key={d} style={{
-            textAlign: 'center',
-            fontSize: '11px',
-            color: 'var(--text-dim)',
-            padding: '4px 0',
-          }}>
-            {d}
-          </div>
+          <div key={d} className="archive-weekday">{d}</div>
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(7, 1fr)',
-        gap: '4px',
-      }}>
-        {/* Empty cells before first day */}
+      <div className="archive-grid">
         {Array.from({ length: firstDay }).map((_, i) => (
           <div key={`empty-${i}`} />
         ))}
@@ -107,71 +87,41 @@ export default function Archive() {
           const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`
           const isToday = dateStr === todayStr
           const isFuture = dateStr > todayStr
-          const isPast = dateStr < todayStr
 
           if (isFuture) {
             return (
-              <div key={day} style={dayStyle(false, false)}>
-                <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>{day}</span>
+              <div key={day} className="archive-day archive-day--future">
+                <span className="archive-day__num archive-day__num--future">{day}</span>
               </div>
             )
           }
 
           if (isToday) {
             return (
-              <Link key={day} to={`/archive/${dateStr}`} className="day-hover btn-press" style={dayLinkStyle(true)}>
-                <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{day}</span>
+              <Link key={day} to={`/archive/${dateStr}`} className="archive-day archive-day--today day-hover btn-press">
+                <span className="archive-day__num archive-day__num--today">{day}</span>
               </Link>
             )
           }
 
-          // Past date
           if (!isSubscribed) {
             return (
-              <Link key={day} to={`/archive/${dateStr}`} className="day-hover btn-press" style={{ ...dayLinkStyle(false), opacity: 0.4 }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{day}</span>
+              <Link key={day} to={`/archive/${dateStr}`} className="archive-day day-hover btn-press" style={{ opacity: 0.4 }}>
+                <span className="archive-day__num archive-day__num--past">{day}</span>
               </Link>
             )
           }
 
           return (
-            <Link key={day} to={`/archive/${dateStr}`} className="day-hover btn-press" style={dayLinkStyle(false)}>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{day}</span>
-              <span style={{
-                width: '4px',
-                height: '4px',
-                borderRadius: '50%',
-                background: 'var(--amber)',
-                display: 'block',
-                margin: '2px auto 0',
-              }} />
+            <Link key={day} to={`/archive/${dateStr}`} className="archive-day day-hover btn-press">
+              <span className="archive-day__num archive-day__num--past">{day}</span>
+              <span className="archive-day__dot" />
             </Link>
           )
         })}
       </div>
     </div>
   )
-}
-
-function dayStyle(isToday, clickable) {
-  return {
-    aspectRatio: '1',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: '6px',
-    border: isToday ? '1px solid var(--amber)' : '1px solid transparent',
-    background: 'transparent',
-  }
-}
-
-function dayLinkStyle(isToday) {
-  return {
-    ...dayStyle(isToday, true),
-    textDecoration: 'none',
-    cursor: 'pointer',
-  }
 }
 
 function NavButton({ onClick, label, disabled }) {

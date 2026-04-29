@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import './ShareButton.css'
 
 export default function ShareButton({ emojiGrid, gameSlug }) {
   const [copied, setCopied] = useState(false)
@@ -9,7 +10,7 @@ export default function ShareButton({ emojiGrid, gameSlug }) {
       'drop-or-flop': 'Drop or Flop',
       'who-sampled-it': 'Who Sampled It',
       'era': 'Era',
-      'the-flip': 'The Flip',
+      'cover-or-not': 'Cover or Not',
     }[gameSlug] || 'Tempify'
 
     const base = import.meta.env.BASE_URL?.replace(/\/$/, '') ?? ''
@@ -24,15 +25,7 @@ export default function ShareButton({ emojiGrid, gameSlug }) {
   return (
     <button
       onClick={handleShare}
-      className="btn-press btn-hover"
-      style={{
-        fontSize: '13px',
-        color: copied ? 'var(--green)' : 'var(--text-muted)',
-        padding: '7px 14px',
-        border: '1px solid var(--border)',
-        borderRadius: '999px',
-        transition: 'color 100ms ease',
-      }}
+      className={`share-btn btn-press btn-hover${copied ? ' share-btn--copied' : ''}`}
     >
       {copied ? 'Copied' : 'Share'}
     </button>

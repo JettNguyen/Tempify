@@ -6,8 +6,9 @@ import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
+import './CoverOrNot.css'
 
-export default function TheFlip() {
+export default function CoverOrNot() {
   const { user } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
 
@@ -15,23 +16,21 @@ export default function TheFlip() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
-  const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
-  const refA = useRef(null)
-  const refB = useRef(null)
+  const coverRef = useRef(null)
+  const originalRef = useRef(null)
 
   useEffect(() => {
-    getPuzzle('the-flip')
+    getPuzzle('cover-or-not')
       .then(setPuzzle)
       .catch(() => setError('No puzzle found for today.'))
       .finally(() => setLoading(false))
   }, [])
 
-  // Restore completed state if user already played today
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('the-flip')) {
-      setCorrect(completions['the-flip']?.completed ?? false)
+    if (isComplete('cover-or-not')) {
+      setCorrect(completions['cover-or-not']?.completed ?? false)
       setDone(true)
     }
   }, [puzzle, completions])
@@ -39,13 +38,12 @@ export default function TheFlip() {
   async function handleGuess(pick) {
     if (done) return
     const isCorrect = pick === puzzle.answer
-    setChosen(pick)
     setCorrect(isCorrect)
     setDone(true)
-    markComplete('the-flip', 1)
+    markComplete('cover-or-not', 1)
     if (user) {
-      await saveScore({ userId: user.id, gameSlug: 'the-flip', attempts: 1, completed: isCorrect })
-      if (isCorrect) await updateStreak(user.id, 'the-flip')
+      await saveScore({ userId: user.id, gameSlug: 'cover-or-not', attempts: 1, completed: isCorrect })
+      if (isCorrect) await updateStreak(user.id, 'cover-or-not')
     }
   }
 
@@ -53,86 +51,82 @@ export default function TheFlip() {
   if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
   if (!puzzle) return null
 
-  const vA = puzzle.metadata?.version_a
-  const vB = puzzle.metadata?.version_b
+  const m = puzzle.metadata || {}
+  const isCover = puzzle.answer === 'cover'
 
   return (
     <GameShell>
-      <Link
-        to="/"
-        style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
-      >
-        ← Back
-      </Link>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-          the flip
-        </p>
-        <h1 style={{ fontSize: '18px', fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4 }}>
-          Which version came first?
-        </h1>
+      <Link to="/" className="game-back-link">← Back</Link>
+
+      <div className="game-header">
+        <p className="game-header__eyebrow">cover or not</p>
+        <h1 className="game-header__title">Is this song a cover of an earlier track?</h1>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
-        <div>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Version A</p>
-          <AudioPlayer ref={refA} src={vA?.audio_url} label={null} onPlay={() => refB.current?.pause()} />
-        </div>
-        <div>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Version B</p>
-          <AudioPlayer ref={refB} src={vB?.audio_url} label={null} onPlay={() => refA.current?.pause()} />
-        </div>
+      <div className="cover-or-not__song">
+        {m.song_title && (
+          <>
+            <p className="cover-or-not__song-name">{m.song_title}</p>
+            {m.song_artist && (
+              <p className="cover-or-not__song-meta">
+                {m.song_artist}{m.song_year ? ` · ${m.song_year}` : ''}
+              </p>
+            )}
+          </>
+        )}
+        <AudioPlayer
+          ref={coverRef}
+          src={puzzle.audio_url}
+          onPlay={() => originalRef.current?.pause()}
+        />
       </div>
 
       {!done && (
-        <div className="stagger-list" style={{ display: 'flex', gap: '0.75rem' }}>
-          <ChoiceButton label="A came first" onClick={() => handleGuess('A')} />
-          <ChoiceButton label="B came first" onClick={() => handleGuess('B')} />
+        <div className="stagger-list cover-or-not__choices">
+          <ChoiceButton label="It's a cover" onClick={() => handleGuess('cover')} />
+          <ChoiceButton label="It's original" onClick={() => handleGuess('original')} />
         </div>
       )}
 
       {done && (
         <>
-          {/* Timeline visual */}
-          <div style={{
-            marginTop: '1rem',
-            padding: '1.25rem 1.5rem',
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: '10px',
-          }}>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              The timeline
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0', position: 'relative' }}>
-              <TimelineNode
-                label={vA?.year < vB?.year ? vA?.year : vB?.year}
-                version={vA?.year < vB?.year ? 'A' : 'B'}
-                title={vA?.year < vB?.year ? vA?.title : vB?.title}
-                isAnswer={puzzle.answer === (vA?.year < vB?.year ? 'A' : 'B')}
-              />
-              <div style={{
-                flex: 1,
-                height: '1px',
-                background: 'var(--border)',
-                margin: '0 -1px',
-                position: 'relative',
-                top: '-10px',
-              }} />
-              <TimelineNode
-                label={vA?.year > vB?.year ? vA?.year : vB?.year}
-                version={vA?.year > vB?.year ? 'A' : 'B'}
-                title={vA?.year > vB?.year ? vA?.title : vB?.title}
-                isAnswer={false}
+          {isCover && m.original_audio_url && (
+            <div className="cover-or-not__original-card">
+              <p className="cover-or-not__original-label">The original</p>
+              <p className="cover-or-not__original-name">{m.original_title}</p>
+              {m.original_artist && (
+                <p className="cover-or-not__original-meta">
+                  {m.original_artist}{m.original_year ? ` · ${m.original_year}` : ''}
+                </p>
+              )}
+              <AudioPlayer
+                ref={originalRef}
+                src={m.original_audio_url}
+                onPlay={() => coverRef.current?.pause()}
               />
             </div>
-          </div>
+          )}
+
+          {isCover && !m.original_audio_url && m.original_title && (
+            <div className="cover-or-not__original-card">
+              <p className="cover-or-not__original-label">The original</p>
+              <p className="cover-or-not__original-name">{m.original_title}</p>
+              {m.original_artist && (
+                <p className="cover-or-not__original-meta">
+                  {m.original_artist}{m.original_year ? ` · ${m.original_year}` : ''}
+                </p>
+              )}
+            </div>
+          )}
 
           <ResultCard
             correct={correct}
-            answer={`Version ${puzzle.answer} came first (${puzzle.answer === 'A' ? vA?.year : vB?.year})`}
+            answer={isCover
+              ? `It's a cover${m.original_title ? ` of "${m.original_title}"` : ''}${m.original_artist ? ` by ${m.original_artist}` : ''}`
+              : "It's an original"
+            }
             emojiGrid={correct ? '🟩' : '⬜'}
-            gameSlug="the-flip"
+            gameSlug="cover-or-not"
             nextGame={{ path: '/', label: 'Back to games' }}
           />
         </>
@@ -141,48 +135,9 @@ export default function TheFlip() {
   )
 }
 
-function TimelineNode({ label, version, title, isAnswer }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-      <div style={{
-        width: '28px',
-        height: '28px',
-        borderRadius: '50%',
-        background: isAnswer ? 'var(--amber-glow)' : 'var(--surface)',
-        border: `1px solid ${isAnswer ? 'var(--amber)' : 'var(--border)'}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '11px',
-        fontWeight: 500,
-        color: isAnswer ? 'var(--amber)' : 'var(--text-muted)',
-      }}>
-        {version}
-      </div>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>{label}</div>
-        <div style={{ fontSize: '11px', color: 'var(--text-muted)', maxWidth: '80px' }}>{title}</div>
-      </div>
-    </div>
-  )
-}
-
 function ChoiceButton({ label, onClick }) {
   return (
-    <button
-      onClick={onClick}
-      className="btn-press btn-hover"
-      style={{
-        flex: 1,
-        padding: '1rem',
-        border: '1px solid var(--border)',
-        borderRadius: '10px',
-        color: 'var(--text-primary)',
-        fontSize: '14px',
-        fontWeight: 500,
-        cursor: 'pointer',
-      }}
-    >
+    <button onClick={onClick} className="cover-or-not__choice-btn btn-press btn-hover">
       {label}
     </button>
   )

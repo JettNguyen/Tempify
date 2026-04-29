@@ -1,0 +1,91 @@
+.archive-header {
+  margin-bottom: 2rem;
+}
+
+.archive-eyebrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.archive-month-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.archive-month-title {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.archive-month-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.archive-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.archive-weekday {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  padding: 4px 0;
+}
+
+.archive-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.archive-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+
+.archive-day--today {
+  border-color: var(--amber);
+}
+
+.archive-day--future {
+  pointer-events: none;
+}
+
+.archive-day__num {
+  font-size: 12px;
+}
+
+.archive-day__num--today {
+  color: var(--text-primary);
+}
+
+.archive-day__num--past {
+  color: var(--text-muted);
+}
+
+.archive-day__num--future {
+  color: var(--text-dim);
+}
+
+.archive-day__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--amber);
+  display: block;
+  margin: 2px auto 0;
+}

@@ -1,0 +1,148 @@
+.explore-header {
+  margin-bottom: 2rem;
+}
+
+.explore-eyebrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.explore-title {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.explore-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 2rem;
+  scrollbar-width: none;
+}
+
+.explore-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.explore-recs {
+  margin-bottom: 2rem;
+}
+
+.explore-recs-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.explore-recs-list {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.explore-rec-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid;
+  cursor: pointer;
+  text-align: left;
+}
+
+.explore-rec-btn__name {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 1px;
+}
+
+.explore-rec-btn__count {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.explore-puzzle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.explore-puzzle-card {
+  display: block;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.explore-puzzle-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.explore-puzzle-left {
+  min-width: 0;
+}
+
+.explore-puzzle-tags {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.explore-game-tag {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.explore-played-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.explore-puzzle-answer {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explore-puzzle-artist {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.explore-puzzle-date {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.explore-load-more {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.explore-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+}

@@ -6,6 +6,7 @@ import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
+import './DropOrFlop.css'
 
 export default function DropOrFlop() {
   const { user } = useAuth()
@@ -25,7 +26,6 @@ export default function DropOrFlop() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Restore completed state if user already played today
   useEffect(() => {
     if (!puzzle || done) return
     if (isComplete('drop-or-flop')) {
@@ -55,44 +55,24 @@ export default function DropOrFlop() {
 
   return (
     <GameShell>
-      <Link
-        to="/"
-        style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
-      >
-        ← Back
-      </Link>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-          drop or flop
-        </p>
-        <h1 style={{ fontSize: '18px', fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4 }}>
-          Did this song hit or miss the charts?
-        </h1>
+      <Link to="/" className="game-back-link">← Back</Link>
+
+      <div className="game-header">
+        <p className="game-header__eyebrow">drop or flop</p>
+        <h1 className="game-header__title">Did this song ever chart on the Billboard Hot 100?</h1>
       </div>
 
       <AudioPlayer src={puzzle.audio_url} />
 
-      <div style={{ marginTop: '1.25rem', marginBottom: '1.5rem' }}>
-        <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-          {puzzle.answer}
-        </p>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-          {puzzle.metadata?.artist}
-        </p>
+      <div className="drop-or-flop__song">
+        <p className="drop-or-flop__song-name">{puzzle.answer}</p>
+        <p className="drop-or-flop__song-artist">{puzzle.metadata?.artist}</p>
       </div>
 
       {!done && (
-        <div className="stagger-list" style={{ display: 'flex', gap: '0.75rem' }}>
-          <ChoiceButton
-            label="Hit"
-            accent="var(--amber)"
-            onClick={() => handleGuess('hit')}
-          />
-          <ChoiceButton
-            label="Miss"
-            accent="var(--border)"
-            onClick={() => handleGuess('miss')}
-          />
+        <div className="stagger-list drop-or-flop__choices">
+          <ChoiceButton label="Hit" onClick={() => handleGuess('hit')} />
+          <ChoiceButton label="Miss" onClick={() => handleGuess('miss')} />
         </div>
       )}
 
@@ -117,22 +97,9 @@ export default function DropOrFlop() {
   )
 }
 
-function ChoiceButton({ label, accent, onClick }) {
+function ChoiceButton({ label, onClick }) {
   return (
-    <button
-      onClick={onClick}
-      className="btn-press btn-hover"
-      style={{
-        flex: 1,
-        padding: '1.25rem',
-        border: `1px solid ${accent}`,
-        borderRadius: '10px',
-        color: 'var(--text-primary)',
-        fontSize: '15px',
-        fontWeight: 500,
-        cursor: 'pointer',
-      }}
-    >
+    <button onClick={onClick} className="drop-or-flop__choice-btn btn-press btn-hover">
       {label}
     </button>
   )

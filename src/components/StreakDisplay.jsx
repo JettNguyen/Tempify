@@ -1,9 +1,11 @@
+import './StreakDisplay.css'
+
 const GAMES = [
   { slug: 'one-bar', name: 'One Bar' },
   { slug: 'drop-or-flop', name: 'Drop or Flop' },
   { slug: 'who-sampled-it', name: 'Who Sampled It' },
   { slug: 'era', name: 'Era' },
-  { slug: 'the-flip', name: 'The Flip' },
+  { slug: 'cover-or-not', name: 'Cover or Not' },
 ]
 
 export default function StreakDisplay({ streaks = [] }) {
@@ -17,21 +19,9 @@ export default function StreakDisplay({ streaks = [] }) {
       {GAMES.map((game) => {
         const streak = streakMap[game.slug] || 0
         return (
-          <div key={game.slug} style={{
-            padding: '0.75rem 1rem',
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-          }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
-              {game.name}
-            </div>
-            <div style={{
-              fontSize: '22px',
-              fontWeight: 500,
-              color: streak > 0 ? 'var(--amber)' : 'var(--text-dim)',
-              lineHeight: 1,
-            }}>
+          <div key={game.slug} className="streak-card">
+            <div className="streak-card__label">{game.name}</div>
+            <div className={`streak-card__value${streak > 0 ? ' streak-card__value--active' : ''}`}>
               {streak}
             </div>
           </div>

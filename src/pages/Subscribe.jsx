@@ -1,4 +1,5 @@
 import { useAuth } from '../hooks/useAuth'
+import './Subscribe.css'
 
 export default function Subscribe() {
   const { user } = useAuth()
@@ -15,69 +16,29 @@ export default function Subscribe() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1.25rem',
-    }}>
-      <div style={{ width: '100%', maxWidth: '400px' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-          tempify+
-        </p>
-        <h1 style={{
-          fontSize: '24px',
-          fontWeight: 500,
-          color: 'var(--text-primary)',
-          letterSpacing: '-0.02em',
-          marginBottom: '0.75rem',
-        }}>
-          Every day, going back forever.
-        </h1>
-        <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: 1.7 }}>
+    <div className="subscribe-page">
+      <div className="subscribe-card">
+        <p className="subscribe-eyebrow">tempify+</p>
+        <h1 className="subscribe-title">Every day, going back forever.</h1>
+        <p className="subscribe-body">
           Unlock the full archive, browse by genre, and get recommendations based on
           what you actually play. Streaks carry across all five games.
         </p>
 
-        <div style={{
-          padding: '1.5rem',
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: '10px',
-          marginBottom: '1rem',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '0.25rem' }}>
-            <span style={{ fontSize: '28px', fontWeight: 500, color: 'var(--text-primary)' }}>$3</span>
-            <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>/ month</span>
+        <div className="subscribe-price-box">
+          <div className="subscribe-price-row">
+            <span className="subscribe-price">$3</span>
+            <span className="subscribe-price-unit">/ month</span>
           </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
-            Cancel any time, no questions.
-          </p>
+          <p className="subscribe-fine-print">Cancel any time, no questions.</p>
         </div>
 
-        <button
-          onClick={handleSubscribe}
-          className="btn-press"
-          style={{
-            width: '100%',
-            padding: '12px',
-            background: 'var(--amber)',
-            border: 'none',
-            borderRadius: '8px',
-            color: '#0f0f0f',
-            fontSize: '15px',
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
-        >
+        <button onClick={handleSubscribe} className="subscribe-cta btn-press">
           Subscribe — $3/mo
         </button>
 
         {!user && (
-          <p style={{ fontSize: '12px', color: 'var(--text-dim)', marginTop: '1rem', textAlign: 'center' }}>
-            You'll be asked to log in or create an account.
-          </p>
+          <p className="subscribe-hint">You'll be asked to log in or create an account.</p>
         )}
       </div>
     </div>

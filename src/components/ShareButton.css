@@ -1,0 +1,12 @@
+.share-btn {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: color 100ms ease;
+}
+
+.share-btn--copied {
+  color: var(--green);
+}

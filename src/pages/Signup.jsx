@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import './Login.css'
 
 export default function Signup() {
   const navigate = useNavigate()
@@ -36,19 +37,11 @@ export default function Signup() {
 
   if (sent) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.25rem',
-      }}>
-        <div style={{ maxWidth: '400px', textAlign: 'center' }}>
-          <div style={{ fontSize: '20px', marginBottom: '1rem' }}>✉️</div>
-          <h2 style={{ fontSize: '18px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            Check your email
-          </h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+      <div className="auth-page">
+        <div className="auth-sent">
+          <div className="auth-sent-icon">✉️</div>
+          <h2 className="auth-sent-title">Check your email</h2>
+          <p className="auth-sent-body">
             We sent a confirmation link to <strong style={{ color: 'var(--text-primary)' }}>{email}</strong>
           </p>
         </div>
@@ -57,67 +50,32 @@ export default function Signup() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1.25rem',
-    }}>
-      <div style={{ width: '100%', maxWidth: '400px' }}>
-        <h1 style={{
-          fontSize: '20px',
-          fontWeight: 500,
-          color: 'var(--text-primary)',
-          marginBottom: '0.5rem',
-          letterSpacing: '-0.02em',
-        }}>
-          Create an account
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '2rem' }}>
-          Already have one? <Link to="/login" style={{ color: 'var(--text-primary)' }}>Log in</Link>
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-title">Create an account</h1>
+        <p className="auth-subtitle">
+          Already have one? <Link to="/login" className="auth-link">Log in</Link>
         </p>
 
-        <button
-          onClick={handleGoogleSignup}
-          className="btn-press"
-          style={{
-            width: '100%',
-            padding: '10px 16px',
-            background: 'transparent',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-            color: 'var(--text-primary)',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-            cursor: 'pointer',
-            marginBottom: '1.25rem',
-            transition: 'background 80ms ease',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#222222'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-        >
+        <button onClick={handleGoogleSignup} className="auth-google-btn btn-press btn-hover">
           <GoogleIcon />
           Continue with Google
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-          <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>or</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+        <div className="auth-divider">
+          <div className="auth-divider__line" />
+          <span className="auth-divider__text">or</span>
+          <div className="auth-divider__line" />
         </div>
 
-        <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <form onSubmit={handleSignup} className="auth-form">
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            style={inputStyle}
+            className="auth-input"
           />
           <input
             type="password"
@@ -126,48 +84,18 @@ export default function Signup() {
             onChange={(e) => setPassword(e.target.value)}
             minLength={8}
             required
-            style={inputStyle}
+            className="auth-input"
           />
 
-          {error && (
-            <p style={{ fontSize: '12px', color: '#ef4444' }}>{error}</p>
-          )}
+          {error && <p className="auth-error">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-press"
-            style={{
-              width: '100%',
-              padding: '10px',
-              background: 'var(--amber)',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#0f0f0f',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1,
-              marginTop: '0.25rem',
-            }}
-          >
+          <button type="submit" disabled={loading} className="auth-submit btn-press">
             {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
       </div>
     </div>
   )
-}
-
-const inputStyle = {
-  width: '100%',
-  background: 'var(--surface)',
-  border: '1px solid var(--border)',
-  borderRadius: '8px',
-  padding: '10px 14px',
-  color: 'var(--text-primary)',
-  fontSize: '14px',
-  outline: 'none',
 }
 
 function GoogleIcon() {

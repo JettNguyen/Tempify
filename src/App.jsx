@@ -16,11 +16,11 @@ import OneBar from './games/OneBar'
 import DropOrFlop from './games/DropOrFlop'
 import WhoSampledIt from './games/WhoSampledIt'
 import Era from './games/Era'
-import TheFlip from './games/TheFlip'
+import CoverOrNot from './games/TheFlip'
 
 export default function App() {
   return (
-    <BrowserRouter basename="/Tempify">
+    <BrowserRouter basename="/Tempify" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <Navbar />
         <Routes>
@@ -29,7 +29,7 @@ export default function App() {
           <Route path="/game/drop-or-flop" element={<DropOrFlop />} />
           <Route path="/game/who-sampled-it" element={<WhoSampledIt />} />
           <Route path="/game/era" element={<Era />} />
-          <Route path="/game/the-flip" element={<TheFlip />} />
+          <Route path="/game/cover-or-not" element={<CoverOrNot />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/archive" element={<Archive />} />
           <Route path="/archive/:date" element={<ArchiveDay />} />

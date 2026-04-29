@@ -5,13 +5,14 @@ import { useCompletion } from '../hooks/useCompletion'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import GameTile from '../components/GameTile'
+import './Home.css'
 
 const GAMES = [
   { slug: 'one-bar',       name: 'One Bar',         description: 'Name the song from a tiny clip. Wrong guesses unlock more audio.', path: '/game/one-bar',       featured: true },
   { slug: 'drop-or-flop',  name: 'Drop or Flop',    description: 'Did it chart? One listen, one guess.',                             path: '/game/drop-or-flop' },
   { slug: 'who-sampled-it',name: 'Who Sampled It',  description: 'Hear the sample, find the source.',                               path: '/game/who-sampled-it' },
   { slug: 'era',           name: 'Era',              description: 'Guess which decade the song is from.',                            path: '/game/era' },
-  { slug: 'the-flip',      name: 'The Flip',         description: 'Two versions of the same song. Which came first?',               path: '/game/the-flip' },
+  { slug: 'cover-or-not',  name: 'Cover or Not',     description: 'Is this song a cover of an earlier track?',                     path: '/game/cover-or-not' },
 ]
 
 const dateLabel = () =>
@@ -22,7 +23,6 @@ export default function Home() {
   const { isComplete } = useCompletion(user?.id)
   const [genres, setGenres] = useState({})
 
-  // Prefetch today's puzzle genres so tiles can show the label without navigating in
   useEffect(() => {
     const today = todayEST()
     supabase
@@ -43,13 +43,9 @@ export default function Home() {
 
   return (
     <div className="page-shell-wide">
-      <div style={{ marginBottom: '2rem' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
-          {dateLabel()}
-        </p>
-        <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-          Today's games
-        </h1>
+      <div className="home-header">
+        <p className="home-date">{dateLabel()}</p>
+        <h1 className="home-title">Today's games</h1>
       </div>
 
       <div style={{ marginBottom: '0.75rem' }}>
@@ -90,8 +86,8 @@ export default function Home() {
       </div>
 
       {!user && (
-        <p style={{ marginTop: '2.5rem', fontSize: '13px', color: 'var(--text-dim)', textAlign: 'center' }}>
-          <Link to="/login" style={{ color: 'var(--text-muted)' }}>Log in</Link> to track streaks and access the archive.
+        <p className="home-no-account">
+          <Link to="/login">Log in</Link> to track streaks and access the archive.
         </p>
       )}
     </div>
