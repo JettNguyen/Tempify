@@ -1,16 +1,16 @@
-<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
-  <rect width="200" height="200" rx="16" fill="#0f0f0f"/>
+  <rect width="512" height="512" rx="75" fill="#0e0e0e"/>
 
   <!-- Metronome triangle -->
-  <polygon points="100,30 160,170 40,170" fill="none" stroke="#f59e0b" stroke-width="15" stroke-linejoin="round"/>
+  <polygon points="256,75 432,437 80,437" fill="none" stroke="#f59e0b" stroke-width="35" stroke-linejoin="round"/>
 
   <!-- Pendulum -->
-  <line x1="100" y1="152" x2="155" y2="60" stroke="#f59e0b" stroke-width="5" stroke-linecap="round"/>
+  <line x1="256" y1="400" x2="400" y2="150" stroke="#f59e0b" stroke-width="15" stroke-linecap="round"/>
 
   <!-- Pivot dot -->
-  <circle cx="100" cy="162" r="15" fill="#f59e0b"/>
+  <circle cx="256" cy="419" r="35" fill="#f59e0b"/>
 
   <!-- Pendulum weight -->
-  <rect x="145" y="45" width="25" height="15" rx="3" fill="#f59e0b"/>
+  <rect x="370" y="125" width="60" height="35" rx="3" fill="#f59e0b"/>
 </svg>
