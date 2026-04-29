@@ -28,12 +28,25 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function fetchProfile(userId) {
-    const { data } = await supabase
+    let { data } = await supabase
       .from('users')
       .select('*')
       .eq('id', userId)
-      .single()
-    // Admin always has premium access regardless of subscription status in DB
+      .maybeSingle()
+
+    // No row yet — happens when the DB trigger didn't fire (e.g. some OAuth flows).
+    // Create the row client-side so the user can immediately set their avatar/username.
+    if (!data) {
+      const { data: authData } = await supabase.auth.getUser()
+      const email = authData?.user?.email ?? null
+      const { data: created } = await supabase
+        .from('users')
+        .insert({ id: userId, email })
+        .select()
+        .maybeSingle()
+      data = created
+    }
+
     const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.trim()
     if (data && adminEmail && data.email?.trim() === adminEmail) {
       data.is_subscribed = true
