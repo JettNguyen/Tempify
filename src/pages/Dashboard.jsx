@@ -7,7 +7,7 @@ import './Dashboard.css'
 
 const GAME_NAMES = {
   'one-bar': 'One Bar',
-  'drop-or-flop': 'Drop or Flop',
+  'drop-or-flop': 'Hit or Miss',
   'who-sampled-it': 'Who Sampled It',
   'era': 'Era',
   'cover-or-not': 'Cover or Not',

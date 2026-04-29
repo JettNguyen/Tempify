@@ -10,7 +10,7 @@ import './Archive.css'
 
 const GAMES = [
   { slug: 'one-bar',        name: 'One Bar',        path: '/game/one-bar' },
-  { slug: 'drop-or-flop',   name: 'Drop or Flop',   path: '/game/drop-or-flop' },
+  { slug: 'drop-or-flop',   name: 'Hit or Miss',    path: '/game/drop-or-flop' },
   { slug: 'who-sampled-it', name: 'Who Sampled It', path: '/game/who-sampled-it' },
   { slug: 'era',            name: 'Era',            path: '/game/era' },
   { slug: 'cover-or-not',   name: 'Cover or Not',   path: '/game/cover-or-not' },

@@ -9,7 +9,7 @@ import './Home.css'
 
 const GAMES = [
   { slug: 'one-bar',       name: 'One Bar',         description: 'Name the song from a tiny clip. Wrong guesses unlock more audio.', path: '/game/one-bar',       featured: true },
-  { slug: 'drop-or-flop',  name: 'Drop or Flop',    description: 'Did it chart? One listen, one guess.',                             path: '/game/drop-or-flop' },
+  { slug: 'drop-or-flop',  name: 'Hit or Miss',     description: 'Did it chart? One listen, one guess.',                             path: '/game/drop-or-flop' },
   { slug: 'who-sampled-it',name: 'Who Sampled It',  description: 'Hear the sample, find the source.',                               path: '/game/who-sampled-it' },
   { slug: 'era',           name: 'Era',              description: 'Guess which decade the song is from.',                            path: '/game/era' },
   { slug: 'cover-or-not',  name: 'Cover or Not',     description: 'Is this song a cover of an earlier track?',                     path: '/game/cover-or-not' },

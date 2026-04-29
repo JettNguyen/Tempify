@@ -60,7 +60,7 @@ export default function DropOrFlop() {
       <Link to="/" className="game-back-link">← Back</Link>
 
       <div className="game-header">
-        <p className="game-header__eyebrow">drop or flop</p>
+        <p className="game-header__eyebrow">hit or miss</p>
         <h1 className="game-header__title">Did this song ever chart on the Billboard Hot 100?</h1>
       </div>
 

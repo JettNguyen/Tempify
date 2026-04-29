@@ -7,7 +7,7 @@ export default function ShareButton({ emojiGrid, gameSlug }) {
   function handleShare() {
     const gameName = {
       'one-bar': 'One Bar',
-      'drop-or-flop': 'Drop or Flop',
+      'drop-or-flop': 'Hit or Miss',
       'who-sampled-it': 'Who Sampled It',
       'era': 'Era',
       'cover-or-not': 'Cover or Not',

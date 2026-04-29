@@ -150,7 +150,7 @@ export default function OneBar() {
           artist={puzzle.metadata?.artist}
           emojiGrid={buildEmojiGrid()}
           gameSlug="one-bar"
-          nextGame={{ path: '/game/drop-or-flop', label: 'Drop or Flop' }}
+          nextGame={{ path: '/game/drop-or-flop', label: 'Hit or Miss' }}
         />
       )}
     </GameShell>

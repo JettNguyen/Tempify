@@ -5,12 +5,12 @@ import { supabase } from '../lib/supabase'
 import { GENRES } from '../lib/genres'
 import { searchSongs } from '../lib/itunes'
 import { searchRecordings } from '../lib/musicbrainz'
-import { lookupBillboardPeak } from '../lib/billboard'
+import { lookupBillboardPeak, lookupBillboard200Peak } from '../lib/billboard'
 import { todayEST } from '../lib/date'
 
 const GAMES = [
   { slug: 'one-bar',        short: 'One Bar' },
-  { slug: 'drop-or-flop',   short: 'Drop/Flop' },
+  { slug: 'drop-or-flop',   short: 'Hit or Miss' },
   { slug: 'who-sampled-it', short: 'Sampled' },
   { slug: 'era',            short: 'Era' },
   { slug: 'cover-or-not',   short: 'Cover/Not' },
@@ -190,27 +190,45 @@ function OneBarFields({ f, set }) {
 }
 
 function DropOrFlopFields({ f, set }) {
-  const [bbStatus, setBbStatus] = useState(null) // null | 'hit' | 'miss'
+  const [bbStatus, setBbStatus] = useState(null) // null | 'hot100' | 'bb200' | 'miss'
+  const [bb200Peak, setBb200Peak] = useState(null)
   const lastLookup = useRef('')
 
   useEffect(() => {
     const key = `${f.answer}|||${f.artist}`
     if (!f.answer || !f.artist || key === lastLookup.current) return
     lastLookup.current = key
+    setBb200Peak(null)
 
-    lookupBillboardPeak(f.answer, f.artist).then(result => {
+    lookupBillboardPeak(f.answer, f.artist).then(async result => {
       if (result) {
         set('verdict', 'hit')
         set('peakPosition', String(result.peak))
         set('weeksAtOne', String(result.weeksAtOne))
-        setBbStatus('hit')
+        setBbStatus('hot100')
       } else {
         set('verdict', 'miss')
         set('peakPosition', '0')
-        setBbStatus('miss')
+        set('weeksAtOne', '0')
+        const result200 = await lookupBillboard200Peak(f.answer, f.artist)
+        if (result200) {
+          setBb200Peak(result200)
+          setBbStatus('bb200')
+        } else {
+          setBbStatus('miss')
+        }
       }
     })
   }, [f.answer, f.artist])
+
+  let statusMsg = null
+  if (bbStatus === 'hot100') {
+    statusMsg = { text: `Hot 100 — peak #${f.peakPosition}${Number(f.weeksAtOne) > 0 ? `, ${f.weeksAtOne}w at #1` : ''} (edit below if wrong)`, color: 'var(--green)' }
+  } else if (bbStatus === 'bb200') {
+    statusMsg = { text: `Not on Hot 100 — album peaked #${bb200Peak.peak} on Billboard 200${bb200Peak.weeksAtOne > 0 ? `, ${bb200Peak.weeksAtOne}w at #1` : ''} → set as miss`, color: 'var(--amber)' }
+  } else if (bbStatus === 'miss') {
+    statusMsg = { text: 'Not found on Hot 100 or Billboard 200 — set as miss or enter manually', color: 'var(--text-dim)' }
+  }
 
   return (
     <>
@@ -218,11 +236,9 @@ function DropOrFlopFields({ f, set }) {
         <Field label="Artist"><Input value={f.artist} onChange={v => set('artist', v)} /></Field>
         <Field label="Year"><Input value={f.year} onChange={v => set('year', v)} type="number" /></Field>
       </div>
-      {bbStatus && (
-        <p style={{ fontSize: '11px', marginBottom: '0.5rem', color: bbStatus === 'hit' ? 'var(--green)' : 'var(--text-dim)' }}>
-          {bbStatus === 'hit'
-            ? `Found on Hot 100 — peak #${f.peakPosition}${Number(f.weeksAtOne) > 0 ? `, ${f.weeksAtOne}w at #1` : ''} (edit below if wrong)`
-            : 'Not found in Hot 100 dataset — set as miss or enter manually'}
+      {statusMsg && (
+        <p style={{ fontSize: '11px', marginBottom: '0.5rem', color: statusMsg.color }}>
+          {statusMsg.text}
         </p>
       )}
       <Field label="Verdict">
@@ -658,6 +674,7 @@ export default function Admin() {
   const [error, setError]       = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [editingId, setEditingId] = useState(null)
+  const [gamePuzzles, setGamePuzzles] = useState([])
 
   const today = todayEST()
   const startDate = addDays(today, weekOffset * 14)
@@ -678,6 +695,15 @@ export default function Admin() {
   }, [isAdmin, startDate, endDate])
 
   useEffect(() => { fetchSchedule() }, [fetchSchedule])
+
+  useEffect(() => {
+    if (!showForm || !isAdmin) return
+    supabase
+      .from('puzzles')
+      .select('id, answer, metadata')
+      .eq('game_slug', form.game)
+      .then(({ data }) => setGamePuzzles(data || []))
+  }, [form.game, showForm, isAdmin])
 
   if (loading) return null
   if (!isAdmin) return <Navigate to="/" replace />
@@ -709,9 +735,26 @@ export default function Admin() {
     setDeletingId(null)
   }
 
+  function songKeyFromRow(gameSlug, answer, metadata) {
+    switch (gameSlug) {
+      case 'era':          return (metadata?.title      || '').toLowerCase().trim()
+      case 'cover-or-not': return (metadata?.song_title || '').toLowerCase().trim()
+      default:             return (answer               || '').toLowerCase().trim()
+    }
+  }
+
+  function songKeyFromForm(f) {
+    switch (f.game) {
+      case 'era':          return f.songTitle.toLowerCase().trim()
+      case 'cover-or-not': return f.coverSongTitle.toLowerCase().trim()
+      default:             return f.answer.toLowerCase().trim()
+    }
+  }
+
   function validateForm(f) {
     const err = []
-    if (!f.date) err.push('Date')
+    if (!f.date)  err.push('Date')
+    if (!f.genre) err.push('Genre')
     switch (f.game) {
       case 'one-bar':
         if (!f.audioUrl) err.push('Audio URL')
@@ -919,6 +962,17 @@ export default function Admin() {
                 </select>
               </Field>
             </div>
+            {(() => {
+              const slotKey = `${form.date}|${form.game}`
+              const conflict = scheduled[slotKey]
+              if (!conflict || conflict.id === editingId) return null
+              return (
+                <p style={{ fontSize: '12px', color: '#ef4444', marginBottom: '0.75rem' }}>
+                  A {GAMES.find(g => g.slug === form.game)?.short} puzzle already exists for this date ({conflict.answer || 'no answer set'}).
+                  Use the ✎ button in the grid to edit it instead.
+                </p>
+              )
+            })()}
 
             {/* Genre */}
             <Field label="Genre">
@@ -957,18 +1011,42 @@ export default function Admin() {
               {form.game === 'cover-or-not'    && <FlipFields       f={form} set={set} />}
             </div>
 
+            {(() => {
+              const key = songKeyFromForm(form)
+              if (!key) return null
+              const dupe = gamePuzzles.find(p =>
+                p.id !== editingId && songKeyFromRow(form.game, p.answer, p.metadata) === key
+              )
+              if (!dupe) return null
+              return (
+                <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '0.75rem' }}>
+                  This song has already been used as a {GAMES.find(g => g.slug === form.game)?.short} puzzle (scheduled {dupe.scheduled_date}). Pick a different song.
+                </p>
+              )
+            })()}
+
             {error && (
               <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '0.75rem' }}>{error}</p>
             )}
 
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
-              <button type="submit" disabled={saving} className="btn-press" style={{
-                padding: '9px 20px', background: 'var(--amber)', border: 'none',
-                borderRadius: '999px', color: '#0f0f0f', fontSize: '13px',
-                fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1,
-              }}>
-                {saving ? 'Saving…' : editingId ? 'Save changes' : 'Add puzzle'}
-              </button>
+              {(() => {
+                const dateConflict = !editingId && !!scheduled[`${form.date}|${form.game}`]
+                const songKey = songKeyFromForm(form)
+                const songConflict = !!songKey && gamePuzzles.some(p =>
+                  p.id !== editingId && songKeyFromRow(form.game, p.answer, p.metadata) === songKey
+                )
+                const blocked = saving || dateConflict || songConflict
+                return (
+                  <button type="submit" disabled={blocked} className="btn-press" style={{
+                    padding: '9px 20px', background: 'var(--amber)', border: 'none',
+                    borderRadius: '999px', color: '#0f0f0f', fontSize: '13px',
+                    fontWeight: 500, cursor: blocked ? 'not-allowed' : 'pointer', opacity: blocked ? 0.4 : 1,
+                  }}>
+                    {saving ? 'Saving…' : editingId ? 'Save changes' : 'Add puzzle'}
+                  </button>
+                )
+              })()}
               <button type="button" onClick={() => { setForm(BLANK); setShowForm(false); setEditingId(null) }} style={{
                 padding: '9px 20px', background: 'transparent', border: '1px solid var(--border)',
                 borderRadius: '999px', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',

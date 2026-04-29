@@ -1,5 +1,6 @@
 // Lazy-loaded on first call — only used in the admin panel
 let index = null
+let index200 = null
 
 async function getIndex() {
   if (!index) {
@@ -7,6 +8,14 @@ async function getIndex() {
     index = mod.default
   }
   return index
+}
+
+async function getIndex200() {
+  if (!index200) {
+    const mod = await import('../assets/billboard-200-index.json')
+    index200 = mod.default
+  }
+  return index200
 }
 
 function normalize(str) {
@@ -38,6 +47,27 @@ export async function lookupBillboardPeak(title, artist) {
   let match = entries.find(([a]) => a === normArtist)
     ?? entries.find(([a]) => a.includes(normArtist) || normArtist.includes(a))
     ?? entries[0] // sorted by peak ascending — best chart result for this title
+
+  const [, peak, weeksAtOne] = match
+  return { peak, weeksAtOne }
+}
+
+/**
+ * Look up an album in the Billboard 200 index.
+ * Returns { peak, weeksAtOne } if found, or null if never charted.
+ * Same matching priority as lookupBillboardPeak.
+ */
+export async function lookupBillboard200Peak(title, artist) {
+  const idx        = await getIndex200()
+  const normTitle  = normalize(title)
+  const normArtist = normalize(artist)
+
+  const entries = idx[normTitle]
+  if (!entries || entries.length === 0) return null
+
+  let match = entries.find(([a]) => a === normArtist)
+    ?? entries.find(([a]) => a.includes(normArtist) || normArtist.includes(a))
+    ?? entries[0]
 
   const [, peak, weeksAtOne] = match
   return { peak, weeksAtOne }
