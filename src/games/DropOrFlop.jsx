@@ -82,7 +82,7 @@ export default function DropOrFlop() {
       </div>
 
       {!done && (
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="stagger-list" style={{ display: 'flex', gap: '0.75rem' }}>
           <ChoiceButton
             label="Hit"
             accent="var(--amber)"
@@ -121,21 +121,17 @@ function ChoiceButton({ label, accent, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="btn-press"
+      className="btn-press btn-hover"
       style={{
         flex: 1,
         padding: '1.25rem',
-        background: 'transparent',
         border: `1px solid ${accent}`,
         borderRadius: '10px',
         color: 'var(--text-primary)',
         fontSize: '15px',
         fontWeight: 500,
         cursor: 'pointer',
-        transition: 'background 80ms ease',
       }}
-      onMouseEnter={(e) => e.currentTarget.style.background = '#222222'}
-      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
     >
       {label}
     </button>
@@ -143,9 +139,5 @@ function ChoiceButton({ label, accent, onClick }) {
 }
 
 function GameShell({ children }) {
-  return (
-    <div style={{ paddingTop: '88px', paddingBottom: '4rem', maxWidth: '560px', margin: '0 auto', padding: '88px 1.25rem 4rem' }}>
-      {children}
-    </div>
-  )
+  return <div className="page-shell">{children}</div>
 }

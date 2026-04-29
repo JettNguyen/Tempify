@@ -58,11 +58,7 @@ export default function Archive() {
   const isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth()
 
   return (
-    <div style={{
-      maxWidth: '680px',
-      margin: '0 auto',
-      padding: '88px 1.25rem 4rem',
-    }}>
+    <div className="page-shell-wide">
       <div style={{ marginBottom: '2rem' }}>
         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>archive</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -123,7 +119,7 @@ export default function Archive() {
 
           if (isToday) {
             return (
-              <Link key={day} to={`/archive/${dateStr}`} style={dayLinkStyle(true)}>
+              <Link key={day} to={`/archive/${dateStr}`} className="day-hover btn-press" style={dayLinkStyle(true)}>
                 <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{day}</span>
               </Link>
             )
@@ -132,14 +128,14 @@ export default function Archive() {
           // Past date
           if (!isSubscribed) {
             return (
-              <Link key={day} to={`/archive/${dateStr}`} style={{ ...dayLinkStyle(false), opacity: 0.4 }}>
+              <Link key={day} to={`/archive/${dateStr}`} className="day-hover btn-press" style={{ ...dayLinkStyle(false), opacity: 0.4 }}>
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{day}</span>
               </Link>
             )
           }
 
           return (
-            <Link key={day} to={`/archive/${dateStr}`} style={dayLinkStyle(false)}>
+            <Link key={day} to={`/archive/${dateStr}`} className="day-hover btn-press" style={dayLinkStyle(false)}>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{day}</span>
               <span style={{
                 width: '4px',
@@ -175,7 +171,6 @@ function dayLinkStyle(isToday) {
     ...dayStyle(isToday, true),
     textDecoration: 'none',
     cursor: 'pointer',
-    transition: 'background 80ms ease',
   }
 }
 
@@ -184,7 +179,7 @@ function NavButton({ onClick, label, disabled }) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className="btn-press"
+      className="btn-press nav-btn"
       style={{
         width: '32px',
         height: '32px',
@@ -197,6 +192,7 @@ function NavButton({ onClick, label, disabled }) {
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '14px',
+        transition: 'background 120ms ease, border-color 120ms ease',
       }}
     >
       {label}

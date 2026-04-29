@@ -53,7 +53,7 @@ export default function Profile() {
   }
 
   return (
-    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '88px 1.25rem 4rem' }}>
+    <div className="page-shell-narrow">
 
       {/* Back link */}
       <Link

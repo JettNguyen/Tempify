@@ -21,7 +21,7 @@ function GenrePill({ genre, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="btn-press"
+      className="btn-press btn-hover"
       style={{
         padding: '6px 13px',
         borderRadius: '999px',
@@ -33,7 +33,6 @@ function GenrePill({ genre, active, onClick }) {
         fontWeight: active ? 500 : 400,
         cursor: 'pointer',
         whiteSpace: 'nowrap',
-        transition: 'all 80ms ease',
       }}
     >
       {genre}
@@ -54,17 +53,13 @@ function PuzzleCard({ puzzle, played }) {
   return (
     <Link
       to={`/archive/${puzzle.scheduled_date}`}
+      className="card-hover card-lift btn-press"
       style={{
         display: 'block',
         padding: '1rem 1.25rem',
-        background: 'var(--surface)',
         border: '1px solid var(--border)',
         borderRadius: '10px',
-        textDecoration: 'none',
-        transition: 'background 80ms ease',
       }}
-      onMouseEnter={e => e.currentTarget.style.background = '#1e1e1e'}
-      onMouseLeave={e => e.currentTarget.style.background = 'var(--surface)'}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
         <div style={{ minWidth: 0 }}>
@@ -197,7 +192,7 @@ export default function Explore() {
   }, [activeGenre, page, today])
 
   return (
-    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '88px 1.25rem 4rem' }}>
+    <div className="page-shell-wide">
       <div style={{ marginBottom: '2rem' }}>
         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>explore</p>
         <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
@@ -229,7 +224,7 @@ export default function Explore() {
                 <button
                   key={genre}
                   onClick={() => setActiveGenre(genre)}
-                  className="btn-press"
+                  className="btn-press btn-hover"
                   style={{
                     padding: '8px 16px',
                     borderRadius: '8px',
@@ -279,10 +274,10 @@ export default function Explore() {
               <button
                 onClick={() => setPage(n => n + 1)}
                 disabled={fetching}
-                className="btn-press"
+                className="btn-press btn-hover"
                 style={{
                   padding: '9px 22px', borderRadius: '999px',
-                  border: '1px solid var(--border)', background: 'transparent',
+                  border: '1px solid var(--border)',
                   color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',
                 }}
               >

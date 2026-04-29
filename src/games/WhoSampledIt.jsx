@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
@@ -17,6 +17,7 @@ export default function WhoSampledIt() {
   const [done, setDone] = useState(false)
   const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
+  const sourceRef = useRef(null)
 
   useEffect(() => {
     getPuzzle('who-sampled-it')
@@ -38,6 +39,7 @@ export default function WhoSampledIt() {
 
   async function handleGuess(option) {
     if (done) return
+    sourceRef.current?.pause()
     const isCorrect = option.title === puzzle.answer
     setChosen(option.title)
     setCorrect(isCorrect)
@@ -76,10 +78,10 @@ export default function WhoSampledIt() {
         <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
           {puzzle.metadata?.source_song} — {puzzle.metadata?.source_artist} ({puzzle.metadata?.source_year})
         </p>
-        <AudioPlayer src={puzzle.audio_url} />
+        <AudioPlayer ref={sourceRef} src={puzzle.audio_url} />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1.25rem' }}>
+      <div className="stagger-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1.25rem' }}>
         {options.map((option) => {
           const isChosen = chosen === option.title
           const isAnswer = option.title === puzzle.answer
@@ -95,20 +97,17 @@ export default function WhoSampledIt() {
               key={option.title}
               onClick={() => handleGuess(option)}
               disabled={done}
-              className="btn-press"
+              className={`btn-press${done ? '' : ' btn-hover'}`}
               style={{
                 width: '100%',
                 textAlign: 'left',
                 padding: '14px 16px',
-                background: 'transparent',
                 border: `1px solid ${borderColor}`,
                 borderRadius: '8px',
                 cursor: done ? 'default' : 'pointer',
-                transition: 'background 80ms ease, border-color 150ms ease',
+                transition: 'border-color 150ms ease',
                 opacity: done && !isAnswer && !isChosen ? 0.5 : 1,
               }}
-              onMouseEnter={(e) => !done && (e.currentTarget.style.background = '#222222')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>
                 {option.title}
@@ -128,7 +127,7 @@ export default function WhoSampledIt() {
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
                 The original sample
               </p>
-              <AudioPlayer src={puzzle.metadata.sample_audio_url} />
+              <AudioPlayer src={puzzle.metadata.sample_audio_url} autoPlay />
             </div>
           )}
           <ResultCard
@@ -147,9 +146,5 @@ export default function WhoSampledIt() {
 }
 
 function GameShell({ children }) {
-  return (
-    <div style={{ paddingTop: '88px', paddingBottom: '4rem', maxWidth: '560px', margin: '0 auto', padding: '88px 1.25rem 4rem' }}>
-      {children}
-    </div>
-  )
+  return <div className="page-shell">{children}</div>
 }

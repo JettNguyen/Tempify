@@ -42,7 +42,7 @@ export default function Home() {
   const bottom = rest.slice(2)
 
   return (
-    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '88px 1.25rem 4rem' }}>
+    <div className="page-shell-wide">
       <div style={{ marginBottom: '2rem' }}>
         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
           {dateLabel()}

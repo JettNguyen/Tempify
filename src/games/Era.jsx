@@ -74,7 +74,7 @@ export default function Era() {
 
       <AudioPlayer src={puzzle.audio_url} />
 
-      <div style={{
+      <div className="stagger-list" style={{
         display: 'flex',
         gap: '6px',
         marginTop: '1.25rem',
@@ -103,7 +103,7 @@ export default function Era() {
               key={decade}
               onClick={() => handleGuess(decade)}
               disabled={done}
-              className="btn-press"
+              className={`btn-press${done ? '' : ' btn-hover'}`}
               style={{
                 padding: '8px 16px',
                 background: bg,
@@ -113,10 +113,8 @@ export default function Era() {
                 fontSize: '13px',
                 fontWeight: 500,
                 cursor: done ? 'default' : 'pointer',
-                transition: 'background 80ms ease, color 150ms ease, border-color 150ms ease',
+                transition: 'color 150ms ease, border-color 150ms ease',
               }}
-              onMouseEnter={(e) => !done && (e.currentTarget.style.background = '#222222')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               {decade}
             </button>
@@ -139,9 +137,5 @@ export default function Era() {
 }
 
 function GameShell({ children }) {
-  return (
-    <div style={{ paddingTop: '88px', paddingBottom: '4rem', maxWidth: '560px', margin: '0 auto', padding: '88px 1.25rem 4rem' }}>
-      {children}
-    </div>
-  )
+  return <div className="page-shell">{children}</div>
 }

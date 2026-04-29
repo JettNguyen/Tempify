@@ -778,7 +778,7 @@ export default function Admin() {
   }
 
   return (
-    <div style={{ maxWidth: '780px', margin: '0 auto', padding: '88px 1.25rem 6rem' }}>
+    <div className="page-shell-admin">
       <div style={{ marginBottom: '2rem' }}>
         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>admin</p>
         <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>

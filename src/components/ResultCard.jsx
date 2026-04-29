@@ -52,16 +52,14 @@ export default function ResultCard({ correct, answer, artist, detail, emojiGrid,
         {nextGame && (
           <Link
             to={nextGame.path}
+            className="btn-hover btn-press"
             style={{
               fontSize: '13px',
               color: 'var(--text-muted)',
               padding: '7px 14px',
               border: '1px solid var(--border)',
               borderRadius: '999px',
-              transition: 'background 80ms ease',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#222222'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             {nextGame.label} →
           </Link>

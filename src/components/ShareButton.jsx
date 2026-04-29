@@ -12,7 +12,9 @@ export default function ShareButton({ emojiGrid, gameSlug }) {
       'the-flip': 'The Flip',
     }[gameSlug] || 'Tempify'
 
-    const text = `${emojiGrid || ''}\n${gameName} — tempify.app`
+    const base = import.meta.env.BASE_URL?.replace(/\/$/, '') ?? ''
+    const url = window.location.origin + base
+    const text = `${emojiGrid || ''}\n${gameName} — ${url}`
     navigator.clipboard.writeText(text.trim()).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -22,18 +24,15 @@ export default function ShareButton({ emojiGrid, gameSlug }) {
   return (
     <button
       onClick={handleShare}
-      className="btn-press"
+      className="btn-press btn-hover"
       style={{
         fontSize: '13px',
         color: copied ? 'var(--green)' : 'var(--text-muted)',
         padding: '7px 14px',
         border: '1px solid var(--border)',
         borderRadius: '999px',
-        background: 'transparent',
-        transition: 'color 100ms ease, background 80ms ease',
+        transition: 'color 100ms ease',
       }}
-      onMouseEnter={(e) => !copied && (e.currentTarget.style.background = '#222222')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
     >
       {copied ? 'Copied' : 'Share'}
     </button>

@@ -17,13 +17,15 @@ export default function Navbar() {
       top: 0,
       left: 0,
       right: 0,
-      height: '52px',
+      height: 'calc(52px + env(safe-area-inset-top))',
       background: 'var(--bg)',
       borderBottom: '0.5px solid var(--border)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '0 1.25rem',
+      paddingTop: 'env(safe-area-inset-top)',
+      paddingLeft: 'max(1.25rem, env(safe-area-inset-left))',
+      paddingRight: 'max(1.25rem, env(safe-area-inset-right))',
       zIndex: 100,
     }}>
       <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
@@ -51,16 +53,16 @@ export default function Navbar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         {user ? (
           <>
-            <Link to="/dashboard" style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+            <Link to="/dashboard" className="nav-link" style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
               Dashboard
             </Link>
             {isSubscribed && (
-              <Link to="/explore" style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+              <Link to="/explore" className="nav-link" style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
                 Explore
               </Link>
             )}
             {isAdmin && (
-              <Link to="/admin" style={{ color: 'var(--amber)', fontSize: '14px' }}>
+              <Link to="/admin" className="nav-link" style={{ color: 'var(--amber)', fontSize: '14px' }}>
                 Admin
               </Link>
             )}
@@ -75,12 +77,12 @@ export default function Navbar() {
           </>
         ) : (
           <>
-            <Link to="/login" style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+            <Link to="/login" className="nav-link" style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
               Log in
             </Link>
             <Link
               to="/signup"
-              className="btn-press"
+              className="btn-press btn-amber"
               style={{
                 background: 'var(--amber)',
                 color: '#0f0f0f',

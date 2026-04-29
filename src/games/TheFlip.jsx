@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
@@ -17,6 +17,8 @@ export default function TheFlip() {
   const [done, setDone] = useState(false)
   const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
+  const refA = useRef(null)
+  const refB = useRef(null)
 
   useEffect(() => {
     getPuzzle('the-flip')
@@ -74,16 +76,16 @@ export default function TheFlip() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
         <div>
           <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Version A</p>
-          <AudioPlayer src={vA?.audio_url} label={null} />
+          <AudioPlayer ref={refA} src={vA?.audio_url} label={null} onPlay={() => refB.current?.pause()} />
         </div>
         <div>
           <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Version B</p>
-          <AudioPlayer src={vB?.audio_url} label={null} />
+          <AudioPlayer ref={refB} src={vB?.audio_url} label={null} onPlay={() => refA.current?.pause()} />
         </div>
       </div>
 
       {!done && (
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="stagger-list" style={{ display: 'flex', gap: '0.75rem' }}>
           <ChoiceButton label="A came first" onClick={() => handleGuess('A')} />
           <ChoiceButton label="B came first" onClick={() => handleGuess('B')} />
         </div>
@@ -169,21 +171,17 @@ function ChoiceButton({ label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="btn-press"
+      className="btn-press btn-hover"
       style={{
         flex: 1,
         padding: '1rem',
-        background: 'transparent',
         border: '1px solid var(--border)',
         borderRadius: '10px',
         color: 'var(--text-primary)',
         fontSize: '14px',
         fontWeight: 500,
         cursor: 'pointer',
-        transition: 'background 80ms ease',
       }}
-      onMouseEnter={(e) => e.currentTarget.style.background = '#222222'}
-      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
     >
       {label}
     </button>
@@ -191,9 +189,5 @@ function ChoiceButton({ label, onClick }) {
 }
 
 function GameShell({ children }) {
-  return (
-    <div style={{ paddingTop: '88px', paddingBottom: '4rem', maxWidth: '560px', margin: '0 auto', padding: '88px 1.25rem 4rem' }}>
-      {children}
-    </div>
-  )
+  return <div className="page-shell">{children}</div>
 }

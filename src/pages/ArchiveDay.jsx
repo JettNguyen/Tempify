@@ -50,11 +50,7 @@ export default function ArchiveDay() {
   })
 
   return (
-    <div style={{
-      maxWidth: '680px',
-      margin: '0 auto',
-      padding: '88px 1.25rem 4rem',
-    }}>
+    <div className="page-shell-wide">
       <Link
         to="/archive"
         style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginBottom: '1.5rem' }}
@@ -82,17 +78,13 @@ export default function ArchiveDay() {
             <Link
               key={puzzle.id}
               to={GAME_PATHS[puzzle.game_slug] || '/'}
+              className="card-hover card-lift btn-press"
               style={{
                 display: 'block',
                 padding: '1.25rem 1.5rem',
-                background: 'var(--surface)',
                 border: '1px solid var(--border)',
                 borderRadius: '10px',
-                textDecoration: 'none',
-                transition: 'background 80ms ease',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#1e1e1e'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface)'}
             >
               <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
                 {GAME_NAMES[puzzle.game_slug] || puzzle.game_slug}

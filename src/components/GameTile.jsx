@@ -7,19 +7,15 @@ export default function GameTile({ name, description, path, complete, featured, 
   return (
     <Link
       to={path}
+      className="card-hover btn-press"
       style={{
         display: 'block',
         position: 'relative',
         padding: featured ? '2rem 1.75rem' : '1.5rem',
-        background: 'var(--surface)',
         border: '1px solid var(--border)',
         borderRadius: '10px',
         overflow: 'hidden',
-        textDecoration: 'none',
-        transition: 'background 80ms ease',
       }}
-      onMouseEnter={(e) => e.currentTarget.style.background = '#1e1e1e'}
-      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface)'}
     >
       {featured && (
         <svg
@@ -56,15 +52,19 @@ export default function GameTile({ name, description, path, complete, featured, 
           </div>
         </div>
 
-        <span style={{
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          background: complete ? 'var(--green)' : 'var(--amber)',
-          display: 'inline-block',
-          flexShrink: 0,
-          marginTop: '4px',
-        }} title={complete ? 'Completed today' : 'Not played yet'} />
+        <span
+          className={complete ? '' : 'dot-pulse'}
+          style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: complete ? 'var(--green)' : 'var(--amber)',
+            display: 'inline-block',
+            flexShrink: 0,
+            marginTop: '4px',
+          }}
+          title={complete ? 'Completed today' : 'Not played yet'}
+        />
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1.25rem' }}>

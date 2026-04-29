@@ -9,8 +9,8 @@ import GuessInput from '../components/GuessInput'
 import ResultCard from '../components/ResultCard'
 
 const MAX_ATTEMPTS = 6
-const BASE_SECONDS = 3
-const SECONDS_PER_REVEAL = 3
+const BASE_SECONDS = 0.5
+const SECONDS_PER_REVEAL = 1.5
 
 export default function OneBar() {
   const { user } = useAuth()
@@ -177,9 +177,5 @@ export default function OneBar() {
 }
 
 function GameShell({ children }) {
-  return (
-    <div style={{ paddingTop: '88px', paddingBottom: '4rem', maxWidth: '560px', margin: '0 auto', padding: '88px 1.25rem 4rem' }}>
-      {children}
-    </div>
-  )
+  return <div className="page-shell">{children}</div>
 }

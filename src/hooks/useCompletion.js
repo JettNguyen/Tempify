@@ -2,29 +2,27 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 
-const storageKey = () => `tempify_completions_${todayEST()}`
+const storageKey = (userId) => `tempify_completions_${userId || 'guest'}_${todayEST()}`
 
-function readLocal() {
+function readLocal(userId) {
   try {
-    return JSON.parse(localStorage.getItem(storageKey()) || '{}')
+    return JSON.parse(localStorage.getItem(storageKey(userId)) || '{}')
   } catch {
     return {}
   }
 }
 
-function writeLocal(data) {
-  localStorage.setItem(storageKey(), JSON.stringify(data))
+function writeLocal(userId, data) {
+  localStorage.setItem(storageKey(userId), JSON.stringify(data))
 }
 
 export function useCompletion(userId) {
-  const [completions, setCompletions] = useState({})
+  const [completions, setCompletions] = useState(() => readLocal(userId))
 
   useEffect(() => {
-    if (userId) {
-      loadFromSupabase()
-    } else {
-      setCompletions(readLocal())
-    }
+    // Always seed from localStorage first so restore logic works instantly
+    setCompletions(readLocal(userId))
+    if (userId) loadFromSupabase()
   }, [userId])
 
   async function loadFromSupabase() {
@@ -39,14 +37,16 @@ export function useCompletion(userId) {
       data.forEach((row) => {
         map[row.game_slug] = { attempts: row.attempts, completed: row.completed }
       })
-      setCompletions(map)
+      // Supabase is authoritative; write back to localStorage to keep in sync
+      writeLocal(userId, map)
+      setCompletions(prev => ({ ...prev, ...map }))
     }
   }
 
   function markComplete(gameSlug, attempts) {
     const updated = { ...completions, [gameSlug]: { attempts, completed: true } }
     setCompletions(updated)
-    if (!userId) writeLocal(updated)
+    writeLocal(userId, updated) // scoped per user for instant restore on navigation
   }
 
   function isComplete(gameSlug) {

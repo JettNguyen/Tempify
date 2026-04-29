@@ -16,7 +16,11 @@ export default function GuessInput({ onGuess, disabled, placeholder = 'Search fo
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside, { passive: true })
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
   }, [])
 
   function handleChange(e) {
@@ -98,17 +102,14 @@ export default function GuessInput({ onGuess, disabled, placeholder = 'Search fo
             <button
               key={song.id}
               onClick={() => selectResult(song)}
+              className="btn-hover"
               style={{
                 width: '100%',
                 textAlign: 'left',
                 padding: '10px 14px',
-                background: 'transparent',
                 borderBottom: '1px solid var(--border)',
                 cursor: 'pointer',
-                transition: 'background 80ms ease',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#222222'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>
                 {song.title}

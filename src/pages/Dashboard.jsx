@@ -38,11 +38,7 @@ export default function Dashboard() {
   const isSubscribed = profile?.is_subscribed
 
   return (
-    <div style={{
-      maxWidth: '680px',
-      margin: '0 auto',
-      padding: '88px 1.25rem 4rem',
-    }}>
+    <div className="page-shell-wide">
       {/* Greeting */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>

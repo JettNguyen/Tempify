@@ -1,13 +1,22 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 
-export default function AudioPlayer({ src, maxDuration, label }) {
+const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, onPlay, autoPlay }, ref) {
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
 
-  // maxDuration caps playback (used in One Bar game)
   const limit = maxDuration || Infinity
+
+  // Expose pause() to parent via ref
+  useImperativeHandle(ref, () => ({
+    pause() {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        setPlaying(false)
+      }
+    },
+  }))
 
   useEffect(() => {
     const audio = audioRef.current
@@ -48,6 +57,14 @@ export default function AudioPlayer({ src, maxDuration, label }) {
     }
   }, [src])
 
+  // Auto-play on mount (e.g. sample audio reveal)
+  useEffect(() => {
+    if (autoPlay && audioRef.current) {
+      audioRef.current.play().catch(() => {})
+      setPlaying(true)
+    }
+  }, [])
+
   function togglePlay() {
     const audio = audioRef.current
     if (!audio) return
@@ -57,6 +74,7 @@ export default function AudioPlayer({ src, maxDuration, label }) {
     } else {
       audio.play()
       setPlaying(true)
+      onPlay?.()
     }
   }
 
@@ -88,16 +106,15 @@ export default function AudioPlayer({ src, maxDuration, label }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <button
           onClick={togglePlay}
-          className="btn-press"
+          className={`btn-press audio-play-btn${playing ? ' playing' : ''}`}
           style={{
-            width: '36px',
-            height: '36px',
+            width: '44px',
+            height: '44px',
             borderRadius: '50%',
             background: 'var(--amber)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            flexShrink: 0,
           }}
           aria-label={playing ? 'Pause' : 'Play'}
         >
@@ -114,24 +131,20 @@ export default function AudioPlayer({ src, maxDuration, label }) {
         </button>
 
         <div style={{ flex: 1 }}>
-          <div
-            style={{
-              height: '3px',
-              background: 'var(--border)',
+          <div style={{
+            height: '3px',
+            background: 'var(--border)',
+            borderRadius: '2px',
+            overflow: 'hidden',
+            marginBottom: '6px',
+          }}>
+            <div style={{
+              height: '100%',
+              width: `${progress * 100}%`,
+              background: 'var(--amber)',
               borderRadius: '2px',
-              overflow: 'hidden',
-              marginBottom: '6px',
-            }}
-          >
-            <div
-              style={{
-                height: '100%',
-                width: `${progress * 100}%`,
-                background: 'var(--amber)',
-                borderRadius: '2px',
-                transition: 'width 100ms linear',
-              }}
-            />
+              transition: 'width 100ms linear',
+            }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -147,4 +160,6 @@ export default function AudioPlayer({ src, maxDuration, label }) {
       </div>
     </div>
   )
-}
+})
+
+export default AudioPlayer

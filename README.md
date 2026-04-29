@@ -1,20 +1,22 @@
 # Tempify
 
-![Tempify logo](./public/favicon.svg)
+<p align="center">
+<img src=./public/favicon.svg style=width:150px>
+</p>
 
 Five music games, one new track each day.
 
-**[tempify.app](https://JettNguyen.github.io/Tempify/)** &nbsp;·&nbsp; Free to play, no account required
+**[Tempify](https://JettNguyen.github.io/Tempify/)** &nbsp;·&nbsp; Free to play, no account required
 
 ---
 
 ## The games
 
-**One Bar** — You get a 3-second clip. Name the song. Every wrong guess unlocks a few more seconds, up to six attempts.
+**One Bar**: You get a half-second clip. Name the song within up to 6 attempts. Every wrong guess unlocks a second and a half more.
 
-**Drop or Flop** — One listen. Did this song chart or disappear without a trace?
+**Drop or Flop**: Did this song chart or disappear without a trace?
 
-**Who Sampled It** — A famous track is playing. Pick which song it sampled from four options.
+**Who Sampled It** — A famous track plays. Pick which song it sampled from four options.
 
 **Era** — No hints, no context. Just the music. Guess the decade.
 
