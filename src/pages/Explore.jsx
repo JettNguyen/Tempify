@@ -6,245 +6,253 @@ import { todayEST } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
 import ArchiveLock from '../components/ArchiveLock'
 import './Explore.css'
+import './Archive.css'
 
-const GAME_LABELS = {
-  'one-bar':        'One Bar',
-  'drop-or-flop':   'Drop or Flop',
-  'who-sampled-it': 'Who Sampled It',
-  'era':            'Era',
-  'cover-or-not':   'Cover or Not',
+const GAMES = [
+  { slug: 'one-bar',        name: 'One Bar',        path: '/game/one-bar' },
+  { slug: 'drop-or-flop',   name: 'Drop or Flop',   path: '/game/drop-or-flop' },
+  { slug: 'who-sampled-it', name: 'Who Sampled It', path: '/game/who-sampled-it' },
+  { slug: 'era',            name: 'Era',            path: '/game/era' },
+  { slug: 'cover-or-not',   name: 'Cover or Not',   path: '/game/cover-or-not' },
+]
+
+const FIRST_PUZZLE_DATE = '2026-04-28'
+
+function getDisplayAnswer(puzzle) {
+  const slug = puzzle.game_slug
+  if (slug === 'cover-or-not' || slug === 'the-flip') {
+    if (puzzle.answer === 'cover' || puzzle.answer === 'a') return puzzle.metadata?.song_title || 'Cover'
+    if (puzzle.answer === 'original' || puzzle.answer === 'b') return puzzle.metadata?.song_title || 'Original'
+    return puzzle.metadata?.song_title ?? puzzle.answer
+  }
+  if (slug === 'era') return puzzle.metadata?.title ?? puzzle.answer
+  return puzzle.answer
 }
 
-const PAGE_SIZE = 20
-
-function GenrePill({ genre, active, onClick }) {
-  const colors = GENRE_COLORS[genre]
-  return (
-    <button
-      onClick={onClick}
-      className="btn-press btn-hover"
-      style={{
-        padding: '6px 13px',
-        borderRadius: '999px',
-        border: '1px solid',
-        borderColor: active ? (colors?.text ?? 'var(--amber)') : 'var(--border)',
-        background: active ? (colors?.bg ?? 'var(--amber-glow)') : 'transparent',
-        color: active ? (colors?.text ?? 'var(--amber)') : 'var(--text-muted)',
-        fontSize: '12px',
-        fontWeight: active ? 500 : 400,
-        cursor: 'pointer',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {genre}
-    </button>
-  )
-}
-
-function PuzzleCard({ puzzle, played }) {
-  const artist = puzzle.metadata?.artist
-    ?? puzzle.metadata?.song_artist
-    ?? puzzle.metadata?.source_artist
-    ?? null
-  const genreColors = puzzle.genre ? GENRE_COLORS[puzzle.genre] : null
-  const dateStr = new Date(puzzle.scheduled_date + 'T12:00:00').toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  })
-
-  return (
-    <Link
-      to={`/archive/${puzzle.scheduled_date}`}
-      className="explore-puzzle-card card-hover card-lift btn-press"
-    >
-      <div className="explore-puzzle-inner">
-        <div className="explore-puzzle-left">
-          <div className="explore-puzzle-tags">
-            <span className="explore-game-tag">{GAME_LABELS[puzzle.game_slug]}</span>
-            {genreColors && (
-              <span
-                style={{ fontSize: '10px', fontWeight: 500, padding: '2px 7px', borderRadius: '999px', background: genreColors.bg, color: genreColors.text, whiteSpace: 'nowrap' }}
-              >
-                {puzzle.genre}
-              </span>
-            )}
-            {played && <span className="explore-played-dot" title="Played" />}
-          </div>
-          <p className="explore-puzzle-answer">{puzzle.answer}</p>
-          {artist && <p className="explore-puzzle-artist">{artist}</p>}
-        </div>
-        <span className="explore-puzzle-date">{dateStr}</span>
-      </div>
-    </Link>
-  )
-}
+function getDaysInMonth(year, month) { return new Date(year, month + 1, 0).getDate() }
+function getFirstDayOfMonth(year, month) { return new Date(year, month, 1).getDay() }
+function pad(n) { return String(n).padStart(2, '0') }
 
 export default function Explore() {
   const { user, profile, loading } = useAuth()
-  const [activeGenre, setActiveGenre] = useState('all')
-  const [puzzles, setPuzzles] = useState([])
+  const [view, setView] = useState('browse')
+  const [activeGenres, setActiveGenres] = useState([])
+  const [allPuzzles, setAllPuzzles] = useState([])
   const [playedSlugs, setPlayedSlugs] = useState(new Set())
-  const [topGenres, setTopGenres] = useState([])
   const [fetching, setFetching] = useState(true)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(false)
+
+  const now = new Date()
+  const [viewYear, setViewYear] = useState(now.getFullYear())
+  const [viewMonth, setViewMonth] = useState(now.getMonth())
+  const todayStr = todayEST()
+  const todayCalStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+
+  useEffect(() => {
+    if (!user) return
+    supabase.from('scores').select('game_slug, date_played').eq('user_id', user.id).eq('completed', true)
+      .then(({ data }) => {
+        if (data?.length) setPlayedSlugs(new Set(data.map(s => `${s.date_played}|${s.game_slug}`)))
+      })
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    setFetching(true)
+    supabase.from('puzzles')
+      .select('id, game_slug, scheduled_date, answer, genre, metadata')
+      .lte('scheduled_date', todayStr)
+      .order('scheduled_date', { ascending: false })
+      .then(({ data }) => {
+        setAllPuzzles(data || [])
+        setFetching(false)
+      })
+  }, [user, todayStr])
 
   if (loading) return null
   if (!user) return <Navigate to="/login" state={{ from: '/explore' }} replace />
 
   const isSubscribed = profile?.is_subscribed
-  const today = todayEST()
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (!user) return
-    async function loadHistory() {
-      const { data: scores } = await supabase
-        .from('scores')
-        .select('game_slug, date_played')
-        .eq('user_id', user.id)
-        .eq('completed', true)
+  function toggleGenre(g) {
+    setActiveGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
+  }
 
-      if (!scores?.length) return
+  const filtered = activeGenres.length === 0
+    ? allPuzzles
+    : allPuzzles.filter(p => p.genre && activeGenres.includes(p.genre))
 
-      const keys = scores.map(s => `${s.date_played}|${s.game_slug}`)
-      setPlayedSlugs(new Set(keys))
+  const byGame = {}
+  GAMES.forEach(g => { byGame[g.slug] = [] })
+  filtered.forEach(p => {
+    const slug = p.game_slug === 'the-flip' ? 'cover-or-not' : p.game_slug
+    if (byGame[slug]) byGame[slug].push(p)
+  })
 
-      const dates = [...new Set(scores.map(s => s.date_played))]
-      const { data: played } = await supabase
-        .from('puzzles')
-        .select('game_slug, scheduled_date, genre')
-        .in('scheduled_date', dates)
-        .not('genre', 'is', null)
+  // Calendar
+  const firstPuzzle = new Date(FIRST_PUZZLE_DATE + 'T12:00:00')
+  const isEarliestMonth = viewYear === firstPuzzle.getFullYear() && viewMonth === firstPuzzle.getMonth()
+  const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth()
+  const monthName = new Date(viewYear, viewMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const days = getDaysInMonth(viewYear, viewMonth)
+  const firstDay = getFirstDayOfMonth(viewYear, viewMonth)
 
-      if (!played?.length) return
-
-      const freq = {}
-      played.forEach(p => {
-        const key = `${p.scheduled_date}|${p.game_slug}`
-        if (keys.includes(key) && p.genre) {
-          freq[p.genre] = (freq[p.genre] || 0) + 1
-        }
-      })
-
-      const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 3)
-      setTopGenres(sorted)
-    }
-    loadHistory()
-  }, [user])
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    setPage(1)
-    setPuzzles([])
-  }, [activeGenre])
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      setFetching(true)
-      let q = supabase
-        .from('puzzles')
-        .select('id, game_slug, scheduled_date, answer, genre, metadata')
-        .lt('scheduled_date', today)
-        .order('scheduled_date', { ascending: false })
-        .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-
-      if (activeGenre !== 'all') q = q.eq('genre', activeGenre)
-
-      const { data } = await q
-      if (cancelled || !data) return
-
-      const items = data.slice(0, PAGE_SIZE)
-      setHasMore(data.length > PAGE_SIZE)
-      setPuzzles(prev => page === 1 ? items : [...prev, ...items])
-      setFetching(false)
-    }
-    load()
-    return () => { cancelled = true }
-  }, [activeGenre, page, today])
+  function prevMonth() {
+    if (isEarliestMonth) return
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
+    else setViewMonth(m => m - 1)
+  }
+  function nextMonth() {
+    if (isCurrentMonth) return
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
+    else setViewMonth(m => m + 1)
+  }
 
   return (
     <div className="page-shell-wide">
       <div className="explore-header">
         <p className="explore-eyebrow">explore</p>
-        <h1 className="explore-title">Browse by genre</h1>
+        <div className="explore-title-row">
+          <h1 className="explore-title">Browse puzzles</h1>
+          <div className="explore-view-toggle">
+            <button
+              onClick={() => setView('browse')}
+              className={`explore-view-btn btn-press${view === 'browse' ? ' explore-view-btn--active' : ''}`}
+            >Browse</button>
+            <button
+              onClick={() => setView('calendar')}
+              className={`explore-view-btn btn-press${view === 'calendar' ? ' explore-view-btn--active' : ''}`}
+            >Calendar</button>
+          </div>
+        </div>
       </div>
 
       <div className="explore-pills">
-        <GenrePill genre="All" active={activeGenre === 'all'} onClick={() => setActiveGenre('all')} />
-        {GENRES.map(g => (
-          <GenrePill key={g} genre={g} active={activeGenre === g} onClick={() => setActiveGenre(g)} />
-        ))}
+        {GENRES.map(g => {
+          const active = activeGenres.includes(g)
+          const colors = GENRE_COLORS[g]
+          return (
+            <button
+              key={g}
+              onClick={() => toggleGenre(g)}
+              className="btn-press btn-hover"
+              style={{
+                padding: '6px 13px', borderRadius: '999px', border: '1px solid',
+                borderColor: active ? (colors?.text ?? 'var(--amber)') : 'var(--border)',
+                background: active ? (colors?.bg ?? 'var(--amber-glow)') : 'transparent',
+                color: active ? (colors?.text ?? 'var(--amber)') : 'var(--text-muted)',
+                fontSize: '12px', fontWeight: active ? 500 : 400, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >{g}</button>
+          )
+        })}
+        {activeGenres.length > 0 && (
+          <button
+            onClick={() => setActiveGenres([])}
+            className="btn-press btn-hover"
+            style={{ padding: '6px 13px', borderRadius: '999px', border: '1px solid var(--border)', color: 'var(--text-dim)', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >Clear ✕</button>
+        )}
       </div>
 
-      {activeGenre === 'all' && topGenres.length > 0 && (
-        <div className="explore-recs">
-          <p className="explore-recs-label">based on what you play</p>
-          <div className="explore-recs-list">
-            {topGenres.map(([genre, count]) => {
-              const colors = GENRE_COLORS[genre]
+      {!isSubscribed ? (
+        <ArchiveLock />
+      ) : view === 'calendar' ? (
+        <div>
+          <div className="explore-cal-header">
+            <h2 className="explore-cal-title">{monthName}</h2>
+            <div className="archive-month-nav">
+              <CalNavBtn onClick={prevMonth} label="←" disabled={isEarliestMonth} />
+              <CalNavBtn onClick={nextMonth} label="→" disabled={isCurrentMonth} />
+            </div>
+          </div>
+          <div className="archive-weekdays">
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+              <div key={d} className="archive-weekday">{d}</div>
+            ))}
+          </div>
+          <div className="archive-grid">
+            {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
+            {Array.from({ length: days }).map((_, i) => {
+              const day = i + 1
+              const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`
+              const isToday = dateStr === todayCalStr
+              const isFuture = dateStr > todayCalStr
+              const hasPuzzles = dateStr >= FIRST_PUZZLE_DATE && !isFuture
+
+              if (isFuture) return (
+                <div key={day} className="archive-day archive-day--future">
+                  <span className="archive-day__num archive-day__num--future">{day}</span>
+                </div>
+              )
+              if (isToday) return (
+                <Link key={day} to={`/archive/${dateStr}`} className="archive-day archive-day--today day-hover btn-press">
+                  <span className="archive-day__num archive-day__num--today">{day}</span>
+                  {hasPuzzles && <span className="archive-day__dot" />}
+                </Link>
+              )
               return (
-                <button
-                  key={genre}
-                  onClick={() => setActiveGenre(genre)}
-                  className="explore-rec-btn btn-press btn-hover"
-                  style={{
-                    borderColor: colors?.text ?? 'var(--border)',
-                    background: colors?.bg ?? 'var(--surface)',
-                  }}
-                >
-                  <div className="explore-rec-btn__name" style={{ color: colors?.text ?? 'var(--text-primary)' }}>
-                    {genre}
-                  </div>
-                  <div className="explore-rec-btn__count">
-                    {count} {count === 1 ? 'game' : 'games'} played
-                  </div>
-                </button>
+                <Link key={day} to={`/archive/${dateStr}`} className={`archive-day day-hover btn-press${!hasPuzzles ? ' archive-day--pre-launch' : ''}`}>
+                  <span className="archive-day__num archive-day__num--past">{day}</span>
+                  {hasPuzzles && <span className="archive-day__dot" />}
+                </Link>
               )
             })}
           </div>
         </div>
-      )}
-
-      {!isSubscribed ? (
-        <ArchiveLock />
-      ) : fetching && puzzles.length === 0 ? (
+      ) : fetching ? (
         <p className="explore-empty">Loading...</p>
-      ) : puzzles.length === 0 ? (
-        <p className="explore-empty">
-          No {activeGenre !== 'all' ? activeGenre + ' ' : ''}games in the archive yet.
-        </p>
       ) : (
-        <>
-          <div className="explore-puzzle-list">
-            {puzzles.map(p => (
-              <PuzzleCard
-                key={p.id}
-                puzzle={p}
-                played={playedSlugs.has(`${p.scheduled_date}|${p.game_slug}`)}
-              />
-            ))}
-          </div>
-
-          {hasMore && (
-            <div className="explore-load-more">
-              <button
-                onClick={() => setPage(n => n + 1)}
-                disabled={fetching}
-                className="btn-press btn-hover"
-                style={{
-                  padding: '9px 22px', borderRadius: '999px',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',
-                }}
-              >
-                {fetching ? 'Loading…' : 'Load more'}
-              </button>
-            </div>
+        <div className="explore-games">
+          {GAMES.map(game => {
+            const puzzles = byGame[game.slug]
+            if (!puzzles?.length) return null
+            return (
+              <div key={game.slug} className="explore-game-row">
+                <h2 className="explore-game-row__title">{game.name}</h2>
+                <div className="explore-game-row__scroll">
+                  {puzzles.map(p => {
+                    const played = playedSlugs.has(`${p.scheduled_date}|${p.game_slug}`)
+                    const gameLink = `${game.path}?date=${p.scheduled_date}`
+                    const dateStr = new Date(p.scheduled_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    const answer = getDisplayAnswer(p)
+                    const artistLine = p.metadata?.song_artist || p.metadata?.artist || null
+                    const genreColors = p.genre ? GENRE_COLORS[p.genre] : null
+                    return (
+                      <Link key={p.id} to={gameLink} className={`explore-game-card card-hover btn-press${played ? ' explore-game-card--played' : ''}`}>
+                        <div className="explore-game-card__date">{dateStr}</div>
+                        <div className="explore-game-card__answer">{answer}</div>
+                        {artistLine && <div className="explore-game-card__artist">{artistLine}</div>}
+                        <div className="explore-game-card__footer">
+                          {genreColors && (
+                            <span className="explore-game-card__genre" style={{ background: genreColors.bg, color: genreColors.text }}>
+                              {p.genre}
+                            </span>
+                          )}
+                          {played && <span className="explore-game-card__played-label">✓ Played</span>}
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+          {GAMES.every(g => !byGame[g.slug]?.length) && (
+            <p className="explore-empty">No puzzles found{activeGenres.length ? ' for selected genres' : ''}.</p>
           )}
-        </>
+        </div>
       )}
     </div>
+  )
+}
+
+function CalNavBtn({ onClick, label, disabled }) {
+  return (
+    <button onClick={onClick} disabled={disabled} className="btn-press nav-btn" style={{
+      width: 32, height: 32, background: 'var(--surface)', border: '1px solid var(--border)',
+      borderRadius: '6px', color: disabled ? 'var(--text-dim)' : 'var(--text-muted)',
+      cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex',
+      alignItems: 'center', justifyContent: 'center', fontSize: '14px',
+    }}>{label}</button>
   )
 }

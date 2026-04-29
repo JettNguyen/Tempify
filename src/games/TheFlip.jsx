@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { getPuzzle } from '../lib/puzzles'
@@ -11,17 +11,20 @@ import './CoverOrNot.css'
 export default function CoverOrNot() {
   const { user } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
+  const [searchParams] = useSearchParams()
+  const dateParam = searchParams.get('date') || undefined
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
   const [correct, setCorrect] = useState(false)
+  const [autoPlayOriginal, setAutoPlayOriginal] = useState(false)
   const coverRef = useRef(null)
   const originalRef = useRef(null)
 
   useEffect(() => {
-    getPuzzle('cover-or-not')
+    getPuzzle('cover-or-not', dateParam)
       .then(setPuzzle)
       .catch(() => setError('No puzzle found for today.'))
       .finally(() => setLoading(false))
@@ -40,6 +43,10 @@ export default function CoverOrNot() {
     const isCorrect = pick === puzzle.answer
     setCorrect(isCorrect)
     setDone(true)
+    if (puzzle.answer === 'cover' && puzzle.metadata?.original_audio_url) {
+      coverRef.current?.pause()
+      setAutoPlayOriginal(true)
+    }
     markComplete('cover-or-not', 1)
     if (user) {
       await saveScore({ userId: user.id, gameSlug: 'cover-or-not', attempts: 1, completed: isCorrect })
@@ -102,6 +109,7 @@ export default function CoverOrNot() {
               <AudioPlayer
                 ref={originalRef}
                 src={m.original_audio_url}
+                autoPlay={autoPlayOriginal}
                 onPlay={() => coverRef.current?.pause()}
               />
             </div>

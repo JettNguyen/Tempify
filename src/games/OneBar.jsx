@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { getPuzzle } from '../lib/puzzles'
@@ -16,6 +16,8 @@ const SECONDS_PER_REVEAL = 0.5
 export default function OneBar() {
   const { user } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
+  const [searchParams] = useSearchParams()
+  const dateParam = searchParams.get('date') || undefined
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -29,7 +31,7 @@ export default function OneBar() {
   const [revealSeconds, setRevealSeconds] = useState(BASE_SECONDS)
 
   useEffect(() => {
-    getPuzzle('one-bar')
+    getPuzzle('one-bar', dateParam)
       .then(setPuzzle)
       .catch(() => setError('No puzzle found for today.'))
       .finally(() => setLoading(false))

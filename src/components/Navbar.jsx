@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import Avatar from './Avatar'
 import logoUrl from '/favicon.svg'
@@ -6,12 +6,18 @@ import './Navbar.css'
 
 export default function Navbar() {
   const { user, profile } = useAuth()
+  const { pathname } = useLocation()
 
   const initial = (profile?.email || user?.email || '').split('@')[0][0]?.toUpperCase() ?? '?'
   const isSubscribed = profile?.is_subscribed
   const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.trim()
   const currentEmail = (profile?.email || user?.email || '').trim()
   const isAdmin = !!adminEmail && currentEmail === adminEmail
+
+  function linkClass(path) {
+    const active = pathname === path || (path !== '/' && pathname.startsWith(path))
+    return `navbar__link nav-link${active ? ' navbar__link--active' : ''}`
+  }
 
   return (
     <nav className="navbar">
@@ -23,12 +29,12 @@ export default function Navbar() {
       <div className="navbar__links">
         {user ? (
           <>
-            <Link to="/dashboard" className="navbar__link nav-link">Dashboard</Link>
+            <Link to="/dashboard" className={linkClass('/dashboard')}>Dashboard</Link>
             {isSubscribed && (
-              <Link to="/explore" className="navbar__link nav-link">Explore</Link>
+              <Link to="/explore" className={linkClass('/explore')}>Explore</Link>
             )}
             {isAdmin && (
-              <Link to="/admin" className="navbar__link navbar__link--admin nav-link">Admin</Link>
+              <Link to="/admin" className={`${linkClass('/admin')} navbar__link--admin`}>Admin</Link>
             )}
             <Link to="/profile" className="btn-press" title="Your profile">
               <Avatar
@@ -41,7 +47,7 @@ export default function Navbar() {
           </>
         ) : (
           <>
-            <Link to="/login" className="navbar__link nav-link">Log in</Link>
+            <Link to="/login" className={linkClass('/login')}>Log in</Link>
             <Link to="/signup" className="navbar__signup btn-press btn-amber">Sign up</Link>
           </>
         )}

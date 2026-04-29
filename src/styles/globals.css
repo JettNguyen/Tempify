@@ -250,6 +250,10 @@ input, textarea {
     width: 100%;
   }
 
+  .navbar__link--active::after {
+    width: 100%;
+  }
+
   .day-hover:hover {
     background: var(--surface);
   }

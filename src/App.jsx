@@ -20,7 +20,7 @@ import CoverOrNot from './games/TheFlip'
 
 export default function App() {
   return (
-    <BrowserRouter basename="/Tempify" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <BrowserRouter basename={import.meta.env.BASE_URL} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <Navbar />
         <Routes>

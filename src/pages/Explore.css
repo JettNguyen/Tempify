@@ -1,5 +1,5 @@
 .explore-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .explore-eyebrow {
@@ -8,11 +8,46 @@
   margin-bottom: 0.35rem;
 }
 
+.explore-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .explore-title {
   font-size: 22px;
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.02em;
+}
+
+.explore-view-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.explore-view-btn {
+  padding: 5px 12px;
+  border-radius: 5px;
+  border: none;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: transparent;
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.explore-view-btn--active {
+  background: var(--border);
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .explore-pills {
@@ -28,118 +63,115 @@
   display: none;
 }
 
-.explore-recs {
-  margin-bottom: 2rem;
-}
-
-.explore-recs-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 0.75rem;
-}
-
-.explore-recs-list {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.explore-rec-btn {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid;
-  cursor: pointer;
-  text-align: left;
-}
-
-.explore-rec-btn__name {
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 1px;
-}
-
-.explore-rec-btn__count {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.explore-puzzle-list {
+/* Browse view — game rows */
+.explore-games {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 2rem;
 }
 
-.explore-puzzle-card {
-  display: block;
-  padding: 1rem 1.25rem;
+.explore-game-row__title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+}
+
+.explore-game-row__scroll {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+
+.explore-game-row__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.explore-game-card {
+  flex-shrink: 0;
+  width: 148px;
+  padding: 0.875rem 1rem;
   border: 1px solid var(--border);
   border-radius: 10px;
-}
-
-.explore-puzzle-inner {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 2px;
+  text-decoration: none;
 }
 
-.explore-puzzle-left {
-  min-width: 0;
-}
-
-.explore-puzzle-tags {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  margin-bottom: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.explore-game-tag {
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: var(--bg);
-  border: 1px solid var(--border);
+.explore-game-card__date {
+  font-size: 11px;
   color: var(--text-dim);
-  white-space: nowrap;
+  margin-bottom: 4px;
 }
 
-.explore-played-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--green);
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-.explore-puzzle-answer {
-  font-size: 14px;
+.explore-game-card__answer {
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.explore-puzzle-artist {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.explore-puzzle-date {
+.explore-game-card__artist {
   font-size: 11px;
-  color: var(--text-dim);
-  flex-shrink: 0;
-  padding-top: 2px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.explore-load-more {
-  margin-top: 1.5rem;
-  text-align: center;
+.explore-game-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.explore-game-card__genre {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.explore-game-card--played {
+  border-color: var(--green);
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.explore-game-card__played-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--green);
+  margin-left: auto;
+}
+
+/* Calendar view */
+.explore-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.explore-cal-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.archive-day--pre-launch {
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 .explore-empty {

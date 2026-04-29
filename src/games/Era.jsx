@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { getPuzzle } from '../lib/puzzles'
@@ -13,6 +13,8 @@ const DECADES = ['60s', '70s', '80s', '90s', '00s', '10s', '20s']
 export default function Era() {
   const { user } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
+  const [searchParams] = useSearchParams()
+  const dateParam = searchParams.get('date') || undefined
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -22,7 +24,7 @@ export default function Era() {
   const [correct, setCorrect] = useState(false)
 
   useEffect(() => {
-    getPuzzle('era')
+    getPuzzle('era', dateParam)
       .then(setPuzzle)
       .catch(() => setError('No puzzle found for today.'))
       .finally(() => setLoading(false))

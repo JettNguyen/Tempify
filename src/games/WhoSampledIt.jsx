@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { getPuzzle } from '../lib/puzzles'
@@ -11,6 +11,8 @@ import './WhoSampledIt.css'
 export default function WhoSampledIt() {
   const { user } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
+  const [searchParams] = useSearchParams()
+  const dateParam = searchParams.get('date') || undefined
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -18,11 +20,16 @@ export default function WhoSampledIt() {
   const [done, setDone] = useState(false)
   const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
+  const [shuffledOptions, setShuffledOptions] = useState([])
   const sourceRef = useRef(null)
 
   useEffect(() => {
-    getPuzzle('who-sampled-it')
-      .then(setPuzzle)
+    getPuzzle('who-sampled-it', dateParam)
+      .then(p => {
+        setPuzzle(p)
+        const opts = p?.metadata?.options || []
+        setShuffledOptions([...opts].sort(() => Math.random() - 0.5))
+      })
       .catch(() => setError('No puzzle found for today.'))
       .finally(() => setLoading(false))
   }, [])
@@ -55,8 +62,6 @@ export default function WhoSampledIt() {
   if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
   if (!puzzle) return null
 
-  const options = puzzle.metadata?.options || []
-
   return (
     <GameShell>
       <Link to="/" className="game-back-link">← Back</Link>
@@ -74,7 +79,7 @@ export default function WhoSampledIt() {
       </div>
 
       <div className="stagger-list who-sampled__options">
-        {options.map((option) => {
+        {shuffledOptions.map((option) => {
           const isChosen = chosen === option.title
           const isAnswer = option.title === puzzle.answer
 

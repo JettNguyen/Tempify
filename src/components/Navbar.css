@@ -45,10 +45,22 @@
 .navbar__link {
   color: var(--text-muted);
   font-size: 14px;
+  transition: color 120ms ease;
+}
+
+.navbar__link--active {
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .navbar__link--admin {
   color: var(--amber);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .navbar__link:hover {
+    color: var(--text-primary);
+  }
 }
 
 .navbar__signup {
