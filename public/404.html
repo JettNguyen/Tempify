@@ -8,10 +8,10 @@
     // Save the intended path and redirect to the app root — the app
     // reads it back from sessionStorage and restores it via history.replaceState.
     // This handles both deep links and browser refreshes on sub-routes.
-    // OAuth redirects go to /Tempify/ directly so they don't hit this file.
+    // OAuth redirects go to the site root so they don't hit this file.
     var target = location.pathname + location.search + location.hash
     sessionStorage.setItem('spa-path', target)
-    location.replace('/Tempify/')
+    location.replace('/')
   </script>
 </head>
 <body></body>
