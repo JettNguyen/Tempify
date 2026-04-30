@@ -89,8 +89,12 @@ export async function searchSongs(query) {
   url.searchParams.set('entity', 'song')
   url.searchParams.set('limit', '20')
 
+  const headers = PROXY_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
+    ? { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY }
+    : undefined
+
   try {
-    const res = await fetch(url.toString())
+    const res = await fetch(url.toString(), { headers })
     if (!res.ok) return []
     const json = await res.json()
     const tracks = (json.results || []).map((track) => ({
