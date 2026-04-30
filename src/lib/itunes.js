@@ -1,8 +1,10 @@
-// In dev, requests go through the Vite proxy (/itunes → itunes.apple.com)
-// to avoid CORS. In production the iTunes API allows cross-origin directly.
-const BASE = import.meta.env.DEV
-  ? '/itunes'
-  : 'https://itunes.apple.com'
+// In dev, requests go through the Vite proxy (/itunes → itunes.apple.com).
+// In production, use a Supabase Edge Function proxy when VITE_ITUNES_PROXY_URL is set.
+const BASE = import.meta.env.VITE_ITUNES_PROXY_URL
+  ? import.meta.env.VITE_ITUNES_PROXY_URL.replace(/\/$/, '')
+  : import.meta.env.DEV
+    ? '/itunes'
+    : 'https://itunes.apple.com'
 
 // Session-level cache: query string → results array
 const cache = new Map()
