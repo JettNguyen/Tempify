@@ -248,13 +248,20 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
 export async function searchUsers(query) {
   if (!query || query.trim().length < 2) return []
   const q = query.trim().toLowerCase()
+  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.trim()
   const { data } = await supabase
     .from('users')
-    .select('id, username, avatar_icon, avatar_color')
+    .select('id, username, avatar_icon, avatar_color, email, is_subscribed')
     .not('username', 'is', null)
     .or(`username.ilike.%${q}%,email.ilike.%${q}%`)
     .limit(10)
-  return (data || []).filter(u => u.username)
+
+  return (data || [])
+    .filter(u => u.username)
+    .map(u => ({
+      ...u,
+      is_subscribed: Boolean(u.is_subscribed || (adminEmail && u.email?.trim() === adminEmail)),
+    }))
 }
 
 export async function getFollowerProfiles(userId) {

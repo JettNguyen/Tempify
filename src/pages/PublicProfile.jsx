@@ -28,6 +28,13 @@ function fmtTime(s) {
   return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 }
 
+function formatDate(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return dateString
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+}
+
 function avg(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null }
 function minOf(arr) { return arr.length ? Math.min(...arr) : null }
 
@@ -134,13 +141,17 @@ export default function PublicProfile() {
     setLoadingProfile(true)
     setPanel(null)
 
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.trim()
     supabase
       .from('users')
-      .select('id, username, avatar_icon, avatar_color, is_subscribed, leaderboard_visibility')
+      .select('id, username, avatar_icon, avatar_color, email, is_subscribed, leaderboard_visibility')
       .eq('username', username.toLowerCase())
       .maybeSingle()
       .then(async ({ data, error }) => {
         if (error || !data) { setTarget(null); setLoadingProfile(false); return }
+        if (adminEmail && data.email?.trim() === adminEmail) {
+          data.is_subscribed = true
+        }
         setTarget(data)
 
         const [sc, st, followers, followingIds] = await Promise.all([
@@ -371,7 +382,7 @@ export default function PublicProfile() {
                   <span className={`dashboard-score-dot${score.completed ? ' dashboard-score-dot--complete' : ''}`} />
                   <div>
                     <div className="dashboard-score-name">{GAME_NAMES[score.game_slug] || score.game_slug}</div>
-                    <div className="dashboard-score-date">{score.date_played}</div>
+                    <div className="dashboard-score-date">{formatDate(score.date_played)}</div>
                   </div>
                 </div>
                 <span className={`dashboard-score-result${score.completed ? ' dashboard-score-result--win' : ''}`}>

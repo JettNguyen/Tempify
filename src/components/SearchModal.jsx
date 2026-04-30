@@ -65,6 +65,9 @@ export default function SearchModal({ onClose }) {
                 <button key={u.id} className="search-modal__result btn-press" onClick={() => pick(u.username)}>
                   <Avatar iconKey={u.avatar_icon} color={u.avatar_color} initial={u.username?.[0]?.toUpperCase() ?? '?'} size={28} />
                   <span className="search-modal__result-name">@{u.username}</span>
+                  {u.is_subscribed && (
+                    <span className="search-modal__result-badge">Premium</span>
+                  )}
                 </button>
               ))
             )}
