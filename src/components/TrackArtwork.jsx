@@ -11,9 +11,13 @@ export default function TrackArtwork({ title, artist, src, label, size = 'medium
 
     if (src || !title) return
 
-    findArtwork({ title, artist }).then((url) => {
-      if (!cancelled && url) setArtwork(url)
-    })
+    findArtwork({ title, artist })
+      .then((url) => {
+        if (!cancelled && url) setArtwork(url)
+      })
+      .catch(() => {
+        // Keep fallback UI if lookup fails.
+      })
 
     return () => { cancelled = true }
   }, [title, artist, src])

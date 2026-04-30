@@ -1,5 +1,6 @@
 // In dev, requests go through the Vite proxy (/itunes → itunes.apple.com).
-// In production, use a Supabase Edge Function proxy when VITE_ITUNES_PROXY_URL is set.
+// In production, use a Supabase Functions proxy when VITE_ITUNES_PROXY_URL is set.
+// Prefer the public function domain (https://<project>.functions.supabase.co/itunes-proxy).
 const PROXY_URL = import.meta.env.VITE_ITUNES_PROXY_URL
   ? import.meta.env.VITE_ITUNES_PROXY_URL.replace(/\/$/, '')
   : null
@@ -9,8 +10,45 @@ const BASE = PROXY_URL
     ? '/itunes'
     : 'https://itunes.apple.com'
 
-// Session-level cache: query string → results array
 const cache = new Map()
+
+function searchSongsViaJsonp(query, limit = 20) {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return Promise.resolve([])
+  }
+
+  return new Promise((resolve) => {
+    const callbackName = `__tempify_itunes_${Date.now()}_${Math.floor(Math.random() * 100000)}`
+    const script = document.createElement('script')
+    const timeout = window.setTimeout(() => cleanup([]), 5000)
+
+    function cleanup(result) {
+      try {
+        delete window[callbackName]
+      } catch {
+        window[callbackName] = undefined
+      }
+      if (script.parentNode) script.parentNode.removeChild(script)
+      window.clearTimeout(timeout)
+      resolve(result)
+    }
+
+    window[callbackName] = (json) => {
+      cleanup(Array.isArray(json?.results) ? json.results : [])
+    }
+
+    script.onerror = () => cleanup([])
+
+    const url = new URL('https://itunes.apple.com/search')
+    url.searchParams.set('term', query)
+    url.searchParams.set('entity', 'song')
+    url.searchParams.set('limit', String(limit))
+    url.searchParams.set('callback', callbackName)
+    script.src = url.toString()
+
+    document.head.appendChild(script)
+  })
+}
 
 // Map iTunes genre names to our curated GENRES list
 const GENRE_MAP = {
@@ -61,6 +99,7 @@ function stripVariant(title) {
 function deduplicate(tracks) {
   const seen = new Map()
   for (const t of tracks) {
+    if (!t?.title || !t?.artist) continue
     const key = `${stripVariant(t.title).toLowerCase()}|||${t.artist.toLowerCase()}`
     const existing = seen.get(key)
     if (!existing) {
@@ -86,38 +125,66 @@ export async function searchSongs(query) {
   // Fetch more than we need so deduplication still leaves enough results
   const url = new URL(`${BASE}/search`)
   url.searchParams.set('term', query)
+  url.searchParams.set('media', 'music')
   url.searchParams.set('entity', 'song')
   url.searchParams.set('limit', '20')
 
-  const headers = PROXY_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
-    ? { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY }
-    : undefined
+  const toTracks = (resultList) => {
+    const rows = Array.isArray(resultList) ? resultList : []
+    return rows
+      .filter((track) => track?.trackName && track?.artistName)
+      .map((track) => {
+        const rawArtwork = track.artworkUrl100 || track.artworkUrl60 || null
+        return {
+          id: track.trackId,
+          title: track.trackName,
+          artist: track.artistName,
+          album: track.collectionName,
+          year: track.releaseDate ? new Date(track.releaseDate).getFullYear() : null,
+          genre: mapGenre(track.primaryGenreName),
+          previewUrl: track.previewUrl,
+          artworkUrl: rawArtwork ? rawArtwork.replace('100x100bb', '600x600bb') : null,
+          trackViewUrl: track.trackViewUrl,
+        }
+      })
+      .filter((track) => track.artworkUrl)
+  }
 
   try {
-    const res = await fetch(url.toString(), { headers })
-    if (!res.ok) return []
-    const json = await res.json()
-    const tracks = (json.results || []).map((track) => ({
-      id: track.trackId,
-      title: track.trackName,
-      artist: track.artistName,
-      album: track.collectionName,
-      year: track.releaseDate ? new Date(track.releaseDate).getFullYear() : null,
-      genre: mapGenre(track.primaryGenreName),
-      previewUrl: track.previewUrl,
-      artworkUrl: track.artworkUrl100?.replace('100x100bb', '600x600bb') ?? null,
-      trackViewUrl: track.trackViewUrl,
-    }))
-    const results = deduplicate(tracks).slice(0, 8)
-    cache.set(key, results)
-    return results
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 2500)
+    const res = await fetch(url.toString(), { signal: controller.signal })
+    clearTimeout(timeout)
+    if (res.ok) {
+      const json = await res.json()
+      const results = deduplicate(toTracks(json.results)).slice(0, 8)
+      cache.set(key, results)
+      return results
+    }
   } catch {
-    return []
+    // Fall through to JSONP fallback.
   }
+
+  const jsonpResults = await searchSongsViaJsonp(query, 20)
+  const results = deduplicate(toTracks(jsonpResults)).slice(0, 8)
+  cache.set(key, results)
+  return results
 }
 
 export async function findArtwork({ title, artist }) {
-  const query = [title, artist].filter(Boolean).join(' ')
-  const [match] = await searchSongs(query)
-  return match?.artworkUrl ?? null
+  const queries = [
+    [title, artist].filter(Boolean).join(' '),
+    title || '',
+  ].map((q) => q.trim()).filter((q) => q.length >= 2)
+
+  for (const query of queries) {
+    try {
+      const [match] = await searchSongs(query)
+      if (match?.artworkUrl) return match.artworkUrl
+    } catch {
+      // Try the next query form.
+    }
+  }
+
+  return null
 }

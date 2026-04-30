@@ -16,7 +16,9 @@ export default async function handler(req: Request) {
   }
 
   const requestUrl = new URL(req.url)
-  const proxiedPath = requestUrl.pathname.replace(/^\/itunes-proxy/, '') || '/search'
+  const proxiedPath = requestUrl.pathname
+    .replace(/^\/functions\/v1\/itunes-proxy/, '')
+    .replace(/^\/itunes-proxy/, '') || '/search'
   const targetUrl = `https://itunes.apple.com${proxiedPath}${requestUrl.search}`
 
   try {
