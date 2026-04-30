@@ -89,11 +89,14 @@ export async function searchSongs(query) {
   url.searchParams.set('term', query)
   url.searchParams.set('entity', 'song')
   url.searchParams.set('limit', '20')
+  const headers = {}
   if (PROXY_URL && PROXY_KEY) {
-    url.searchParams.set('apikey', PROXY_KEY)
+    headers.Authorization = `Bearer ${PROXY_KEY}`
+    headers.apikey = PROXY_KEY
   }
+
   try {
-    const res = await fetch(url.toString())
+    const res = await fetch(url.toString(), { headers })
     if (!res.ok) return []
     const json = await res.json()
     const tracks = (json.results || []).map((track) => ({
