@@ -26,7 +26,9 @@ export default function Sampled() {
   const [correct, setCorrect] = useState(false)
   const [shuffledOptions, setShuffledOptions] = useState([])
   const [finalTime, setFinalTime] = useState(null)
+  const [shouldAutoplaySample, setShouldAutoplaySample] = useState(false)
   const sourceRef = useRef(null)
+  const sampleRef = useRef(null)
 
   const { stop, display } = useGameTimer(!done, 250, `tempify_game_sampled_${puzzleDate}`)
 
@@ -48,9 +50,16 @@ export default function Sampled() {
       const wasCorrect = completions['sampled']?.completed ?? false
       setChosen(wasCorrect ? puzzle.answer : null)
       setCorrect(wasCorrect)
+      setShouldAutoplaySample(false)
       setDone(true)
     }
   }, [puzzle, completions])
+
+  useEffect(() => {
+    if (!done || !shouldAutoplaySample) return
+    sampleRef.current?.play()
+    setShouldAutoplaySample(false)
+  }, [done, shouldAutoplaySample])
 
   async function handleGuess(option) {
     if (done) return
@@ -61,6 +70,7 @@ export default function Sampled() {
     setChosen(option.title)
     setCorrect(isCorrect)
     setDone(true)
+    setShouldAutoplaySample(Boolean(puzzle.metadata?.sample_audio_url))
     markComplete('sampled', 1)
     if (user) {
       await saveScore({ userId: user.id, gameSlug: 'sampled', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
@@ -131,7 +141,7 @@ export default function Sampled() {
           {puzzle.metadata?.sample_audio_url && (
             <div className="sampled__original">
               <p className="sampled__original-label">The original sample</p>
-              <AudioPlayer src={puzzle.metadata.sample_audio_url} />
+              <AudioPlayer ref={sampleRef} src={puzzle.metadata.sample_audio_url} />
             </div>
           )}
           <ResultCard

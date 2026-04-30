@@ -7,12 +7,18 @@
 .track-artwork--medium {
   width: 100px;
   height: 100px;
+  min-width: 100px;
+  min-height: 100px;
+  flex: 0 0 100px;
   margin-bottom: 1rem;
 }
 
 .track-artwork--small {
   width: 60px;
   height: 60px;
+  min-width: 60px;
+  min-height: 60px;
+  flex: 0 0 60px;
   margin-bottom: 0.75rem;
 }
 
@@ -20,18 +26,29 @@
 .track-artwork__fallback {
   width: 100px;
   height: 100px;
+  min-width: 100px;
+  min-height: 100px;
+  max-width: 100px;
+  max-height: 100px;
   border-radius: 8px;
   border: 1px solid var(--border);
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .track-artwork--small .track-artwork__img,
 .track-artwork--small .track-artwork__fallback {
   width: 60px;
   height: 60px;
+  min-width: 60px;
+  min-height: 60px;
+  max-width: 60px;
+  max-height: 60px;
 }
 
 .track-artwork__img {
+  display: block;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   background: var(--surface);
 }

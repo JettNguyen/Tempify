@@ -16,6 +16,19 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
         setPlaying(false)
       }
     },
+    play() {
+      const audio = audioRef.current
+      if (!audio) return Promise.resolve()
+      onPlay?.()
+      const playPromise = audio.play()
+      setPlaying(true)
+      if (playPromise && typeof playPromise.catch === 'function') {
+        return playPromise.catch(() => {
+          setPlaying(false)
+        })
+      }
+      return Promise.resolve()
+    },
   }))
 
   useEffect(() => {
