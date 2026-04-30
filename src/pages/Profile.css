@@ -130,4 +130,13 @@
   padding: 0;
   background: none;
   border: none;
+  transition: color 0.2s ease;
+}
+
+.profile-signout-btn:hover {
+  color: var(--red);
+}
+
+.profile-signout-btn:active {
+  color: var(--red);
 }
