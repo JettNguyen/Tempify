@@ -23,11 +23,12 @@ export default function Era() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
+  const [hasStarted, setHasStarted] = useState(false)
   const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
   const [finalTime, setFinalTime] = useState(null)
 
-  const { stop, display } = useGameTimer(!done, 250, `tempify_game_era_${puzzleDate}`)
+  const { stop, display } = useGameTimer(hasStarted && !done, 250, `tempify_game_era_${puzzleDate}`)
 
   useEffect(() => {
     getPuzzle('era', dateParam)
@@ -48,7 +49,7 @@ export default function Era() {
   }, [puzzle, completions])
 
   async function handleGuess(decade) {
-    if (done) return
+    if (done || !hasStarted) return
     const elapsed = stop()
     setFinalTime(elapsed)
     const isCorrect = decade === puzzle.answer
@@ -73,10 +74,11 @@ export default function Era() {
       <div className="game-header">
         <p className="game-header__eyebrow">era</p>
         <h1 className="game-header__title">What decade is this song from?</h1>
-        {!done && <p className="game-timer">{display}</p>}
+        {!done && hasStarted && <p className="game-timer">{display}</p>}
+        {!done && !hasStarted && <p className="game-timer">Press play to start timer</p>}
       </div>
 
-      <AudioPlayer src={puzzle.audio_url} />
+      <AudioPlayer src={puzzle.audio_url} onPlay={() => setHasStarted(true)} />
 
       <div className="stagger-list era__decades">
         {DECADES.map((decade) => {
@@ -93,7 +95,7 @@ export default function Era() {
           }
 
           return (
-            <button key={decade} onClick={() => handleGuess(decade)} disabled={done} className={cls}>
+            <button key={decade} onClick={() => handleGuess(decade)} disabled={done || !hasStarted} className={cls}>
               {decade}
             </button>
           )
