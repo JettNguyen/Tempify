@@ -164,12 +164,13 @@ export async function getFollowers(userId) {
 }
 
 export async function isFollowing(followerId, followingId) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('follows')
     .select('id')
     .eq('follower_id', followerId)
     .eq('following_id', followingId)
-    .single()
+    .maybeSingle()
+  if (error) throw error
   return !!data
 }
 

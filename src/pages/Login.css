@@ -79,6 +79,30 @@
   outline: none;
 }
 
+.auth-password-wrap {
+  position: relative;
+}
+
+.auth-password-wrap .auth-input {
+  padding-right: 42px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.auth-password-rules {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: -2px;
+}
+
 .auth-error {
   font-size: 12px;
   color: #ef4444;

@@ -1,43 +1,36 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
-import { checkUsernameAvailable, saveProfileSettings } from '../lib/avatar'
 import './Login.css'
 
 export default function Signup() {
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [username, setUsername] = useState('')
-  const [usernameStatus, setUsernameStatus] = useState(null) // null | 'checking' | 'available' | 'taken' | 'invalid'
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState(null)
   const [sent, setSent]         = useState(false)
-  const debounce = useRef(null)
 
-  function handleUsernameChange(val) {
-    setUsername(val)
-    setUsernameStatus(null)
-    clearTimeout(debounce.current)
-    const trimmed = val.trim().toLowerCase()
-    if (!trimmed) return
-    if (!/^[a-z0-9_]{2,20}$/.test(trimmed)) {
-      setUsernameStatus('invalid')
-      return
-    }
-    setUsernameStatus('checking')
-    debounce.current = setTimeout(async () => {
-      const available = await checkUsernameAvailable(trimmed, 'none')
-      setUsernameStatus(available ? 'available' : 'taken')
-    }, 400)
+  function isPasswordStrong(value) {
+    return value.length >= 8 && /[A-Z]/.test(value) && /[^A-Za-z0-9]/.test(value)
   }
 
   async function handleSignup(e) {
     e.preventDefault()
     setError(null)
 
-    const trimmedUsername = username.trim().toLowerCase()
-    if (!trimmedUsername) { setError('Please choose a username.'); return }
-    if (usernameStatus !== 'available') { setError('Please choose a valid, available username.'); return }
+    if (!isPasswordStrong(password)) {
+      setError('Password must be at least 8 characters and include one uppercase letter and one special character.')
+      return
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
 
     setLoading(true)
     const { data, error: err } = await supabase.auth.signUp({
@@ -45,14 +38,15 @@ export default function Signup() {
       password,
       options: { emailRedirectTo: window.location.origin + import.meta.env.BASE_URL },
     })
-    if (err) { setError(err.message); setLoading(false); return }
-
-    // Save username immediately - works even before email confirmation
-    if (data?.user?.id) {
-      await saveProfileSettings(data.user.id, {
-        username: trimmedUsername,
-        leaderboardVisibility: 'followers',
-      })
+    if (err) {
+      const raw = `${err.message || ''}`.toLowerCase()
+      if (err.status === 429 || raw.includes('rate') || raw.includes('too many')) {
+        setError('Too many signup attempts right now. Please wait a minute and try again.')
+      } else {
+        setError(err.message)
+      }
+      setLoading(false)
+      return
     }
 
     setLoading(false)
@@ -80,13 +74,6 @@ export default function Signup() {
     )
   }
 
-  const usernameHint = {
-    checking:  { text: 'Checking…',   color: 'var(--text-dim)' },
-    available: { text: '✓ Available', color: 'var(--green)' },
-    taken:     { text: '✕ Already taken', color: '#ef4444' },
-    invalid:   { text: '2–20 characters: letters, numbers, underscores only', color: '#ef4444' },
-  }[usernameStatus]
-
   return (
     <div className="auth-page">
       <div className="auth-card">
@@ -107,25 +94,6 @@ export default function Signup() {
         </div>
 
         <form onSubmit={handleSignup} className="auth-form">
-          <div style={{ position: 'relative' }}>
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={e => handleUsernameChange(e.target.value)}
-              required
-              className="auth-input"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-            {usernameHint && (
-              <p style={{ fontSize: '11px', color: usernameHint.color, marginTop: '3px' }}>
-                {usernameHint.text}
-              </p>
-            )}
-          </div>
-
           <input
             type="email"
             placeholder="Email"
@@ -134,19 +102,57 @@ export default function Signup() {
             required
             className="auth-input"
           />
-          <input
-            type="password"
-            placeholder="Password (min 8 characters)"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            minLength={8}
-            required
-            className="auth-input"
-          />
+          <div className="auth-password-wrap">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              minLength={8}
+              required
+              className="auth-input"
+            />
+            <button
+              type="button"
+              className="auth-password-toggle btn-press"
+              onClick={() => setShowPassword(v => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+            </button>
+          </div>
+
+          <div className="auth-password-wrap">
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder="Retype password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              minLength={8}
+              required
+              className="auth-input"
+            />
+            <button
+              type="button"
+              className="auth-password-toggle btn-press"
+              onClick={() => setShowConfirmPassword(v => !v)}
+              aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+            >
+              <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
+            </button>
+          </div>
+
+          <p className="auth-password-rules">
+            Password must be 8+ characters and include one uppercase letter and one special character.
+          </p>
 
           {error && <p className="auth-error">{error}</p>}
 
-          <button type="submit" disabled={loading || usernameStatus !== 'available'} className="auth-submit btn-press">
+          <button
+            type="submit"
+            disabled={loading}
+            className="auth-submit btn-press"
+          >
             {loading ? 'Creating account…' : 'Create account'}
           </button>
         </form>

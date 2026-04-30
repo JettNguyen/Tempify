@@ -138,9 +138,9 @@ export default function PublicProfile() {
       .from('users')
       .select('id, username, avatar_icon, avatar_color, is_subscribed, leaderboard_visibility')
       .eq('username', username.toLowerCase())
-      .single()
-      .then(async ({ data }) => {
-        if (!data) { setTarget(null); setLoadingProfile(false); return }
+      .maybeSingle()
+      .then(async ({ data, error }) => {
+        if (error || !data) { setTarget(null); setLoadingProfile(false); return }
         setTarget(data)
 
         const [sc, st, followers, followingIds] = await Promise.all([
