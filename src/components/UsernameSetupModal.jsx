@@ -8,9 +8,12 @@ export default function UsernameSetupModal() {
   const [username, setUsername] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const providers = user?.app_metadata?.providers || []
+  const provider = user?.app_metadata?.provider
+  const isGoogleAuth = provider === 'google' || providers.includes('google')
 
-  // Only show when logged in with no username set
-  if (!user || !profile || profile.username) return null
+  // Only show for Google auth users who still need a username.
+  if (!user || !profile || profile.username || !isGoogleAuth) return null
 
   async function handleSubmit(e) {
     e.preventDefault()
