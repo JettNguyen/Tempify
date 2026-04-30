@@ -14,7 +14,7 @@ export const GENRES = [
   'K-Pop',
 ]
 
-// Muted pill color per genre — subtle, not rainbow
+// Muted pill color per genre - subtle, not rainbow
 export const GENRE_COLORS = {
   'Pop':        { bg: '#f59e0b18', text: '#f59e0b' },
   'Rock':       { bg: '#ef444418', text: '#f87171' },

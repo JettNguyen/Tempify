@@ -39,7 +39,7 @@ function buildStats(scores, streaks = []) {
   const longestStreak = streaks.reduce((max, s) => Math.max(max, s.longest_streak || 0), 0)
   const oneTryWins = scores.filter(s => s.completed && s.attempts === 1).length
 
-  // Perfect days — all 5 games won on the same date
+  // Perfect days - all 5 games won on the same date
   const byDate = {}
   scores.forEach(s => {
     if (!byDate[s.date_played]) byDate[s.date_played] = []
@@ -50,7 +50,7 @@ function buildStats(scores, streaks = []) {
     return Object.keys(GAME_NAMES).every(g => slugs.has(g))
   }).length
 
-  // Consistency — % of days since first play that they actually played
+  // Consistency - % of days since first play that they actually played
   const sortedDates = [...new Set(scores.map(s => s.date_played))].sort()
   const firstPlay = sortedDates[0]
   const today = new Date().toISOString().split('T')[0]
@@ -92,7 +92,7 @@ function buildStats(scores, streaks = []) {
     .filter(s => s.completed && s.time_seconds != null)
     .reduce((best, s) => (!best || s.time_seconds < best.time) ? { time: s.time_seconds, game: GAME_NAMES[s.game_slug] } : best, null)
 
-  // One Bar mastery — % solved in 1–2 guesses
+  // One Bar mastery - % solved in 1–2 guesses
   const obPlays = scores.filter(s => s.game_slug === 'one-bar')
   const obMastery = obPlays.length
     ? Math.round(obPlays.filter(s => s.completed && s.attempts <= 2).length / obPlays.length * 100)

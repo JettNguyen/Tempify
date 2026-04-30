@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
+import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import AudioPlayer from '../components/AudioPlayer'
@@ -15,6 +16,7 @@ export default function HitOrMiss() {
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
+  const puzzleDate = dateParam || todayEST()
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -24,7 +26,7 @@ export default function HitOrMiss() {
   const [correct, setCorrect] = useState(false)
   const [finalTime, setFinalTime] = useState(null)
 
-  const { stop, display } = useGameTimer(!done)
+  const { stop, display } = useGameTimer(!done, 250, `tempify_game_hit-or-miss_${puzzleDate}`)
 
   useEffect(() => {
     getPuzzle('hit-or-miss', dateParam)
@@ -103,8 +105,8 @@ export default function HitOrMiss() {
               ? `Peak #${puzzle.metadata?.peak_position} (${puzzle.metadata?.year})`
               : `Missed the charts (${puzzle.metadata?.year})`
             : isHit
-              ? `It was a hit — peaked at #${puzzle.metadata?.peak_position} in ${puzzle.metadata?.year}`
-              : `It flopped — never charted (${puzzle.metadata?.year})`
+              ? `It was a hit. It peaked at #${puzzle.metadata?.peak_position} in ${puzzle.metadata?.year}`
+              : `It missed. It never entered the Hot 100 (${puzzle.metadata?.year})`
           }
           detail={puzzle.metadata?.hint}
           emojiGrid={correct ? '🟩' : '⬜'}

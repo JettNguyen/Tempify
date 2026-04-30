@@ -47,7 +47,7 @@ export default function Signup() {
     })
     if (err) { setError(err.message); setLoading(false); return }
 
-    // Save username immediately — works even before email confirmation
+    // Save username immediately - works even before email confirmation
     if (data?.user?.id) {
       await saveProfileSettings(data.user.id, {
         username: trimmedUsername,

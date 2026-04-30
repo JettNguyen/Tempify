@@ -240,11 +240,11 @@ function HitOrMissFields({ f, set }) {
 
   let statusMsg = null
   if (bbStatus === 'hot100') {
-    statusMsg = { text: `Hot 100 — peak #${f.peakPosition}${Number(f.weeksAtOne) > 0 ? `, ${f.weeksAtOne}w at #1` : ''} (edit below if wrong)`, color: 'var(--green)' }
+    statusMsg = { text: `Hot 100 - peak #${f.peakPosition}${Number(f.weeksAtOne) > 0 ? `, ${f.weeksAtOne}w at #1` : ''} (edit below if wrong)`, color: 'var(--green)' }
   } else if (bbStatus === 'bb200') {
-    statusMsg = { text: `Not on Hot 100 — album peaked #${bb200Peak.peak} on Billboard 200${bb200Peak.weeksAtOne > 0 ? `, ${bb200Peak.weeksAtOne}w at #1` : ''} → set as miss`, color: 'var(--amber)' }
+    statusMsg = { text: `Not on Hot 100 - album peaked #${bb200Peak.peak} on Billboard 200${bb200Peak.weeksAtOne > 0 ? `, ${bb200Peak.weeksAtOne}w at #1` : ''} → set as miss`, color: 'var(--amber)' }
   } else if (bbStatus === 'miss') {
-    statusMsg = { text: 'Not found on Hot 100 or Billboard 200 — set as miss or enter manually', color: 'var(--text-dim)' }
+    statusMsg = { text: 'Not found on Hot 100 or Billboard 200 - set as miss or enter manually', color: 'var(--text-dim)' }
   }
 
   return (
@@ -314,7 +314,7 @@ function WhoSampledFields({ f, set, setGenre }) {
     <>
       {/* ── A: The song players hear ── */}
       <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
-        {sectionHead('A — The newer song (players hear this)')}
+        {sectionHead('A - The newer song (players hear this)')}
         <SongSearch
           placeholder="Search iTunes for the newer song…"
           onSelect={song => {
@@ -344,7 +344,7 @@ function WhoSampledFields({ f, set, setGenre }) {
 
       {/* ── B: The original sampled track ── */}
       <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
-        {sectionHead('B — The original sampled track (correct answer)')}
+        {sectionHead('B - The original sampled track (correct answer)')}
         <div style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <a
             href={wsUrl}
@@ -390,7 +390,7 @@ function WhoSampledFields({ f, set, setGenre }) {
 
       {/* ── C: Decoy options ── */}
       <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)' }}>
-        {sectionHead('C — Decoy options (plausible songs from same era)')}
+        {sectionHead('C - Decoy options (plausible songs from same era)')}
         {[
           { n: 2, title: 'opt2Title', artist: 'opt2Artist', audio: 'opt2AudioUrl', artwork: 'opt2ArtworkUrl', itunes: 'opt2ItunesUrl' },
           { n: 3, title: 'opt3Title', artist: 'opt3Artist', audio: 'opt3AudioUrl', artwork: 'opt3ArtworkUrl', itunes: 'opt3ItunesUrl' },
@@ -452,7 +452,7 @@ function EraFields({ f, set }) {
           <Input value={f.year} onChange={handleYear} type="number" />
         </Field>
       </div>
-      <Field label="Correct decade — auto-set from year, or click to override">
+      <Field label="Correct decade - auto-set from year, or click to override">
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {DECADES.map(d => (
             <button key={d} type="button" onClick={() => set('answer', d)} style={{
@@ -556,7 +556,7 @@ function FlipFields({ f, set }) {
   return (
     <>
       <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '1rem' }}>
-        Search iTunes for the cover version — fills title, artist, year, and audio automatically.
+        Search iTunes for the cover version - fills title, artist, year, and audio automatically.
       </p>
 
       {/* The cover song */}
@@ -598,7 +598,7 @@ function FlipFields({ f, set }) {
         </div>
       </div>
 
-      {/* Original song — only if cover */}
+      {/* Original song - only if cover */}
       {f.isCover === 'cover' && (
         <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)' }}>
           <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
@@ -663,7 +663,7 @@ function SongSearch({ onSelect, placeholder = 'Search for a song...' }) {
   return (
     <div ref={wrap} style={{ position: 'relative', marginBottom: '1.25rem' }}>
       <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>
-        Search iTunes — fills in audio URL, title, artist & year automatically
+        Search iTunes - fills in audio URL, title, artist & year automatically
       </p>
       <input
         value={query}
@@ -897,7 +897,7 @@ export default function Admin() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
         <button onClick={() => setWeekOffset(w => w - 1)} style={navBtn}>← prev</button>
         <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-          {fmtDate(startDate)} — {fmtDate(endDate)}
+          {fmtDate(startDate)} - {fmtDate(endDate)}
         </span>
         <button onClick={() => setWeekOffset(w => w + 1)} style={navBtn}>next →</button>
         {weekOffset !== 0 && (
@@ -986,7 +986,7 @@ export default function Admin() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* iTunes search — hidden for sampled and cover-or-not (they have their own search) */}
+            {/* iTunes search - hidden for sampled and cover-or-not (they have their own search) */}
             {form.game !== 'sampled' && form.game !== 'cover-or-not' && (
               <SongSearch onSelect={song => {
                 setForm(f => ({
@@ -1040,7 +1040,7 @@ export default function Admin() {
               </div>
             </Field>
 
-            {/* Audio URL + Answer — common to most games; sampled handles these internally */}
+            {/* Audio URL + Answer - common to most games; sampled handles these internally */}
             {form.game !== 'sampled' && form.game !== 'cover-or-not' && (
               <Field label="Audio URL">
                 <Input value={form.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />

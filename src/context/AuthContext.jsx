@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
       .eq('id', userId)
       .maybeSingle()
 
-    // No row yet — happens when the DB trigger didn't fire (e.g. some OAuth flows).
+    // No row yet - happens when the DB trigger didn't fire (e.g. some OAuth flows).
     // Create the row client-side so the user can immediately set their avatar/username.
     if (!data) {
       const { data: authData } = await supabase.auth.getUser()

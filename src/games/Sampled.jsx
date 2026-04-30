@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
+import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import AudioPlayer from '../components/AudioPlayer'
@@ -15,6 +16,7 @@ export default function Sampled() {
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
+  const puzzleDate = dateParam || todayEST()
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -26,7 +28,7 @@ export default function Sampled() {
   const [finalTime, setFinalTime] = useState(null)
   const sourceRef = useRef(null)
 
-  const { stop, display } = useGameTimer(!done)
+  const { stop, display } = useGameTimer(!done, 250, `tempify_game_sampled_${puzzleDate}`)
 
   useEffect(() => {
     getPuzzle('sampled', dateParam)

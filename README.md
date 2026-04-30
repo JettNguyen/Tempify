@@ -14,7 +14,7 @@ Five music games, new ones each day.
 
 **One Bar**: Name the song with a half-second clip within up to 6 attempts. Every wrong guess unlocks another half a second.
 
-**Hit or Miss**: Did this song ender the Hot 100 or disappear without a trace?
+**Hit or Miss**: Did this song enter the Hot 100 or disappear without a trace?
 
 **Sampled**: Pick which song it sampled from four options.
 

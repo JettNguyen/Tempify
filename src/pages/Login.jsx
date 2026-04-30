@@ -21,7 +21,7 @@ export default function Login() {
 
     let email = identifier.trim()
 
-    // If no @ it's a username — look up the real email
+    // If no @ it's a username - look up the real email
     if (!email.includes('@')) {
       const found = await getEmailByUsername(email)
       if (!found) {

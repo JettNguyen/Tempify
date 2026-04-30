@@ -63,7 +63,7 @@
   display: none;
 }
 
-/* Browse view — game rows */
+/* Browse view - game rows */
 .explore-games {
   display: flex;
   flex-direction: column;

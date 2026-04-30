@@ -4,7 +4,7 @@ const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!url || !key) {
-  console.warn('[Tempify] Supabase env vars missing — auth and data features are disabled.')
+  console.warn('[Tempify] Supabase env vars missing - auth and data features are disabled.')
 }
 
 // Fall back to placeholder values so the app renders without crashing.

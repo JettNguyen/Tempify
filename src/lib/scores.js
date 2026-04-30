@@ -101,7 +101,7 @@ export async function updateStreak(userId, gameSlug, isPremium = false) {
   if (continued) {
     newCurrent = existing.current_streak + 1
   } else {
-    // Gap detected — try auto-freeze for premium users
+    // Gap detected - try auto-freeze for premium users
     const frozen = isPremium ? await consumeFreeze(userId, gameSlug) : false
     newCurrent = frozen ? existing.current_streak + 1 : 1
   }
@@ -194,7 +194,7 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
       .filter(u => u.id === userId || ['followers', 'public'].includes(u.leaderboard_visibility))
       .map(u => u.id)
   } else {
-    // global — users who opted into public
+    // global - users who opted into public
     const { data: users } = await supabase
       .from('users')
       .select('id')

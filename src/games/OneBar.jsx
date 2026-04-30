@@ -137,7 +137,7 @@ export default function OneBar() {
           {attempts.map((a, i) => (
             <div key={i} className="one-bar__guess-row">
               <span className="one-bar__guess-x">✕</span>
-              <span>{a.title} — {a.artist}</span>
+              <span>{a.title} by {a.artist}</span>
             </div>
           ))}
         </div>

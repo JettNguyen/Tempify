@@ -1,4 +1,4 @@
-// Lazy-loaded on first call — only used in the admin panel
+// Lazy-loaded on first call - only used in the admin panel
 let index = null
 let index200 = null
 
@@ -46,7 +46,7 @@ export async function lookupBillboardPeak(title, artist) {
   // Each entry is [normalizedArtist, peak, weeksAtOne]
   let match = entries.find(([a]) => a === normArtist)
     ?? entries.find(([a]) => a.includes(normArtist) || normArtist.includes(a))
-    ?? entries[0] // sorted by peak ascending — best chart result for this title
+    ?? entries[0] // sorted by peak ascending - best chart result for this title
 
   const [, peak, weeksAtOne] = match
   return { peak, weeksAtOne }

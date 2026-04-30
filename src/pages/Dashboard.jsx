@@ -120,7 +120,7 @@ export default function Dashboard() {
         {dataLoading ? <div className="dashboard-streak-placeholder" /> : <StreakDisplay streaks={streaks} />}
       </section>
 
-      {/* Stats — gated for non-premium */}
+      {/* Stats - gated for non-premium */}
       <section className="dashboard-section">
         <p className="dashboard-section-label">stats</p>
         {dataLoading ? (
