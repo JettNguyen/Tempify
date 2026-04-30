@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
 import './Login.css'
 
 export default function Signup() {
+  const navigate = useNavigate()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -13,7 +14,6 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState(null)
-  const [sent, setSent]         = useState(false)
 
   function isPasswordStrong(value) {
     return value.length >= 8 && /[A-Z]/.test(value) && /[^A-Za-z0-9]/.test(value)
@@ -50,7 +50,7 @@ export default function Signup() {
     }
 
     setLoading(false)
-    setSent(true)
+    navigate('/', { replace: true })
   }
 
   async function handleGoogleSignup() {
@@ -58,20 +58,6 @@ export default function Signup() {
       provider: 'google',
       options: { redirectTo: window.location.origin + import.meta.env.BASE_URL },
     })
-  }
-
-  if (sent) {
-    return (
-      <div className="auth-page">
-        <div className="auth-sent">
-          <div className="auth-sent-icon">✉️</div>
-          <h2 className="auth-sent-title">Check your email</h2>
-          <p className="auth-sent-body">
-            We sent a confirmation link to <strong style={{ color: 'var(--text-primary)' }}>{email}</strong>
-          </p>
-        </div>
-      </div>
-    )
   }
 
   return (
