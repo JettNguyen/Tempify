@@ -5,24 +5,23 @@ import { useAuth } from '../hooks/useAuth'
 import { AVATAR_ICONS, AVATAR_COLORS, saveAvatar, saveProfileSettings, checkUsernameAvailable } from '../lib/avatar'
 import Avatar from '../components/Avatar'
 import './Profile.css'
+import './Dashboard.css'
 
 const VISIBILITY_OPTIONS = [
-  { value: 'public',    label: 'Public',          desc: 'Anyone can see your scores on the global leaderboard', premium: true },
-  { value: 'followers', label: 'Followers only',  desc: 'Only people you follow can see your scores', premium: false },
-  { value: 'nobody',    label: 'Private',         desc: 'Your scores never appear on any leaderboard', premium: false },
+  { value: 'public',    label: 'Public',         desc: 'Anyone can see your scores on the global leaderboard', premium: true },
+  { value: 'followers', label: 'Followers only', desc: 'Only people you follow can see your scores', premium: false },
+  { value: 'nobody',    label: 'Private',        desc: 'Your scores never appear on any leaderboard', premium: false },
 ]
 
 export default function Profile() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth()
   const navigate = useNavigate()
 
-  // Avatar state
   const [selectedIcon, setSelectedIcon] = useState(null)
   const [selectedColor, setSelectedColor] = useState(AVATAR_COLORS[0].hex)
   const [savingAvatar, setSavingAvatar] = useState(false)
   const [savedAvatar, setSavedAvatar] = useState(false)
 
-  // Profile settings state
   const [username, setUsername] = useState('')
   const [visibility, setVisibility] = useState('followers')
   const [usernameError, setUsernameError] = useState('')
@@ -63,15 +62,12 @@ export default function Profile() {
       await refreshProfile()
       setSavedAvatar(true)
       setTimeout(() => setSavedAvatar(false), 2000)
-    } finally {
-      setSavingAvatar(false)
-    }
+    } finally { setSavingAvatar(false) }
   }
 
   async function handleSaveSettings() {
     if (!settingsDirty || savingSettings) return
     setUsernameError('')
-
     const trimmed = username.trim().toLowerCase()
     if (trimmed && !/^[a-z0-9_]{2,20}$/.test(trimmed)) {
       setUsernameError('Username must be 2–20 characters: letters, numbers, underscores only.')
@@ -79,21 +75,15 @@ export default function Profile() {
     }
     if (trimmed && trimmed !== profile?.username) {
       const available = await checkUsernameAvailable(trimmed, user.id)
-      if (!available) {
-        setUsernameError('That username is already taken.')
-        return
-      }
+      if (!available) { setUsernameError('That username is already taken.'); return }
     }
-
     setSavingSettings(true)
     try {
       await saveProfileSettings(user.id, { username: trimmed || null, leaderboardVisibility: visibility })
       await refreshProfile()
       setSavedSettings(true)
       setTimeout(() => setSavedSettings(false), 2000)
-    } finally {
-      setSavingSettings(false)
-    }
+    } finally { setSavingSettings(false) }
   }
 
   async function handleSignOut() {
@@ -103,27 +93,21 @@ export default function Profile() {
 
   return (
     <div className="page-shell-narrow">
-      <Link to="/dashboard" className="profile-back">← Dashboard</Link>
-
+      {/* Header */}
       <div className="profile-header">
-        <Avatar iconKey={selectedIcon} color={selectedColor} initial={initial} size={64} />
-        <div>
+        <Avatar iconKey={selectedIcon} color={selectedColor} initial={initial} size={56} />
+        <div style={{ flex: 1 }}>
           <div className="profile-email">{profile?.username ? `@${profile.username}` : (profile?.email || user.email)}</div>
           <span className={`profile-badge${isSubscribed ? ' profile-badge--subscribed' : ''}`}>
-            {isSubscribed ? 'Subscribed' : 'Free plan'}
+            {isSubscribed ? 'Premium' : 'Free plan'}
           </span>
         </div>
-      </div>
-
-      {/* Public profile link */}
-      {profile?.username && (
-        <p style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '1.5rem' }}>
-          Your public profile:{' '}
-          <Link to={`/u/${profile.username}`} style={{ color: 'var(--amber)' }}>
-            /u/{profile.username}
+        {profile?.username && (
+          <Link to={`/u/${profile.username}`} style={{ fontSize: '12px', color: 'var(--amber)', whiteSpace: 'nowrap' }}>
+            My profile →
           </Link>
-        </p>
-      )}
+        )}
+      </div>
 
       {/* Username + leaderboard settings */}
       <div className="profile-section">
@@ -142,9 +126,7 @@ export default function Profile() {
               fontSize: '13px', outline: 'none',
             }}
           />
-          {usernameError && (
-            <p style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>{usernameError}</p>
-          )}
+          {usernameError && <p style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>{usernameError}</p>}
           <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '4px' }}>
             Letters, numbers, underscores. Used for your public profile URL.
           </p>
@@ -156,19 +138,14 @@ export default function Profile() {
             const locked = opt.premium && !isSubscribed
             const active = visibility === opt.value
             return (
-              <button
-                key={opt.value}
-                type="button"
-                disabled={locked}
+              <button key={opt.value} type="button" disabled={locked}
                 onClick={() => !locked && setVisibility(opt.value)}
                 style={{
                   textAlign: 'left', padding: '10px 12px', borderRadius: '8px',
                   border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
                   background: active ? 'var(--amber-glow)' : 'transparent',
-                  cursor: locked ? 'not-allowed' : 'pointer',
-                  opacity: locked ? 0.4 : 1,
-                }}
-              >
+                  cursor: locked ? 'not-allowed' : 'pointer', opacity: locked ? 0.4 : 1,
+                }}>
                 <div style={{ fontSize: '13px', color: active ? 'var(--amber)' : 'var(--text-primary)', fontWeight: 500 }}>
                   {opt.label}
                   {opt.premium && !isSubscribed && <span style={{ fontSize: '10px', marginLeft: '6px', color: 'var(--amber)' }}>Premium</span>}
@@ -179,64 +156,61 @@ export default function Profile() {
           })}
         </div>
 
-        <button
-          onClick={handleSaveSettings}
-          disabled={!settingsDirty || savingSettings}
-          className={`profile-save-btn btn-press${settingsDirty ? ' profile-save-btn--dirty' : ''}`}
-        >
+        <button onClick={handleSaveSettings} disabled={!settingsDirty || savingSettings}
+          className={`profile-save-btn btn-press${settingsDirty ? ' profile-save-btn--dirty' : ''}`}>
           {savedSettings ? 'Saved' : savingSettings ? 'Saving…' : 'Save profile settings'}
         </button>
       </div>
 
       {/* Avatar */}
       <div className="profile-section">
-        <p className="profile-section-label">your avatar</p>
-
+        <p className="profile-section-label">avatar</p>
         <p className="profile-picker-label">icon</p>
         <div className="profile-icon-grid">
           {AVATAR_ICONS.map(({ key, icon, label }) => {
             const active = selectedIcon === key
             return (
-              <button
-                key={key}
-                onClick={() => setSelectedIcon(key)}
-                title={label}
-                className={`profile-icon-btn btn-press${active ? ' profile-icon-btn--active' : ''}`}
-              >
+              <button key={key} onClick={() => setSelectedIcon(key)} title={label}
+                className={`profile-icon-btn btn-press${active ? ' profile-icon-btn--active' : ''}`}>
                 <FontAwesomeIcon icon={icon} className={`profile-icon${active ? ' profile-icon--active' : ''}`} />
               </button>
             )
           })}
         </div>
-
         <p className="profile-picker-label">color</p>
         <div className="profile-color-row">
           {AVATAR_COLORS.map(({ hex, label }) => {
             const active = selectedColor === hex
             return (
-              <button
-                key={hex}
-                onClick={() => setSelectedColor(hex)}
-                title={label}
-                className="btn-press"
+              <button key={hex} onClick={() => setSelectedColor(hex)} title={label} className="btn-press"
                 style={{
-                  width: '28px', height: '28px', borderRadius: '50%',
-                  background: hex, border: 'none', cursor: 'pointer',
+                  width: '28px', height: '28px', borderRadius: '50%', background: hex,
+                  border: 'none', cursor: 'pointer',
                   boxShadow: active ? `0 0 0 2px var(--bg), 0 0 0 4px ${hex}` : 'none',
                   transition: 'box-shadow 80ms ease',
-                }}
-              />
+                }} />
             )
           })}
         </div>
-
-        <button
-          onClick={handleSaveAvatar}
-          disabled={!avatarDirty || savingAvatar}
-          className={`profile-save-btn btn-press${avatarDirty ? ' profile-save-btn--dirty' : ''}`}
-        >
+        <button onClick={handleSaveAvatar} disabled={!avatarDirty || savingAvatar}
+          className={`profile-save-btn btn-press${avatarDirty ? ' profile-save-btn--dirty' : ''}`}>
           {savedAvatar ? 'Saved' : savingAvatar ? 'Saving…' : 'Save avatar'}
         </button>
+      </div>
+
+      {/* Billing */}
+      <div className="profile-section">
+        {isSubscribed ? (
+          <a href={import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_URL} className="dashboard-billing-link">
+            Manage billing
+          </a>
+        ) : (
+          <div className="dashboard-upsell">
+            <p className="dashboard-upsell-title">Unlock the archive</p>
+            <p className="dashboard-upsell-body">Play every past day and keep your streaks alive across all games.</p>
+            <Link to="/subscribe" className="dashboard-upsell-btn btn-press">See plans</Link>
+          </div>
+        )}
       </div>
 
       <div className="profile-signout-section">

@@ -22,24 +22,94 @@ const GAME_NAMES = {
 
 function pct(v) { return `${Math.round(v * 100)}%` }
 
-function buildStats(scores) {
+function fmtTime(s) {
+  if (s == null) return null
+  if (s < 60) return `${s.toFixed(1)}s`
+  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
+}
+
+function avg(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null }
+function minOf(arr) { return arr.length ? Math.min(...arr) : null }
+
+function buildStats(scores, streaks = []) {
+  if (!scores.length) return null
+
   const wins = scores.filter(s => s.completed)
+  const uniqueDays = new Set(scores.map(s => s.date_played)).size
+  const longestStreak = streaks.reduce((max, s) => Math.max(max, s.longest_streak || 0), 0)
+  const oneTryWins = scores.filter(s => s.completed && s.attempts === 1).length
+
+  // Perfect days — all 5 games won on the same date
+  const byDate = {}
+  scores.forEach(s => {
+    if (!byDate[s.date_played]) byDate[s.date_played] = []
+    byDate[s.date_played].push(s)
+  })
+  const perfectDays = Object.values(byDate).filter(day => {
+    const slugs = new Set(day.filter(s => s.completed).map(s => s.game_slug))
+    return Object.keys(GAME_NAMES).every(g => slugs.has(g))
+  }).length
+
+  // Consistency — % of days since first play that they actually played
+  const sortedDates = [...new Set(scores.map(s => s.date_played))].sort()
+  const firstPlay = sortedDates[0]
+  const today = new Date().toISOString().split('T')[0]
+  const totalDaysSinceFirst = firstPlay
+    ? Math.max(1, Math.round((new Date(today) - new Date(firstPlay)) / 86400000) + 1)
+    : 1
+  const consistency = Math.round((uniqueDays / totalDaysSinceFirst) * 100)
+
+  // Per-game stats
   const byGame = Object.keys(GAME_NAMES).map(slug => {
     const plays = scores.filter(s => s.game_slug === slug)
     const w = plays.filter(s => s.completed)
-    return { slug, name: GAME_NAMES[slug], plays: plays.length, wins: w.length, winRate: plays.length ? w.length / plays.length : 0 }
+    const allAttempts = plays.map(s => s.attempts).filter(Boolean)
+    const winAttempts = w.map(s => s.attempts).filter(Boolean)
+    const winTimes = w.filter(s => s.time_seconds != null).map(s => s.time_seconds)
+    const allTimes = plays.filter(s => s.time_seconds != null).map(s => s.time_seconds)
+
+    const avgAttempts = avg(allAttempts)
+    const bestAttempts = minOf(winAttempts)   // fewest guesses on a win
+    const avgTime = avg(allTimes)
+    const bestTime = minOf(winTimes)          // fastest winning time
+    const oneTryRate = plays.length ? plays.filter(s => s.completed && s.attempts === 1).length / plays.length : 0
+    const sub10sRate = winTimes.length ? winTimes.filter(t => t < 10).length / winTimes.length : 0
+
+    return {
+      slug, name: GAME_NAMES[slug],
+      plays: plays.length, wins: w.length,
+      winRate: plays.length ? w.length / plays.length : 0,
+      avgAttempts, bestAttempts, avgTime, bestTime,
+      oneTryRate, sub10sRate,
+    }
   })
+
+  const activeGames = byGame.filter(g => g.plays > 0)
+  const bestGame = [...activeGames].sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)[0]
+
+  // Fastest single win across all timed games
+  const fastestWin = scores
+    .filter(s => s.completed && s.time_seconds != null)
+    .reduce((best, s) => (!best || s.time_seconds < best.time) ? { time: s.time_seconds, game: GAME_NAMES[s.game_slug] } : best, null)
+
+  // One Bar mastery — % solved in 1–2 guesses
+  const obPlays = scores.filter(s => s.game_slug === 'one-bar')
+  const obMastery = obPlays.length
+    ? Math.round(obPlays.filter(s => s.completed && s.attempts <= 2).length / obPlays.length * 100)
+    : null
+
   return {
     plays: scores.length, wins: wins.length,
     winRate: scores.length ? wins.length / scores.length : 0,
-    uniqueDays: new Set(scores.map(s => s.date_played)).size,
+    uniqueDays, oneTryWins, longestStreak, bestGame,
+    perfectDays, consistency, fastestWin, obMastery,
     byGame,
   }
 }
 
 export default function PublicProfile() {
   const { username } = useParams()
-  const { user } = useAuth()
+  const { user, profile: myProfile } = useAuth()
 
   const [target, setTarget] = useState(null)
   const [scores, setScores] = useState([])
@@ -56,7 +126,8 @@ export default function PublicProfile() {
   const [panelLoading, setPanelLoading] = useState(false)
 
   const isMe = user && target && user.id === target.id
-  const isTargetPremium = target?.is_subscribed
+  // For isMe, use AuthContext's profile which has the admin-email override applied
+  const isTargetPremium = isMe ? myProfile?.is_subscribed : target?.is_subscribed
 
   useEffect(() => {
     if (!username) return
@@ -132,7 +203,7 @@ export default function PublicProfile() {
     </Shell>
   )
 
-  const stats = buildStats(scores)
+  const stats = buildStats(scores, streaks)
 
   return (
     <Shell>
@@ -142,7 +213,17 @@ export default function PublicProfile() {
       <div className="pubprofile__header">
         <Avatar iconKey={target.avatar_icon} color={target.avatar_color} initial={target.username?.[0]?.toUpperCase() ?? '?'} size={56} />
         <div className="pubprofile__info">
-          <h1 className="pubprofile__name">@{target.username}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <h1 className="pubprofile__name">@{target.username}</h1>
+            {isTargetPremium && (
+              <span style={{
+                fontSize: '10px', fontWeight: 600, letterSpacing: '0.06em',
+                textTransform: 'uppercase', color: '#0f0f0f',
+                background: 'var(--amber)', borderRadius: '999px',
+                padding: '2px 8px', lineHeight: 1.6, flexShrink: 0,
+              }}>Premium</span>
+            )}
+          </div>
           <div className="pubprofile__meta">
             <button className="pubprofile__meta-btn" onClick={() => openPanel('followers')}>
               <strong>{followerCount}</strong> follower{followerCount !== 1 ? 's' : ''}
@@ -202,38 +283,71 @@ export default function PublicProfile() {
       {/* Stats */}
       <section className="dashboard-section">
         <p className="dashboard-section-label">stats</p>
+
+        {/* Always-visible basics */}
+        <div className="dashboard-stat-grid" style={{ marginBottom: '1rem' }}>
+          <StatCard label="Win rate"    value={pct(stats?.winRate ?? 0)}  detail={`${stats?.wins ?? 0} of ${stats?.plays ?? 0} played`} />
+          <StatCard label="Days played" value={stats?.uniqueDays ?? 0}     detail="Unique puzzle days" />
+        </div>
+
         {!isTargetPremium ? (
-          <div className="pubprofile__locked">
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              Win rate: <strong style={{ color: 'var(--text-primary)' }}>{pct(stats.winRate)}</strong>
-              {'  '}·{'  '}
-              Games played: <strong style={{ color: 'var(--text-primary)' }}>{stats.plays}</strong>
-            </p>
-            <p style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
-              Detailed stats are only visible for premium members.
-            </p>
+          <div className="pubprofile__premium-lock">
+            <span className="pubprofile__lock-icon">🔒</span>
+            <div>
+              <p style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500, marginBottom: '2px' }}>
+                Premium stats locked
+              </p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                Detailed stats are exclusive to premium members.
+              </p>
+            </div>
           </div>
+        ) : !stats ? (
+          <p style={{ fontSize: '13px', color: 'var(--text-dim)' }}>No games played yet.</p>
         ) : (
           <>
-            <div className="dashboard-stat-grid">
-              <StatCard label="Win rate" value={pct(stats.winRate)} detail={`${stats.wins}/${stats.plays} won`} />
-              <StatCard label="Days played" value={stats.uniqueDays} detail="Unique days" />
+            {/* Premium-exclusive stat cards */}
+            <p className="pubprofile__premium-label">★ Premium</p>
+            <div className="dashboard-stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '1.25rem' }}>
+              <StatCard label="First-try wins"   value={stats.oneTryWins}                         detail="Correct on first guess" highlight={stats.oneTryWins > 0} />
+              <StatCard label="Best streak"      value={`${stats.longestStreak}d`}                 detail={stats.bestGame ? `Best in ${stats.bestGame.name}` : 'Keep playing'} highlight={stats.longestStreak >= 7} />
+              <StatCard label="Perfect days"     value={stats.perfectDays}                         detail="All 5 games won" highlight={stats.perfectDays > 0} />
+              <StatCard label="Consistency"      value={`${stats.consistency}%`}                   detail="Days played since first game" highlight={stats.consistency >= 50} />
+              <StatCard label="One Bar mastery"  value={stats.obMastery != null ? `${stats.obMastery}%` : '—'} detail="Solved in ≤2 guesses" highlight={stats.obMastery >= 50} />
+              <StatCard label="Speed record"     value={stats.fastestWin ? fmtTime(stats.fastestWin.time) : '—'} detail={stats.fastestWin ? `in ${stats.fastestWin.game}` : 'No timed wins yet'} highlight={!!stats.fastestWin} />
             </div>
+
+            {/* Per-game breakdown */}
             <div className="dashboard-game-stats">
-              {stats.byGame.filter(g => g.plays > 0).map(game => (
-                <div key={game.slug} className="dashboard-game-stat">
-                  <div className="dashboard-game-stat__top">
-                    <span>{game.name}</span>
-                    <strong>{pct(game.winRate)}</strong>
+              {stats.byGame.filter(g => g.plays > 0).map(game => {
+                const isOneBar = game.slug === 'one-bar'
+                return (
+                  <div key={game.slug} className="dashboard-game-stat">
+                    <div className="dashboard-game-stat__top">
+                      <span>{game.name}</span>
+                      <strong>{pct(game.winRate)}</strong>
+                    </div>
+                    <div className="dashboard-game-stat__bar">
+                      <span style={{ width: `${game.winRate * 100}%` }} />
+                    </div>
+                    <div className="dashboard-game-stat__meta">
+                      <span>{game.wins}/{game.plays} wins</span>
+                      {isOneBar ? (
+                        <span>
+                          {game.avgAttempts != null ? `${game.avgAttempts.toFixed(1)} avg · ` : ''}
+                          {game.bestAttempts != null ? `best ${game.bestAttempts} · ` : ''}
+                          {`${Math.round(game.oneTryRate * 100)}% first-try`}
+                        </span>
+                      ) : (
+                        <span>
+                          {game.avgTime != null ? `avg ${fmtTime(game.avgTime)}` : ''}
+                          {game.bestTime != null ? ` · best ${fmtTime(game.bestTime)}` : ''}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="dashboard-game-stat__bar">
-                    <span style={{ width: `${game.winRate * 100}%` }} />
-                  </div>
-                  <div className="dashboard-game-stat__meta">
-                    <span>{game.wins}/{game.plays} wins</span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </>
         )}
@@ -267,11 +381,13 @@ export default function PublicProfile() {
 
 function Shell({ children }) { return <div className="page-shell-wide">{children}</div> }
 
-function StatCard({ label, value, detail }) {
+function StatCard({ label, value, detail, highlight }) {
   return (
     <div className="dashboard-stat-card">
       <p className="dashboard-stat-card__label">{label}</p>
-      <p className="dashboard-stat-card__value">{value}</p>
+      <p className={"dashboard-stat-card__value" + (highlight ? ' dashboard-stat-card__value--highlight' : '')}>
+        {value}
+      </p>
       <p className="dashboard-stat-card__detail">{detail}</p>
     </div>
   )

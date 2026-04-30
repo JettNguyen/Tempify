@@ -63,6 +63,18 @@
   }
 }
 
+@media (max-width: 480px) {
+  .navbar__links {
+    gap: 0.6rem;
+  }
+}
+
+@media (max-width: 340px) {
+  .navbar__wordmark {
+    display: none;
+  }
+}
+
 .navbar__signup {
   background: var(--amber);
   color: #0f0f0f;

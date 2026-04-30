@@ -26,6 +26,8 @@
   color: var(--text-primary);
   font-weight: 500;
   margin-bottom: 2px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .result-card__answer-row {
@@ -86,11 +88,16 @@
 }
 
 @media (max-width: 420px) {
+  .result-card {
+    padding: 1.1rem;
+  }
+  .result-card__answer {
+    font-size: 16px;
+  }
   .result-card__actions {
     align-items: stretch;
     flex-direction: column-reverse;
   }
-
   .result-card__next,
   .result-card__actions .share-btn {
     width: 100%;

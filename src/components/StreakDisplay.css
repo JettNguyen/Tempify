@@ -1,14 +1,10 @@
 .streak-card {
-  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 0.85rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-}
-
-.streak-card__label {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 0.35rem;
 }
 
 .streak-card__value {
@@ -16,8 +12,15 @@
   font-weight: 500;
   color: var(--text-dim);
   line-height: 1;
+  margin-bottom: 0.35rem;
 }
 
 .streak-card__value--active {
   color: var(--amber);
+}
+
+.streak-card__label {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.3;
 }

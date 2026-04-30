@@ -193,10 +193,26 @@ input, textarea {
   transition: background-color 0.2s ease;
 }
 
-/* Navbar text links — base for underline animation */
+/* Navbar text links */
 .nav-link {
   position: relative;
   transition: color 0.2s ease;
+}
+
+/* Underline indicator — visible on all devices for active state */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.2s ease;
+}
+
+.navbar__link--active::after {
+  width: 100%;
 }
 
 /* ================================
@@ -230,27 +246,12 @@ input, textarea {
     box-shadow: 0 0 0 8px var(--amber-glow);
   }
 
-  /* Underline slides in from the left on hover */
-  .nav-link::after {
-    content: '';
-    position: absolute;
-    bottom: -3px;
-    left: 0;
-    width: 0;
-    height: 1px;
-    background: currentColor;
-    transition: width 0.2s ease;
-  }
-
+  /* Underline slides in on hover (animation only for pointer devices) */
   .nav-link:hover {
     color: var(--text-primary) !important;
   }
 
   .nav-link:hover::after {
-    width: 100%;
-  }
-
-  .navbar__link--active::after {
     width: 100%;
   }
 
@@ -293,12 +294,7 @@ input, textarea {
   gap: 0.75rem;
 }
 
-@media (max-width: 500px) {
-  .home-grid-mid,
-  .home-grid-bot {
-    grid-template-columns: 1fr;
-  }
-}
+/* Grid stays 2-column on all sizes — tiles compact themselves instead */
 
 /* Prevent iOS from zooming in on input focus */
 @media (max-width: 640px) {
@@ -374,15 +370,11 @@ input, textarea {
   line-height: 1.4;
 }
 
-/* Streak row — wrap gracefully on very small screens */
+/* Streak row — always 5 equal columns, shrinks with screen width */
 .streak-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.streak-row > * {
-  flex: 1;
-  min-width: 70px;
 }
 
 /* Live game timer shown while playing */
@@ -397,4 +389,43 @@ input, textarea {
 .result-card__time {
   color: var(--text-muted);
   font-weight: 400;
+}
+
+/* ================================
+   MOBILE — narrow screen fixes
+   ================================ */
+
+@media (max-width: 400px) {
+  /* Tighter page padding */
+  .page-shell,
+  .page-shell-wide,
+  .page-shell-narrow,
+  .page-shell-admin {
+    padding-left: max(0.9rem, env(safe-area-inset-left));
+    padding-right: max(0.9rem, env(safe-area-inset-right));
+  }
+
+  /* Smaller game header title */
+  .game-header__title {
+    font-size: 17px;
+  }
+
+  /* Compact streak cards */
+  .streak-card {
+    padding: 0.55rem 0.5rem;
+  }
+  .streak-card__value {
+    font-size: 18px;
+  }
+  .streak-card__label {
+    font-size: 10px;
+  }
+
+  /* Stat grid stays 2-col but tighter */
+  .dashboard-stat-card {
+    padding: 0.7rem 0.75rem;
+  }
+  .dashboard-stat-card__value {
+    font-size: 18px;
+  }
 }

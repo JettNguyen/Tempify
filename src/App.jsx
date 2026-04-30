@@ -3,7 +3,6 @@ import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import UsernameSetupModal from './components/UsernameSetupModal'
 import Home from './pages/Home'
-import Dashboard from './pages/Dashboard'
 import Archive from './pages/Archive'
 import ArchiveDay from './pages/ArchiveDay'
 import Explore from './pages/Explore'
@@ -33,7 +32,7 @@ export default function App() {
           <Route path="/game/sampled" element={<Sampled />} />
           <Route path="/game/era" element={<Era />} />
           <Route path="/game/cover-or-not" element={<CoverOrNot />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
           <Route path="/archive" element={<Archive />} />
           <Route path="/archive/:date" element={<ArchiveDay />} />
           <Route path="/explore" element={<Explore />} />
