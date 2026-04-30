@@ -50,6 +50,7 @@ export default function Home() {
 
       <div style={{ marginBottom: '0.75rem' }}>
         <GameTile
+          slug={featured.slug}
           name={featured.name}
           description={featured.description}
           path={featured.path}
@@ -63,6 +64,7 @@ export default function Home() {
         {middle.map((game) => (
           <GameTile
             key={game.slug}
+            slug={game.slug}
             name={game.name}
             description={game.description}
             path={game.path}
@@ -76,6 +78,7 @@ export default function Home() {
         {bottom.map((game) => (
           <GameTile
             key={game.slug}
+            slug={game.slug}
             name={game.name}
             description={game.description}
             path={game.path}

@@ -1,7 +1,7 @@
 .game-tile {
   display: block;
   position: relative;
-  border: 1px solid var(--border);
+  border: 2px solid var(--game-color);
   border-radius: 10px;
   overflow: hidden;
   padding: 1.5rem;
@@ -55,7 +55,7 @@
   display: inline-block;
   flex-shrink: 0;
   margin-top: 4px;
-  background: var(--amber);
+  background: var(--game-color);
 }
 
 .game-tile__dot--complete {
@@ -75,10 +75,14 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--amber);
+  color: var(--game-color);
   padding: 6px 14px;
-  border: 1px solid var(--amber);
+  border: 1px solid var(--game-color);
   border-radius: 999px;
+}
+
+.game-tile__play-badge svg {
+  fill: var(--game-color);
 }
 
 .game-tile__genre-pill {

@@ -38,9 +38,7 @@ export default function Navbar() {
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
               </button>
-              {isSubscribed && (
-                <Link to="/explore" className={linkClass('/explore')}>Explore</Link>
-              )}
+              <Link to="/explore" className={linkClass('/explore')}>Explore</Link>
               {isAdmin && (
                 <Link to="/admin" className={`${linkClass('/admin')} navbar__link--admin`}>Admin</Link>
               )}

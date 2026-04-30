@@ -154,7 +154,7 @@ export default function Dashboard() {
 
             <div className="dashboard-game-stats">
               {stats.byGame.map(game => (
-                <div key={game.slug} className="dashboard-game-stat">
+                <div key={game.slug} className={`dashboard-game-stat dashboard-game-stat--${game.slug}`}>
                   <div className="dashboard-game-stat__top">
                     <span>{game.name}</span>
                     <strong>{game.plays ? pct(game.winRate) : '--'}</strong>

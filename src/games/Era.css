@@ -31,7 +31,7 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: color 150ms ease, border-color 150ms ease;
+  transition: color 0.2s ease, border-color 0.2s ease;
 }
 
 .era__decade-btn--answer {

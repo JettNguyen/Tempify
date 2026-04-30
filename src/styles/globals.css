@@ -14,6 +14,46 @@
   --text-primary: #fcfcfc;
   --text-muted: #a0a0a0;
   --text-dim: #555555;
+
+  /* Game brand colors */
+  --game-one-bar: #f59e0b;
+  --game-hit-or-miss: #3b82f6;
+  --game-sampled: #a855f7;
+  --game-era: #14b8a6;
+  --game-cover-or-not: #f97316;
+
+  /* Game brand color glows */
+  --game-one-bar-glow: #f59e0b2f;
+  --game-hit-or-miss-glow: #3b82f62f;
+  --game-sampled-glow: #a855f72f;
+  --game-era-glow: #14b8a62f;
+  --game-cover-or-not-glow: #f973162f;
+}
+
+/* Shared game color utilities */
+.game-theme--one-bar {
+  --game-color: var(--game-one-bar);
+  --game-color-glow: var(--game-one-bar-glow);
+}
+
+.game-theme--hit-or-miss {
+  --game-color: var(--game-hit-or-miss);
+  --game-color-glow: var(--game-hit-or-miss-glow);
+}
+
+.game-theme--sampled {
+  --game-color: var(--game-sampled);
+  --game-color-glow: var(--game-sampled-glow);
+}
+
+.game-theme--era {
+  --game-color: var(--game-era);
+  --game-color-glow: var(--game-era-glow);
+}
+
+.game-theme--cover-or-not {
+  --game-color: var(--game-cover-or-not);
+  --game-color-glow: var(--game-cover-or-not-glow);
 }
 
 *, *::before, *::after {

@@ -2,13 +2,13 @@ import { Link } from 'react-router-dom'
 import { GENRE_COLORS } from '../lib/genres'
 import './GameTile.css'
 
-export default function GameTile({ name, description, path, complete, featured, genre }) {
+export default function GameTile({ slug, name, description, path, complete, featured, genre }) {
   const genreStyle = genre && GENRE_COLORS[genre]
 
   return (
     <Link
       to={path}
-      className={`game-tile card-hover btn-press${featured ? ' game-tile--featured' : ''}`}
+      className={`game-tile card-hover btn-press game-theme--${slug}${featured ? ' game-tile--featured' : ''}`}
     >
       {featured && (
         <svg

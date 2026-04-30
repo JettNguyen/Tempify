@@ -4,7 +4,7 @@
   padding: 7px 14px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  transition: color 100ms ease;
+  transition: color 0.2s ease;
 }
 
 .share-btn--copied {

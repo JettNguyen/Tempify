@@ -100,6 +100,32 @@
   padding: 0.9rem 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
+  background: linear-gradient(180deg, var(--game-color-glow, transparent) 0%, transparent 100%);
+}
+
+.dashboard-game-stat--one-bar {
+  --game-color: var(--game-one-bar);
+  --game-color-glow: var(--game-one-bar-glow);
+}
+
+.dashboard-game-stat--hit-or-miss {
+  --game-color: var(--game-hit-or-miss);
+  --game-color-glow: var(--game-hit-or-miss-glow);
+}
+
+.dashboard-game-stat--sampled {
+  --game-color: var(--game-sampled);
+  --game-color-glow: var(--game-sampled-glow);
+}
+
+.dashboard-game-stat--era {
+  --game-color: var(--game-era);
+  --game-color-glow: var(--game-era-glow);
+}
+
+.dashboard-game-stat--cover-or-not {
+  --game-color: var(--game-cover-or-not);
+  --game-color-glow: var(--game-cover-or-not-glow);
 }
 
 .dashboard-game-stat__top,
@@ -117,7 +143,7 @@
 }
 
 .dashboard-game-stat__top strong {
-  color: var(--amber);
+  color: var(--game-color, var(--amber));
   font-weight: 500;
 }
 
@@ -133,7 +159,7 @@
   display: block;
   height: 100%;
   min-width: 0;
-  background: var(--amber);
+  background: var(--game-color, var(--amber));
 }
 
 .dashboard-game-stat__meta {

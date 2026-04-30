@@ -107,7 +107,7 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: opacity 80ms;
+  transition: opacity 0.2s ease;
 }
 
 .username-modal__btn:disabled {

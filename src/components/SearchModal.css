@@ -59,7 +59,7 @@
   cursor: pointer;
   padding: 4px;
   flex-shrink: 0;
-  transition: color 80ms;
+  transition: color 0.2s;
 }
 
 .search-modal__close:hover {

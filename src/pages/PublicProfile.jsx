@@ -329,7 +329,7 @@ export default function PublicProfile() {
               {stats.byGame.filter(g => g.plays > 0).map(game => {
                 const isOneBar = game.slug === 'one-bar'
                 return (
-                  <div key={game.slug} className="dashboard-game-stat">
+                  <div key={game.slug} className={`dashboard-game-stat dashboard-game-stat--${game.slug}`}>
                     <div className="dashboard-game-stat__top">
                       <span>{game.name}</span>
                       <strong>{pct(game.winRate)}</strong>

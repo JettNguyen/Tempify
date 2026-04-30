@@ -41,7 +41,7 @@
   color: var(--text-muted);
   cursor: pointer;
   background: transparent;
-  transition: background 100ms ease, color 100ms ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .explore-view-btn--active {

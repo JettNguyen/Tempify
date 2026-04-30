@@ -19,7 +19,7 @@ export default function StreakDisplay({ streaks = [] }) {
       {GAMES.map((game) => {
         const streak = streakMap[game.slug] || 0
         return (
-          <div key={game.slug} className="streak-card">
+          <div key={game.slug} className={`streak-card game-theme--${game.slug}`}>
             <div className={`streak-card__value${streak > 0 ? ' streak-card__value--active' : ''}`}>
               {streak}
             </div>

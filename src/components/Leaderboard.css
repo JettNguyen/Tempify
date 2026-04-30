@@ -37,7 +37,7 @@
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 80ms, color 80ms;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .leaderboard__tab--active {
