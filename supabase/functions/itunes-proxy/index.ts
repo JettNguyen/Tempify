@@ -4,7 +4,7 @@ export default async function handler(req: Request) {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET,OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey',
       },
     })
   }
@@ -24,7 +24,7 @@ export default async function handler(req: Request) {
   const headers = new Headers(response.headers)
   headers.set('Access-Control-Allow-Origin', '*')
   headers.set('Access-Control-Allow-Methods', 'GET,OPTIONS')
-  headers.set('Access-Control-Allow-Headers', 'Content-Type')
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, apikey')
 
   return new Response(body, {
     status: response.status,

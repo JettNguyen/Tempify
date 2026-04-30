@@ -1,10 +1,14 @@
 // In dev, requests go through the Vite proxy (/itunes → itunes.apple.com).
 // In production, use a Supabase Edge Function proxy when VITE_ITUNES_PROXY_URL is set.
-const BASE = import.meta.env.VITE_ITUNES_PROXY_URL
+const PROXY_URL = import.meta.env.VITE_ITUNES_PROXY_URL
   ? import.meta.env.VITE_ITUNES_PROXY_URL.replace(/\/$/, '')
+  : null
+const BASE = PROXY_URL
+  ? PROXY_URL
   : import.meta.env.DEV
     ? '/itunes'
     : 'https://itunes.apple.com'
+const PROXY_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 // Session-level cache: query string → results array
 const cache = new Map()
@@ -81,9 +85,15 @@ export async function searchSongs(query) {
   if (cache.has(key)) return cache.get(key)
 
   // Fetch more than we need so deduplication still leaves enough results
-  const url = `${BASE}/search?term=${encodeURIComponent(query)}&entity=song&limit=20`
+  const url = new URL(`${BASE}/search`)
+  url.searchParams.set('term', query)
+  url.searchParams.set('entity', 'song')
+  url.searchParams.set('limit', '20')
+  if (PROXY_URL && PROXY_KEY) {
+    url.searchParams.set('apikey', PROXY_KEY)
+  }
   try {
-    const res = await fetch(url)
+    const res = await fetch(url.toString())
     if (!res.ok) return []
     const json = await res.json()
     const tracks = (json.results || []).map((track) => ({
