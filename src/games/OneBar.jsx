@@ -12,6 +12,7 @@ import './OneBar.css'
 const MAX_ATTEMPTS = 6
 const BASE_SECONDS = 0.5
 const SECONDS_PER_REVEAL = 0.5
+const REVEAL_TIMINGS = [0.5, 1, 2, 5, 15, 30]
 
 export default function OneBar() {
   const { user } = useAuth()
@@ -50,7 +51,7 @@ export default function OneBar() {
       }))
       setAttempts(fake)
       setCorrect(wasCorrect)
-      setRevealSeconds(Math.min(BASE_SECONDS + (count - 1) * SECONDS_PER_REVEAL, 21))
+      setRevealSeconds(REVEAL_TIMINGS[Math.min(count - 1, REVEAL_TIMINGS.length - 1)])
       setDone(true)
     }
   }, [puzzle, completions])
@@ -84,7 +85,7 @@ export default function OneBar() {
       }
     } else {
       guessInputRef.current?.clear()
-      setRevealSeconds(Math.min(BASE_SECONDS + newAttempts.length * SECONDS_PER_REVEAL, 21))
+      setRevealSeconds(REVEAL_TIMINGS[Math.min(newAttempts.length, REVEAL_TIMINGS.length - 1)])
     }
   }
 
