@@ -12,7 +12,7 @@ Five music games, new ones each day.
 
 ## The Games
 
-**One Bar**: Name the song with a half-second clip within up to 6 attempts. Every wrong guess unlocks another half a second.
+**One Bar**: Name the song with a half-second clip within up to 6 attempts. Every wrong guess unlocks more of the song.
 
 **Hit or Miss**: Did this song enter the Hot 100 or disappear without a trace?
 

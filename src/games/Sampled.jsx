@@ -6,6 +6,7 @@ import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
+import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
 import TrackArtwork from '../components/TrackArtwork'
@@ -63,6 +64,7 @@ export default function Sampled() {
 
   async function handleGuess(option) {
     if (done) return
+    hapticImportantTap()
     sourceRef.current?.pause()
     const elapsed = stop()
     setFinalTime(elapsed)

@@ -1,0 +1,10 @@
+{
+	"appId": "me.tempify",
+	"appName": "Tempify",
+	"webDir": "dist",
+	"packageClassList": [
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"HapticsPlugin"
+	]
+}

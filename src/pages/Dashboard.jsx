@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { getRecentScores, getStreaks } from '../lib/scores'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
+import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import StreakDisplay from '../components/StreakDisplay'
 import './Dashboard.css'
 
@@ -64,6 +65,12 @@ export default function Dashboard() {
   const [dataLoading, setDataLoading] = useState(true)
 
   const isSubscribed = profile?.is_subscribed
+  const customerPortalUrl = import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_URL
+
+  async function handleManageBillingClick(event) {
+    event.preventDefault()
+    await openExternalUrlInApp(customerPortalUrl)
+  }
 
   useEffect(() => {
     if (!user) return
@@ -208,7 +215,7 @@ export default function Dashboard() {
 
       {isSubscribed ? (
         <p>
-          <a href={import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_URL} className="dashboard-billing-link">
+          <a href={customerPortalUrl} onClick={handleManageBillingClick} className="dashboard-billing-link">
             Manage billing
           </a>
         </p>

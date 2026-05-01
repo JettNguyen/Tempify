@@ -1,10 +1,11 @@
 import { useAuth } from '../hooks/useAuth'
+import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import './Subscribe.css'
 
 export default function Subscribe() {
   const { user } = useAuth()
 
-  function handleSubscribe() {
+  async function handleSubscribe() {
     const link = import.meta.env.VITE_STRIPE_PAYMENT_LINK
     if (!link) {
       console.warn('VITE_STRIPE_PAYMENT_LINK is not set.')
@@ -12,7 +13,7 @@ export default function Subscribe() {
     }
     const url = new URL(link)
     if (user?.email) url.searchParams.set('prefilled_email', user.email)
-    window.location.href = url.toString()
+    await openExternalUrlInApp(url.toString())
   }
 
   return (

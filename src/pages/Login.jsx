@@ -1,18 +1,31 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { signInWithGoogleOAuth } from '../lib/oauth'
 import { getEmailByUsername } from '../lib/avatar'
+import { useAuth } from '../hooks/useAuth'
 import './Login.css'
 
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from || '/'
+  const { user } = useAuth()
 
   const [identifier, setIdentifier] = useState('') // email or username
   const [password, setPassword]     = useState('')
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
+
+  useEffect(() => {
+    if (!user) return
+
+    const oauthProvider = sessionStorage.getItem('tempify-oauth-provider')
+    if (oauthProvider === 'google') {
+      sessionStorage.removeItem('tempify-oauth-provider')
+      navigate('/', { replace: true })
+    }
+  }, [user, navigate])
 
   async function handleEmailLogin(e) {
     e.preventDefault()
@@ -42,10 +55,8 @@ export default function Login() {
   }
 
   async function handleGoogleLogin() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + import.meta.env.BASE_URL },
-    })
+    sessionStorage.setItem('tempify-oauth-provider', 'google')
+    await signInWithGoogleOAuth()
   }
 
   return (

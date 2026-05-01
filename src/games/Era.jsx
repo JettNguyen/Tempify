@@ -6,6 +6,7 @@ import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
+import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
 import './Era.css'
@@ -50,6 +51,7 @@ export default function Era() {
 
   async function handleGuess(decade) {
     if (done || !hasStarted) return
+    hapticImportantTap()
     const elapsed = stop()
     setFinalTime(elapsed)
     const isCorrect = decade === puzzle.answer

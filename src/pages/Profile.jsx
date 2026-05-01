@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useAuth } from '../hooks/useAuth'
 import { AVATAR_ICONS, AVATAR_COLORS, saveAvatar, saveProfileSettings, checkUsernameAvailable } from '../lib/avatar'
+import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import Avatar from '../components/Avatar'
 import './Profile.css'
 import './Dashboard.css'
@@ -45,6 +46,7 @@ export default function Profile() {
 
   const initial = (profile?.email || user.email || '').split('@')[0][0]?.toUpperCase() ?? '?'
   const isSubscribed = profile?.is_subscribed
+  const customerPortalUrl = import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_URL
 
   const avatarDirty =
     selectedIcon !== (profile?.avatar_icon ?? null) ||
@@ -89,6 +91,11 @@ export default function Profile() {
   async function handleSignOut() {
     await signOut()
     navigate('/')
+  }
+
+  async function handleManageBillingClick(event) {
+    event.preventDefault()
+    await openExternalUrlInApp(customerPortalUrl)
   }
 
   return (
@@ -201,7 +208,7 @@ export default function Profile() {
       {/* Billing */}
       <div className="profile-section">
         {isSubscribed ? (
-          <a href={import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_URL} className="dashboard-billing-link">
+          <a href={customerPortalUrl} onClick={handleManageBillingClick} className="dashboard-billing-link">
             Manage billing
           </a>
         ) : (

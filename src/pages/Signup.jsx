@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
+import { signInWithGoogleOAuth } from '../lib/oauth'
+import { useAuth } from '../hooks/useAuth'
 import './Login.css'
 
 export default function Signup() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -14,6 +17,16 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState(null)
+
+  useEffect(() => {
+    if (!user) return
+
+    const oauthProvider = sessionStorage.getItem('tempify-oauth-provider')
+    if (oauthProvider === 'google') {
+      sessionStorage.removeItem('tempify-oauth-provider')
+      navigate('/', { replace: true })
+    }
+  }, [user, navigate])
 
   function isPasswordStrong(value) {
     return value.length >= 8 && /[A-Z]/.test(value) && /[^A-Za-z0-9]/.test(value)
@@ -54,10 +67,8 @@ export default function Signup() {
   }
 
   async function handleGoogleSignup() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + import.meta.env.BASE_URL },
-    })
+    sessionStorage.setItem('tempify-oauth-provider', 'google')
+    await signInWithGoogleOAuth()
   }
 
   return (

@@ -6,6 +6,7 @@ import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
+import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
 import TrackArtwork from '../components/TrackArtwork'
@@ -47,6 +48,7 @@ export default function CoverOrNot() {
 
   async function handleGuess(pick) {
     if (done) return
+    hapticImportantTap()
     const elapsed = stop()
     setFinalTime(elapsed)
     const isCorrect = pick === puzzle.answer
