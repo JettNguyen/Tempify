@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { todayEST } from './date'
+import { getPuzzleArtworkUrls, prefetchArtworkUrls } from './artwork'
 
 export async function getPuzzle(gameSlug, date) {
   const target = date || todayEST()
@@ -12,7 +13,9 @@ export async function getPuzzle(gameSlug, date) {
     .limit(1)
   if (error) throw error
   if (!data || data.length === 0) throw new Error('No puzzle found')
-  return data[0]
+  const puzzle = data[0]
+  prefetchArtworkUrls(getPuzzleArtworkUrls(puzzle))
+  return puzzle
 }
 
 export async function getPuzzlesForDate(date) {
@@ -22,5 +25,7 @@ export async function getPuzzlesForDate(date) {
     .select('*')
     .eq('scheduled_date', target)
   if (error) throw error
-  return data || []
+  const puzzles = data || []
+  prefetchArtworkUrls(puzzles.flatMap((p) => getPuzzleArtworkUrls(p)))
+  return puzzles
 }

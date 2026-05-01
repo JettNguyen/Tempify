@@ -9,6 +9,7 @@ import {
 } from '../lib/scores'
 import Avatar from '../components/Avatar'
 import StreakDisplay from '../components/StreakDisplay'
+import DelayedSpinner from '../components/DelayedSpinner'
 import './Dashboard.css'
 import './PublicProfile.css'
 
@@ -209,7 +210,7 @@ export default function PublicProfile() {
     setFollowLoading(false)
   }
 
-  if (loadingProfile) return <Shell><p style={{ color: 'var(--text-muted)' }}>Loading…</p></Shell>
+  if (loadingProfile) return <Shell><DelayedSpinner active={loadingProfile} label="Loading profile..." /></Shell>
   if (!target) return (
     <Shell>
       <p style={{ color: 'var(--text-muted)' }}>User not found.</p>
@@ -270,7 +271,7 @@ export default function PublicProfile() {
         <div className="pubprofile__panel">
           <p className="pubprofile__panel-title">{panel === 'followers' ? 'Followers' : 'Following'}</p>
           {panelLoading ? (
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Loading…</p>
+            <DelayedSpinner active={panelLoading} inline label="Loading..." />
           ) : panelUsers.length === 0 ? (
             <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
               {panel === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}

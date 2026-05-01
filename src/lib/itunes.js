@@ -11,6 +11,50 @@ const BASE = PROXY_URL
     : 'https://itunes.apple.com'
 
 const cache = new Map()
+const artworkLookupCache = new Map()
+const ARTWORK_CACHE_STORAGE_KEY = 'tempify_artwork_lookup_cache_v1'
+const ARTWORK_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 14
+
+function artworkKey({ title, artist }) {
+  return `${(title || '').trim().toLowerCase()}|||${(artist || '').trim().toLowerCase()}`
+}
+
+function hydrateArtworkCache() {
+  if (typeof window === 'undefined') return
+  if (artworkLookupCache.size > 0) return
+
+  try {
+    const raw = window.localStorage.getItem(ARTWORK_CACHE_STORAGE_KEY)
+    if (!raw) return
+
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return
+
+    const now = Date.now()
+    Object.entries(parsed).forEach(([key, entry]) => {
+      if (!entry?.url || !entry?.savedAt) return
+      if (now - entry.savedAt > ARTWORK_CACHE_TTL_MS) return
+      artworkLookupCache.set(key, entry.url)
+    })
+  } catch {
+    // Ignore localStorage parse errors.
+  }
+}
+
+function persistArtworkCache() {
+  if (typeof window === 'undefined') return
+
+  try {
+    const now = Date.now()
+    const payload = {}
+    artworkLookupCache.forEach((url, key) => {
+      payload[key] = { url, savedAt: now }
+    })
+    window.localStorage.setItem(ARTWORK_CACHE_STORAGE_KEY, JSON.stringify(payload))
+  } catch {
+    // Ignore quota/storage errors.
+  }
+}
 
 function searchSongsViaJsonp(query, limit = 20) {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -20,7 +64,7 @@ function searchSongsViaJsonp(query, limit = 20) {
   return new Promise((resolve) => {
     const callbackName = `__tempify_itunes_${Date.now()}_${Math.floor(Math.random() * 100000)}`
     const script = document.createElement('script')
-    const timeout = window.setTimeout(() => cleanup([]), 5000)
+    const timeout = window.setTimeout(() => cleanup([]), 2200)
 
     function cleanup(result) {
       try {
@@ -116,6 +160,37 @@ function deduplicate(tracks) {
   return Array.from(seen.values())
 }
 
+function normalizeForSearch(value) {
+  return (value || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function filterByQuery(results, query) {
+  const q = normalizeForSearch(query)
+  if (!q) return results
+  return results.filter((track) => {
+    const title = normalizeForSearch(track.title)
+    const artist = normalizeForSearch(track.artist)
+    return title.includes(q) || artist.includes(q) || `${title} ${artist}`.includes(q)
+  })
+}
+
+export function getCachedSongSearch(query) {
+  const key = (query || '').trim().toLowerCase()
+  if (!key) return []
+  if (cache.has(key)) return cache.get(key)
+
+  let bestMatchKey = null
+  for (const cachedKey of cache.keys()) {
+    if (!key.startsWith(cachedKey)) continue
+    if (!bestMatchKey || cachedKey.length > bestMatchKey.length) {
+      bestMatchKey = cachedKey
+    }
+  }
+
+  if (!bestMatchKey) return []
+  return filterByQuery(cache.get(bestMatchKey) || [], key).slice(0, 8)
+}
+
 export async function searchSongs(query) {
   if (!query || query.trim().length < 2) return []
 
@@ -150,28 +225,44 @@ export async function searchSongs(query) {
       .filter((track) => track.artworkUrl)
   }
 
-  try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 2500)
-    const res = await fetch(url.toString(), { signal: controller.signal })
-    clearTimeout(timeout)
-    if (res.ok) {
+  const fetchPromise = (async () => {
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 1400)
+      const res = await fetch(url.toString(), { signal: controller.signal })
+      clearTimeout(timeout)
+      if (!res.ok) return []
       const json = await res.json()
-      const results = deduplicate(toTracks(json.results)).slice(0, 8)
-      cache.set(key, results)
-      return results
+      return deduplicate(toTracks(json.results)).slice(0, 8)
+    } catch {
+      return []
     }
-  } catch {
-    // Fall through to JSONP fallback.
+  })()
+
+  const jsonpPromise = searchSongsViaJsonp(query, 20)
+    .then((rows) => deduplicate(toTracks(rows)).slice(0, 8))
+    .catch(() => [])
+
+  const firstResult = await Promise.race([fetchPromise, jsonpPromise])
+  if (firstResult.length > 0) {
+    cache.set(key, firstResult)
+    return firstResult
   }
 
-  const jsonpResults = await searchSongsViaJsonp(query, 20)
-  const results = deduplicate(toTracks(jsonpResults)).slice(0, 8)
+  const [fromFetch, fromJsonp] = await Promise.all([fetchPromise, jsonpPromise])
+  const results = fromFetch.length > 0 ? fromFetch : fromJsonp
   cache.set(key, results)
   return results
 }
 
 export async function findArtwork({ title, artist }) {
+  hydrateArtworkCache()
+
+  const key = artworkKey({ title, artist })
+  if (artworkLookupCache.has(key)) {
+    return artworkLookupCache.get(key)
+  }
+
   const queries = [
     [title, artist].filter(Boolean).join(' '),
     title || '',
@@ -180,7 +271,11 @@ export async function findArtwork({ title, artist }) {
   for (const query of queries) {
     try {
       const [match] = await searchSongs(query)
-      if (match?.artworkUrl) return match.artworkUrl
+      if (match?.artworkUrl) {
+        artworkLookupCache.set(key, match.artworkUrl)
+        persistArtworkCache()
+        return match.artworkUrl
+      }
     } catch {
       // Try the next query form.
     }

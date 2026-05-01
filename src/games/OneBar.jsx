@@ -3,11 +3,14 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { getPuzzle } from '../lib/puzzles'
+import { findArtwork } from '../lib/itunes'
+import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import GuessInput from '../components/GuessInput'
 import ResultCard from '../components/ResultCard'
+import DelayedSpinner from '../components/DelayedSpinner'
 import './OneBar.css'
 
 const MAX_ATTEMPTS = 6
@@ -31,6 +34,7 @@ export default function OneBar() {
   const [done, setDone] = useState(false)
   const [correct, setCorrect] = useState(false)
   const [revealSeconds, setRevealSeconds] = useState(BASE_SECONDS)
+  const [resultArtwork, setResultArtwork] = useState(null)
 
   useEffect(() => {
     getPuzzle('one-bar', dateParam)
@@ -56,6 +60,35 @@ export default function OneBar() {
       setDone(true)
     }
   }, [puzzle, completions])
+
+  useEffect(() => {
+    if (!puzzle) return
+
+    let cancelled = false
+    const existing = puzzle.metadata?.artwork_url || null
+    if (existing) {
+      setResultArtwork(existing)
+      prefetchArtworkUrls([existing])
+      return
+    }
+
+    const title = puzzle.answer
+    const artist = puzzle.metadata?.artist
+    if (!title) return
+
+    findArtwork({ title, artist })
+      .then((url) => {
+        if (!cancelled && url) {
+          setResultArtwork(url)
+          prefetchArtworkUrls([url])
+        }
+      })
+      .catch(() => {
+        // Keep fallback UI if lookup fails.
+      })
+
+    return () => { cancelled = true }
+  }, [puzzle])
 
   function buildEmojiGrid() {
     return attempts.map((a) => (a.correct ? '🟩' : '⬜')).join('')
@@ -91,7 +124,7 @@ export default function OneBar() {
     }
   }
 
-  if (loading) return <GameShell><p style={{ color: 'var(--text-muted)' }}>Loading...</p></GameShell>
+  if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
   if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
   if (!puzzle) return null
 
@@ -154,7 +187,7 @@ export default function OneBar() {
           artwork={{
             title: puzzle.answer,
             artist: puzzle.metadata?.artist,
-            src: puzzle.metadata?.artwork_url,
+            src: resultArtwork || puzzle.metadata?.artwork_url,
           }}
           emojiGrid={buildEmojiGrid()}
           gameSlug="one-bar"

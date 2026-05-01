@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { getPuzzlesForDate } from '../lib/puzzles'
 import ArchiveLock from '../components/ArchiveLock'
+import DelayedSpinner from '../components/DelayedSpinner'
 import GameTile from '../components/GameTile'
 import './ArchiveDay.css'
 import './Home.css'
@@ -82,7 +83,7 @@ export default function ArchiveDay() {
       {isPast && !isSubscribed ? (
         <ArchiveLock />
       ) : fetching ? (
-        <p className="archive-day-empty">Loading...</p>
+        <DelayedSpinner active={fetching} label="Loading archive day..." />
       ) : available.length === 0 ? (
         <p className="archive-day-empty">No puzzles found for this date.</p>
       ) : (

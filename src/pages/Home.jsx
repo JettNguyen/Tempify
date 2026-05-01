@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
+import { getPuzzleArtworkUrls, prefetchArtworkUrls } from '../lib/artwork'
 import GameTile from '../components/GameTile'
 import './Home.css'
 
@@ -27,13 +28,14 @@ export default function Home() {
     const today = todayEST()
     supabase
       .from('puzzles')
-      .select('game_slug, genre')
+      .select('game_slug, genre, metadata')
       .eq('scheduled_date', today)
       .then(({ data }) => {
         if (!data) return
         const map = {}
         data.forEach((p) => { if (p.genre) map[p.game_slug] = p.genre })
         setGenres(map)
+        prefetchArtworkUrls(data.flatMap((p) => getPuzzleArtworkUrls(p)))
       })
   }, [])
 

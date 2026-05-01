@@ -5,10 +5,13 @@ import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
+import { findArtwork } from '../lib/itunes'
+import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
+import DelayedSpinner from '../components/DelayedSpinner'
 import './Era.css'
 
 const DECADES = ['60s', '70s', '80s', '90s', '00s', '10s', '20s']
@@ -28,6 +31,7 @@ export default function Era() {
   const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
   const [finalTime, setFinalTime] = useState(null)
+  const [resultArtwork, setResultArtwork] = useState(null)
 
   const { stop, display } = useGameTimer(hasStarted && !done, 250, `tempify_game_era_${puzzleDate}`)
 
@@ -49,6 +53,35 @@ export default function Era() {
     }
   }, [puzzle, completions])
 
+  useEffect(() => {
+    if (!puzzle) return
+
+    let cancelled = false
+    const existing = puzzle.metadata?.artwork_url || null
+    if (existing) {
+      setResultArtwork(existing)
+      prefetchArtworkUrls([existing])
+      return
+    }
+
+    const title = puzzle.metadata?.title
+    const artist = puzzle.metadata?.artist
+    if (!title) return
+
+    findArtwork({ title, artist })
+      .then((url) => {
+        if (!cancelled && url) {
+          setResultArtwork(url)
+          prefetchArtworkUrls([url])
+        }
+      })
+      .catch(() => {
+        // Keep fallback UI if lookup fails.
+      })
+
+    return () => { cancelled = true }
+  }, [puzzle])
+
   async function handleGuess(decade) {
     if (done) return
     hapticImportantTap()
@@ -65,7 +98,7 @@ export default function Era() {
     }
   }
 
-  if (loading) return <GameShell><p style={{ color: 'var(--text-muted)' }}>Loading...</p></GameShell>
+  if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
   if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
   if (!puzzle) return null
 
@@ -112,7 +145,7 @@ export default function Era() {
           artwork={{
             title: puzzle.metadata?.title,
             artist: puzzle.metadata?.artist,
-            src: puzzle.metadata?.artwork_url,
+            src: resultArtwork || puzzle.metadata?.artwork_url,
           }}
           emojiGrid={correct ? '🟩' : '⬜'}
           gameSlug="era"

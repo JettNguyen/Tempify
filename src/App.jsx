@@ -10,6 +10,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Profile from './pages/Profile'
 import PublicProfile from './pages/PublicProfile'
+import Privacy from './pages/Privacy'
 import Subscribe from './pages/Subscribe'
 import Success from './pages/Success'
 import Admin from './pages/Admin'
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/archive/:date" element={<ArchiveDay />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/u/:username" element={<PublicProfile />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
