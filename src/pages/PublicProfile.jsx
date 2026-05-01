@@ -133,7 +133,7 @@ export default function PublicProfile() {
   const [panelLoading, setPanelLoading] = useState(false)
 
   const isMe = user && target && user.id === target.id
-  // For isMe, use AuthContext's profile which has the admin-email override applied
+  // For isMe, use AuthContext's profile which applies premium-email overrides.
   const isTargetPremium = isMe ? myProfile?.is_subscribed : target?.is_subscribed
 
   useEffect(() => {
@@ -141,7 +141,7 @@ export default function PublicProfile() {
     setLoadingProfile(true)
     setPanel(null)
 
-    const adminEmails = (import.meta.env.VITE_ADMIN_EMAIL || '')
+    const premiumEmails = (import.meta.env.VITE_PREMIUM_EMAILS || '')
       .split(',')
       .map(e => e.trim().toLowerCase())
       .filter(Boolean)
@@ -152,7 +152,7 @@ export default function PublicProfile() {
       .maybeSingle()
       .then(async ({ data, error }) => {
         if (error || !data) { setTarget(null); setLoadingProfile(false); return }
-        if (adminEmails.length && adminEmails.includes((data.email || '').trim().toLowerCase())) {
+        if (premiumEmails.length && premiumEmails.includes((data.email || '').trim().toLowerCase())) {
           data.is_subscribed = true
         }
         setTarget(data)

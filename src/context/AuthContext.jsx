@@ -121,11 +121,11 @@ export function AuthProvider({ children }) {
       data = created
     }
 
-    const adminEmails = (import.meta.env.VITE_ADMIN_EMAIL || '')
+    const premiumEmails = (import.meta.env.VITE_PREMIUM_EMAILS || '')
       .split(',')
       .map(e => e.trim().toLowerCase())
       .filter(Boolean)
-    if (data && adminEmails.length && adminEmails.includes((data.email || '').trim().toLowerCase())) {
+    if (data && premiumEmails.length && premiumEmails.includes((data.email || '').trim().toLowerCase())) {
       data.is_subscribed = true
     }
     setProfile(data)
