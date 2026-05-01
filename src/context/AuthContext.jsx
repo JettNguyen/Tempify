@@ -43,40 +43,50 @@ export function AuthProvider({ children }) {
 
     let isDisposed = false
     let listenerHandle = null
+    const processedUrls = new Set()
+
+    async function handleOAuthCallbackUrl(url) {
+      if (!url || !url.includes('://auth/callback')) return
+      if (processedUrls.has(url)) return
+      processedUrls.add(url)
+
+      try {
+        await Browser.close()
+      } catch {
+        // Ignore close errors when browser is already closed.
+      }
+
+      try {
+        const callbackUrl = new URL(url)
+        const code = callbackUrl.searchParams.get('code')
+
+        if (code) {
+          await supabase.auth.exchangeCodeForSession(code)
+          return
+        }
+
+        const hashParams = new URLSearchParams(callbackUrl.hash.replace(/^#/, ''))
+        const accessToken = hashParams.get('access_token')
+        const refreshToken = hashParams.get('refresh_token')
+
+        if (accessToken && refreshToken) {
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+        }
+      } catch (err) {
+        console.error('[Tempify] Failed to process OAuth callback:', err)
+      }
+    }
 
     async function setupAppUrlListener() {
       listenerHandle = await CapApp.addListener('appUrlOpen', async ({ url }) => {
-        if (!url || !url.includes('://auth/callback')) return
-
-        try {
-          await Browser.close()
-        } catch {
-          // Ignore close errors when browser is already closed.
-        }
-
-        try {
-          const callbackUrl = new URL(url)
-          const code = callbackUrl.searchParams.get('code')
-
-          if (code) {
-            await supabase.auth.exchangeCodeForSession(code)
-            return
-          }
-
-          const hashParams = new URLSearchParams(callbackUrl.hash.replace(/^#/, ''))
-          const accessToken = hashParams.get('access_token')
-          const refreshToken = hashParams.get('refresh_token')
-
-          if (accessToken && refreshToken) {
-            await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            })
-          }
-        } catch (err) {
-          console.error('[Tempify] Failed to process OAuth callback:', err)
-        }
+        await handleOAuthCallbackUrl(url)
       })
+
+      const launchUrl = await CapApp.getLaunchUrl()
+      await handleOAuthCallbackUrl(launchUrl?.url)
 
       if (isDisposed) {
         listenerHandle?.remove()

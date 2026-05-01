@@ -50,7 +50,7 @@ export default function Era() {
   }, [puzzle, completions])
 
   async function handleGuess(decade) {
-    if (done || !hasStarted) return
+    if (done) return
     hapticImportantTap()
     const elapsed = stop()
     setFinalTime(elapsed)
@@ -58,7 +58,7 @@ export default function Era() {
     setChosen(decade)
     setCorrect(isCorrect)
     setDone(true)
-    markComplete('era', 1)
+    markComplete('era', 1, isCorrect)
     if (user) {
       await saveScore({ userId: user.id, gameSlug: 'era', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'era', profile?.is_subscribed)
@@ -97,7 +97,7 @@ export default function Era() {
           }
 
           return (
-            <button key={decade} onClick={() => handleGuess(decade)} disabled={done || !hasStarted} className={cls}>
+            <button key={decade} onClick={() => handleGuess(decade)} disabled={done} className={cls}>
               {decade}
             </button>
           )

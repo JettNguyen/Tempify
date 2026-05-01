@@ -80,7 +80,7 @@ export default function OneBar() {
     if (isCorrect || newAttempts.length >= MAX_ATTEMPTS) {
       setCorrect(isCorrect)
       setDone(true)
-      markComplete('one-bar', newAttempts.length)
+      markComplete('one-bar', newAttempts.length, isCorrect)
       if (user) {
         await saveScore({ userId: user.id, gameSlug: 'one-bar', attempts: newAttempts.length, completed: isCorrect })
         if (isCorrect) await updateStreak(user.id, 'one-bar')

@@ -54,7 +54,7 @@ export default function HitOrMiss() {
     setChosen(verdict)
     setCorrect(isCorrect)
     setDone(true)
-    markComplete('hit-or-miss', 1)
+    markComplete('hit-or-miss', 1, isCorrect)
     if (user) {
       await saveScore({ userId: user.id, gameSlug: 'hit-or-miss', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'hit-or-miss', profile?.is_subscribed)

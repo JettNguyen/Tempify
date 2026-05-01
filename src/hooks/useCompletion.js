@@ -35,7 +35,12 @@ export function useCompletion(userId) {
     if (data) {
       const map = {}
       data.forEach((row) => {
-        map[row.game_slug] = { attempts: row.attempts, completed: row.completed }
+        const prev = map[row.game_slug]
+        map[row.game_slug] = {
+          attempts: Math.max(prev?.attempts ?? 0, row.attempts ?? 0),
+          completed: Boolean(prev?.completed || row.completed),
+          played: true,
+        }
       })
       // Supabase is authoritative; write back to localStorage to keep in sync
       writeLocal(userId, map)
@@ -43,14 +48,22 @@ export function useCompletion(userId) {
     }
   }
 
-  function markComplete(gameSlug, attempts) {
-    const updated = { ...completions, [gameSlug]: { attempts, completed: true } }
+  function markComplete(gameSlug, attempts, completed = true) {
+    const updated = {
+      ...completions,
+      [gameSlug]: {
+        attempts,
+        completed: Boolean(completed),
+        played: true,
+      },
+    }
     setCompletions(updated)
     writeLocal(userId, updated) // scoped per user for instant restore on navigation
   }
 
   function isComplete(gameSlug) {
-    return completions[gameSlug]?.completed === true
+    const game = completions[gameSlug]
+    return Boolean(game?.played || (game?.attempts ?? 0) > 0 || game?.completed)
   }
 
   return { completions, markComplete, isComplete }
