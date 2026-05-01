@@ -49,7 +49,7 @@ export default function Explore() {
 
   useEffect(() => {
     if (!user) return
-    supabase.from('scores').select('game_slug, date_played').eq('user_id', user.id).eq('completed', true)
+    supabase.from('scores').select('game_slug, date_played').eq('user_id', user.id)
       .then(({ data }) => {
         if (data?.length) setPlayedSlugs(new Set(data.map(s => `${s.date_played}|${s.game_slug}`)))
       })

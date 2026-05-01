@@ -97,7 +97,7 @@ function buildStats(scores, streaks = []) {
   // Fastest single win across all timed games
   const fastestWin = scores
     .filter(s => s.completed && s.time_seconds != null)
-    .reduce((best, s) => (!best || s.time_seconds < best.time) ? { time: s.time_seconds, game: GAME_NAMES[s.game_slug] } : best, null)
+    .reduce((best, s) => (!best || s.time_seconds < best.time) ? { time: s.time_seconds, game: GAME_NAMES[s.game_slug], date: s.date_played } : best, null)
 
   // One Bar mastery - % solved in 1–2 guesses
   const obPlays = scores.filter(s => s.game_slug === 'one-bar')
@@ -335,7 +335,7 @@ export default function PublicProfile() {
               <StatCard label="Perfect days"     value={stats.perfectDays}                         detail="All 5 games won" highlight={highlightPerfectDays} />
               <StatCard label="Consistency"      value={`${stats.consistency}%`}                   detail="Days played since first game" highlight={highlightConsistency} />
               <StatCard label="One Bar mastery"  value={stats.obMastery != null ? `${stats.obMastery}%` : '—'} detail="Solved in ≤2 guesses" highlight={highlightOBMastery} />
-              <StatCard label="Speed record"     value={stats.fastestWin ? fmtTime(stats.fastestWin.time) : '—'} detail={stats.fastestWin ? `in ${stats.fastestWin.game}` : 'No timed wins yet'} highlight={highlightSpeed} />
+              <StatCard label="Speed record"     value={stats.fastestWin ? fmtTime(stats.fastestWin.time) : '—'} detail={stats.fastestWin ? `in ${stats.fastestWin.game} on ${stats.fastestWin.date}` : 'No timed wins yet'} highlight={highlightSpeed} />
             </div>
 
             {/* Per-game breakdown */}

@@ -2,7 +2,7 @@ import { supabase } from './supabase'
 import { todayEST, yesterdayEST } from './date'
 
 export async function saveScore({ userId, gameSlug, attempts, completed, timeSeconds }) {
-  await supabase.from('scores').insert({
+  const { error } = await supabase.from('scores').insert({
     user_id: userId,
     game_slug: gameSlug,
     date_played: todayEST(),
@@ -10,6 +10,10 @@ export async function saveScore({ userId, gameSlug, attempts, completed, timeSec
     completed,
     time_seconds: timeSeconds ?? null,
   })
+
+  if (error) {
+    throw error
+  }
 }
 
 export async function getRecentScores(userId, limit = 20) {
