@@ -709,7 +709,10 @@ function SongSearch({ onSelect, placeholder = 'Search for a song...' }) {
 // ─── Main page ───────────────────────────────────────────────────────────────
 export default function Admin() {
   const { user, loading } = useAuth()
-  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL
+  const adminEmails = (import.meta.env.VITE_ADMIN_EMAIL || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean)
 
   const [puzzles, setPuzzles]   = useState([])
   const [weekOffset, setWeekOffset] = useState(0)
@@ -726,7 +729,7 @@ export default function Admin() {
   const dates = dateRange(startDate, 14)
   const endDate = dates[dates.length - 1]
 
-  const isAdmin = !loading && !!user && !!adminEmail && user.email === adminEmail
+  const isAdmin = !loading && !!user && adminEmails.length && adminEmails.includes((user.email || '').trim().toLowerCase())
 
   const fetchSchedule = useCallback(async () => {
     if (!isAdmin) return

@@ -141,7 +141,10 @@ export default function PublicProfile() {
     setLoadingProfile(true)
     setPanel(null)
 
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.trim()
+    const adminEmails = (import.meta.env.VITE_ADMIN_EMAIL || '')
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean)
     supabase
       .from('users')
       .select('id, username, avatar_icon, avatar_color, email, is_subscribed, leaderboard_visibility')
@@ -149,7 +152,7 @@ export default function PublicProfile() {
       .maybeSingle()
       .then(async ({ data, error }) => {
         if (error || !data) { setTarget(null); setLoadingProfile(false); return }
-        if (adminEmail && data.email?.trim() === adminEmail) {
+        if (adminEmails.length && adminEmails.includes((data.email || '').trim().toLowerCase())) {
           data.is_subscribed = true
         }
         setTarget(data)

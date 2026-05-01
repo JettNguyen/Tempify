@@ -13,9 +13,12 @@ export default function Navbar() {
 
   const initial = (profile?.email || user?.email || '').split('@')[0][0]?.toUpperCase() ?? '?'
   const isSubscribed = profile?.is_subscribed
-  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.trim()
-  const currentEmail = (profile?.email || user?.email || '').trim()
-  const isAdmin = !!adminEmail && currentEmail === adminEmail
+  const adminEmails = (import.meta.env.VITE_ADMIN_EMAIL || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean)
+  const currentEmail = (profile?.email || user?.email || '').trim().toLowerCase()
+  const isAdmin = adminEmails.length && adminEmails.includes(currentEmail)
 
   function linkClass(path) {
     const active = pathname === path || (path !== '/' && pathname.startsWith(path))
