@@ -220,6 +220,27 @@ export default function Profile() {
         )}
       </div>
 
+      {/* Legal */}
+      <div className="profile-section">
+        <p className="profile-section-label">legal</p>
+        <Link
+          to="/privacy"
+          className="btn-hover"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            padding: '8px 10px',
+            borderRadius: '8px',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
+            fontSize: '12px',
+          }}
+        >
+          Privacy Policy →
+        </Link>
+      </div>
+
       <div className="profile-signout-section">
         <button onClick={handleSignOut} className="profile-signout-btn">Sign out</button>
       </div>

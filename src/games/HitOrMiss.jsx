@@ -10,6 +10,7 @@ import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
 import TrackArtwork from '../components/TrackArtwork'
+import DelayedSpinner from '../components/DelayedSpinner'
 import './HitOrMiss.css'
 
 export default function HitOrMiss() {
@@ -61,7 +62,7 @@ export default function HitOrMiss() {
     }
   }
 
-  if (loading) return <GameShell><p style={{ color: 'var(--text-muted)' }}>Loading...</p></GameShell>
+  if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
   if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
   if (!puzzle) return null
 

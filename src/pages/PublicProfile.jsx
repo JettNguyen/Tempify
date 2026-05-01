@@ -9,6 +9,7 @@ import {
 } from '../lib/scores'
 import Avatar from '../components/Avatar'
 import StreakDisplay from '../components/StreakDisplay'
+import DelayedSpinner from '../components/DelayedSpinner'
 import './Dashboard.css'
 import './PublicProfile.css'
 
@@ -133,7 +134,7 @@ export default function PublicProfile() {
   const [panelLoading, setPanelLoading] = useState(false)
 
   const isMe = user && target && user.id === target.id
-  // For isMe, use AuthContext's profile which has the admin-email override applied
+  // For isMe, use AuthContext's profile which applies premium-email overrides.
   const isTargetPremium = isMe ? myProfile?.is_subscribed : target?.is_subscribed
 
   useEffect(() => {
@@ -141,7 +142,7 @@ export default function PublicProfile() {
     setLoadingProfile(true)
     setPanel(null)
 
-    const adminEmails = (import.meta.env.VITE_ADMIN_EMAIL || '')
+    const premiumEmails = (import.meta.env.VITE_PREMIUM_EMAILS || '')
       .split(',')
       .map(e => e.trim().toLowerCase())
       .filter(Boolean)
@@ -152,7 +153,7 @@ export default function PublicProfile() {
       .maybeSingle()
       .then(async ({ data, error }) => {
         if (error || !data) { setTarget(null); setLoadingProfile(false); return }
-        if (adminEmails.length && adminEmails.includes((data.email || '').trim().toLowerCase())) {
+        if (premiumEmails.length && premiumEmails.includes((data.email || '').trim().toLowerCase())) {
           data.is_subscribed = true
         }
         setTarget(data)
@@ -209,7 +210,7 @@ export default function PublicProfile() {
     setFollowLoading(false)
   }
 
-  if (loadingProfile) return <Shell><p style={{ color: 'var(--text-muted)' }}>Loading…</p></Shell>
+  if (loadingProfile) return <Shell><DelayedSpinner active={loadingProfile} label="Loading profile..." /></Shell>
   if (!target) return (
     <Shell>
       <p style={{ color: 'var(--text-muted)' }}>User not found.</p>
@@ -270,7 +271,7 @@ export default function PublicProfile() {
         <div className="pubprofile__panel">
           <p className="pubprofile__panel-title">{panel === 'followers' ? 'Followers' : 'Following'}</p>
           {panelLoading ? (
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Loading…</p>
+            <DelayedSpinner active={panelLoading} inline label="Loading..." />
           ) : panelUsers.length === 0 ? (
             <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
               {panel === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}

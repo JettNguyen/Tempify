@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
 import ArchiveLock from '../components/ArchiveLock'
+import DelayedSpinner from '../components/DelayedSpinner'
 import './Explore.css'
 import './Archive.css'
 
@@ -197,7 +198,7 @@ export default function Explore() {
           </div>
         </div>
       ) : fetching ? (
-        <p className="explore-empty">Loading...</p>
+        <DelayedSpinner active={fetching} label="Loading puzzles..." />
       ) : (
         <div className="explore-games">
           {GAMES.map(game => {

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
-import { searchSongs } from '../lib/itunes'
+import { searchSongs, getCachedSongSearch } from '../lib/itunes'
 import './GuessInput.css'
 
 const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placeholder = 'Search for a song...' }, ref) {
@@ -9,6 +9,7 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef(null)
   const containerRef = useRef(null)
+  const requestIdRef = useRef(0)
 
   useImperativeHandle(ref, () => ({
     clear() {
@@ -35,17 +36,26 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
   function handleChange(e) {
     const val = e.target.value
     setQuery(val)
+    const requestId = ++requestIdRef.current
 
     clearTimeout(debounceRef.current)
     if (val.trim().length < 2) {
       setResults([])
       setOpen(false)
+      setLoading(false)
       return
+    }
+
+    const cachedHits = getCachedSongSearch(val)
+    if (cachedHits.length > 0) {
+      setResults(cachedHits)
+      setOpen(true)
     }
 
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
       const hits = await searchSongs(val)
+      if (requestId !== requestIdRef.current) return
       setResults(hits)
       setOpen(hits.length > 0)
       setLoading(false)

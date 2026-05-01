@@ -5,11 +5,14 @@ import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
+import { findArtwork } from '../lib/itunes'
+import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
 import TrackArtwork from '../components/TrackArtwork'
+import DelayedSpinner from '../components/DelayedSpinner'
 import './CoverOrNot.css'
 
 export default function CoverOrNot() {
@@ -25,6 +28,7 @@ export default function CoverOrNot() {
   const [done, setDone] = useState(false)
   const [correct, setCorrect] = useState(false)
   const [finalTime, setFinalTime] = useState(null)
+  const [originalResultArtwork, setOriginalResultArtwork] = useState(null)
   const coverRef = useRef(null)
   const originalRef = useRef(null)
 
@@ -46,6 +50,35 @@ export default function CoverOrNot() {
     }
   }, [puzzle, completions])
 
+  useEffect(() => {
+    if (!puzzle) return
+
+    let cancelled = false
+    const metadata = puzzle.metadata || {}
+    const existing = metadata.original_artwork_url || null
+    if (existing) {
+      setOriginalResultArtwork(existing)
+      prefetchArtworkUrls([existing])
+      return
+    }
+
+    if (puzzle.answer !== 'cover') return
+    if (!metadata.original_title) return
+
+    findArtwork({ title: metadata.original_title, artist: metadata.original_artist })
+      .then((url) => {
+        if (!cancelled && url) {
+          setOriginalResultArtwork(url)
+          prefetchArtworkUrls([url])
+        }
+      })
+      .catch(() => {
+        // Keep fallback UI if lookup fails.
+      })
+
+    return () => { cancelled = true }
+  }, [puzzle])
+
   async function handleGuess(pick) {
     if (done) return
     hapticImportantTap()
@@ -64,7 +97,7 @@ export default function CoverOrNot() {
     }
   }
 
-  if (loading) return <GameShell><p style={{ color: 'var(--text-muted)' }}>Loading...</p></GameShell>
+  if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
   if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
   if (!puzzle) return null
 
@@ -120,7 +153,7 @@ export default function CoverOrNot() {
           artwork={isCover ? {
             title: m.original_title,
             artist: m.original_artist,
-            src: m.original_artwork_url,
+            src: originalResultArtwork || m.original_artwork_url,
           } : undefined}
           emojiGrid={correct ? '🟩' : '⬜'}
           gameSlug="cover-or-not"

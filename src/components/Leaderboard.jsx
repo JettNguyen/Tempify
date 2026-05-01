@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getLeaderboard } from '../lib/scores'
 import { todayEST } from '../lib/date'
+import DelayedSpinner from './DelayedSpinner'
 import './Leaderboard.css'
 
 function fmtTime(s) {
@@ -55,7 +56,7 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
           <Link to="/login">Log in</Link> to see how friends did.
         </p>
       ) : loading ? (
-        <p className="leaderboard__empty">Loading…</p>
+        <DelayedSpinner active={loading} inline label="Loading leaderboard..." />
       ) : entries.length === 0 ? (
         <p className="leaderboard__empty">
           {tab === 'friends'
