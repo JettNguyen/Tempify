@@ -2,5 +2,9 @@
 	"appId": "me.tempify",
 	"appName": "Tempify",
 	"webDir": "dist",
-	"packageClassList": []
+	"packageClassList": [
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"HapticsPlugin"
+	]
 }

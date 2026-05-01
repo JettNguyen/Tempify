@@ -6,6 +6,7 @@ import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
+import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
 import TrackArtwork from '../components/TrackArtwork'
@@ -46,13 +47,14 @@ export default function HitOrMiss() {
 
   async function handleGuess(verdict) {
     if (done) return
+    hapticImportantTap()
     const elapsed = stop()
     setFinalTime(elapsed)
     const isCorrect = verdict === puzzle.metadata?.verdict
     setChosen(verdict)
     setCorrect(isCorrect)
     setDone(true)
-    markComplete('hit-or-miss', 1)
+    markComplete('hit-or-miss', 1, isCorrect)
     if (user) {
       await saveScore({ userId: user.id, gameSlug: 'hit-or-miss', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'hit-or-miss', profile?.is_subscribed)

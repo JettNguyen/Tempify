@@ -6,6 +6,7 @@ import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
+import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
 import TrackArtwork from '../components/TrackArtwork'
@@ -47,6 +48,7 @@ export default function CoverOrNot() {
 
   async function handleGuess(pick) {
     if (done) return
+    hapticImportantTap()
     const elapsed = stop()
     setFinalTime(elapsed)
     const isCorrect = pick === puzzle.answer
@@ -55,7 +57,7 @@ export default function CoverOrNot() {
     if (puzzle.answer === 'cover' && puzzle.metadata?.original_audio_url) {
       coverRef.current?.pause()
     }
-    markComplete('cover-or-not', 1)
+    markComplete('cover-or-not', 1, isCorrect)
     if (user) {
       await saveScore({ userId: user.id, gameSlug: 'cover-or-not', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'cover-or-not', profile?.is_subscribed)

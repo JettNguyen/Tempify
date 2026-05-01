@@ -45,7 +45,6 @@ export default function ArchiveDay() {
       .select('game_slug')
       .eq('user_id', user.id)
       .eq('date_played', date)
-      .eq('completed', true)
       .then(({ data }) => {
         if (data) setCompletedSlugs(new Set(data.map(s => s.game_slug)))
       })

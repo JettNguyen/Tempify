@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
+import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import GuessInput from '../components/GuessInput'
 import ResultCard from '../components/ResultCard'
@@ -66,6 +67,7 @@ export default function OneBar() {
 
   async function handleGuess(song) {
     if (done || attempts.length >= MAX_ATTEMPTS) return
+    hapticImportantTap()
 
     const titleMatch = stripVariants(song.title).toLowerCase() === puzzle.answer.toLowerCase().trim()
     const artistMatch = !puzzle.metadata?.artist ||
@@ -78,7 +80,7 @@ export default function OneBar() {
     if (isCorrect || newAttempts.length >= MAX_ATTEMPTS) {
       setCorrect(isCorrect)
       setDone(true)
-      markComplete('one-bar', newAttempts.length)
+      markComplete('one-bar', newAttempts.length, isCorrect)
       if (user) {
         await saveScore({ userId: user.id, gameSlug: 'one-bar', attempts: newAttempts.length, completed: isCorrect })
         if (isCorrect) await updateStreak(user.id, 'one-bar')

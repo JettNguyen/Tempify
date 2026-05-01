@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="vc-launch">
+    <device id="retina6_12" orientation="portrait" appearance="dark"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <scene sceneID="scene-launch">
+            <objects>
+                <viewController id="vc-launch" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="view-root">
+                        <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchLogo" translatesAutoresizingMaskIntoConstraints="NO" id="image-logo">
+                                <rect key="frame" x="135" y="352" width="120" height="120"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="120" id="logo-w"/>
+                                    <constraint firstAttribute="height" constant="120" id="logo-h"/>
+                                </constraints>
+                            </imageView>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="spinner-main">
+                                <rect key="frame" x="176" y="500" width="37" height="37"/>
+                            </activityIndicatorView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="safe-area"/>
+                        <color key="backgroundColor" red="0.05490196078" green="0.05490196078" blue="0.05490196078" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="image-logo" firstAttribute="centerX" secondItem="safe-area" secondAttribute="centerX" id="logo-center-x"/>
+                            <constraint firstItem="image-logo" firstAttribute="centerY" secondItem="safe-area" secondAttribute="centerY" constant="-40" id="logo-center-y"/>
+                            <constraint firstItem="spinner-main" firstAttribute="centerX" secondItem="safe-area" secondAttribute="centerX" id="spinner-center-x"/>
+                            <constraint firstItem="spinner-main" firstAttribute="top" secondItem="image-logo" secondAttribute="bottom" constant="28" id="spinner-top"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="first-responder" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="52" y="375"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="LaunchLogo" width="512" height="512"/>
+    </resources>
+</document>

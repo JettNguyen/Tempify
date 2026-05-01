@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { searchUsers } from '../lib/scores'
 import Avatar from './Avatar'
@@ -12,8 +12,29 @@ export default function SearchModal({ onClose }) {
   const debounce = useRef(null)
   const inputRef = useRef(null)
 
+  useLayoutEffect(() => {
+    const focusInput = () => {
+      const input = inputRef.current
+      if (!input) return
+      input.focus({ preventScroll: true })
+      input.click()
+    }
+
+    // iOS Safari/WKWebView can ignore the first programmatic focus during modal mount.
+    // Retry focus shortly after paint to reliably open the keyboard.
+    focusInput()
+    const rafId = requestAnimationFrame(focusInput)
+    const t1 = window.setTimeout(focusInput, 60)
+    const t2 = window.setTimeout(focusInput, 180)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
+  }, [])
+
   useEffect(() => {
-    inputRef.current?.focus()
     function onKey(e) { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
@@ -46,6 +67,7 @@ export default function SearchModal({ onClose }) {
           </svg>
           <input
             ref={inputRef}
+            autoFocus
             value={query}
             onChange={handleChange}
             placeholder="Search users by username…"

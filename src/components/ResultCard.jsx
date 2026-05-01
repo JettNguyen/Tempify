@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import ShareButton from './ShareButton'
 import TrackArtwork from './TrackArtwork'
 import Leaderboard from './Leaderboard'
+import { hapticWinCelebration } from '../lib/haptics'
 import './ResultCard.css'
 
 function fmtTime(s) {
@@ -18,6 +20,12 @@ export default function ResultCard({
   puzzleDate, timeSeconds,
 }) {
   const timeLabel = gameSlug !== 'one-bar' ? fmtTime(timeSeconds) : null
+
+  useEffect(() => {
+    if (correct) {
+      hapticWinCelebration()
+    }
+  }, [correct])
 
   return (
     <div className={`result-card slide-up${correct ? ' result-card--correct' : ''}`}>

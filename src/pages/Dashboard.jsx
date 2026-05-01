@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { getRecentScores, getStreaks } from '../lib/scores'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
+import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import StreakDisplay from '../components/StreakDisplay'
 import './Dashboard.css'
 
@@ -26,13 +27,27 @@ function buildStats(scores) {
     const plays = scores.filter(s => s.game_slug === slug)
     const wins = plays.filter(s => s.completed)
     const attempts = plays.reduce((sum, s) => sum + (s.attempts || 0), 0)
-    const times = plays.filter(s => s.time_seconds != null).map(s => s.time_seconds)
+    const timePlays = plays.filter(s => s.time_seconds != null)
+    const times = timePlays.map(s => s.time_seconds)
+    
+    // Find best time and its date
+    let bestTime = null
+    let bestTimeDate = null
+    if (times.length > 0) {
+      const minTime = Math.min(...times)
+      const bestPlay = timePlays.find(s => s.time_seconds === minTime)
+      bestTime = minTime
+      bestTimeDate = bestPlay?.date_played
+    }
+    
     return {
       slug, name: GAME_NAMES[slug],
       plays: plays.length, wins: wins.length,
       winRate: plays.length ? wins.length / plays.length : 0,
       avgAttempts: plays.length ? attempts / plays.length : 0,
       avgTime: times.length ? times.reduce((a, b) => a + b, 0) / times.length : null,
+      bestTime,
+      bestTimeDate,
     }
   })
 
@@ -64,6 +79,12 @@ export default function Dashboard() {
   const [dataLoading, setDataLoading] = useState(true)
 
   const isSubscribed = profile?.is_subscribed
+  const customerPortalUrl = import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_URL
+
+  async function handleManageBillingClick(event) {
+    event.preventDefault()
+    await openExternalUrlInApp(customerPortalUrl)
+  }
 
   useEffect(() => {
     if (!user) return
@@ -167,7 +188,9 @@ export default function Dashboard() {
                     <span>
                       {game.slug === 'one-bar'
                         ? (game.plays ? `${game.avgAttempts.toFixed(1)} avg guesses` : 'No plays yet')
-                        : (game.avgTime != null ? `avg ${fmtTime(game.avgTime)}` : 'No plays yet')}
+                        : (game.bestTime != null 
+                          ? `⚡ ${fmtTime(game.bestTime)} on ${game.bestTimeDate}`
+                          : 'No plays yet')}
                     </span>
                   </div>
                 </div>
@@ -208,7 +231,7 @@ export default function Dashboard() {
 
       {isSubscribed ? (
         <p>
-          <a href={import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_URL} className="dashboard-billing-link">
+          <a href={customerPortalUrl} onClick={handleManageBillingClick} className="dashboard-billing-link">
             Manage billing
           </a>
         </p>

@@ -6,6 +6,7 @@ import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
+import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
 import './Era.css'
@@ -49,14 +50,15 @@ export default function Era() {
   }, [puzzle, completions])
 
   async function handleGuess(decade) {
-    if (done || !hasStarted) return
+    if (done) return
+    hapticImportantTap()
     const elapsed = stop()
     setFinalTime(elapsed)
     const isCorrect = decade === puzzle.answer
     setChosen(decade)
     setCorrect(isCorrect)
     setDone(true)
-    markComplete('era', 1)
+    markComplete('era', 1, isCorrect)
     if (user) {
       await saveScore({ userId: user.id, gameSlug: 'era', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'era', profile?.is_subscribed)
@@ -95,7 +97,7 @@ export default function Era() {
           }
 
           return (
-            <button key={decade} onClick={() => handleGuess(decade)} disabled={done || !hasStarted} className={cls}>
+            <button key={decade} onClick={() => handleGuess(decade)} disabled={done} className={cls}>
               {decade}
             </button>
           )
