@@ -5,6 +5,8 @@
 	"packageClassList": [
 		"AppPlugin",
 		"CAPBrowserPlugin",
-		"HapticsPlugin"
+		"HapticsPlugin",
+		"PurchasesPlugin",
+		"RevenueCatUIPlugin"
 	]
 }

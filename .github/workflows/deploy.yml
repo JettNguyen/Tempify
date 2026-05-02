@@ -52,6 +52,7 @@ jobs:
           VITE_STRIPE_PAYMENT_LINK: ${{ secrets.VITE_STRIPE_PAYMENT_LINK }}
           VITE_ADMIN_EMAIL: ${{ secrets.VITE_ADMIN_EMAIL }}
           VITE_ITUNES_PROXY_URL: ${{ secrets.VITE_ITUNES_PROXY_URL }}
+          VITE_PREMIUM_EMAILS: ${{ secrets.VITE_PREMIUM_EMAILS }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

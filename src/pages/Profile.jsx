@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useAuth } from '../hooks/useAuth'
 import { AVATAR_ICONS, AVATAR_COLORS, saveAvatar, saveProfileSettings, checkUsernameAvailable } from '../lib/avatar'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
+import { getNativeManageSubscriptionsUrl, usesNativeIap } from '../lib/billing'
 import Avatar from '../components/Avatar'
 import './Profile.css'
 import './Dashboard.css'
@@ -95,6 +96,10 @@ export default function Profile() {
 
   async function handleManageBillingClick(event) {
     event.preventDefault()
+    if (usesNativeIap()) {
+      await openExternalUrlInApp(getNativeManageSubscriptionsUrl())
+      return
+    }
     await openExternalUrlInApp(customerPortalUrl)
   }
 
@@ -209,7 +214,7 @@ export default function Profile() {
       <div className="profile-section">
         {isSubscribed ? (
           <a href={customerPortalUrl} onClick={handleManageBillingClick} className="dashboard-billing-link">
-            Manage billing
+            {usesNativeIap() ? 'Manage subscriptions' : 'Manage billing'}
           </a>
         ) : (
           <div className="dashboard-upsell">

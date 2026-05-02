@@ -3,6 +3,7 @@ import { App as CapApp } from '@capacitor/app'
 import { Browser } from '@capacitor/browser'
 import { supabase } from '../lib/supabase'
 import { isNativeApp } from '../lib/oauth'
+import { initRevenueCat, checkPremiumEntitlement } from '../lib/billing'
 
 const AuthContext = createContext(null)
 
@@ -125,8 +126,22 @@ export function AuthProvider({ children }) {
       .split(',')
       .map(e => e.trim().toLowerCase())
       .filter(Boolean)
-    if (data && premiumEmails.length && premiumEmails.includes((data.email || '').trim().toLowerCase())) {
-      data.is_subscribed = true
+    const emailBasedPremium = Boolean(
+      data && premiumEmails.length && premiumEmails.includes((data.email || '').trim().toLowerCase())
+    )
+
+    let nativePremium = false
+    if (isNativeApp()) {
+      try {
+        await initRevenueCat(userId)
+        nativePremium = await checkPremiumEntitlement()
+      } catch {
+        nativePremium = false
+      }
+    }
+
+    if (data) {
+      data.is_subscribed = Boolean(data.is_subscribed || emailBasedPremium || nativePremium)
     }
     setProfile(data)
     setLoading(false)

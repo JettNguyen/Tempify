@@ -20,14 +20,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/assets/index-BpGi49Jl.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-fEs5hZOw.css">
+    <script type="module" crossorigin src="/assets/index-BqCOv9op.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DwZx2xXX.css">
   </head>
   <body>
     <!-- Restore path saved by 404.html for GitHub Pages SPA routing -->
     <script>
       (function () {
-        var path = sessionStorage.getItem('spa-path')
+        var params = new URLSearchParams(window.location.search)
+        var queryPath = params.get('spa')
+        var path = queryPath || sessionStorage.getItem('spa-path')
         if (path) {
           sessionStorage.removeItem('spa-path')
           window.history.replaceState(null, '', path)
