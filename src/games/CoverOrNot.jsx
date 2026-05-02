@@ -29,6 +29,7 @@ export default function CoverOrNot() {
   const [correct, setCorrect] = useState(false)
   const [finalTime, setFinalTime] = useState(null)
   const [originalResultArtwork, setOriginalResultArtwork] = useState(null)
+  const [shouldAutoplayOriginal, setShouldAutoplayOriginal] = useState(false)
   const coverRef = useRef(null)
   const originalRef = useRef(null)
 
@@ -46,6 +47,7 @@ export default function CoverOrNot() {
     if (isComplete('cover-or-not')) {
       stop()
       setCorrect(completions['cover-or-not']?.completed ?? false)
+      setShouldAutoplayOriginal(false)
       setDone(true)
     }
   }, [puzzle, completions])
@@ -79,6 +81,15 @@ export default function CoverOrNot() {
     return () => { cancelled = true }
   }, [puzzle])
 
+  useEffect(() => {
+    if (!done || !shouldAutoplayOriginal) return
+    const id = setTimeout(() => {
+      originalRef.current?.play()
+      setShouldAutoplayOriginal(false)
+    }, 100)
+    return () => clearTimeout(id)
+  }, [done, shouldAutoplayOriginal])
+
   async function handleGuess(pick) {
     if (done) return
     hapticImportantTap()
@@ -89,6 +100,7 @@ export default function CoverOrNot() {
     setDone(true)
     if (puzzle.answer === 'cover' && puzzle.metadata?.original_audio_url) {
       coverRef.current?.pause()
+      setShouldAutoplayOriginal(true)
     }
     markComplete('cover-or-not', 1, isCorrect)
     if (user) {

@@ -59,8 +59,13 @@ export default function Sampled() {
 
   useEffect(() => {
     if (!done || !shouldAutoplaySample) return
-    sampleRef.current?.play()
-    setShouldAutoplaySample(false)
+    // Small delay: AudioPlayer mounts in the same render that sets done=true,
+    // so we wait one frame to guarantee the ref's imperative handle is ready.
+    const id = setTimeout(() => {
+      sampleRef.current?.play()
+      setShouldAutoplaySample(false)
+    }, 100)
+    return () => clearTimeout(id)
   }, [done, shouldAutoplaySample])
 
   async function handleGuess(option) {

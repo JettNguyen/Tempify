@@ -1,11 +1,39 @@
+import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
+import { usesNativeIap, presentPaywallIfNeeded, restorePurchases } from '../lib/billing'
 import './Subscribe.css'
 
 export default function Subscribe() {
-  const { user } = useAuth()
+  const { user, refreshProfile } = useAuth()
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+
+  const nativeIap = usesNativeIap()
 
   async function handleSubscribe() {
+    if (busy) return
+
+    if (nativeIap) {
+      setBusy(true)
+      setMessage('')
+      try {
+        // Shows the RC native paywall; skips it automatically if already subscribed.
+        const { purchased } = await presentPaywallIfNeeded()
+        if (purchased) {
+          await refreshProfile()
+          setMessage('Subscription activated!')
+        }
+        // If dismissed/cancelled, no message — just close.
+      } catch (err) {
+        setMessage(err?.message || 'Unable to complete purchase right now.')
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
+
+    // Web: redirect to Stripe payment link
     const link = import.meta.env.VITE_STRIPE_PAYMENT_LINK
     if (!link) {
       console.warn('VITE_STRIPE_PAYMENT_LINK is not set.')
@@ -14,6 +42,21 @@ export default function Subscribe() {
     const url = new URL(link)
     if (user?.email) url.searchParams.set('prefilled_email', user.email)
     await openExternalUrlInApp(url.toString())
+  }
+
+  async function handleRestore() {
+    if (busy || !nativeIap) return
+    setBusy(true)
+    setMessage('')
+    try {
+      const restored = await restorePurchases()
+      await refreshProfile()
+      setMessage(restored ? 'Purchases restored!' : 'No active subscription found to restore.')
+    } catch (err) {
+      setMessage(err?.message || 'Unable to restore purchases right now.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -34,9 +77,17 @@ export default function Subscribe() {
           <p className="subscribe-fine-print">Cancel any time, no questions.</p>
         </div>
 
-        <button onClick={handleSubscribe} className="subscribe-cta btn-press">
-          Subscribe — $3/mo
+        <button onClick={handleSubscribe} className="subscribe-cta btn-press" disabled={busy}>
+          {busy ? 'Please wait…' : nativeIap ? 'See Plans' : 'Subscribe — $3/mo'}
         </button>
+
+        {nativeIap && (
+          <button onClick={handleRestore} className="subscribe-restore btn-press btn-hover" disabled={busy}>
+            Restore purchases
+          </button>
+        )}
+
+        {message && <p className="subscribe-hint">{message}</p>}
 
         {!user && (
           <p className="subscribe-hint">You'll be asked to log in or create an account.</p>
