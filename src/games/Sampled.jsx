@@ -155,10 +155,10 @@ export default function Sampled() {
           <ResultCard
             correct={correct}
             answer={puzzle.answer}
-            artist={puzzle.metadata?.sample_artist}
+            artist={puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist}
             artwork={{
               title: puzzle.answer,
-              artist: puzzle.metadata?.sample_artist,
+              artist: puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist,
               src: puzzle.metadata?.sample_artwork_url,
             }}
             detail={`Originally released in ${puzzle.metadata?.sample_year}`}

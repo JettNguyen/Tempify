@@ -13,11 +13,29 @@ import './Archive.css'
 
 const FIRST_PUZZLE_DATE = '2026-04-28'
 
-function updateScrollGradient(row) {
-  const wrap = row.parentElement
-  if (!wrap || !wrap.classList.contains('explore-scroll-wrap')) return
-  wrap.classList.toggle('can-left', row.scrollLeft > 1)
-  wrap.classList.toggle('at-end', row.scrollLeft + row.clientWidth >= row.scrollWidth - 2)
+function updateScrollGradient(el) {
+  if (!el) return
+  const atStart = el.scrollLeft <= 1
+  const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2
+  const noOverflow = el.scrollWidth <= el.clientWidth + 2
+  let mask
+  if (noOverflow) {
+    mask = 'none'
+  } else if (atStart) {
+    mask = 'linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%)'
+  } else if (atEnd) {
+    mask = 'linear-gradient(to right, transparent 0, black 48px, black 100%)'
+  } else {
+    mask = 'linear-gradient(to right, transparent 0, black 48px, black calc(100% - 48px), transparent 100%)'
+  }
+  el.style.webkitMaskImage = mask
+  el.style.maskImage = mask
+}
+
+function getDisplayArtist(puzzle) {
+  if (puzzle.game_slug === 'sampled')
+    return puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist || null
+  return puzzle.metadata?.song_artist || puzzle.metadata?.artist || null
 }
 
 function getDisplayAnswer(puzzle) {
@@ -55,9 +73,19 @@ export default function Explore() {
     const el = pillsRef.current
     if (!el) return
     updateScrollGradient(el)
+    const onWheel = (e) => {
+      if (el.scrollWidth <= el.clientWidth) return
+      e.preventDefault()
+      el.scrollLeft += e.deltaY
+      updateScrollGradient(el)
+    }
     const onScroll = () => updateScrollGradient(el)
+    el.addEventListener('wheel', onWheel, { passive: false })
     el.addEventListener('scroll', onScroll)
-    return () => el.removeEventListener('scroll', onScroll)
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('scroll', onScroll)
+    }
   }, [])
   useEffect(() => {
     if (pillsRef.current) updateScrollGradient(pillsRef.current)
@@ -67,6 +95,9 @@ export default function Explore() {
   useEffect(() => {
     const el = gamesRef.current
     if (!el) return
+    requestAnimationFrame(() => {
+      el.querySelectorAll('.explore-game-row__scroll').forEach(updateScrollGradient)
+    })
     const onWheel = (e) => {
       const row = e.target.closest('.explore-game-row__scroll')
       if (!row || row.scrollWidth <= row.clientWidth) return
@@ -85,14 +116,6 @@ export default function Explore() {
       el.removeEventListener('wheel', onWheel)
       el.removeEventListener('scroll', onScroll, { capture: true })
     }
-  }, [])
-
-  useEffect(() => {
-    const el = gamesRef.current
-    if (!el) return
-    requestAnimationFrame(() => {
-      el.querySelectorAll('.explore-game-row__scroll').forEach(updateScrollGradient)
-    })
   }, [allPuzzles])
 
   useEffect(() => {
@@ -171,8 +194,7 @@ export default function Explore() {
         </div>
       </div>
 
-      <div className="explore-scroll-wrap">
-        <div className="explore-pills" ref={pillsRef}>
+      <div className="explore-pills" ref={pillsRef}>
         {GENRES.map(g => {
           const active = activeGenres.includes(g)
           const colors = GENRE_COLORS[g]
@@ -198,7 +220,6 @@ export default function Explore() {
             style={{ padding: '6px 13px', borderRadius: '999px', border: '1px solid var(--border)', color: 'var(--text-dim)', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
           >Clear ✕</button>
         )}
-        </div>
       </div>
 
       {!isSubscribed ? (
@@ -256,15 +277,14 @@ export default function Explore() {
             return (
               <div key={game.slug} className="explore-game-row">
                 <h2 className="explore-game-row__title">{game.name}</h2>
-                <div className="explore-scroll-wrap">
-                  <div className="explore-game-row__scroll">
+                <div className="explore-game-row__scroll">
                   {puzzles.map(p => {
                     const played = playedSlugs.has(`${p.scheduled_date}|${p.game_slug}`)
                       || isComplete(p.game_slug, p.scheduled_date)
                     const gameLink = `${game.path}?date=${p.scheduled_date}`
                     const dateStr = new Date(p.scheduled_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                     const answer = getDisplayAnswer(p)
-                    const artistLine = p.metadata?.song_artist || p.metadata?.artist || null
+                    const artistLine = getDisplayArtist(p)
                     const genreColors = p.genre ? GENRE_COLORS[p.genre] : null
                     return (
                       <Link key={p.id} to={gameLink} className={`explore-game-card card-hover btn-press${played ? ' explore-game-card--played' : ''}`}>
@@ -288,7 +308,6 @@ export default function Explore() {
                       </Link>
                     )
                   })}
-                  </div>
                 </div>
               </div>
             )
