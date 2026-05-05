@@ -70,21 +70,10 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
 
     if (!autoplay || !src) return
 
-    const tryAutoplay = () => {
-      onPlay?.()
-      setPlaying(true)
-      const p = audio.play()
-      if (p && typeof p.catch === 'function') {
-        p.catch(() => setPlaying(false))
-      }
-    }
-
-    if (audio.readyState >= 2) {
-      tryAutoplay()
-    } else {
-      audio.addEventListener('canplay', tryAutoplay, { once: true })
-      return () => audio.removeEventListener('canplay', tryAutoplay)
-    }
+    onPlay?.()
+    setPlaying(true)
+    const p = audio.play()
+    if (p?.catch) p.catch(() => setPlaying(false))
   }, [src, autoplay])
 
   function togglePlay() {
