@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { signInWithGoogleOAuth } from '../lib/oauth'
+import { signInWithGoogleOAuth, signInWithApple } from '../lib/oauth'
 import { getEmailByUsername } from '../lib/avatar'
 import { useAuth } from '../hooks/useAuth'
 import './Login.css'
@@ -21,7 +21,7 @@ export default function Login() {
     if (!user) return
 
     const oauthProvider = sessionStorage.getItem('tempify-oauth-provider')
-    if (oauthProvider === 'google') {
+    if (oauthProvider === 'google' || oauthProvider === 'apple') {
       sessionStorage.removeItem('tempify-oauth-provider')
       navigate('/', { replace: true })
     }
@@ -59,6 +59,17 @@ export default function Login() {
     await signInWithGoogleOAuth()
   }
 
+  async function handleAppleLogin() {
+    sessionStorage.setItem('tempify-oauth-provider', 'apple')
+    try {
+      await signInWithApple()
+    } catch (err) {
+      sessionStorage.removeItem('tempify-oauth-provider')
+      console.error('[Tempify] Apple login failed:', err)
+      setError(`Sign in with Apple failed: ${err?.message || err}`)
+    }
+  }
+
   return (
     <div className="auth-page">
       <div className="auth-card">
@@ -67,10 +78,16 @@ export default function Login() {
           Don't have an account? <Link to="/signup" className="auth-link">Sign up</Link>
         </p>
 
-        <button onClick={handleGoogleLogin} className="auth-google-btn btn-press btn-hover">
-          <GoogleIcon />
-          Continue with Google
-        </button>
+        <div className="auth-social-group">
+          <button onClick={handleAppleLogin} className="auth-apple-btn btn-press btn-hover">
+            <AppleIcon />
+            Continue with Apple
+          </button>
+          <button onClick={handleGoogleLogin} className="auth-google-btn btn-press btn-hover">
+            <GoogleIcon />
+            Continue with Google
+          </button>
+        </div>
 
         <div className="auth-divider">
           <div className="auth-divider__line" />
@@ -107,6 +124,14 @@ export default function Login() {
         </form>
       </div>
     </div>
+  )
+}
+
+function AppleIcon() {
+  return (
+    <svg width="15" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.28.07 2.18.74 3.01.8 1.15-.24 2.25-.93 3.48-.84 1.47.12 2.58.7 3.31 1.79-3.01 1.86-2.3 5.6.46 6.76-.58 1.5-1.28 2.97-2.26 4.37zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+    </svg>
   )
 }
 
