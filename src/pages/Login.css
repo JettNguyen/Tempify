@@ -29,6 +29,7 @@
   color: var(--text-primary);
 }
 
+.auth-apple-btn,
 .auth-google-btn {
   width: 100%;
   padding: 10px 16px;
@@ -41,6 +42,10 @@
   justify-content: center;
   gap: 10px;
   cursor: pointer;
+  margin-bottom: 0.75rem;
+}
+
+.auth-social-group {
   margin-bottom: 1.25rem;
 }
 
