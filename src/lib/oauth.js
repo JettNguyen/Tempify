@@ -32,3 +32,21 @@ export async function signInWithGoogleOAuth() {
     await Browser.open({ url: data.url })
   }
 }
+
+export async function signInWithApple() {
+  const native = isNativeApp()
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'apple',
+    options: {
+      redirectTo: getOAuthRedirectTo(),
+      skipBrowserRedirect: native,
+    },
+  })
+
+  if (error) throw error
+
+  if (native && data?.url) {
+    await Browser.open({ url: data.url })
+  }
+}
