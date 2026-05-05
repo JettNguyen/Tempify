@@ -7,27 +7,15 @@ import {
   getFollowerProfiles, getFollowingProfiles,
   getRecentScores, getStreaks,
 } from '../lib/scores'
+import { GAME_SLUGS, getGameName } from '../lib/games'
+import { fmtTime } from '../lib/date'
 import Avatar from '../components/Avatar'
 import StreakDisplay from '../components/StreakDisplay'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './Dashboard.css'
 import './PublicProfile.css'
 
-const GAME_NAMES = {
-  'one-bar': 'One Bar',
-  'hit-or-miss': 'Hit or Miss',
-  'sampled': 'Sampled',
-  'era': 'Era',
-  'cover-or-not': 'Cover or Not',
-}
-
 function pct(v) { return `${Math.round(v * 100)}%` }
-
-function fmtTime(s) {
-  if (s == null) return null
-  if (s < 60) return `${s.toFixed(1)}s`
-  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
-}
 
 function formatDate(dateString) {
   if (!dateString) return ''
@@ -55,7 +43,7 @@ function buildStats(scores, streaks = []) {
   })
   const perfectDays = Object.values(byDate).filter(day => {
     const slugs = new Set(day.filter(s => s.completed).map(s => s.game_slug))
-    return Object.keys(GAME_NAMES).every(g => slugs.has(g))
+    return GAME_SLUGS.every(g => slugs.has(g))
   }).length
 
   // Consistency - % of days since first play that they actually played
@@ -68,7 +56,7 @@ function buildStats(scores, streaks = []) {
   const consistency = Math.round((uniqueDays / totalDaysSinceFirst) * 100)
 
   // Per-game stats
-  const byGame = Object.keys(GAME_NAMES).map(slug => {
+  const byGame = GAME_SLUGS.map(slug => {
     const plays = scores.filter(s => s.game_slug === slug)
     const w = plays.filter(s => s.completed)
     const allAttempts = plays.map(s => s.attempts).filter(Boolean)
@@ -84,7 +72,7 @@ function buildStats(scores, streaks = []) {
     const sub10sRate = winTimes.length ? winTimes.filter(t => t < 10).length / winTimes.length : 0
 
     return {
-      slug, name: GAME_NAMES[slug],
+      slug, name: getGameName(slug),
       plays: plays.length, wins: w.length,
       winRate: plays.length ? w.length / plays.length : 0,
       avgAttempts, bestAttempts, avgTime, bestTime,
@@ -98,7 +86,7 @@ function buildStats(scores, streaks = []) {
   // Fastest single win across all timed games
   const fastestWin = scores
     .filter(s => s.completed && s.time_seconds != null)
-    .reduce((best, s) => (!best || s.time_seconds < best.time) ? { time: s.time_seconds, game: GAME_NAMES[s.game_slug], date: s.date_played } : best, null)
+    .reduce((best, s) => (!best || s.time_seconds < best.time) ? { time: s.time_seconds, game: getGameName(s.game_slug), date: s.date_played } : best, null)
 
   // One Bar mastery - % solved in 1–2 guesses
   const obPlays = scores.filter(s => s.game_slug === 'one-bar')
@@ -385,7 +373,7 @@ export default function PublicProfile() {
                 <div className="dashboard-score-left">
                   <span className={`dashboard-score-dot${score.completed ? ' dashboard-score-dot--complete' : ''}`} />
                   <div>
-                    <div className="dashboard-score-name">{GAME_NAMES[score.game_slug] || score.game_slug}</div>
+                    <div className="dashboard-score-name">{getGameName(score.game_slug)}</div>
                     <div className="dashboard-score-date">{formatDate(score.date_played)}</div>
                   </div>
                 </div>

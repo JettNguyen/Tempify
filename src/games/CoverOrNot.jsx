@@ -104,7 +104,7 @@ export default function CoverOrNot() {
     }
     markComplete('cover-or-not', 1, isCorrect)
     if (user) {
-      await saveScore({ userId: user.id, gameSlug: 'cover-or-not', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
+      await saveScore({ userId: user.id, gameSlug: 'cover-or-not', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'cover-or-not', profile?.is_subscribed)
     }
   }

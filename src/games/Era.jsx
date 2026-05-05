@@ -93,7 +93,7 @@ export default function Era() {
     setDone(true)
     markComplete('era', 1, isCorrect)
     if (user) {
-      await saveScore({ userId: user.id, gameSlug: 'era', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
+      await saveScore({ userId: user.id, gameSlug: 'era', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'era', profile?.is_subscribed)
     }
   }

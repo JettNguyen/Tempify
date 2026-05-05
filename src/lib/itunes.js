@@ -136,7 +136,7 @@ function mapGenre(itunesGenre) {
 // Variant suffixes that make the same song look like a different result
 const VARIANT_RE = /\s*[\(\[]\s*(feat\.|ft\.|featuring|remix|remixed|remaster|remastered|live|edit|version|radio\s*edit|acoustic|instrumental|deluxe|extended|mix|reprise|cover|tribute|explicit|clean|mono|stereo|single\s*version|original\s*mix|bonus)\b.*[\)\]]\s*$/gi
 
-function stripVariant(title) {
+export function stripVariant(title) {
   return title.replace(VARIANT_RE, '').trim()
 }
 

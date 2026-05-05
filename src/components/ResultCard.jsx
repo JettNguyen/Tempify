@@ -4,15 +4,8 @@ import ShareButton from './ShareButton'
 import TrackArtwork from './TrackArtwork'
 import Leaderboard from './Leaderboard'
 import { hapticWinCelebration } from '../lib/haptics'
+import { fmtTime } from '../lib/date'
 import './ResultCard.css'
-
-function fmtTime(s) {
-  if (s == null) return null
-  const mins = Math.floor(s / 60)
-  const secs = Math.floor(s % 60)
-  const tenths = Math.floor((s % 1) * 10)
-  return mins > 0 ? `${mins}:${String(secs).padStart(2, '0')}` : `${secs}.${tenths}s`
-}
 
 export default function ResultCard({
   correct, answer, artist, detail, emojiGrid,

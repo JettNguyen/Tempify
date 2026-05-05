@@ -2,25 +2,14 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import { todayEST } from '../lib/date'
+import { GAME_BY_SLUG, GAME_SLUGS } from '../lib/games'
 import { getPuzzlesForDate } from '../lib/puzzles'
 import ArchiveLock from '../components/ArchiveLock'
 import DelayedSpinner from '../components/DelayedSpinner'
 import GameTile from '../components/GameTile'
 import './ArchiveDay.css'
 import './Home.css'
-
-function gameMeta(date) {
-  const q = `?date=${date}`
-  return {
-    'one-bar':        { name: 'One Bar',        description: 'Name the song from a tiny clip.',             path: `/game/one-bar${q}`,        featured: true },
-    'hit-or-miss':    { name: 'Hit or Miss',    description: 'Did it ever chart on the Hot 100?',          path: `/game/hit-or-miss${q}` },
-    'sampled':        { name: 'Sampled',        description: 'Hear the sample, find the source.',          path: `/game/sampled${q}` },
-    'era':            { name: 'Era',             description: 'Guess which decade the song is from.',       path: `/game/era${q}` },
-    'cover-or-not':   { name: 'Cover or Not',   description: 'Is this song a cover of an earlier track?',  path: `/game/cover-or-not${q}` },
-  }
-}
-
-const GAME_ORDER = ['one-bar', 'hit-or-miss', 'sampled', 'era', 'cover-or-not']
 
 export default function ArchiveDay() {
   const { date } = useParams()
@@ -29,7 +18,7 @@ export default function ArchiveDay() {
   const [completedSlugs, setCompletedSlugs] = useState(new Set())
   const [fetching, setFetching] = useState(true)
 
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+  const today = todayEST()
   const isToday = date === today
   const isPast = date < today
 
@@ -63,10 +52,7 @@ export default function ArchiveDay() {
   const puzzleMap = {}
   puzzles.forEach(p => { puzzleMap[p.game_slug] = p })
 
-  const GAME_META = gameMeta(date)
-
-  // Only show games that have a puzzle for this date
-  const available = GAME_ORDER.filter(slug => puzzleMap[slug])
+  const available = GAME_SLUGS.filter(slug => puzzleMap[slug])
   const [featuredSlug, ...rest] = available
   const middle = rest.slice(0, 2)
   const bottom = rest.slice(2)
@@ -91,9 +77,9 @@ export default function ArchiveDay() {
           {featuredSlug && (
             <div style={{ marginBottom: '0.75rem' }}>
               <GameTile
-                name={GAME_META[featuredSlug].name}
-                description={GAME_META[featuredSlug].description}
-                path={GAME_META[featuredSlug].path}
+                name={GAME_BY_SLUG[featuredSlug].name}
+                description={GAME_BY_SLUG[featuredSlug].description}
+                path={`${GAME_BY_SLUG[featuredSlug].path}?date=${date}`}
                 complete={completedSlugs.has(featuredSlug)}
                 genre={puzzleMap[featuredSlug]?.genre}
                 featured
@@ -106,9 +92,9 @@ export default function ArchiveDay() {
               {middle.map(slug => (
                 <GameTile
                   key={slug}
-                  name={GAME_META[slug].name}
-                  description={GAME_META[slug].description}
-                  path={GAME_META[slug].path}
+                  name={GAME_BY_SLUG[slug].name}
+                  description={GAME_BY_SLUG[slug].description}
+                  path={`${GAME_BY_SLUG[slug].path}?date=${date}`}
                   complete={completedSlugs.has(slug)}
                   genre={puzzleMap[slug]?.genre}
                 />
@@ -121,9 +107,9 @@ export default function ArchiveDay() {
               {bottom.map(slug => (
                 <GameTile
                   key={slug}
-                  name={GAME_META[slug].name}
-                  description={GAME_META[slug].description}
-                  path={GAME_META[slug].path}
+                  name={GAME_BY_SLUG[slug].name}
+                  description={GAME_BY_SLUG[slug].description}
+                  path={`${GAME_BY_SLUG[slug].path}?date=${date}`}
                   complete={completedSlugs.has(slug)}
                   genre={puzzleMap[slug]?.genre}
                 />

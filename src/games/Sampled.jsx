@@ -81,7 +81,7 @@ export default function Sampled() {
     setShouldAutoplaySample(Boolean(puzzle.metadata?.sample_audio_url))
     markComplete('sampled', 1, isCorrect)
     if (user) {
-      await saveScore({ userId: user.id, gameSlug: 'sampled', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
+      await saveScore({ userId: user.id, gameSlug: 'sampled', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'sampled', profile?.is_subscribed)
     }
   }

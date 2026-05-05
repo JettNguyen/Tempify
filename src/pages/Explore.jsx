@@ -1,23 +1,23 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
+import { GAMES } from '../lib/games'
 import ArchiveLock from '../components/ArchiveLock'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './Explore.css'
 import './Archive.css'
 
-const GAMES = [
-  { slug: 'one-bar',        name: 'One Bar',        path: '/game/one-bar' },
-  { slug: 'hit-or-miss',    name: 'Hit or Miss',    path: '/game/hit-or-miss' },
-  { slug: 'sampled',        name: 'Sampled',        path: '/game/sampled' },
-  { slug: 'era',            name: 'Era',            path: '/game/era' },
-  { slug: 'cover-or-not',   name: 'Cover or Not',   path: '/game/cover-or-not' },
-]
-
 const FIRST_PUZZLE_DATE = '2026-04-28'
+
+function updateScrollGradient(row) {
+  const wrap = row.parentElement
+  if (!wrap || !wrap.classList.contains('explore-scroll-wrap')) return
+  wrap.classList.toggle('can-left', row.scrollLeft > 1)
+  wrap.classList.toggle('at-end', row.scrollLeft + row.clientWidth >= row.scrollWidth - 2)
+}
 
 function getDisplayAnswer(puzzle) {
   const slug = puzzle.game_slug
@@ -47,6 +47,51 @@ export default function Explore() {
   const [viewMonth, setViewMonth] = useState(now.getMonth())
   const todayStr = todayEST()
   const todayCalStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+
+  const pillsRef = useRef(null)
+  useEffect(() => {
+    const el = pillsRef.current
+    if (!el) return
+    updateScrollGradient(el)
+    const onScroll = () => updateScrollGradient(el)
+    el.addEventListener('scroll', onScroll)
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
+  useEffect(() => {
+    if (pillsRef.current) updateScrollGradient(pillsRef.current)
+  }, [activeGenres])
+
+  const gamesRef = useRef(null)
+  useEffect(() => {
+    const el = gamesRef.current
+    if (!el) return
+    const onWheel = (e) => {
+      const row = e.target.closest('.explore-game-row__scroll')
+      if (!row || row.scrollWidth <= row.clientWidth) return
+      e.preventDefault()
+      row.scrollLeft += e.deltaY
+      updateScrollGradient(row)
+    }
+    const onScroll = (e) => {
+      if (e.target.classList?.contains('explore-game-row__scroll')) {
+        updateScrollGradient(e.target)
+      }
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    el.addEventListener('scroll', onScroll, { capture: true })
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('scroll', onScroll, { capture: true })
+    }
+  }, [])
+
+  useEffect(() => {
+    const el = gamesRef.current
+    if (!el) return
+    requestAnimationFrame(() => {
+      el.querySelectorAll('.explore-game-row__scroll').forEach(updateScrollGradient)
+    })
+  }, [allPuzzles])
 
   useEffect(() => {
     if (!user) return
@@ -124,7 +169,8 @@ export default function Explore() {
         </div>
       </div>
 
-      <div className="explore-pills">
+      <div className="explore-scroll-wrap">
+        <div className="explore-pills" ref={pillsRef}>
         {GENRES.map(g => {
           const active = activeGenres.includes(g)
           const colors = GENRE_COLORS[g]
@@ -150,6 +196,7 @@ export default function Explore() {
             style={{ padding: '6px 13px', borderRadius: '999px', border: '1px solid var(--border)', color: 'var(--text-dim)', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
           >Clear ✕</button>
         )}
+        </div>
       </div>
 
       {!isSubscribed ? (
@@ -200,14 +247,15 @@ export default function Explore() {
       ) : fetching ? (
         <DelayedSpinner active={fetching} label="Loading puzzles..." />
       ) : (
-        <div className="explore-games">
+        <div className="explore-games" ref={gamesRef}>
           {GAMES.map(game => {
             const puzzles = byGame[game.slug]
             if (!puzzles?.length) return null
             return (
               <div key={game.slug} className="explore-game-row">
                 <h2 className="explore-game-row__title">{game.name}</h2>
-                <div className="explore-game-row__scroll">
+                <div className="explore-scroll-wrap">
+                  <div className="explore-game-row__scroll">
                   {puzzles.map(p => {
                     const played = playedSlugs.has(`${p.scheduled_date}|${p.game_slug}`)
                     const gameLink = `${game.path}?date=${p.scheduled_date}`
@@ -237,6 +285,7 @@ export default function Explore() {
                       </Link>
                     )
                   })}
+                  </div>
                 </div>
               </div>
             )

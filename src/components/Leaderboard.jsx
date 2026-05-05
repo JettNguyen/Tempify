@@ -2,17 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getLeaderboard } from '../lib/scores'
-import { todayEST } from '../lib/date'
+import { todayEST, fmtTime } from '../lib/date'
 import DelayedSpinner from './DelayedSpinner'
 import './Leaderboard.css'
-
-function fmtTime(s) {
-  if (s == null) return '—'
-  const mins = Math.floor(s / 60)
-  const secs = Math.floor(s % 60)
-  const tenths = Math.floor((s % 1) * 10)
-  return mins > 0 ? `${mins}:${String(secs).padStart(2, '0')}` : `${secs}.${tenths}s`
-}
 
 export default function Leaderboard({ gameSlug, puzzleDate }) {
   const { user, profile } = useAuth()
@@ -75,7 +67,7 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
                   {isMe && <span className="leaderboard__you"> (you)</span>}
                 </Link>
                 <span className="leaderboard__score">
-                  {isTimeBased ? fmtTime(entry.timeSeconds) : `${entry.attempts} guess${entry.attempts !== 1 ? 'es' : ''}`}
+                  {isTimeBased ? (fmtTime(entry.timeSeconds) ?? '—') : `${entry.attempts} guess${entry.attempts !== 1 ? 'es' : ''}`}
                 </span>
               </li>
             )

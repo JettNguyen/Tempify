@@ -1,12 +1,5 @@
+import { GAMES } from '../lib/games'
 import './StreakDisplay.css'
-
-const GAMES = [
-  { slug: 'one-bar', name: 'One Bar' },
-  { slug: 'hit-or-miss', name: 'Hit or Miss' },
-  { slug: 'sampled', name: 'Sampled' },
-  { slug: 'era', name: 'Era' },
-  { slug: 'cover-or-not', name: 'Cover or Not' },
-]
 
 export default function StreakDisplay({ streaks = [] }) {
   const streakMap = {}

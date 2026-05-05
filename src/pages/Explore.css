@@ -64,6 +64,42 @@
 }
 
 /* Browse view - game rows */
+.explore-scroll-wrap {
+  position: relative;
+}
+
+.explore-scroll-wrap::before,
+.explore-scroll-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.explore-scroll-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg), transparent);
+  opacity: 0;
+}
+
+.explore-scroll-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg), transparent);
+  opacity: 1;
+}
+
+.explore-scroll-wrap.can-left::before {
+  opacity: 1;
+}
+
+.explore-scroll-wrap.at-end::after {
+  opacity: 0;
+}
+
 .explore-games {
   display: flex;
   flex-direction: column;
@@ -90,6 +126,28 @@
 
 .explore-game-row__scroll::-webkit-scrollbar {
   display: none;
+}
+
+@media (hover: hover) {
+  .explore-game-row__scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    padding-bottom: 12px;
+  }
+
+  .explore-game-row__scroll::-webkit-scrollbar {
+    display: block;
+    height: 4px;
+  }
+
+  .explore-game-row__scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .explore-game-row__scroll::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+  }
 }
 
 .explore-game-card {
