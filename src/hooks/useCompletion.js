@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 
-const storageKey = (userId) => `tempify_completions_${userId || 'guest'}_${todayEST()}`
+// v2: keyed by slug|date so archive and today's puzzles don't collide
+const storageKey = (userId) => `tempify_completions_v2_${userId || 'guest'}`
 
 function readLocal(userId) {
   try {
@@ -20,7 +21,6 @@ export function useCompletion(userId) {
   const [completions, setCompletions] = useState(() => readLocal(userId))
 
   useEffect(() => {
-    // Always seed from localStorage first so restore logic works instantly
     setCompletions(readLocal(userId))
     if (userId) loadFromSupabase()
   }, [userId])
@@ -28,42 +28,41 @@ export function useCompletion(userId) {
   async function loadFromSupabase() {
     const { data } = await supabase
       .from('scores')
-      .select('game_slug, attempts, completed')
+      .select('game_slug, date_played, attempts, completed')
       .eq('user_id', userId)
       .eq('date_played', todayEST())
 
     if (data) {
       const map = {}
       data.forEach((row) => {
-        const prev = map[row.game_slug]
-        map[row.game_slug] = {
+        const key = `${row.game_slug}|${row.date_played}`
+        const prev = map[key]
+        map[key] = {
           attempts: Math.max(prev?.attempts ?? 0, row.attempts ?? 0),
           completed: Boolean(prev?.completed || row.completed),
           played: true,
         }
       })
-      // Supabase is authoritative; write back to localStorage to keep in sync
-      writeLocal(userId, map)
+      const merged = { ...readLocal(userId), ...map }
+      writeLocal(userId, merged)
       setCompletions(prev => ({ ...prev, ...map }))
     }
   }
 
-  function markComplete(gameSlug, attempts, completed = true) {
+  function markComplete(gameSlug, puzzleDate, attempts, completed = true) {
+    const key = `${gameSlug}|${puzzleDate}`
     const updated = {
       ...completions,
-      [gameSlug]: {
-        attempts,
-        completed: Boolean(completed),
-        played: true,
-      },
+      [key]: { attempts, completed: Boolean(completed), played: true },
     }
     setCompletions(updated)
-    writeLocal(userId, updated) // scoped per user for instant restore on navigation
+    writeLocal(userId, updated)
   }
 
-  function isComplete(gameSlug) {
-    const game = completions[gameSlug]
-    return Boolean(game?.played || (game?.attempts ?? 0) > 0 || game?.completed)
+  function isComplete(gameSlug, date) {
+    const key = `${gameSlug}|${date}`
+    const entry = completions[key]
+    return Boolean(entry?.played || (entry?.attempts ?? 0) > 0 || entry?.completed)
   }
 
   return { completions, markComplete, isComplete }

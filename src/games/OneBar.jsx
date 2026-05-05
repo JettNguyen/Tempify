@@ -47,8 +47,8 @@ export default function OneBar() {
 
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('one-bar')) {
-      const stored = completions['one-bar']
+    if (isComplete('one-bar', puzzleDate)) {
+      const stored = completions[`one-bar|${puzzleDate}`]
       const count = stored?.attempts || 1
       const wasCorrect = stored?.completed ?? false
       const fake = Array.from({ length: count }, (_, i) => ({
@@ -111,7 +111,7 @@ export default function OneBar() {
     if (isCorrect || newAttempts.length >= MAX_ATTEMPTS) {
       setCorrect(isCorrect)
       setDone(true)
-      markComplete('one-bar', newAttempts.length, isCorrect)
+      markComplete('one-bar', puzzleDate, newAttempts.length, isCorrect)
       if (user) {
         await saveScore({ userId: user.id, gameSlug: 'one-bar', puzzleDate, attempts: newAttempts.length, completed: isCorrect })
         if (isCorrect) await updateStreak(user.id, 'one-bar')

@@ -49,7 +49,7 @@ export default function Home() {
           name={featured.name}
           description={featured.description}
           path={featured.path}
-          complete={isComplete(featured.slug)}
+          complete={isComplete(featured.slug, todayEST())}
           genre={genres[featured.slug]}
           featured
         />
@@ -63,7 +63,7 @@ export default function Home() {
             name={game.name}
             description={game.description}
             path={game.path}
-            complete={isComplete(game.slug)}
+            complete={isComplete(game.slug, todayEST())}
             genre={genres[game.slug]}
           />
         ))}
@@ -77,7 +77,7 @@ export default function Home() {
             name={game.name}
             description={game.description}
             path={game.path}
-            complete={isComplete(game.slug)}
+            complete={isComplete(game.slug, todayEST())}
             genre={genres[game.slug]}
           />
         ))}

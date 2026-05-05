@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useCompletion } from '../hooks/useCompletion'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
@@ -36,6 +37,7 @@ function pad(n) { return String(n).padStart(2, '0') }
 
 export default function Explore() {
   const { user, profile, loading } = useAuth()
+  const { isComplete } = useCompletion(user?.id)
   const [view, setView] = useState('browse')
   const [activeGenres, setActiveGenres] = useState([])
   const [allPuzzles, setAllPuzzles] = useState([])
@@ -258,6 +260,7 @@ export default function Explore() {
                   <div className="explore-game-row__scroll">
                   {puzzles.map(p => {
                     const played = playedSlugs.has(`${p.scheduled_date}|${p.game_slug}`)
+                      || isComplete(p.game_slug, p.scheduled_date)
                     const gameLink = `${game.path}?date=${p.scheduled_date}`
                     const dateStr = new Date(p.scheduled_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                     const answer = getDisplayAnswer(p)

@@ -44,9 +44,9 @@ export default function CoverOrNot() {
 
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('cover-or-not')) {
+    if (isComplete('cover-or-not', puzzleDate)) {
       stop()
-      setCorrect(completions['cover-or-not']?.completed ?? false)
+      setCorrect(completions[`cover-or-not|${puzzleDate}`]?.completed ?? false)
       setShouldAutoplayOriginal(false)
       setDone(true)
     }
@@ -102,7 +102,7 @@ export default function CoverOrNot() {
       coverRef.current?.pause()
       setShouldAutoplayOriginal(true)
     }
-    markComplete('cover-or-not', 1, isCorrect)
+    markComplete('cover-or-not', puzzleDate, 1, isCorrect)
     if (user) {
       await saveScore({ userId: user.id, gameSlug: 'cover-or-not', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'cover-or-not', profile?.is_subscribed)

@@ -44,9 +44,9 @@ export default function Era() {
 
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('era')) {
+    if (isComplete('era', puzzleDate)) {
       stop()
-      const wasCorrect = completions['era']?.completed ?? false
+      const wasCorrect = completions[`era|${puzzleDate}`]?.completed ?? false
       setChosen(wasCorrect ? puzzle.answer : null)
       setCorrect(wasCorrect)
       setDone(true)
@@ -91,7 +91,7 @@ export default function Era() {
     setChosen(decade)
     setCorrect(isCorrect)
     setDone(true)
-    markComplete('era', 1, isCorrect)
+    markComplete('era', puzzleDate, 1, isCorrect)
     if (user) {
       await saveScore({ userId: user.id, gameSlug: 'era', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'era', profile?.is_subscribed)

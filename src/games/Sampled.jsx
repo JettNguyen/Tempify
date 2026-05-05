@@ -47,9 +47,9 @@ export default function Sampled() {
 
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('sampled')) {
+    if (isComplete('sampled', puzzleDate)) {
       stop()
-      const wasCorrect = completions['sampled']?.completed ?? false
+      const wasCorrect = completions[`sampled|${puzzleDate}`]?.completed ?? false
       setChosen(wasCorrect ? puzzle.answer : null)
       setCorrect(wasCorrect)
       setShouldAutoplaySample(false)
@@ -79,7 +79,7 @@ export default function Sampled() {
     setCorrect(isCorrect)
     setDone(true)
     setShouldAutoplaySample(Boolean(puzzle.metadata?.sample_audio_url))
-    markComplete('sampled', 1, isCorrect)
+    markComplete('sampled', puzzleDate, 1, isCorrect)
     if (user) {
       await saveScore({ userId: user.id, gameSlug: 'sampled', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: elapsed })
       if (isCorrect) await updateStreak(user.id, 'sampled', profile?.is_subscribed)
