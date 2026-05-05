@@ -123,7 +123,7 @@ export default function CoverOrNot() {
       <div className="game-header">
         <p className="game-header__eyebrow">cover or not</p>
         <h1 className="game-header__title">Is this song a cover of an earlier track?</h1>
-        {!done && <p className="game-timer">{display}</p>}
+        {!done && profile?.competitive_mode !== false && <p className="game-timer">{display}</p>}
       </div>
 
       <div className="cover-or-not__song">
@@ -145,7 +145,7 @@ export default function CoverOrNot() {
             </div>
           )}
         </div>
-        <AudioPlayer ref={coverRef} src={puzzle.audio_url} onPlay={() => originalRef.current?.pause()} />
+        <AudioPlayer ref={coverRef} src={puzzle.audio_url} onPlay={() => originalRef.current?.pause()} autoplay={profile?.autoplay_audio !== false} />
       </div>
 
       {!done && (
@@ -172,6 +172,7 @@ export default function CoverOrNot() {
           puzzleDate={dateParam}
           timeSeconds={finalTime}
           nextGame={{ path: '/', label: 'Back to games' }}
+          showLeaderboard={profile?.competitive_mode !== false}
         >
           {isCover && (
             <div className="cover-or-not__original-reveal">

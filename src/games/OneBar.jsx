@@ -19,7 +19,7 @@ const SECONDS_PER_REVEAL = 0.5
 const REVEAL_TIMINGS = [0.5, 1, 2, 5, 15, 30]
 
 export default function OneBar() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
@@ -141,7 +141,7 @@ export default function OneBar() {
         </h1>
       </div>
 
-      <AudioPlayer src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} />
+      <AudioPlayer src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} autoplay={profile?.autoplay_audio !== false} />
 
       <div className="one-bar__progress">
         <div className="one-bar__bars">
@@ -193,6 +193,7 @@ export default function OneBar() {
           gameSlug="one-bar"
           puzzleDate={dateParam}
           nextGame={{ path: '/game/hit-or-miss', label: 'Hit or Miss' }}
+          showLeaderboard={profile?.competitive_mode !== false}
         />
       )}
     </GameShell>

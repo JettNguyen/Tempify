@@ -49,13 +49,15 @@ export async function saveAvatar(userId, { icon, color }) {
   if (error) throw error
 }
 
-export async function saveProfileSettings(userId, { username, leaderboardVisibility }) {
+export async function saveProfileSettings(userId, updates) {
+  const patch = {}
+  if ('username' in updates) patch.username = updates.username || null
+  if ('leaderboardVisibility' in updates) patch.leaderboard_visibility = updates.leaderboardVisibility
+  if ('autoplayAudio' in updates) patch.autoplay_audio = updates.autoplayAudio
+  if ('competitiveMode' in updates) patch.competitive_mode = updates.competitiveMode
   const { error } = await supabase
     .from('users')
-    .update({
-      username: username || null,
-      leaderboard_visibility: leaderboardVisibility,
-    })
+    .update(patch)
     .eq('id', userId)
   if (error) throw error
 }

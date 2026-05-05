@@ -97,7 +97,7 @@ export default function Sampled() {
       <div className="game-header">
         <p className="game-header__eyebrow">sampled</p>
         <h1 className="game-header__title">This song samples a classic. Which one?</h1>
-        {!done && <p className="game-timer">{display}</p>}
+        {!done && profile?.competitive_mode !== false && <p className="game-timer">{display}</p>}
       </div>
 
       <div className="sampled__source">
@@ -115,7 +115,7 @@ export default function Sampled() {
             </p>
           </div>
         </div>
-        <AudioPlayer ref={sourceRef} src={puzzle.audio_url} />
+        <AudioPlayer ref={sourceRef} src={puzzle.audio_url} autoplay={profile?.autoplay_audio !== false} />
       </div>
 
       <div className="stagger-list sampled__options">
@@ -167,6 +167,7 @@ export default function Sampled() {
             puzzleDate={dateParam}
             timeSeconds={finalTime}
             nextGame={{ path: '/game/era', label: 'Era' }}
+            showLeaderboard={profile?.competitive_mode !== false}
           />
         </>
       )}
