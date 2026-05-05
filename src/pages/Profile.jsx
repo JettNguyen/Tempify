@@ -9,6 +9,46 @@ import Avatar from '../components/Avatar'
 import './Profile.css'
 import './Dashboard.css'
 
+function PreferenceToggle({ label, desc, checked, onChange }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+      <div>
+        <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{desc}</div>
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        aria-pressed={checked}
+        style={{
+          flexShrink: 0,
+          width: '40px',
+          height: '22px',
+          borderRadius: '11px',
+          border: 'none',
+          background: checked ? 'var(--amber)' : 'var(--border)',
+          cursor: 'pointer',
+          position: 'relative',
+          transition: 'background 150ms ease',
+          padding: 0,
+        }}
+      >
+        <span style={{
+          position: 'absolute',
+          top: '3px',
+          left: checked ? '21px' : '3px',
+          width: '16px',
+          height: '16px',
+          borderRadius: '50%',
+          background: '#0f0f0f',
+          transition: 'left 150ms ease',
+          display: 'block',
+        }} />
+      </button>
+    </div>
+  )
+}
+
 const VISIBILITY_OPTIONS = [
   { value: 'public',    label: 'Public',         desc: 'Anyone can see your scores on the global leaderboard', premium: true },
   { value: 'followers', label: 'Followers only', desc: 'Only people you follow can see your scores', premium: false },
@@ -30,6 +70,11 @@ export default function Profile() {
   const [savingSettings, setSavingSettings] = useState(false)
   const [savedSettings, setSavedSettings] = useState(false)
 
+  const [autoplayAudio, setAutoplayAudio] = useState(true)
+  const [competitiveMode, setCompetitiveMode] = useState(true)
+  const [savingPrefs, setSavingPrefs] = useState(false)
+  const [savedPrefs, setSavedPrefs] = useState(false)
+
   const synced = useRef(false)
 
   useEffect(() => {
@@ -39,6 +84,8 @@ export default function Profile() {
       if (profile.avatar_color) setSelectedColor(profile.avatar_color)
       if (profile.username) setUsername(profile.username)
       if (profile.leaderboard_visibility) setVisibility(profile.leaderboard_visibility)
+      setAutoplayAudio(profile.autoplay_audio ?? true)
+      setCompetitiveMode(profile.competitive_mode ?? true)
     }
   }, [profile])
 
@@ -56,6 +103,10 @@ export default function Profile() {
   const settingsDirty =
     username !== (profile?.username ?? '') ||
     visibility !== (profile?.leaderboard_visibility ?? 'followers')
+
+  const prefsDirty =
+    autoplayAudio !== (profile?.autoplay_audio ?? true) ||
+    competitiveMode !== (profile?.competitive_mode ?? true)
 
   async function handleSaveAvatar() {
     if (!avatarDirty || savingAvatar) return
@@ -87,6 +138,17 @@ export default function Profile() {
       setSavedSettings(true)
       setTimeout(() => setSavedSettings(false), 2000)
     } finally { setSavingSettings(false) }
+  }
+
+  async function handleSavePrefs() {
+    if (!prefsDirty || savingPrefs) return
+    setSavingPrefs(true)
+    try {
+      await saveProfileSettings(user.id, { autoplayAudio, competitiveMode })
+      await refreshProfile()
+      setSavedPrefs(true)
+      setTimeout(() => setSavedPrefs(false), 2000)
+    } finally { setSavingPrefs(false) }
   }
 
   async function handleSignOut() {
@@ -171,6 +233,31 @@ export default function Profile() {
         <button onClick={handleSaveSettings} disabled={!settingsDirty || savingSettings}
           className={`profile-save-btn btn-press${settingsDirty ? ' profile-save-btn--dirty' : ''}`}>
           {savedSettings ? 'Saved' : savingSettings ? 'Saving…' : 'Save profile settings'}
+        </button>
+      </div>
+
+      {/* Game Preferences */}
+      <div className="profile-section">
+        <p className="profile-section-label">game preferences</p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.25rem' }}>
+          <PreferenceToggle
+            label="Autoplay audio"
+            desc="Song starts playing automatically when a game loads"
+            checked={autoplayAudio}
+            onChange={setAutoplayAudio}
+          />
+          <PreferenceToggle
+            label="Competitive mode"
+            desc="Show the timer and leaderboard during games"
+            checked={competitiveMode}
+            onChange={setCompetitiveMode}
+          />
+        </div>
+
+        <button onClick={handleSavePrefs} disabled={!prefsDirty || savingPrefs}
+          className={`profile-save-btn btn-press${prefsDirty ? ' profile-save-btn--dirty' : ''}`}>
+          {savedPrefs ? 'Saved' : savingPrefs ? 'Saving…' : 'Save preferences'}
         </button>
       </div>
 

@@ -109,11 +109,11 @@ export default function Era() {
       <div className="game-header">
         <p className="game-header__eyebrow">era</p>
         <h1 className="game-header__title">What decade is this song from?</h1>
-        {!done && hasStarted && <p className="game-timer">{display}</p>}
-        {!done && !hasStarted && <p className="game-timer">Press play to start timer</p>}
+        {!done && profile?.competitive_mode !== false && hasStarted && <p className="game-timer">{display}</p>}
+        {!done && profile?.competitive_mode !== false && !hasStarted && <p className="game-timer">Press play to start timer</p>}
       </div>
 
-      <AudioPlayer src={puzzle.audio_url} onPlay={() => setHasStarted(true)} />
+      <AudioPlayer src={puzzle.audio_url} onPlay={() => setHasStarted(true)} autoplay={profile?.autoplay_audio !== false} />
 
       <div className="stagger-list era__decades">
         {DECADES.map((decade) => {
@@ -152,6 +152,7 @@ export default function Era() {
           puzzleDate={dateParam}
           timeSeconds={finalTime}
           nextGame={{ path: '/game/cover-or-not', label: 'Cover or Not' }}
+          showLeaderboard={profile?.competitive_mode !== false}
         />
       )}
     </GameShell>

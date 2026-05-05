@@ -17,7 +17,7 @@ function fmtTime(s) {
 export default function ResultCard({
   correct, answer, artist, detail, emojiGrid,
   gameSlug, nextGame, artwork, children,
-  puzzleDate, timeSeconds,
+  puzzleDate, timeSeconds, showLeaderboard,
 }) {
   const timeLabel = gameSlug !== 'one-bar' ? fmtTime(timeSeconds) : null
 
@@ -59,7 +59,7 @@ export default function ResultCard({
         )}
       </div>
 
-      {gameSlug && <Leaderboard gameSlug={gameSlug} puzzleDate={puzzleDate} />}
+      {gameSlug && showLeaderboard !== false && <Leaderboard gameSlug={gameSlug} puzzleDate={puzzleDate} />}
     </div>
   )
 }

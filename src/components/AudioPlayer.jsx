@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import './AudioPlayer.css'
 
-const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, onPlay }, ref) {
+const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, onPlay, autoplay }, ref) {
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -63,11 +63,29 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
   useEffect(() => {
     setPlaying(false)
     setCurrentTime(0)
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0
-      audioRef.current.pause()
+    const audio = audioRef.current
+    if (!audio) return
+    audio.currentTime = 0
+    audio.pause()
+
+    if (!autoplay || !src) return
+
+    const tryAutoplay = () => {
+      onPlay?.()
+      setPlaying(true)
+      const p = audio.play()
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => setPlaying(false))
+      }
     }
-  }, [src])
+
+    if (audio.readyState >= 2) {
+      tryAutoplay()
+    } else {
+      audio.addEventListener('canplay', tryAutoplay, { once: true })
+      return () => audio.removeEventListener('canplay', tryAutoplay)
+    }
+  }, [src, autoplay])
 
   function togglePlay() {
     const audio = audioRef.current

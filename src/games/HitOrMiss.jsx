@@ -75,7 +75,7 @@ export default function HitOrMiss() {
       <div className="game-header">
         <p className="game-header__eyebrow">hit or miss</p>
         <h1 className="game-header__title">Did this song ever chart on the Billboard Hot 100?</h1>
-        {!done && <p className="game-timer">{display}</p>}
+        {!done && profile?.competitive_mode !== false && <p className="game-timer">{display}</p>}
       </div>
 
       <div className="hit-or-miss__song">
@@ -91,7 +91,7 @@ export default function HitOrMiss() {
         </div>
       </div>
 
-      <AudioPlayer src={puzzle.audio_url} />
+      <AudioPlayer src={puzzle.audio_url} autoplay={profile?.autoplay_audio !== false} />
 
       {!done && (
         <div className="stagger-list hit-or-miss__choices">
@@ -117,6 +117,7 @@ export default function HitOrMiss() {
           puzzleDate={dateParam}
           timeSeconds={finalTime}
           nextGame={{ path: '/game/sampled', label: 'Sampled' }}
+          showLeaderboard={profile?.competitive_mode !== false}
         />
       )}
     </GameShell>
