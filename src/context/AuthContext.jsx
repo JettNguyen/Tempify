@@ -52,32 +52,34 @@ export function AuthProvider({ children }) {
       processedUrls.add(url)
 
       try {
-        await Browser.close()
-      } catch {
-        // Ignore close errors when browser is already closed.
-      }
-
-      try {
         const callbackUrl = new URL(url)
         const code = callbackUrl.searchParams.get('code')
 
         if (code) {
           await supabase.auth.exchangeCodeForSession(code)
-          return
-        }
+        } else {
+          const hashParams = new URLSearchParams(callbackUrl.hash.replace(/^#/, ''))
+          const accessToken = hashParams.get('access_token')
+          const refreshToken = hashParams.get('refresh_token')
 
-        const hashParams = new URLSearchParams(callbackUrl.hash.replace(/^#/, ''))
-        const accessToken = hashParams.get('access_token')
-        const refreshToken = hashParams.get('refresh_token')
-
-        if (accessToken && refreshToken) {
-          await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          })
+          if (accessToken && refreshToken) {
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            })
+          }
         }
       } catch (err) {
         console.error('[Tempify] Failed to process OAuth callback:', err)
+      }
+
+      // Delay browser close so iOS system dialogs (e.g. password save prompt) have
+      // time to appear and be dismissed before the browser is force-closed.
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      try {
+        await Browser.close()
+      } catch {
+        // Ignore close errors when browser is already closed.
       }
     }
 

@@ -3,18 +3,11 @@ import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getRecentScores, getStreaks } from '../lib/scores'
 import { supabase } from '../lib/supabase'
-import { todayEST } from '../lib/date'
+import { todayEST, fmtTime } from '../lib/date'
+import { GAME_SLUGS, getGameName } from '../lib/games'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import StreakDisplay from '../components/StreakDisplay'
 import './Dashboard.css'
-
-const GAME_NAMES = {
-  'one-bar': 'One Bar',
-  'hit-or-miss': 'Hit or Miss',
-  'sampled': 'Sampled',
-  'era': 'Era',
-  'cover-or-not': 'Cover or Not',
-}
 
 const FREEZE_TOKENS_PER_MONTH = 2
 
@@ -23,14 +16,13 @@ function pct(value) { return `${Math.round(value * 100)}%` }
 function buildStats(scores) {
   const completed = scores.filter(s => s.completed)
   const totalAttempts = scores.reduce((sum, s) => sum + (s.attempts || 0), 0)
-  const byGame = Object.keys(GAME_NAMES).map(slug => {
+  const byGame = GAME_SLUGS.map(slug => {
     const plays = scores.filter(s => s.game_slug === slug)
     const wins = plays.filter(s => s.completed)
     const attempts = plays.reduce((sum, s) => sum + (s.attempts || 0), 0)
     const timePlays = plays.filter(s => s.time_seconds != null)
     const times = timePlays.map(s => s.time_seconds)
-    
-    // Find best time and its date
+
     let bestTime = null
     let bestTimeDate = null
     if (times.length > 0) {
@@ -39,9 +31,9 @@ function buildStats(scores) {
       bestTime = minTime
       bestTimeDate = bestPlay?.date_played
     }
-    
+
     return {
-      slug, name: GAME_NAMES[slug],
+      slug, name: getGameName(slug),
       plays: plays.length, wins: wins.length,
       winRate: plays.length ? wins.length / plays.length : 0,
       avgAttempts: plays.length ? attempts / plays.length : 0,
@@ -62,13 +54,6 @@ function buildStats(scores) {
     avgAttempts: scores.length ? totalAttempts / scores.length : 0,
     oneTryWins, uniqueDays, bestGame, byGame,
   }
-}
-
-function fmtTime(s) {
-  if (s == null) return '—'
-  const mins = Math.floor(s / 60)
-  const secs = Math.floor(s % 60)
-  return mins > 0 ? `${mins}:${String(secs).padStart(2, '0')}` : `${secs}s`
 }
 
 export default function Dashboard() {
@@ -214,7 +199,7 @@ export default function Dashboard() {
                 <div className="dashboard-score-left">
                   <span className={`dashboard-score-dot${score.completed ? ' dashboard-score-dot--complete' : ''}`} />
                   <div>
-                    <div className="dashboard-score-name">{GAME_NAMES[score.game_slug] || score.game_slug}</div>
+                    <div className="dashboard-score-name">{getGameName(score.game_slug)}</div>
                     <div className="dashboard-score-date">{score.date_played}</div>
                   </div>
                 </div>

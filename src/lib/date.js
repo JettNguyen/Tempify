@@ -9,3 +9,12 @@ export function yesterdayEST() {
   d.setDate(d.getDate() - 1)
   return d.toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
 }
+
+/** Format seconds as m:ss or s.ts. Returns null for null/undefined input. */
+export function fmtTime(s) {
+  if (s == null) return null
+  const mins = Math.floor(s / 60)
+  const secs = Math.floor(s % 60)
+  const tenths = Math.floor((s % 1) * 10)
+  return mins > 0 ? `${mins}:${String(secs).padStart(2, '0')}` : `${secs}.${tenths}s`
+}

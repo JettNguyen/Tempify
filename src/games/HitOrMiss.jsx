@@ -39,9 +39,9 @@ export default function HitOrMiss() {
 
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('hit-or-miss')) {
+    if (isComplete('hit-or-miss', puzzleDate)) {
       stop()
-      setCorrect(completions['hit-or-miss']?.completed ?? false)
+      setCorrect(completions[`hit-or-miss|${puzzleDate}`]?.completed ?? false)
       setDone(true)
     }
   }, [puzzle, completions])
@@ -55,10 +55,10 @@ export default function HitOrMiss() {
     setChosen(verdict)
     setCorrect(isCorrect)
     setDone(true)
-    markComplete('hit-or-miss', 1, isCorrect)
+    markComplete('hit-or-miss', puzzleDate, 1, isCorrect)
     if (user) {
       try {
-        await saveScore({ userId: user.id, gameSlug: 'hit-or-miss', attempts: 1, completed: isCorrect, timeSeconds: profile?.competitive_mode !== false ? elapsed : null })
+        await saveScore({ userId: user.id, gameSlug: 'hit-or-miss', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: profile?.competitive_mode !== false ? elapsed : null })
         if (isCorrect) await updateStreak(user.id, 'hit-or-miss', profile?.is_subscribed)
       } catch (err) {
         console.error('[Tempify] HitOrMiss score save error:', err.message)

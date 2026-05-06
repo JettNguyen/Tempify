@@ -5,16 +5,9 @@ import { useCompletion } from '../hooks/useCompletion'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import { getPuzzleArtworkUrls, prefetchArtworkUrls } from '../lib/artwork'
+import { GAMES } from '../lib/games'
 import GameTile from '../components/GameTile'
 import './Home.css'
-
-const GAMES = [
-  { slug: 'one-bar',       name: 'One Bar',         description: 'Name the song from a tiny clip. Wrong guesses unlock more audio.', path: '/game/one-bar',       featured: true },
-  { slug: 'hit-or-miss',   name: 'Hit or Miss',     description: 'Did it enter the Hot 100?',                             path: '/game/hit-or-miss' },
-  { slug: 'sampled',       name: 'Sampled',         description: 'Hear the sample, find the source.',                               path: '/game/sampled' },
-  { slug: 'era',           name: 'Era',              description: 'Guess which decade the song is from.',                            path: '/game/era' },
-  { slug: 'cover-or-not',  name: 'Cover or Not',     description: 'Is it a cover of an earlier track?',                     path: '/game/cover-or-not' },
-]
 
 const dateLabel = () =>
   new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' })
@@ -56,7 +49,7 @@ export default function Home() {
           name={featured.name}
           description={featured.description}
           path={featured.path}
-          complete={isComplete(featured.slug)}
+          complete={isComplete(featured.slug, todayEST())}
           genre={genres[featured.slug]}
           featured
         />
@@ -70,7 +63,7 @@ export default function Home() {
             name={game.name}
             description={game.description}
             path={game.path}
-            complete={isComplete(game.slug)}
+            complete={isComplete(game.slug, todayEST())}
             genre={genres[game.slug]}
           />
         ))}
@@ -84,7 +77,7 @@ export default function Home() {
             name={game.name}
             description={game.description}
             path={game.path}
-            complete={isComplete(game.slug)}
+            complete={isComplete(game.slug, todayEST())}
             genre={genres[game.slug]}
           />
         ))}

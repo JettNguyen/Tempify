@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
+import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
-import { findArtwork } from '../lib/itunes'
+import { findArtwork, stripVariant } from '../lib/itunes'
 import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
@@ -23,6 +24,7 @@ export default function OneBar() {
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
+  const puzzleDate = dateParam || todayEST()
 
   const [puzzle, setPuzzle] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -45,8 +47,8 @@ export default function OneBar() {
 
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('one-bar')) {
-      const stored = completions['one-bar']
+    if (isComplete('one-bar', puzzleDate)) {
+      const stored = completions[`one-bar|${puzzleDate}`]
       const count = stored?.attempts || 1
       const wasCorrect = stored?.completed ?? false
       const fake = Array.from({ length: count }, (_, i) => ({
@@ -94,15 +96,11 @@ export default function OneBar() {
     return attempts.map((a) => (a.correct ? '🟩' : '⬜')).join('')
   }
 
-  function stripVariants(title) {
-    return title.replace(/\s*[\(\[]\s*(feat\.|ft\.|featuring|remix|remixed|remaster|remastered|live|edit|version|radio\s*edit|acoustic|instrumental|deluxe|extended|mix|reprise|cover|tribute|explicit|clean|mono|stereo|single\s*version|original\s*mix|bonus)\b.*[\)\]]\s*$/gi, '').trim()
-  }
-
   async function handleGuess(song) {
     if (done || attempts.length >= MAX_ATTEMPTS) return
     hapticImportantTap()
 
-    const titleMatch = stripVariants(song.title).toLowerCase() === puzzle.answer.toLowerCase().trim()
+    const titleMatch = stripVariant(song.title).toLowerCase() === puzzle.answer.toLowerCase().trim()
     const artistMatch = !puzzle.metadata?.artist ||
       song.artist.toLowerCase().trim() === puzzle.metadata.artist.toLowerCase().trim()
     const isCorrect = titleMatch && artistMatch
@@ -113,10 +111,10 @@ export default function OneBar() {
     if (isCorrect || newAttempts.length >= MAX_ATTEMPTS) {
       setCorrect(isCorrect)
       setDone(true)
-      markComplete('one-bar', newAttempts.length, isCorrect)
+      markComplete('one-bar', puzzleDate, newAttempts.length, isCorrect)
       if (user) {
         try {
-          await saveScore({ userId: user.id, gameSlug: 'one-bar', attempts: newAttempts.length, completed: isCorrect })
+          await saveScore({ userId: user.id, gameSlug: 'one-bar', puzzleDate, attempts: newAttempts.length, completed: isCorrect })
           if (isCorrect) await updateStreak(user.id, 'one-bar')
         } catch (err) {
           console.error('[Tempify] OneBar score save error:', err.message)

@@ -1,23 +1,42 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useCompletion } from '../hooks/useCompletion'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
+import { GAMES } from '../lib/games'
 import ArchiveLock from '../components/ArchiveLock'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './Explore.css'
 import './Archive.css'
 
-const GAMES = [
-  { slug: 'one-bar',        name: 'One Bar',        path: '/game/one-bar' },
-  { slug: 'hit-or-miss',    name: 'Hit or Miss',    path: '/game/hit-or-miss' },
-  { slug: 'sampled',        name: 'Sampled',        path: '/game/sampled' },
-  { slug: 'era',            name: 'Era',            path: '/game/era' },
-  { slug: 'cover-or-not',   name: 'Cover or Not',   path: '/game/cover-or-not' },
-]
-
 const FIRST_PUZZLE_DATE = '2026-04-28'
+
+function updateScrollGradient(el) {
+  if (!el) return
+  const atStart = el.scrollLeft <= 1
+  const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2
+  const noOverflow = el.scrollWidth <= el.clientWidth + 2
+  let mask
+  if (noOverflow) {
+    mask = 'none'
+  } else if (atStart) {
+    mask = 'linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%)'
+  } else if (atEnd) {
+    mask = 'linear-gradient(to right, transparent 0, black 48px, black 100%)'
+  } else {
+    mask = 'linear-gradient(to right, transparent 0, black 48px, black calc(100% - 48px), transparent 100%)'
+  }
+  el.style.webkitMaskImage = mask
+  el.style.maskImage = mask
+}
+
+function getDisplayArtist(puzzle) {
+  if (puzzle.game_slug === 'sampled')
+    return puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist || null
+  return puzzle.metadata?.song_artist || puzzle.metadata?.artist || null
+}
 
 function getDisplayAnswer(puzzle) {
   const slug = puzzle.game_slug
@@ -36,6 +55,7 @@ function pad(n) { return String(n).padStart(2, '0') }
 
 export default function Explore() {
   const { user, profile, loading } = useAuth()
+  const { isComplete } = useCompletion(user?.id)
   const [view, setView] = useState('browse')
   const [activeGenres, setActiveGenres] = useState([])
   const [allPuzzles, setAllPuzzles] = useState([])
@@ -47,6 +67,56 @@ export default function Explore() {
   const [viewMonth, setViewMonth] = useState(now.getMonth())
   const todayStr = todayEST()
   const todayCalStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+
+  const pillsRef = useRef(null)
+  useEffect(() => {
+    const el = pillsRef.current
+    if (!el) return
+    updateScrollGradient(el)
+    const onWheel = (e) => {
+      if (el.scrollWidth <= el.clientWidth) return
+      e.preventDefault()
+      el.scrollLeft += e.deltaY
+      updateScrollGradient(el)
+    }
+    const onScroll = () => updateScrollGradient(el)
+    el.addEventListener('wheel', onWheel, { passive: false })
+    el.addEventListener('scroll', onScroll)
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('scroll', onScroll)
+    }
+  }, [])
+  useEffect(() => {
+    if (pillsRef.current) updateScrollGradient(pillsRef.current)
+  }, [activeGenres])
+
+  const gamesRef = useRef(null)
+  useEffect(() => {
+    const el = gamesRef.current
+    if (!el) return
+    requestAnimationFrame(() => {
+      el.querySelectorAll('.explore-game-row__scroll').forEach(updateScrollGradient)
+    })
+    const onWheel = (e) => {
+      const row = e.target.closest('.explore-game-row__scroll')
+      if (!row || row.scrollWidth <= row.clientWidth) return
+      e.preventDefault()
+      row.scrollLeft += e.deltaY
+      updateScrollGradient(row)
+    }
+    const onScroll = (e) => {
+      if (e.target.classList?.contains('explore-game-row__scroll')) {
+        updateScrollGradient(e.target)
+      }
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    el.addEventListener('scroll', onScroll, { capture: true })
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('scroll', onScroll, { capture: true })
+    }
+  }, [allPuzzles])
 
   useEffect(() => {
     if (!user) return
@@ -124,7 +194,7 @@ export default function Explore() {
         </div>
       </div>
 
-      <div className="explore-pills">
+      <div className="explore-pills" ref={pillsRef}>
         {GENRES.map(g => {
           const active = activeGenres.includes(g)
           const colors = GENRE_COLORS[g]
@@ -200,7 +270,7 @@ export default function Explore() {
       ) : fetching ? (
         <DelayedSpinner active={fetching} label="Loading puzzles..." />
       ) : (
-        <div className="explore-games">
+        <div className="explore-games" ref={gamesRef}>
           {GAMES.map(game => {
             const puzzles = byGame[game.slug]
             if (!puzzles?.length) return null
@@ -210,10 +280,11 @@ export default function Explore() {
                 <div className="explore-game-row__scroll">
                   {puzzles.map(p => {
                     const played = playedSlugs.has(`${p.scheduled_date}|${p.game_slug}`)
+                      || isComplete(p.game_slug, p.scheduled_date)
                     const gameLink = `${game.path}?date=${p.scheduled_date}`
                     const dateStr = new Date(p.scheduled_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                     const answer = getDisplayAnswer(p)
-                    const artistLine = p.metadata?.song_artist || p.metadata?.artist || null
+                    const artistLine = getDisplayArtist(p)
                     const genreColors = p.genre ? GENRE_COLORS[p.genre] : null
                     return (
                       <Link key={p.id} to={gameLink} className={`explore-game-card card-hover btn-press${played ? ' explore-game-card--played' : ''}`}>

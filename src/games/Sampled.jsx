@@ -47,9 +47,9 @@ export default function Sampled() {
 
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('sampled')) {
+    if (isComplete('sampled', puzzleDate)) {
       stop()
-      const wasCorrect = completions['sampled']?.completed ?? false
+      const wasCorrect = completions[`sampled|${puzzleDate}`]?.completed ?? false
       setChosen(wasCorrect ? puzzle.answer : null)
       setCorrect(wasCorrect)
       setShouldAutoplaySample(false)
@@ -79,10 +79,10 @@ export default function Sampled() {
     setCorrect(isCorrect)
     setDone(true)
     setShouldAutoplaySample(Boolean(puzzle.metadata?.sample_audio_url))
-    markComplete('sampled', 1, isCorrect)
+    markComplete('sampled', puzzleDate, 1, isCorrect)
     if (user) {
       try {
-        await saveScore({ userId: user.id, gameSlug: 'sampled', attempts: 1, completed: isCorrect, timeSeconds: profile?.competitive_mode !== false ? elapsed : null })
+        await saveScore({ userId: user.id, gameSlug: 'sampled', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: profile?.competitive_mode !== false ? elapsed : null })
         if (isCorrect) await updateStreak(user.id, 'sampled', profile?.is_subscribed)
       } catch (err) {
         console.error('[Tempify] Sampled score save error:', err.message)
@@ -159,10 +159,10 @@ export default function Sampled() {
           <ResultCard
             correct={correct}
             answer={puzzle.answer}
-            artist={puzzle.metadata?.sample_artist}
+            artist={puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist}
             artwork={{
               title: puzzle.answer,
-              artist: puzzle.metadata?.sample_artist,
+              artist: puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist,
               src: puzzle.metadata?.sample_artwork_url,
             }}
             detail={`Originally released in ${puzzle.metadata?.sample_year}`}
