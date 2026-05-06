@@ -159,24 +159,8 @@ export function AuthProvider({ children }) {
   }
 
   async function deleteAccount() {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) throw new Error('Not authenticated.')
-
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-      },
-    })
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      throw new Error(body?.message || 'Account deletion failed. Please try again.')
-    }
-
+    const { error } = await supabase.rpc('delete_user')
+    if (error) throw new Error(error.message || 'Account deletion failed. Please try again.')
     await supabase.auth.signOut({ scope: 'local' })
   }
 

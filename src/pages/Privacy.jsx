@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import './Privacy.css'
 
-const LAST_UPDATED = 'May 1, 2026'
+const LAST_UPDATED = 'May 6, 2026'
 
 export default function Privacy() {
   return (
@@ -70,7 +70,8 @@ export default function Privacy() {
         <h2>Data Retention</h2>
         <p>
           Account and gameplay data is retained as needed to provide app features and maintain
-          your profile, scores, and history. You may request account deletion by contacting support.
+          your profile, scores, and history. You can permanently delete your account and all
+          associated data at any time from the Profile screen in the app.
         </p>
       </section>
 

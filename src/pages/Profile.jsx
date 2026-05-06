@@ -333,37 +333,51 @@ export default function Profile() {
       {/* Legal */}
       <div className="profile-section">
         <p className="profile-section-label">legal</p>
-        <Link
-          to="/privacy"
-          className="btn-hover"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            padding: '8px 10px',
-            borderRadius: '8px',
-            border: '1px solid var(--border)',
-            color: 'var(--text-muted)',
-            fontSize: '12px',
-          }}
-        >
-          Privacy Policy →
-        </Link>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <Link
+            to="/privacy"
+            className="btn-hover"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '8px 10px',
+              borderRadius: '8px',
+              border: '1px solid var(--border)',
+              color: 'var(--text-muted)',
+              fontSize: '12px',
+            }}
+          >
+            Privacy Policy →
+          </Link>
+          <Link
+            to="/terms"
+            className="btn-hover"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '8px 10px',
+              borderRadius: '8px',
+              border: '1px solid var(--border)',
+              color: 'var(--text-muted)',
+              fontSize: '12px',
+            }}
+          >
+            Terms of Service →
+          </Link>
+        </div>
       </div>
 
       <div className="profile-signout-section">
         <button onClick={handleSignOut} className="profile-signout-btn">Sign out</button>
+      </div>
+
+      <div className="profile-delete-section">
+        <p className="profile-section-label">danger zone</p>
         <button
           onClick={() => { setShowDeleteConfirm(true); setDeleteConfirmText(''); setDeleteError('') }}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-dim)',
-            fontSize: '12px',
-            cursor: 'pointer',
-            marginTop: '12px',
-            textDecoration: 'underline',
-          }}
+          className="profile-delete-btn"
         >
           Delete account
         </button>

@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+declare const Deno: { env: { get(key: string): string } }
 
 function corsHeaders(base: Record<string, string> = {}) {
   return {
@@ -21,7 +21,6 @@ export default async function handler(req: Request) {
     })
   }
 
-  // Verify the caller is authenticated
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), {
@@ -33,26 +32,35 @@ export default async function handler(req: Request) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-  // Use the user's JWT to identify them
-  const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-    global: { headers: { Authorization: authHeader } },
+  // Verify the caller's JWT and get their user ID
+  const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: {
+      'Authorization': authHeader,
+      'apikey': serviceRoleKey,
+    },
   })
 
-  const { data: { user }, error: userError } = await userClient.auth.getUser()
-  if (userError || !user) {
+  if (!userRes.ok) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), {
       status: 401,
       headers: corsHeaders({ 'Content-Type': 'application/json' }),
     })
   }
 
-  // Use admin client to delete the auth user (cascades to users table via FK)
-  const adminClient = createClient(supabaseUrl, serviceRoleKey)
-  const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id)
+  const { id: userId } = await userRes.json()
 
-  if (deleteError) {
-    console.error('[delete-user] Failed to delete user:', deleteError)
-    return new Response(JSON.stringify({ error: 'delete_failed', message: deleteError.message }), {
+  // Delete the user via the admin API
+  const deleteRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${serviceRoleKey}`,
+      'apikey': serviceRoleKey,
+    },
+  })
+
+  if (!deleteRes.ok) {
+    const body = await deleteRes.json().catch(() => ({}))
+    return new Response(JSON.stringify({ error: 'delete_failed', message: body?.message }), {
       status: 500,
       headers: corsHeaders({ 'Content-Type': 'application/json' }),
     })

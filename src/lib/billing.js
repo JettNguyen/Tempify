@@ -140,7 +140,13 @@ export async function presentPaywallIfNeeded() {
   const { result } = await RevenueCatUI.presentPaywallIfNeeded({
     requiredEntitlementIdentifier: entitlementId,
   })
-  console.info('[RevenueCat] Paywall-if-needed result', { result })
+  console.info('[RevenueCat] Paywall-if-needed result', {
+    result,
+    PURCHASED: PAYWALL_RESULT.PURCHASED,
+    RESTORED: PAYWALL_RESULT.RESTORED,
+    isPurchased: result === PAYWALL_RESULT.PURCHASED,
+    isRestored: result === PAYWALL_RESULT.RESTORED,
+  })
 
   return {
     purchased: result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED,
