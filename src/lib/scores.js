@@ -12,7 +12,8 @@ export async function saveScore({ userId, gameSlug, puzzleDate, attempts, comple
   }, { onConflict: 'user_id,game_slug,date_played' })
 
   if (error) {
-    console.error('[Tempify] saveScore failed:', error)
+    console.error('[Tempify] saveScore failed:', gameSlug, error.message)
+    throw error
   }
 }
 

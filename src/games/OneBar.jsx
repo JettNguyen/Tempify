@@ -113,8 +113,12 @@ export default function OneBar() {
       setDone(true)
       markComplete('one-bar', puzzleDate, newAttempts.length, isCorrect)
       if (user) {
-        await saveScore({ userId: user.id, gameSlug: 'one-bar', puzzleDate, attempts: newAttempts.length, completed: isCorrect })
-        if (isCorrect) await updateStreak(user.id, 'one-bar')
+        try {
+          await saveScore({ userId: user.id, gameSlug: 'one-bar', puzzleDate, attempts: newAttempts.length, completed: isCorrect })
+          if (isCorrect) await updateStreak(user.id, 'one-bar')
+        } catch (err) {
+          console.error('[Tempify] OneBar score save error:', err.message)
+        }
       }
     } else {
       guessInputRef.current?.clear()

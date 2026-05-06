@@ -81,8 +81,12 @@ export default function Sampled() {
     setShouldAutoplaySample(Boolean(puzzle.metadata?.sample_audio_url))
     markComplete('sampled', puzzleDate, 1, isCorrect)
     if (user) {
-      await saveScore({ userId: user.id, gameSlug: 'sampled', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: elapsed })
-      if (isCorrect) await updateStreak(user.id, 'sampled', profile?.is_subscribed)
+      try {
+        await saveScore({ userId: user.id, gameSlug: 'sampled', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: profile?.competitive_mode !== false ? elapsed : null })
+        if (isCorrect) await updateStreak(user.id, 'sampled', profile?.is_subscribed)
+      } catch (err) {
+        console.error('[Tempify] Sampled score save error:', err.message)
+      }
     }
   }
 
