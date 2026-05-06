@@ -2,16 +2,20 @@ import { supabase } from './supabase'
 import { todayEST, yesterdayEST } from './date'
 
 export async function saveScore({ userId, gameSlug, attempts, completed, timeSeconds }) {
-  const { error } = await supabase.from('scores').insert({
-    user_id: userId,
-    game_slug: gameSlug,
-    date_played: todayEST(),
-    attempts,
-    completed,
-    time_seconds: timeSeconds ?? null,
-  })
+  const { error } = await supabase.from('scores').upsert(
+    {
+      user_id: userId,
+      game_slug: gameSlug,
+      date_played: todayEST(),
+      attempts,
+      completed,
+      time_seconds: timeSeconds ?? null,
+    },
+    { onConflict: 'user_id,game_slug,date_played', ignoreDuplicates: false }
+  )
 
   if (error) {
+    console.error('[Tempify] saveScore failed:', gameSlug, error.message)
     throw error
   }
 }

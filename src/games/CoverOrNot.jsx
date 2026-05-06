@@ -104,8 +104,12 @@ export default function CoverOrNot() {
     }
     markComplete('cover-or-not', 1, isCorrect)
     if (user) {
-      await saveScore({ userId: user.id, gameSlug: 'cover-or-not', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
-      if (isCorrect) await updateStreak(user.id, 'cover-or-not', profile?.is_subscribed)
+      try {
+        await saveScore({ userId: user.id, gameSlug: 'cover-or-not', attempts: 1, completed: isCorrect, timeSeconds: profile?.competitive_mode !== false ? elapsed : null })
+        if (isCorrect) await updateStreak(user.id, 'cover-or-not', profile?.is_subscribed)
+      } catch (err) {
+        console.error('[Tempify] CoverOrNot score save error:', err.message)
+      }
     }
   }
 

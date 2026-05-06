@@ -57,8 +57,12 @@ export default function HitOrMiss() {
     setDone(true)
     markComplete('hit-or-miss', 1, isCorrect)
     if (user) {
-      await saveScore({ userId: user.id, gameSlug: 'hit-or-miss', attempts: 1, completed: isCorrect, timeSeconds: elapsed })
-      if (isCorrect) await updateStreak(user.id, 'hit-or-miss', profile?.is_subscribed)
+      try {
+        await saveScore({ userId: user.id, gameSlug: 'hit-or-miss', attempts: 1, completed: isCorrect, timeSeconds: profile?.competitive_mode !== false ? elapsed : null })
+        if (isCorrect) await updateStreak(user.id, 'hit-or-miss', profile?.is_subscribed)
+      } catch (err) {
+        console.error('[Tempify] HitOrMiss score save error:', err.message)
+      }
     }
   }
 
