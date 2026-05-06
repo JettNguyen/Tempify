@@ -123,6 +123,28 @@
   padding-top: 1.5rem;
 }
 
+.profile-delete-section {
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.profile-delete-btn {
+  font-size: 13px;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  border: none;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.profile-delete-btn:hover {
+  opacity: 1;
+}
+
 .profile-signout-btn {
   font-size: 13px;
   color: var(--text-muted);

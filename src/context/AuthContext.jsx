@@ -158,8 +158,14 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
   }
 
+  async function deleteAccount() {
+    const { error } = await supabase.rpc('delete_user')
+    if (error) throw new Error(error.message || 'Account deletion failed. Please try again.')
+    await supabase.auth.signOut({ scope: 'local' })
+  }
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut, deleteAccount, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )
