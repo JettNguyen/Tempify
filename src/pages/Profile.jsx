@@ -56,7 +56,7 @@ const VISIBILITY_OPTIONS = [
 ]
 
 export default function Profile() {
-  const { user, profile, loading, signOut, refreshProfile } = useAuth()
+  const { user, profile, loading, signOut, deleteAccount, refreshProfile } = useAuth()
   const navigate = useNavigate()
 
   const [selectedIcon, setSelectedIcon] = useState(null)
@@ -74,6 +74,11 @@ export default function Profile() {
   const [competitiveMode, setCompetitiveMode] = useState(true)
   const [savingPrefs, setSavingPrefs] = useState(false)
   const [savedPrefs, setSavedPrefs] = useState(false)
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const synced = useRef(false)
 
@@ -154,6 +159,19 @@ export default function Profile() {
   async function handleSignOut() {
     await signOut()
     navigate('/')
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteConfirmText !== 'DELETE') return
+    setDeletingAccount(true)
+    setDeleteError('')
+    try {
+      await deleteAccount()
+      navigate('/')
+    } catch (err) {
+      setDeleteError(err?.message || 'Something went wrong. Please try again.')
+      setDeletingAccount(false)
+    }
   }
 
   async function handleManageBillingClick(event) {
@@ -335,7 +353,83 @@ export default function Profile() {
 
       <div className="profile-signout-section">
         <button onClick={handleSignOut} className="profile-signout-btn">Sign out</button>
+        <button
+          onClick={() => { setShowDeleteConfirm(true); setDeleteConfirmText(''); setDeleteError('') }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-dim)',
+            fontSize: '12px',
+            cursor: 'pointer',
+            marginTop: '12px',
+            textDecoration: 'underline',
+          }}
+        >
+          Delete account
+        </button>
       </div>
+
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: '24px',
+        }}>
+          <div style={{
+            background: 'var(--bg-card, #1a1a1a)', border: '1px solid var(--border)',
+            borderRadius: '12px', padding: '24px', maxWidth: '360px', width: '100%',
+          }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+              Delete your account?
+            </h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
+              This permanently deletes your account and all your data — scores, streaks, and profile. This cannot be undone.
+            </p>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+              Type <strong style={{ color: 'var(--text-primary)' }}>DELETE</strong> to confirm:
+            </p>
+            <input
+              value={deleteConfirmText}
+              onChange={e => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              style={{
+                width: '100%', background: '#111', border: '1px solid var(--border)',
+                borderRadius: '6px', padding: '8px 10px', color: 'var(--text-primary)',
+                fontSize: '13px', outline: 'none', marginBottom: '12px', boxSizing: 'border-box',
+              }}
+            />
+            {deleteError && (
+              <p style={{ fontSize: '12px', color: '#ef4444', marginBottom: '12px' }}>{deleteError}</p>
+            )}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deletingAccount}
+                style={{
+                  flex: 1, padding: '9px', borderRadius: '8px',
+                  border: '1px solid var(--border)', background: 'transparent',
+                  color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== 'DELETE' || deletingAccount}
+                style={{
+                  flex: 1, padding: '9px', borderRadius: '8px',
+                  border: 'none', background: deleteConfirmText === 'DELETE' ? '#ef4444' : 'var(--border)',
+                  color: '#fff', fontSize: '13px', fontWeight: 600,
+                  cursor: deleteConfirmText === 'DELETE' && !deletingAccount ? 'pointer' : 'not-allowed',
+                  opacity: deleteConfirmText !== 'DELETE' ? 0.5 : 1,
+                }}
+              >
+                {deletingAccount ? 'Deleting…' : 'Delete account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

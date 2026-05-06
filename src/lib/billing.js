@@ -109,7 +109,7 @@ export async function presentPaywall() {
   if (!usesNativeIap()) throw new Error('Paywall is only available in the mobile app.')
   validateRevenueCatConfig()
 
-  const { PAYWALL_RESULT } = await import('@revenuecat/purchases-capacitor')
+  const { PAYWALL_RESULT } = await import('@revenuecat/purchases-capacitor-ui')
   const RevenueCatUI = await getPurchasesUiSdk()
 
   console.info('[RevenueCat] Presenting paywall')
@@ -133,7 +133,7 @@ export async function presentPaywallIfNeeded() {
   if (!usesNativeIap()) throw new Error('Paywall is only available in the mobile app.')
   const { entitlementId } = validateRevenueCatConfig()
 
-  const { PAYWALL_RESULT } = await import('@revenuecat/purchases-capacitor')
+  const { PAYWALL_RESULT } = await import('@revenuecat/purchases-capacitor-ui')
   const RevenueCatUI = await getPurchasesUiSdk()
 
   console.info('[RevenueCat] Presenting paywall if needed', { entitlementId })
