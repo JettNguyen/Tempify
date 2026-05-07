@@ -52,6 +52,8 @@ const BLANK = {
   coverSongTitle: '', coverSongArtist: '', coverSongYear: '',
   isCover: 'cover',
   originalTitle: '', originalArtist: '', originalYear: '', originalAudio: '',
+  // shared note
+  note: '',
 }
 
 function parseRow(p) {
@@ -107,6 +109,8 @@ function parseRow(p) {
     originalArtist:  m.original_artist || '',
     originalYear:    m.original_year ? String(m.original_year) : '',
     originalAudio:   m.original_audio_url || '',
+    // shared note
+    note: m.note || '',
   }
 }
 
@@ -137,6 +141,7 @@ function buildRow(f) {
         source_year: Number(f.sourceYear),
         source_artwork_url: f.sourceArtworkUrl || null,
         source_itunes_url: f.sourceItunesUrl || null,
+        note: f.note || null,
         options: [
           { title: f.answer,    artist: f.correctArtist, audio_url: f.sampleAudioUrl || null, artwork_url: f.sampleArtworkUrl || null, itunes_url: f.correctItunesUrl || null },
           { title: f.opt2Title, artist: f.opt2Artist, audio_url: f.opt2AudioUrl || null, artwork_url: f.opt2ArtworkUrl || null, itunes_url: f.opt2ItunesUrl || null },
@@ -156,6 +161,7 @@ function buildRow(f) {
         song_title:  f.coverSongTitle,
         song_artist: f.coverSongArtist,
         song_year:   f.coverSongYear ? Number(f.coverSongYear) : null,
+        note: f.note || null,
         ...(f.isCover === 'cover' ? {
           original_title:     f.originalTitle,
           original_artist:    f.originalArtist,
@@ -285,6 +291,20 @@ function HitOrMissFields({ f, set }) {
   )
 }
 
+function NoteField({ f, set }) {
+  return (
+    <Field label="Note (optional) — shown to players after the result">
+      <textarea
+        value={f.note}
+        onChange={e => set('note', e.target.value)}
+        placeholder="e.g. This song interpolates the melody rather than sampling the recording directly."
+        rows={3}
+        style={{ ...inputStyle, resize: 'vertical', lineHeight: '1.5' }}
+      />
+    </Field>
+  )
+}
+
 function WhoSampledFields({ f, set, setGenre }) {
   const wsQuery = [f.sourceSong, f.sourceArtist].filter(Boolean).join(' ')
   const wsUrl = wsQuery
@@ -389,7 +409,7 @@ function WhoSampledFields({ f, set, setGenre }) {
       {divider('3 wrong answer choices')}
 
       {/* ── C: Decoy options ── */}
-      <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)' }}>
+      <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
         {sectionHead('C - Decoy options (plausible songs from same era)')}
         {[
           { n: 2, title: 'opt2Title', artist: 'opt2Artist', audio: 'opt2AudioUrl', artwork: 'opt2ArtworkUrl', itunes: 'opt2ItunesUrl' },
@@ -420,6 +440,8 @@ function WhoSampledFields({ f, set, setGenre }) {
           </div>
         ))}
       </div>
+
+      <NoteField f={f} set={set} />
     </>
   )
 }
@@ -600,7 +622,7 @@ function FlipFields({ f, set }) {
 
       {/* Original song - only if cover */}
       {f.isCover === 'cover' && (
-        <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)' }}>
+        <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
           <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
             Original song
           </p>
@@ -623,6 +645,8 @@ function FlipFields({ f, set }) {
           </Field>
         </div>
       )}
+
+      <NoteField f={f} set={set} />
     </>
   )
 }

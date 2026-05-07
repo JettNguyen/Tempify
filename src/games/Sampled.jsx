@@ -165,7 +165,10 @@ export default function Sampled() {
               artist: puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist,
               src: puzzle.metadata?.sample_artwork_url,
             }}
-            detail={`Originally released in ${puzzle.metadata?.sample_year}`}
+            detail={[
+              `Originally released in ${puzzle.metadata?.sample_year}`,
+              puzzle.metadata?.note,
+            ].filter(Boolean).join(' · ')}
             emojiGrid={correct ? '🟩' : '⬜'}
             gameSlug="sampled"
             puzzleDate={dateParam}
