@@ -171,6 +171,7 @@ export default function CoverOrNot() {
             artist: m.original_artist,
             src: originalResultArtwork || m.original_artwork_url,
           } : undefined}
+          detail={m.note || undefined}
           emojiGrid={correct ? '🟩' : '⬜'}
           gameSlug="cover-or-not"
           puzzleDate={dateParam}
