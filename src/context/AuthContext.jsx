@@ -143,7 +143,15 @@ export function AuthProvider({ children }) {
     }
 
     if (data) {
-      data.is_subscribed = Boolean(data.is_subscribed || emailBasedPremium || nativePremium)
+      // For native: RC is the authoritative source — it handles expiry (cancel keeps
+      // access until period end) and refund (immediate revocation) automatically.
+      // Never OR the stale DB value on native, or cancellations/refunds won't take effect.
+      // For web: DB is authoritative (managed by Stripe webhook).
+      if (isNativeApp()) {
+        data.is_subscribed = Boolean(emailBasedPremium || nativePremium)
+      } else {
+        data.is_subscribed = Boolean(data.is_subscribed || emailBasedPremium)
+      }
     }
     setProfile(data)
     setLoading(false)
@@ -152,6 +160,15 @@ export function AuthProvider({ children }) {
   // Called after profile mutations so all consumers (Navbar, etc.) update instantly
   async function refreshProfile() {
     if (user) await fetchProfile(user.id)
+  }
+
+  // Called immediately after a confirmed purchase (Apple IAP or Stripe).
+  // Writes is_subscribed=true to the DB and updates local state right away,
+  // so premium features unlock without waiting for a webhook or RC round-trip.
+  async function markSubscribed() {
+    if (!user) return
+    await supabase.from('users').update({ is_subscribed: true }).eq('id', user.id)
+    setProfile(p => p ? { ...p, is_subscribed: true } : p)
   }
 
   async function signOut() {
@@ -165,7 +182,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, deleteAccount, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut, deleteAccount, refreshProfile, markSubscribed }}>
       {children}
     </AuthContext.Provider>
   )

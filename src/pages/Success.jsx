@@ -1,7 +1,15 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import './Success.css'
 
 export default function Success() {
+  const { markSubscribed } = useAuth()
+
+  useEffect(() => {
+    markSubscribed()
+  }, [])
+
   return (
     <div className="success-page">
       <div className="success-card">
