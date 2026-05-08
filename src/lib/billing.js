@@ -2,6 +2,13 @@ import { isNativeApp } from './oauth'
 
 const APPLE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions'
 
+// Guard: only call Purchases.configure once per app session.
+// Re-configuring while a StoreKit transaction is in progress can silently cancel it.
+let _rcConfigured = false
+// Track which user RC is currently identified as so we can switch with logIn()
+// when the authenticated Supabase user ID becomes available after anonymous config.
+let _rcCurrentUserId = null
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getApiKey() {
@@ -58,21 +65,39 @@ export function usesNativeIap() {
 export async function initRevenueCat(appUserId = null) {
   if (!usesNativeIap()) return false
 
-  const { apiKey } = validateRevenueCatConfig()
   const { Purchases, LOG_LEVEL } = await getPurchasesSdk()
 
-  await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG })
-  console.info('[RevenueCat] Configuring SDK', {
-    appUserId: appUserId ?? null,
-    entitlementId: getEntitlementId(),
-  })
+  if (!_rcConfigured) {
+    const { apiKey } = validateRevenueCatConfig()
+    await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG })
+    console.info('[RevenueCat] Configuring SDK', {
+      appUserId: appUserId ?? null,
+      entitlementId: getEntitlementId(),
+    })
+    await Purchases.configure({
+      apiKey,
+      appUserID: appUserId ?? undefined,
+    })
+    _rcConfigured = true
+    _rcCurrentUserId = appUserId
+    console.info('[RevenueCat] SDK configured successfully')
+    return true
+  }
 
-  await Purchases.configure({
-    apiKey,
-    appUserID: appUserId ?? undefined,
-  })
+  // SDK already running — if a real user ID is now available and differs from
+  // what RC currently knows (e.g. was configured anonymously before login),
+  // switch the RC customer with logIn() so entitlements resolve correctly.
+  if (appUserId && appUserId !== _rcCurrentUserId) {
+    try {
+      console.info('[RevenueCat] Switching customer to authenticated user', appUserId)
+      await Purchases.logIn({ appUserID: appUserId })
+      _rcCurrentUserId = appUserId
+      console.info('[RevenueCat] logIn successful')
+    } catch (err) {
+      console.warn('[RevenueCat] logIn failed:', err)
+    }
+  }
 
-  console.info('[RevenueCat] SDK configured successfully')
   return true
 }
 
@@ -107,7 +132,7 @@ export async function checkPremiumEntitlement() {
  */
 export async function presentPaywall() {
   if (!usesNativeIap()) throw new Error('Paywall is only available in the mobile app.')
-  validateRevenueCatConfig()
+  await initRevenueCat()
 
   const { PAYWALL_RESULT } = await import('@revenuecat/purchases-capacitor-ui')
   const RevenueCatUI = await getPurchasesUiSdk()
@@ -161,6 +186,8 @@ export async function presentPaywallIfNeeded() {
 export async function restorePurchases() {
   if (!usesNativeIap()) throw new Error('Restore is only available in the mobile app.')
   const { entitlementId } = validateRevenueCatConfig()
+  // Ensure SDK is configured even if called outside the normal auth flow
+  await initRevenueCat()
   const { Purchases } = await getPurchasesSdk()
   const { customerInfo } = await Purchases.restorePurchases()
   return Boolean(customerInfo?.entitlements?.active?.[entitlementId])
@@ -182,10 +209,34 @@ export async function getOfferings() {
   return offerings
 }
 
-/** Deep link to the Apple subscription management screen. */
-export function getNativeManageSubscriptionsUrl() {
+/**
+ * Returns the management URL for the current user's subscription.
+ * RC provides this directly in CustomerInfo; falls back to the Apple URL.
+ * This is an https:// URL that Apple's universal link handling routes to the
+ * App Store Subscriptions page when opened via SFSafariViewController.
+ */
+export async function getNativeManageSubscriptionsUrl() {
+  try {
+    const customerInfo = await getCustomerInfo()
+    if (customerInfo?.managementURL) return customerInfo.managementURL
+  } catch {
+    // fall through to default
+  }
   return APPLE_SUBSCRIPTIONS_URL
 }
+
+/**
+ * Opens Apple's native in-app refund request flow for the active entitlement.
+ * Shows a system sheet inside the app — no browser required.
+ */
+export async function requestRefundForActiveEntitlement() {
+  if (!usesNativeIap()) throw new Error('Refunds are only available in the mobile app.')
+  await initRevenueCat()
+  const { Purchases } = await getPurchasesSdk()
+  const { status } = await Purchases.beginRefundRequestForActiveEntitlement()
+  return status
+}
+
 
 // ── Legacy compatibility ──────────────────────────────────────────────────────
 // AuthContext calls this; keep it working with the new implementation.

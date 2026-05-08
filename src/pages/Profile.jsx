@@ -3,8 +3,9 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useAuth } from '../hooks/useAuth'
 import { AVATAR_ICONS, AVATAR_COLORS, saveAvatar, saveProfileSettings, checkUsernameAvailable } from '../lib/avatar'
+import { Browser } from '@capacitor/browser'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
-import { getNativeManageSubscriptionsUrl, usesNativeIap } from '../lib/billing'
+import { getNativeManageSubscriptionsUrl, usesNativeIap, restorePurchases, requestRefundForActiveEntitlement } from '../lib/billing'
 import Avatar from '../components/Avatar'
 import './Profile.css'
 import './Dashboard.css'
@@ -56,7 +57,7 @@ const VISIBILITY_OPTIONS = [
 ]
 
 export default function Profile() {
-  const { user, profile, loading, signOut, deleteAccount, refreshProfile } = useAuth()
+  const { user, profile, loading, signOut, deleteAccount, refreshProfile, markSubscribed } = useAuth()
   const navigate = useNavigate()
 
   const [selectedIcon, setSelectedIcon] = useState(null)
@@ -75,8 +76,10 @@ export default function Profile() {
   const [savingPrefs, setSavingPrefs] = useState(false)
   const [savedPrefs, setSavedPrefs] = useState(false)
 
+  const [billingBusy, setBillingBusy] = useState(false)
+  const [billingMessage, setBillingMessage] = useState('')
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [deleteError, setDeleteError] = useState('')
 
@@ -162,7 +165,6 @@ export default function Profile() {
   }
 
   async function handleDeleteAccount() {
-    if (deleteConfirmText !== 'DELETE') return
     setDeletingAccount(true)
     setDeleteError('')
     try {
@@ -174,13 +176,58 @@ export default function Profile() {
     }
   }
 
-  async function handleManageBillingClick(event) {
-    event.preventDefault()
-    if (usesNativeIap()) {
-      await openExternalUrlInApp(getNativeManageSubscriptionsUrl())
-      return
+  async function handleRestorePurchases() {
+    if (billingBusy) return
+    setBillingBusy(true)
+    setBillingMessage('')
+    try {
+      const restored = await restorePurchases()
+      if (restored) {
+        await markSubscribed()
+        setBillingMessage('Subscription restored!')
+      } else {
+        setBillingMessage('No active subscription found.')
+      }
+    } catch (err) {
+      setBillingMessage(err?.message || 'Unable to restore purchases.')
+    } finally {
+      setBillingBusy(false)
     }
-    await openExternalUrlInApp(customerPortalUrl)
+  }
+
+  async function handleRequestRefund() {
+    if (billingBusy) return
+    setBillingBusy(true)
+    setBillingMessage('')
+    try {
+      await requestRefundForActiveEntitlement()
+      await refreshProfile()
+      setBillingMessage('Refund request submitted.')
+    } catch (err) {
+      const msg = err?.message || ''
+      // AMSErrorDomain Code=6 only occurs in sandbox — refund sheet requires production
+      if (msg.includes('Engagement Request Cancelled') || msg.includes('AMSError') || msg.includes('sandbox')) {
+        setBillingMessage('Refund requests are only available on the App Store in production, not in sandbox.')
+      } else {
+        setBillingMessage(msg || 'Unable to start refund request.')
+      }
+    } finally {
+      setBillingBusy(false)
+    }
+  }
+
+  async function handleCancelSubscription() {
+    const url = await getNativeManageSubscriptionsUrl()
+
+    // Refresh subscription status when the browser/App Store page closes.
+    // This way a cancellation (or sandbox expiry) is reflected immediately on return.
+    let listener = null
+    listener = await Browser.addListener('browserFinished', async () => {
+      await listener?.remove()
+      await refreshProfile()
+    })
+
+    await openExternalUrlInApp(url)
   }
 
   return (
@@ -318,15 +365,70 @@ export default function Profile() {
       {/* Billing */}
       <div className="profile-section">
         {isSubscribed ? (
-          <a href={customerPortalUrl} onClick={handleManageBillingClick} className="dashboard-billing-link">
-            {usesNativeIap() ? 'Manage subscriptions' : 'Manage billing'}
-          </a>
+          <>
+            <p className="profile-section-label">subscription</p>
+            <p style={{ fontSize: '13px', color: 'var(--text-primary)', marginBottom: '1rem' }}>
+              Tempify+ is active.
+            </p>
+            {usesNativeIap() ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  onClick={handleRestorePurchases}
+                  disabled={billingBusy}
+                  className="profile-billing-btn btn-hover"
+                >
+                  Restore purchases
+                </button>
+                <button
+                  onClick={handleRequestRefund}
+                  disabled={billingBusy}
+                  className="profile-billing-btn btn-hover"
+                >
+                  Request a refund
+                </button>
+                <button
+                  onClick={handleCancelSubscription}
+                  disabled={billingBusy}
+                  className="profile-billing-btn btn-hover"
+                >
+                  Cancel subscription →
+                </button>
+              </div>
+            ) : (
+              <a
+                href={customerPortalUrl}
+                onClick={e => { e.preventDefault(); openExternalUrlInApp(customerPortalUrl) }}
+                className="profile-billing-btn btn-hover"
+                style={{ display: 'inline-block' }}
+              >
+                Manage billing →
+              </a>
+            )}
+            {billingMessage && (
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '10px' }}>{billingMessage}</p>
+            )}
+          </>
         ) : (
-          <div className="dashboard-upsell">
-            <p className="dashboard-upsell-title">Unlock the archive</p>
-            <p className="dashboard-upsell-body">Play every past day and keep your streaks alive across all games.</p>
-            <Link to="/subscribe" className="dashboard-upsell-btn btn-press">See plans</Link>
-          </div>
+          <>
+            <div className="dashboard-upsell">
+              <p className="dashboard-upsell-title">Unlock the archive</p>
+              <p className="dashboard-upsell-body">Play every past day and keep your streaks alive across all games.</p>
+              <Link to="/subscribe" className="dashboard-upsell-btn btn-press">See plans</Link>
+            </div>
+            {usesNativeIap() && (
+              <button
+                onClick={handleRestorePurchases}
+                disabled={billingBusy}
+                className="profile-billing-btn btn-hover"
+                style={{ marginTop: '12px' }}
+              >
+                {billingBusy ? 'Restoring…' : 'Restore purchases'}
+              </button>
+            )}
+            {billingMessage && (
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>{billingMessage}</p>
+            )}
+          </>
         )}
       </div>
 
@@ -376,7 +478,7 @@ export default function Profile() {
       <div className="profile-delete-section">
         <p className="profile-section-label">danger zone</p>
         <button
-          onClick={() => { setShowDeleteConfirm(true); setDeleteConfirmText(''); setDeleteError('') }}
+          onClick={() => { setShowDeleteConfirm(true); setDeleteError('') }}
           className="profile-delete-btn"
         >
           Delete account
@@ -396,22 +498,9 @@ export default function Profile() {
             <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
               Delete your account?
             </h2>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: '1.5' }}>
               This permanently deletes your account and all your data — scores, streaks, and profile. This cannot be undone.
             </p>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-              Type <strong style={{ color: 'var(--text-primary)' }}>DELETE</strong> to confirm:
-            </p>
-            <input
-              value={deleteConfirmText}
-              onChange={e => setDeleteConfirmText(e.target.value)}
-              placeholder="DELETE"
-              style={{
-                width: '100%', background: '#111', border: '1px solid var(--border)',
-                borderRadius: '6px', padding: '8px 10px', color: 'var(--text-primary)',
-                fontSize: '13px', outline: 'none', marginBottom: '12px', boxSizing: 'border-box',
-              }}
-            />
             {deleteError && (
               <p style={{ fontSize: '12px', color: '#ef4444', marginBottom: '12px' }}>{deleteError}</p>
             )}
@@ -420,7 +509,7 @@ export default function Profile() {
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deletingAccount}
                 style={{
-                  flex: 1, padding: '9px', borderRadius: '8px',
+                  flex: 1, padding: '10px', borderRadius: '8px',
                   border: '1px solid var(--border)', background: 'transparent',
                   color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',
                 }}
@@ -429,13 +518,13 @@ export default function Profile() {
               </button>
               <button
                 onClick={handleDeleteAccount}
-                disabled={deleteConfirmText !== 'DELETE' || deletingAccount}
+                disabled={deletingAccount}
                 style={{
-                  flex: 1, padding: '9px', borderRadius: '8px',
-                  border: 'none', background: deleteConfirmText === 'DELETE' ? '#ef4444' : 'var(--border)',
+                  flex: 1, padding: '10px', borderRadius: '8px',
+                  border: 'none', background: '#ef4444',
                   color: '#fff', fontSize: '13px', fontWeight: 600,
-                  cursor: deleteConfirmText === 'DELETE' && !deletingAccount ? 'pointer' : 'not-allowed',
-                  opacity: deleteConfirmText !== 'DELETE' ? 0.5 : 1,
+                  cursor: deletingAccount ? 'not-allowed' : 'pointer',
+                  opacity: deletingAccount ? 0.6 : 1,
                 }}
               >
                 {deletingAccount ? 'Deleting…' : 'Delete account'}

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { App as CapApp } from '@capacitor/app'
 import { Browser } from '@capacitor/browser'
 import { supabase } from '../lib/supabase'
@@ -11,6 +11,10 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  // Ref keeps the current user ID accessible inside long-lived Capacitor listeners
+  // without stale closure issues.
+  const userIdRef = useRef(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
@@ -37,6 +41,28 @@ export function AuthProvider({ children }) {
     })
 
     return () => subscription.unsubscribe()
+  }, [])
+
+  // Keep the ref in sync so Capacitor listeners always see the current user ID.
+  useEffect(() => {
+    userIdRef.current = user?.id ?? null
+  }, [user])
+
+  // Re-check RC subscription status whenever the app comes back to the foreground.
+  // This catches: returning from the subscription management page, sandbox renewals/
+  // expirations that happened while the app was backgrounded, etc.
+  useEffect(() => {
+    if (!isNativeApp()) return
+
+    let listenerHandle = null
+
+    CapApp.addListener('appStateChange', async ({ isActive }) => {
+      if (isActive && userIdRef.current) {
+        await fetchProfile(userIdRef.current)
+      }
+    }).then(handle => { listenerHandle = handle })
+
+    return () => { listenerHandle?.remove() }
   }, [])
 
   useEffect(() => {
@@ -140,10 +166,31 @@ export function AuthProvider({ children }) {
       } catch {
         nativePremium = false
       }
+
+      // Sync RC status into rc_subscribed and recompute is_subscribed.
+      // This is a safety net for when webhooks are delayed or missed.
+      // stripe_subscribed is preserved so a cancelled iOS sub never revokes
+      // an active Stripe subscription on the web side.
+      if (data && data.rc_subscribed !== nativePremium) {
+        const newIsSubscribed = Boolean(nativePremium || data.stripe_subscribed || emailBasedPremium)
+        await supabase
+          .from('users')
+          .update({ rc_subscribed: nativePremium, is_subscribed: newIsSubscribed })
+          .eq('id', userId)
+        data.rc_subscribed = nativePremium
+        data.is_subscribed = newIsSubscribed
+      }
     }
 
     if (data) {
-      data.is_subscribed = Boolean(data.is_subscribed || emailBasedPremium || nativePremium)
+      // iOS: combine live RC check with stripe_subscribed from DB so a web
+      // subscription also unlocks premium in the iOS app.
+      // Web: DB is authoritative (managed by Stripe webhook).
+      if (isNativeApp()) {
+        data.is_subscribed = Boolean(emailBasedPremium || nativePremium || data.stripe_subscribed)
+      } else {
+        data.is_subscribed = Boolean(data.is_subscribed || emailBasedPremium)
+      }
     }
     setProfile(data)
     setLoading(false)
@@ -152,6 +199,18 @@ export function AuthProvider({ children }) {
   // Called after profile mutations so all consumers (Navbar, etc.) update instantly
   async function refreshProfile() {
     if (user) await fetchProfile(user.id)
+  }
+
+  // Called immediately after a confirmed purchase (Apple IAP or Stripe).
+  // Writes is_subscribed=true to the DB and updates local state right away,
+  // so premium features unlock without waiting for a webhook or RC round-trip.
+  async function markSubscribed() {
+    if (!user) return
+    await supabase
+      .from('users')
+      .update({ is_subscribed: true, rc_subscribed: true })
+      .eq('id', user.id)
+    setProfile(p => p ? { ...p, is_subscribed: true, rc_subscribed: true } : p)
   }
 
   async function signOut() {
@@ -165,7 +224,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, deleteAccount, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut, deleteAccount, refreshProfile, markSubscribed }}>
       {children}
     </AuthContext.Provider>
   )
