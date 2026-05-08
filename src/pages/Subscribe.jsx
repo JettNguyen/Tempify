@@ -1,11 +1,13 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
-import { usesNativeIap, presentPaywallIfNeeded, restorePurchases } from '../lib/billing'
+import { usesNativeIap, presentPaywall, restorePurchases } from '../lib/billing'
 import './Subscribe.css'
 
 export default function Subscribe() {
-  const { user, refreshProfile } = useAuth()
+  const { user, refreshProfile, markSubscribed } = useAuth()
+  const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -18,11 +20,11 @@ export default function Subscribe() {
       setBusy(true)
       setMessage('')
       try {
-        // Shows the RC native paywall; skips it automatically if already subscribed.
-        const { purchased } = await presentPaywallIfNeeded()
+        // Always shows the RC native paywall so users can see plans and manage their subscription.
+        const { purchased } = await presentPaywall()
         if (purchased) {
-          await refreshProfile()
-          setMessage('Subscription activated!')
+          await markSubscribed()
+          navigate('/archive')
         }
         // If dismissed/cancelled, no message — just close.
       } catch (err) {
@@ -62,6 +64,21 @@ export default function Subscribe() {
   return (
     <div className="subscribe-page">
       <div className="subscribe-card">
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            display: 'block',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted)',
+            fontSize: '13px',
+            cursor: 'pointer',
+            padding: 0,
+            marginBottom: '1.5rem',
+          }}
+        >
+          ← Back
+        </button>
         <p className="subscribe-eyebrow">tempify+</p>
         <h1 className="subscribe-title">Every day, going back forever.</h1>
         <p className="subscribe-body">
