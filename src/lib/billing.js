@@ -5,6 +5,9 @@ const APPLE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions'
 // Guard: only call Purchases.configure once per app session.
 // Re-configuring while a StoreKit transaction is in progress can silently cancel it.
 let _rcConfigured = false
+// Track which user RC is currently identified as so we can switch with logIn()
+// when the authenticated Supabase user ID becomes available after anonymous config.
+let _rcCurrentUserId = null
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -61,27 +64,40 @@ export function usesNativeIap() {
  */
 export async function initRevenueCat(appUserId = null) {
   if (!usesNativeIap()) return false
-  if (_rcConfigured) {
-    console.info('[RevenueCat] SDK already configured, skipping')
+
+  const { Purchases, LOG_LEVEL } = await getPurchasesSdk()
+
+  if (!_rcConfigured) {
+    const { apiKey } = validateRevenueCatConfig()
+    await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG })
+    console.info('[RevenueCat] Configuring SDK', {
+      appUserId: appUserId ?? null,
+      entitlementId: getEntitlementId(),
+    })
+    await Purchases.configure({
+      apiKey,
+      appUserID: appUserId ?? undefined,
+    })
+    _rcConfigured = true
+    _rcCurrentUserId = appUserId
+    console.info('[RevenueCat] SDK configured successfully')
     return true
   }
 
-  const { apiKey } = validateRevenueCatConfig()
-  const { Purchases, LOG_LEVEL } = await getPurchasesSdk()
+  // SDK already running — if a real user ID is now available and differs from
+  // what RC currently knows (e.g. was configured anonymously before login),
+  // switch the RC customer with logIn() so entitlements resolve correctly.
+  if (appUserId && appUserId !== _rcCurrentUserId) {
+    try {
+      console.info('[RevenueCat] Switching customer to authenticated user', appUserId)
+      await Purchases.logIn({ appUserID: appUserId })
+      _rcCurrentUserId = appUserId
+      console.info('[RevenueCat] logIn successful')
+    } catch (err) {
+      console.warn('[RevenueCat] logIn failed:', err)
+    }
+  }
 
-  await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG })
-  console.info('[RevenueCat] Configuring SDK', {
-    appUserId: appUserId ?? null,
-    entitlementId: getEntitlementId(),
-  })
-
-  await Purchases.configure({
-    apiKey,
-    appUserID: appUserId ?? undefined,
-  })
-
-  _rcConfigured = true
-  console.info('[RevenueCat] SDK configured successfully')
   return true
 }
 

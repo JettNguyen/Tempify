@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useAuth } from '../hooks/useAuth'
 import { AVATAR_ICONS, AVATAR_COLORS, saveAvatar, saveProfileSettings, checkUsernameAvailable } from '../lib/avatar'
+import { Browser } from '@capacitor/browser'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import { getNativeManageSubscriptionsUrl, usesNativeIap, restorePurchases, requestRefundForActiveEntitlement } from '../lib/billing'
 import Avatar from '../components/Avatar'
@@ -217,6 +218,15 @@ export default function Profile() {
 
   async function handleCancelSubscription() {
     const url = await getNativeManageSubscriptionsUrl()
+
+    // Refresh subscription status when the browser/App Store page closes.
+    // This way a cancellation (or sandbox expiry) is reflected immediately on return.
+    let listener = null
+    listener = await Browser.addListener('browserFinished', async () => {
+      await listener?.remove()
+      await refreshProfile()
+    })
+
     await openExternalUrlInApp(url)
   }
 

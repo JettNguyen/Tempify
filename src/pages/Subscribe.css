@@ -90,3 +90,25 @@
   margin-top: 1rem;
   text-align: center;
 }
+
+.subscribe-legal {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.subscribe-legal a,
+.subscribe-legal-btn {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+.subscribe-legal-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}

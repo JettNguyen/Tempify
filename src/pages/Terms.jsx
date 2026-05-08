@@ -78,6 +78,21 @@ export default function Terms() {
       </section>
 
       <section className="privacy-section">
+        <h2>iOS App License</h2>
+        <p>
+          Use of the Tempify iOS app is also governed by Apple's standard End User License Agreement
+          (EULA). You can read it at{' '}
+          <a
+            href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            apple.com/legal/internet-services/itunes/dev/stdeula
+          </a>.
+        </p>
+      </section>
+
+      <section className="privacy-section">
         <h2>Contact</h2>
         <p>
           For questions about these terms, please contact support through the channel listed

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import { usesNativeIap, presentPaywall, restorePurchases } from '../lib/billing'
@@ -109,6 +109,21 @@ export default function Subscribe() {
         {!user && (
           <p className="subscribe-hint">You'll be asked to log in or create an account.</p>
         )}
+
+        <p className="subscribe-legal">
+          {nativeIap ? (
+            <button
+              className="subscribe-legal-btn"
+              onClick={() => openExternalUrlInApp('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+            >
+              Terms of Use
+            </button>
+          ) : (
+            <Link to="/terms">Terms of Use</Link>
+          )}
+          {' · '}
+          <Link to="/privacy">Privacy Policy</Link>
+        </p>
       </div>
     </div>
   )
