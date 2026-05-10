@@ -23,7 +23,8 @@ const WEB_PLANS = [
     unit: '/ year',
     cta: 'Subscribe yearly',
     linkEnv: 'VITE_STRIPE_PAYMENT_LINK_YEARLY',
-    note: 'Best recurring value.',
+    badge: 'Save 31%',
+    note: 'Buy yearly and save $11.',
   },
   {
     key: 'lifetime',
@@ -136,7 +137,10 @@ export default function Subscribe() {
               return (
                 <div key={plan.key} className={`subscribe-price-box${configured ? '' : ' subscribe-price-box--disabled'}`}>
                   <div className="subscribe-plan-header">
-                    <p className="subscribe-plan-label">{plan.label}</p>
+                    <div className="subscribe-plan-label-row">
+                      <p className="subscribe-plan-label">{plan.label}</p>
+                      {plan.badge && <span className="subscribe-plan-badge">{plan.badge}</span>}
+                    </div>
                     <div className="subscribe-price-row">
                       <span className="subscribe-price">{plan.price}</span>
                       <span className="subscribe-price-unit">{plan.unit}</span>

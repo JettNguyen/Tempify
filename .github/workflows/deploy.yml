@@ -50,9 +50,15 @@ jobs:
           VITE_STRIPE_PRICE_ID: ${{ secrets.VITE_STRIPE_PRICE_ID }}
           VITE_STRIPE_CUSTOMER_PORTAL_URL: ${{ secrets.VITE_STRIPE_CUSTOMER_PORTAL_URL }}
           VITE_STRIPE_PAYMENT_LINK: ${{ secrets.VITE_STRIPE_PAYMENT_LINK }}
+          VITE_STRIPE_PAYMENT_LINK_MONTHLY: ${{ secrets.VITE_STRIPE_PAYMENT_LINK_MONTHLY }}
+          VITE_STRIPE_PAYMENT_LINK_YEARLY: ${{ secrets.VITE_STRIPE_PAYMENT_LINK_YEARLY }}
+          VITE_STRIPE_PAYMENT_LINK_LIFETIME: ${{ secrets.VITE_STRIPE_PAYMENT_LINK_LIFETIME }}
           VITE_ADMIN_EMAIL: ${{ secrets.VITE_ADMIN_EMAIL }}
           VITE_ITUNES_PROXY_URL: ${{ secrets.VITE_ITUNES_PROXY_URL }}
           VITE_PREMIUM_EMAILS: ${{ secrets.VITE_PREMIUM_EMAILS }}
+          VITE_RC_APPLE_API_KEY: ${{ secrets.VITE_RC_APPLE_API_KEY }}
+          VITE_RC_ENTITLEMENT_ID: ${{ secrets.VITE_RC_ENTITLEMENT_ID }}
+          VITE_APPLE_CLIENT_ID: ${{ secrets.VITE_APPLE_CLIENT_ID }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
