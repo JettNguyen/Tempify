@@ -9,6 +9,10 @@ declare const Deno: { env: { get(key: string): string | undefined } }
 // Subscription statuses that mean the customer currently has access.
 const ACTIVE_STATUSES = new Set(['active', 'trialing'])
 
+function getLifetimePaymentLinkId() {
+  return Deno.env.get('STRIPE_LIFETIME_PAYMENT_LINK_ID') ?? ''
+}
+
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204 })
@@ -48,10 +52,11 @@ export default async function handler(req: Request): Promise<Response> {
   switch (event.type) {
     // ── New subscription created via payment link ─────────────────────────────
     case 'checkout.session.completed': {
-      if (obj.mode !== 'subscription') break
-
       const email = (obj.customer_details as any)?.email ?? (obj.customer_email as string) ?? null
       const stripeCustomerId = obj.customer as string | null
+      const mode = obj.mode as string | undefined
+
+      if (mode !== 'subscription' && mode !== 'payment') break
 
       if (!email) {
         console.warn('[stripe-webhook] checkout.session.completed: no customer email')
@@ -61,6 +66,26 @@ export default async function handler(req: Request): Promise<Response> {
       const userId = await findUserByEmail(email)
       if (!userId) {
         console.warn(`[stripe-webhook] checkout.session.completed: no user found for email ${email}`)
+        break
+      }
+
+      if (mode === 'payment') {
+        const paymentStatus = obj.payment_status as string | undefined
+        const paymentLinkId = obj.payment_link as string | null
+        const lifetimePaymentLinkId = getLifetimePaymentLinkId()
+
+        if (paymentStatus !== 'paid') {
+          console.info(`[stripe-webhook] checkout.session.completed ignored unpaid payment session for user=${userId}`)
+          break
+        }
+
+        if (!lifetimePaymentLinkId || paymentLinkId !== lifetimePaymentLinkId) {
+          console.info('[stripe-webhook] checkout.session.completed ignored one-time payment that is not the lifetime link')
+          break
+        }
+
+        await setSubscriptionStatus(userId, 'stripe', true, stripeCustomerId ?? undefined)
+        console.info(`[stripe-webhook] checkout.session.completed lifetime purchase → stripe_subscribed=true  user=${userId}`)
         break
       }
 

@@ -40,6 +40,32 @@
   margin-bottom: 1rem;
 }
 
+.subscribe-price-box--disabled {
+  opacity: 0.6;
+}
+
+.subscribe-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.subscribe-plan-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.subscribe-plan-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 .subscribe-price-row {
   display: flex;
   align-items: baseline;
