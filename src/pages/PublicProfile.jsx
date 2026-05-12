@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import {
   followUser, unfollowUser, isFollowing,
   getFollowerProfiles, getFollowingProfiles,
-  getRecentScores, getStreaks,
+  getAllScores, getStreaks,
 } from '../lib/scores'
 import { GAME_SLUGS, getGameName } from '../lib/games'
 import { fmtTime } from '../lib/date'
@@ -147,7 +147,7 @@ export default function PublicProfile() {
         setTarget(data)
 
         const [sc, st, followers, followingIds] = await Promise.all([
-          getRecentScores(data.id, 500),
+          getAllScores(data.id),
           getStreaks(data.id),
           getFollowerProfiles(data.id),
           getFollowingProfiles(data.id),
@@ -368,7 +368,7 @@ export default function PublicProfile() {
         <section className="dashboard-section">
           <p className="dashboard-section-label">recent plays</p>
           <div>
-            {scores.slice(0, 10).map(score => (
+            {[...scores].sort((a, b) => b.date_played.localeCompare(a.date_played)).slice(0, 10).map(score => (
               <div key={score.id} className="dashboard-score-row">
                 <div className="dashboard-score-left">
                   <span className={`dashboard-score-dot${score.completed ? ' dashboard-score-dot--complete' : ''}`} />

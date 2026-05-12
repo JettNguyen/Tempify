@@ -67,6 +67,8 @@ html {
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Allow native rubber-band bounce on iOS WKWebView */
+  overscroll-behavior-y: auto;
 }
 
 body {
@@ -75,6 +77,8 @@ body {
   color: var(--text-muted);
   line-height: 1.5;
   min-height: 100dvh;
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 a {

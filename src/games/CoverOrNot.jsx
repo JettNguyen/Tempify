@@ -26,6 +26,7 @@ export default function CoverOrNot() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
+  const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
   const [finalTime, setFinalTime] = useState(null)
   const [originalResultArtwork, setOriginalResultArtwork] = useState(null)
@@ -96,6 +97,7 @@ export default function CoverOrNot() {
     const elapsed = stop()
     setFinalTime(elapsed)
     const isCorrect = pick === puzzle.answer
+    setChosen(pick)
     setCorrect(isCorrect)
     setDone(true)
     if (puzzle.answer === 'cover' && puzzle.metadata?.original_audio_url) {
@@ -152,12 +154,26 @@ export default function CoverOrNot() {
         <AudioPlayer ref={coverRef} src={puzzle.audio_url} onPlay={() => originalRef.current?.pause()} autoplay={profile?.autoplay_audio !== false} />
       </div>
 
-      {!done && (
-        <div className="stagger-list cover-or-not__choices">
-          <ChoiceButton label="It's a cover" onClick={() => handleGuess('cover')} />
-          <ChoiceButton label="It's original" onClick={() => handleGuess('original')} />
-        </div>
-      )}
+      <div className="stagger-list cover-or-not__choices">
+        {[{ value: 'cover', label: "It's a cover" }, { value: 'original', label: "It's original" }].map(({ value, label }) => {
+          let mod = ''
+          if (done) {
+            if (value === puzzle.answer) mod = ' cover-or-not__choice-btn--correct'
+            else if (value === chosen) mod = ' cover-or-not__choice-btn--wrong'
+            else mod = ' cover-or-not__choice-btn--faded'
+          }
+          return (
+            <button
+              key={value}
+              onClick={() => !done && handleGuess(value)}
+              disabled={done}
+              className={`cover-or-not__choice-btn btn-press${!done ? ' btn-hover' : ''}${mod}`}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
 
       {done && (
         <ResultCard
@@ -196,14 +212,6 @@ export default function CoverOrNot() {
         </ResultCard>
       )}
     </GameShell>
-  )
-}
-
-function ChoiceButton({ label, onClick }) {
-  return (
-    <button onClick={onClick} className="cover-or-not__choice-btn btn-press btn-hover">
-      {label}
-    </button>
   )
 }
 

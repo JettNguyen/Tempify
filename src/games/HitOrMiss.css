@@ -54,4 +54,21 @@
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.hit-or-miss__choice-btn--correct {
+  border-color: var(--green);
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--green);
+}
+
+.hit-or-miss__choice-btn--wrong {
+  border-color: var(--red);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--red);
+}
+
+.hit-or-miss__choice-btn--faded {
+  opacity: 0.3;
 }

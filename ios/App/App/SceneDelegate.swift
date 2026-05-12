@@ -31,7 +31,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func sceneDidDisconnect(_ scene: UIScene) {}
 
-    func sceneDidBecomeActive(_ scene: UIScene) {}
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        // Enable elastic/rubber-band scroll bounce in the WKWebView.
+        // Without this, the Capacitor WKWebView feels stiff compared to Safari.
+        if let vc = window?.rootViewController as? CAPBridgeViewController {
+            vc.webView?.scrollView.alwaysBounceVertical = true
+        }
+    }
 
     func sceneWillResignActive(_ scene: UIScene) {}
 

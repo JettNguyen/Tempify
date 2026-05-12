@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { supabase } from '../lib/supabase'
@@ -56,7 +56,9 @@ function pad(n) { return String(n).padStart(2, '0') }
 export default function Explore() {
   const { user, profile, loading } = useAuth()
   const { isComplete } = useCompletion(user?.id)
-  const [view, setView] = useState('browse')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const view = searchParams.get('view') || 'browse'
+  const setView = (v) => setSearchParams(v === 'browse' ? {} : { view: v }, { replace: true })
   const [activeGenres, setActiveGenres] = useState([])
   const [allPuzzles, setAllPuzzles] = useState([])
   const [playedSlugs, setPlayedSlugs] = useState(new Set())
@@ -164,6 +166,17 @@ export default function Explore() {
   const days = getDaysInMonth(viewYear, viewMonth)
   const firstDay = getFirstDayOfMonth(viewYear, viewMonth)
 
+  // Per-date puzzle counts (unfiltered — calendar always shows full picture)
+  const puzzlesByDate = {}
+  allPuzzles.forEach(p => { puzzlesByDate[p.scheduled_date] = (puzzlesByDate[p.scheduled_date] || 0) + 1 })
+
+  // Per-date played counts from the Supabase scores set
+  const playedByDate = {}
+  playedSlugs.forEach(key => {
+    const [date] = key.split('|')
+    playedByDate[date] = (playedByDate[date] || 0) + 1
+  })
+
   function prevMonth() {
     if (isEarliestMonth) return
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
@@ -247,6 +260,16 @@ export default function Explore() {
               const isFuture = dateStr > todayCalStr
               const hasPuzzles = dateStr >= FIRST_PUZZLE_DATE && !isFuture
 
+              const totalGames = puzzlesByDate[dateStr] || 0
+              const playedCount = playedByDate[dateStr] || 0
+              const dotState = !hasPuzzles || totalGames === 0
+                ? null
+                : playedCount >= totalGames
+                  ? 'complete'
+                  : playedCount > 0
+                    ? 'partial'
+                    : 'unplayed'
+
               if (isFuture) return (
                 <div key={day} className="archive-day archive-day--future">
                   <span className="archive-day__num archive-day__num--future">{day}</span>
@@ -255,16 +278,30 @@ export default function Explore() {
               if (isToday) return (
                 <Link key={day} to={`/archive/${dateStr}`} className="archive-day archive-day--today day-hover btn-press">
                   <span className="archive-day__num archive-day__num--today">{day}</span>
-                  {hasPuzzles && <span className="archive-day__dot" />}
+                  {dotState && <span className={`archive-day__dot archive-day__dot--${dotState}`} />}
                 </Link>
               )
               return (
                 <Link key={day} to={`/archive/${dateStr}`} className={`archive-day day-hover btn-press${!hasPuzzles ? ' archive-day--pre-launch' : ''}`}>
                   <span className="archive-day__num archive-day__num--past">{day}</span>
-                  {hasPuzzles && <span className="archive-day__dot" />}
+                  {dotState && <span className={`archive-day__dot archive-day__dot--${dotState}`} />}
                 </Link>
               )
             })}
+          </div>
+          <div className="archive-legend">
+            <div className="archive-legend__item">
+              <span className="archive-day__dot archive-day__dot--complete" />
+              <span>All done</span>
+            </div>
+            <div className="archive-legend__item">
+              <span className="archive-day__dot archive-day__dot--partial" />
+              <span>In progress</span>
+            </div>
+            <div className="archive-legend__item">
+              <span className="archive-day__dot archive-day__dot--unplayed" />
+              <span>Not played</span>
+            </div>
           </div>
         </div>
       ) : fetching ? (
