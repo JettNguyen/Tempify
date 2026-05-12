@@ -97,12 +97,27 @@ export default function HitOrMiss() {
 
       <AudioPlayer src={puzzle.audio_url} autoplay={profile?.autoplay_audio !== false} />
 
-      {!done && (
-        <div className="stagger-list hit-or-miss__choices">
-          <ChoiceButton label="Hit" onClick={() => handleGuess('hit')} />
-          <ChoiceButton label="Miss" onClick={() => handleGuess('miss')} />
-        </div>
-      )}
+      <div className="stagger-list hit-or-miss__choices">
+        {['hit', 'miss'].map(v => {
+          const verdict = puzzle?.metadata?.verdict
+          let mod = ''
+          if (done) {
+            if (v === verdict) mod = ' hit-or-miss__choice-btn--correct'
+            else if (v === chosen) mod = ' hit-or-miss__choice-btn--wrong'
+            else mod = ' hit-or-miss__choice-btn--faded'
+          }
+          return (
+            <button
+              key={v}
+              onClick={() => !done && handleGuess(v)}
+              disabled={done}
+              className={`hit-or-miss__choice-btn btn-press${!done ? ' btn-hover' : ''}${mod}`}
+            >
+              {v === 'hit' ? 'Hit' : 'Miss'}
+            </button>
+          )
+        })}
+      </div>
 
       {done && (
         <ResultCard
@@ -115,7 +130,7 @@ export default function HitOrMiss() {
               ? `It was a hit. It peaked at #${puzzle.metadata?.peak_position} in ${puzzle.metadata?.year}`
               : `It missed. It never entered the Hot 100 (${puzzle.metadata?.year})`
           }
-          detail={puzzle.metadata?.hint}
+          detail={[puzzle.metadata?.hint, puzzle.metadata?.note].filter(Boolean).join(' · ')}
           emojiGrid={correct ? '🟩' : '⬜'}
           gameSlug="hit-or-miss"
           puzzleDate={dateParam}
@@ -125,14 +140,6 @@ export default function HitOrMiss() {
         />
       )}
     </GameShell>
-  )
-}
-
-function ChoiceButton({ label, onClick }) {
-  return (
-    <button onClick={onClick} className="hit-or-miss__choice-btn btn-press btn-hover">
-      {label}
-    </button>
   )
 }
 

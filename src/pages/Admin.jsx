@@ -130,6 +130,7 @@ function buildRow(f) {
         peak_position: f.verdict === 'hit' ? Number(f.peakPosition) || 0 : 0,
         weeks_at_one: Number(f.weeksAtOne) || 0,
         hint: f.hint || null,
+        note: f.note || null,
       }
       break
     case 'sampled':
@@ -287,6 +288,7 @@ function HitOrMissFields({ f, set }) {
         </div>
       )}
       <Field label="Hint (optional)"><Input value={f.hint} onChange={v => set('hint', v)} placeholder="Billboard context..." /></Field>
+      <NoteField f={f} set={set} />
     </>
   )
 }

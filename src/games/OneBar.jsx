@@ -19,6 +19,8 @@ const BASE_SECONDS = 0.5
 const SECONDS_PER_REVEAL = 0.5
 const REVEAL_TIMINGS = [0.5, 1, 2, 5, 15, 30]
 
+const progressKey = (date) => `tempify_progress_one-bar_${date}`
+
 export default function OneBar() {
   const { user, profile } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
@@ -48,6 +50,7 @@ export default function OneBar() {
   useEffect(() => {
     if (!puzzle || done) return
     if (isComplete('one-bar', puzzleDate)) {
+      localStorage.removeItem(progressKey(puzzleDate))
       const stored = completions[`one-bar|${puzzleDate}`]
       const count = stored?.attempts || 1
       const wasCorrect = stored?.completed ?? false
@@ -92,6 +95,20 @@ export default function OneBar() {
     return () => { cancelled = true }
   }, [puzzle])
 
+  // Restore mid-game guesses from localStorage so navigating away doesn't let
+  // the player restart with a clean slate.
+  useEffect(() => {
+    if (!puzzle || done) return
+    if (isComplete('one-bar', puzzleDate)) return
+    try {
+      const saved = JSON.parse(localStorage.getItem(progressKey(puzzleDate)) || 'null')
+      if (saved?.attempts?.length > 0) {
+        setAttempts(saved.attempts)
+        setRevealSeconds(saved.revealSeconds ?? BASE_SECONDS)
+      }
+    } catch { /* ignore corrupt data */ }
+  }, [puzzle, completions])
+
   function buildEmojiGrid() {
     return attempts.map((a) => (a.correct ? '🟩' : '⬜')).join('')
   }
@@ -111,6 +128,7 @@ export default function OneBar() {
     if (isCorrect || newAttempts.length >= MAX_ATTEMPTS) {
       setCorrect(isCorrect)
       setDone(true)
+      localStorage.removeItem(progressKey(puzzleDate))
       markComplete('one-bar', puzzleDate, newAttempts.length, isCorrect)
       if (user) {
         try {
@@ -122,7 +140,9 @@ export default function OneBar() {
       }
     } else {
       guessInputRef.current?.clear()
-      setRevealSeconds(REVEAL_TIMINGS[Math.min(newAttempts.length, REVEAL_TIMINGS.length - 1)])
+      const nextReveal = REVEAL_TIMINGS[Math.min(newAttempts.length, REVEAL_TIMINGS.length - 1)]
+      setRevealSeconds(nextReveal)
+      localStorage.setItem(progressKey(puzzleDate), JSON.stringify({ attempts: newAttempts, revealSeconds: nextReveal }))
     }
   }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { getRecentScores, getStreaks } from '../lib/scores'
+import { getAllScores, getStreaks } from '../lib/scores'
 import { supabase } from '../lib/supabase'
 import { todayEST, fmtTime } from '../lib/date'
 import { GAME_SLUGS, getGameName } from '../lib/games'
@@ -75,7 +75,7 @@ export default function Dashboard() {
     if (!user) return
     const month = todayEST().slice(0, 7)
     Promise.all([
-      getRecentScores(user.id, 500),
+      getAllScores(user.id),
       getStreaks(user.id),
       isSubscribed
         ? supabase.from('streak_freezes').select('tokens_used').eq('user_id', user.id).eq('month', month)
@@ -194,7 +194,7 @@ export default function Dashboard() {
           <p className="dashboard-empty">No plays yet. <Link to="/">Play today's games</Link></p>
         ) : (
           <div>
-            {scores.slice(0, 20).map(score => (
+            {[...scores].sort((a, b) => b.date_played.localeCompare(a.date_played)).slice(0, 20).map(score => (
               <div key={score.id} className="dashboard-score-row">
                 <div className="dashboard-score-left">
                   <span className={`dashboard-score-dot${score.completed ? ' dashboard-score-dot--complete' : ''}`} />
