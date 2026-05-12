@@ -19,8 +19,11 @@ import HitOrMiss from './games/HitOrMiss'
 import Sampled from './games/Sampled'
 import Era from './games/Era'
 import CoverOrNot from './games/CoverOrNot'
+import { useIOSIPadUI } from './hooks/useIOSIPadUI'
 
 export default function App() {
+  useIOSIPadUI()
+
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>

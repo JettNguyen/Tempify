@@ -389,6 +389,43 @@ input, textarea {
   padding-left: max(1.25rem, env(safe-area-inset-left));
 }
 
+/* Native iPad UI sizing: slightly larger text/controls and wider shells */
+body.ios-ipad-ui {
+  --ios-ipad-ui-scale: 1.12;
+}
+
+@supports (zoom: 1) {
+  body.ios-ipad-ui #root {
+    zoom: var(--ios-ipad-ui-scale);
+  }
+}
+
+@supports not (zoom: 1) {
+  body.ios-ipad-ui #root {
+    transform: scale(var(--ios-ipad-ui-scale));
+    transform-origin: top center;
+    width: calc(100% / var(--ios-ipad-ui-scale));
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+body.ios-ipad-ui .page-shell {
+  max-width: 660px;
+}
+
+body.ios-ipad-ui .page-shell-wide {
+  max-width: 760px;
+}
+
+body.ios-ipad-ui .page-shell-narrow {
+  max-width: 580px;
+}
+
+body.ios-ipad-ui .page-shell-admin {
+  max-width: 860px;
+}
+
 /* Shared back link used in all game pages */
 .game-back-link {
   font-size: 13px;
