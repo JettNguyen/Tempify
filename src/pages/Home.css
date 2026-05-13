@@ -25,3 +25,18 @@
 .home-no-account a {
   color: var(--text-muted);
 }
+
+.home-legal-links {
+  margin-top: 2rem;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.home-legal-links a {
+  color: var(--text-muted);
+}
