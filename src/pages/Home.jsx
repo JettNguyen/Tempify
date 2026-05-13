@@ -88,6 +88,12 @@ export default function Home() {
           <Link to="/login">Log in</Link> to track streaks and access the archive.
         </p>
       )}
+
+      <p className="home-legal-links" aria-label="Legal links">
+        <Link to="/privacy">Privacy Policy</Link>
+        <span aria-hidden="true">•</span>
+        <Link to="/terms">Terms of Service</Link>
+      </p>
     </div>
   )
 }
