@@ -216,7 +216,7 @@ function OneBarFields({ f, set }) {
 function HitOrMissFields({ f, set }) {
   const [bbStatus, setBbStatus] = useState(null) // null | 'hot100' | 'bb200' | 'miss'
   const [bb200Peak, setBb200Peak] = useState(null)
-  const lastLookup = useRef('')
+  const lastLookup = useRef(`${f.answer}|||${f.artist}`)
 
   useEffect(() => {
     const key = `${f.answer}|||${f.artist}`
