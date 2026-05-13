@@ -22,10 +22,25 @@ export async function getRecentScores(userId, limit = 20) {
     .from('scores')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false })
+    .order('date_played', { ascending: false })
     .limit(limit)
   if (error) throw error
   return data || []
+}
+
+// Fetches all scores for a user, ordered by puzzle date descending.
+// Use this for stats computation — getRecentScores with a low limit produces
+// inaccurate aggregates for users with long play histories.
+export async function getAllScores(userId) {
+  // Use RPC so any authenticated user can read any profile's scores —
+  // direct table queries are blocked by RLS for rows owned by other users.
+  const { data, error } = await supabase.rpc('get_public_scores', { p_user_id: userId })
+  if (!error) return data || []
+  // Fallback to direct query (works when reading own data)
+  const { data: fb, error: fbErr } = await supabase
+    .from('scores').select('*').eq('user_id', userId).order('date_played', { ascending: false })
+  if (fbErr) throw fbErr
+  return fb || []
 }
 
 export async function getScoresForMonth(userId, year, month) {
@@ -120,12 +135,14 @@ export async function updateStreak(userId, gameSlug, isPremium = false) {
 }
 
 export async function getStreaks(userId) {
-  const { data, error } = await supabase
-    .from('streaks')
-    .select('*')
-    .eq('user_id', userId)
-  if (error) throw error
-  return data || []
+  // Use RPC so streaks are readable for any user's public profile.
+  const { data, error } = await supabase.rpc('get_public_streaks', { p_user_id: userId })
+  if (!error) return data || []
+  // Fallback to direct query (works when reading own data)
+  const { data: fb, error: fbErr } = await supabase
+    .from('streaks').select('*').eq('user_id', userId)
+  if (fbErr) throw fbErr
+  return fb || []
 }
 
 export async function getFreezesRemaining(userId, gameSlug) {

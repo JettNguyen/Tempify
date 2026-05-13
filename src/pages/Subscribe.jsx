@@ -1,9 +1,48 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import { usesNativeIap, presentPaywall, restorePurchases } from '../lib/billing'
 import './Subscribe.css'
+
+const WEB_PLANS = [
+  {
+    key: 'monthly',
+    label: 'Monthly',
+    price: '$3',
+    unit: '/ month',
+    cta: 'Subscribe monthly',
+    linkEnv: 'VITE_STRIPE_PAYMENT_LINK_MONTHLY',
+    fallbackEnv: 'VITE_STRIPE_PAYMENT_LINK',
+    note: 'Cancel any time.',
+  },
+  {
+    key: 'yearly',
+    label: 'Yearly',
+    price: '$25',
+    unit: '/ year',
+    cta: 'Subscribe yearly',
+    linkEnv: 'VITE_STRIPE_PAYMENT_LINK_YEARLY',
+    badge: 'Save 31%',
+    note: 'Buy yearly and save $11.',
+  },
+  {
+    key: 'lifetime',
+    label: 'Lifetime',
+    price: '$100',
+    unit: ' once',
+    cta: 'Buy lifetime',
+    linkEnv: 'VITE_STRIPE_PAYMENT_LINK_LIFETIME',
+    note: 'One payment. Permanent access.',
+  },
+]
+
+function getWebPlanLink(plan) {
+  const primary = import.meta.env[plan.linkEnv]
+  if (primary) return primary
+  if (plan.fallbackEnv) return import.meta.env[plan.fallbackEnv]
+  return ''
+}
 
 export default function Subscribe() {
   const { user, refreshProfile, markSubscribed } = useAuth()
@@ -13,7 +52,7 @@ export default function Subscribe() {
 
   const nativeIap = usesNativeIap()
 
-  async function handleSubscribe() {
+  async function handleSubscribe(plan = WEB_PLANS[0]) {
     if (busy) return
 
     if (nativeIap) {
@@ -35,10 +74,11 @@ export default function Subscribe() {
       return
     }
 
-    // Web: redirect to Stripe payment link
-    const link = import.meta.env.VITE_STRIPE_PAYMENT_LINK
+    // Web: redirect to the Stripe payment link for the selected plan.
+    const link = getWebPlanLink(plan)
     if (!link) {
-      console.warn('VITE_STRIPE_PAYMENT_LINK is not set.')
+      console.warn(`${plan.linkEnv} is not set.`)
+      setMessage(`The ${plan.label.toLowerCase()} plan is not configured yet.`)
       return
     }
     const url = new URL(link)
@@ -86,17 +126,39 @@ export default function Subscribe() {
           what you actually play. Streaks carry across all five games.
         </p>
 
-        <div className="subscribe-price-box">
-          <div className="subscribe-price-row">
-            <span className="subscribe-price">$3</span>
-            <span className="subscribe-price-unit">/ month</span>
+        {nativeIap ? (
+          <button onClick={() => handleSubscribe()} className="subscribe-cta btn-press" disabled={busy}>
+            {busy ? 'Please wait…' : 'See Plans'}
+          </button>
+        ) : (
+          <div className="subscribe-plan-list">
+            {WEB_PLANS.map((plan) => {
+              const configured = Boolean(getWebPlanLink(plan))
+              return (
+                <div key={plan.key} className={`subscribe-price-box${configured ? '' : ' subscribe-price-box--disabled'}`}>
+                  <div className="subscribe-plan-header">
+                    <div className="subscribe-plan-label-row">
+                      <p className="subscribe-plan-label">{plan.label}</p>
+                      {plan.badge && <span className="subscribe-plan-badge">{plan.badge}</span>}
+                    </div>
+                    <div className="subscribe-price-row">
+                      <span className="subscribe-price">{plan.price}</span>
+                      <span className="subscribe-price-unit">{plan.unit}</span>
+                    </div>
+                  </div>
+                  <p className="subscribe-fine-print">{plan.note}</p>
+                  <button
+                    onClick={() => handleSubscribe(plan)}
+                    className="subscribe-cta btn-press"
+                    disabled={busy || !configured}
+                  >
+                    {busy ? 'Please wait…' : configured ? plan.cta : 'Coming soon'}
+                  </button>
+                </div>
+              )
+            })}
           </div>
-          <p className="subscribe-fine-print">Cancel any time, no questions.</p>
-        </div>
-
-        <button onClick={handleSubscribe} className="subscribe-cta btn-press" disabled={busy}>
-          {busy ? 'Please wait…' : nativeIap ? 'See Plans' : 'Subscribe — $3/mo'}
-        </button>
+        )}
 
         {nativeIap && (
           <button onClick={handleRestore} className="subscribe-restore btn-press btn-hover" disabled={busy}>
@@ -109,6 +171,21 @@ export default function Subscribe() {
         {!user && (
           <p className="subscribe-hint">You'll be asked to log in or create an account.</p>
         )}
+
+        <p className="subscribe-legal">
+          {nativeIap ? (
+            <button
+              className="subscribe-legal-btn"
+              onClick={() => openExternalUrlInApp('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+            >
+              Terms of Use
+            </button>
+          ) : (
+            <Link to="/terms">Terms of Use</Link>
+          )}
+          {' · '}
+          <Link to="/privacy">Privacy Policy</Link>
+        </p>
       </div>
     </div>
   )

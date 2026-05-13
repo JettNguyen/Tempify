@@ -71,7 +71,8 @@
 }
 
 .sampled__option--wrong {
-  border-color: #ef44441a;
+  border-color: var(--red);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .sampled__option--faded {

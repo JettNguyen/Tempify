@@ -40,6 +40,49 @@
   margin-bottom: 1rem;
 }
 
+.subscribe-price-box--disabled {
+  opacity: 0.6;
+}
+
+.subscribe-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.subscribe-plan-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.subscribe-plan-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.subscribe-plan-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.subscribe-plan-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent);
+  border-radius: 4px;
+  padding: 1px 6px;
+  letter-spacing: 0.03em;
+}
+
 .subscribe-price-row {
   display: flex;
   align-items: baseline;
@@ -61,6 +104,7 @@
 .subscribe-fine-print {
   font-size: 12px;
   color: var(--text-dim);
+  margin-bottom: 0.5rem;
 }
 
 .subscribe-cta {
@@ -89,4 +133,26 @@
   color: var(--text-dim);
   margin-top: 1rem;
   text-align: center;
+}
+
+.subscribe-legal {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.subscribe-legal a,
+.subscribe-legal-btn {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+.subscribe-legal-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
 }
