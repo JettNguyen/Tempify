@@ -124,7 +124,7 @@ export default function CoverOrNot() {
 
   return (
     <GameShell>
-      <Link to="/" className="game-back-link">← Back</Link>
+      <Link to={dateParam ? `/archive/${dateParam}` : '/'} replace className="game-back-link">← Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">cover or not</p>
@@ -188,10 +188,9 @@ export default function CoverOrNot() {
             src: originalResultArtwork || m.original_artwork_url,
           } : undefined}
           detail={m.note || undefined}
-          emojiGrid={correct ? '🟩' : '⬜'}
           gameSlug="cover-or-not"
           puzzleDate={dateParam}
-          timeSeconds={finalTime}
+          timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
           nextGame={{ path: '/', label: 'Back to games' }}
           showLeaderboard={profile?.competitive_mode !== false}
         >

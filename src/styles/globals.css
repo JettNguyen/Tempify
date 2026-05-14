@@ -67,8 +67,7 @@ html {
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Allow native rubber-band bounce on iOS WKWebView */
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -77,6 +76,22 @@ body {
   color: var(--text-muted);
   line-height: 1.5;
   min-height: 100dvh;
+  overscroll-behavior-y: none;
+}
+
+.app-scroll-container {
+  min-height: 100dvh;
+}
+
+/* Native iOS: keep navbar fixed by preventing viewport bounce, but allow
+   rubber-band bounce within the page content container. */
+body.ios-native-app {
+  overflow: hidden;
+}
+
+body.ios-native-app .app-scroll-container {
+  height: 100dvh;
+  overflow-y: auto;
   overscroll-behavior-y: auto;
   -webkit-overflow-scrolling: touch;
 }

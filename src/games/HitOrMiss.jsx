@@ -74,7 +74,7 @@ export default function HitOrMiss() {
 
   return (
     <GameShell>
-      <Link to="/" className="game-back-link">← Back</Link>
+      <Link to={dateParam ? `/archive/${dateParam}` : '/'} replace className="game-back-link">← Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">hit or miss</p>
@@ -131,10 +131,9 @@ export default function HitOrMiss() {
               : `It missed. It never entered the Hot 100 (${puzzle.metadata?.year})`
           }
           detail={[puzzle.metadata?.hint, puzzle.metadata?.note].filter(Boolean).join(' · ')}
-          emojiGrid={correct ? '🟩' : '⬜'}
           gameSlug="hit-or-miss"
           puzzleDate={dateParam}
-          timeSeconds={finalTime}
+          timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
           nextGame={{ path: '/game/sampled', label: 'Sampled' }}
           showLeaderboard={profile?.competitive_mode !== false}
         />

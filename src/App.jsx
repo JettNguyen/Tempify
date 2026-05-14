@@ -29,28 +29,30 @@ export default function App() {
       <AuthProvider>
         <Navbar />
         <UsernameSetupModal />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/game/one-bar" element={<OneBar />} />
-          <Route path="/game/hit-or-miss" element={<HitOrMiss />} />
-          <Route path="/game/sampled" element={<Sampled />} />
-          <Route path="/game/era" element={<Era />} />
-          <Route path="/game/cover-or-not" element={<CoverOrNot />} />
-          <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
-          <Route path="/archive" element={<Navigate to="/explore" replace />} />
-          <Route path="/archive/:date" element={<ArchiveDay />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/u/:username" element={<PublicProfile />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/subscribe" element={<Subscribe />} />
-          <Route path="/success" element={<Success />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <div className="app-scroll-container">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/game/one-bar" element={<OneBar />} />
+            <Route path="/game/hit-or-miss" element={<HitOrMiss />} />
+            <Route path="/game/sampled" element={<Sampled />} />
+            <Route path="/game/era" element={<Era />} />
+            <Route path="/game/cover-or-not" element={<CoverOrNot />} />
+            <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
+            <Route path="/archive" element={<Navigate to="/explore" replace />} />
+            <Route path="/archive/:date" element={<ArchiveDay />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/u/:username" element={<PublicProfile />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/success" element={<Success />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
       </AuthProvider>
     </BrowserRouter>
   )

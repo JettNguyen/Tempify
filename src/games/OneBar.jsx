@@ -154,7 +154,7 @@ export default function OneBar() {
 
   return (
     <GameShell>
-      <Link to="/" className="game-back-link">← Back</Link>
+      <Link to={dateParam ? `/archive/${dateParam}` : '/'} replace className="game-back-link">← Back</Link>
 
       <div className="one-bar__header">
         <p className="one-bar__eyebrow">one bar</p>
@@ -212,6 +212,7 @@ export default function OneBar() {
             src: resultArtwork || puzzle.metadata?.artwork_url,
           }}
           emojiGrid={buildEmojiGrid()}
+          attempts={attempts.length}
           gameSlug="one-bar"
           puzzleDate={dateParam}
           nextGame={{ path: '/game/hit-or-miss', label: 'Hit or Miss' }}

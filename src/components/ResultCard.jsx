@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import ShareButton from './ShareButton'
 import TrackArtwork from './TrackArtwork'
 import Leaderboard from './Leaderboard'
@@ -10,8 +10,20 @@ import './ResultCard.css'
 export default function ResultCard({
   correct, answer, artist, detail, emojiGrid,
   gameSlug, nextGame, artwork, children,
-  puzzleDate, timeSeconds, showLeaderboard,
+  puzzleDate, timeSeconds, attempts, showLeaderboard,
 }) {
+  const [searchParams] = useSearchParams()
+  const dateParam = searchParams.get('date')
+
+  // When playing an archive date, preserve it through the next-game chain.
+  // If the final destination is "/" (CoverOrNot's "Back to games"), send to
+  // the archive day instead so the user lands back on that day's list.
+  function resolveNextPath(path) {
+    if (!dateParam) return path
+    if (path === '/') return `/archive/${dateParam}`
+    return `${path}?date=${dateParam}`
+  }
+
   const timeLabel = gameSlug !== 'one-bar' ? fmtTime(timeSeconds) : null
 
   useEffect(() => {
@@ -44,9 +56,16 @@ export default function ResultCard({
       {emojiGrid && <div className="result-card__emoji">{emojiGrid}</div>}
 
       <div className="result-card__actions">
-        <ShareButton emojiGrid={emojiGrid} gameSlug={gameSlug} />
+        <ShareButton
+          emojiGrid={emojiGrid}
+          gameSlug={gameSlug}
+          correct={correct}
+          attempts={attempts}
+          timeSeconds={timeSeconds}
+          puzzleDate={puzzleDate}
+        />
         {nextGame && (
-          <Link to={nextGame.path} className="result-card__next btn-press btn-amber">
+          <Link to={resolveNextPath(nextGame.path)} replace className="result-card__next btn-press btn-amber">
             {nextGame.label} →
           </Link>
         )}

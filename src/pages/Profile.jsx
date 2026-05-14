@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useAuth } from '../hooks/useAuth'
@@ -6,7 +6,9 @@ import { AVATAR_ICONS, AVATAR_COLORS, saveAvatar, saveProfileSettings, checkUser
 import { Browser } from '@capacitor/browser'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import { getNativeManageSubscriptionsUrl, usesNativeIap, restorePurchases, requestRefundForActiveEntitlement } from '../lib/billing'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
+import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
 import './Profile.css'
 import './Dashboard.css'
 
@@ -84,6 +86,12 @@ export default function Profile() {
   const [deleteError, setDeleteError] = useState('')
 
   const synced = useRef(false)
+
+  const onRefresh = useCallback(async () => {
+    await refreshProfile()
+  }, [refreshProfile])
+
+  const { pullDistance, isRefreshing, isDragging } = usePullToRefresh(onRefresh)
 
   useEffect(() => {
     if (profile && !synced.current) {
@@ -231,7 +239,14 @@ export default function Profile() {
   }
 
   return (
-    <div className="page-shell-narrow">
+    <div
+      className="page-shell-narrow"
+      style={{
+        transform: `translateY(${pullDistance}px)`,
+        transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      }}
+    >
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       {/* Header */}
       <div className="profile-header">
         <Avatar iconKey={selectedIcon} color={selectedColor} initial={initial} size={56} />
