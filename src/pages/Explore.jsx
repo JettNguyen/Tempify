@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
@@ -6,8 +6,10 @@ import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
 import { GAMES } from '../lib/games'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import ArchiveLock from '../components/ArchiveLock'
 import DelayedSpinner from '../components/DelayedSpinner'
+import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
 import './Explore.css'
 import './Archive.css'
 
@@ -120,25 +122,24 @@ export default function Explore() {
     }
   }, [allPuzzles])
 
-  useEffect(() => {
-    if (!user) return
-    supabase.from('scores').select('game_slug, date_played').eq('user_id', user.id)
-      .then(({ data }) => {
-        if (data?.length) setPlayedSlugs(new Set(data.map(s => `${s.date_played}|${s.game_slug}`)))
-      })
-  }, [user])
+  const fetchData = useCallback(async () => {
+    const [scoresRes, puzzlesRes] = await Promise.all([
+      user ? supabase.from('scores').select('game_slug, date_played').eq('user_id', user.id) : Promise.resolve({ data: null }),
+      supabase.from('puzzles')
+        .select('id, game_slug, scheduled_date, answer, genre, metadata')
+        .lte('scheduled_date', todayStr)
+        .order('scheduled_date', { ascending: false }),
+    ])
+    if (scoresRes.data?.length) setPlayedSlugs(new Set(scoresRes.data.map(s => `${s.date_played}|${s.game_slug}`)))
+    setAllPuzzles(puzzlesRes.data || [])
+  }, [user, todayStr])
 
   useEffect(() => {
     setFetching(true)
-    supabase.from('puzzles')
-      .select('id, game_slug, scheduled_date, answer, genre, metadata')
-      .lte('scheduled_date', todayStr)
-      .order('scheduled_date', { ascending: false })
-      .then(({ data }) => {
-        setAllPuzzles(data || [])
-        setFetching(false)
-      })
-  }, [todayStr])
+    fetchData().finally(() => setFetching(false))
+  }, [fetchData])
+
+  const { pullDistance, isRefreshing, isDragging } = usePullToRefresh(fetchData)
 
   if (loading) return null
 
@@ -189,7 +190,14 @@ export default function Explore() {
   }
 
   return (
-    <div className="page-shell-wide">
+    <div
+      className="page-shell-wide"
+      style={{
+        transform: `translateY(${pullDistance}px)`,
+        transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      }}
+    >
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       <div className="explore-header">
         <p className="explore-eyebrow">explore</p>
         <div className="explore-title-row">

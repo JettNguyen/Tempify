@@ -65,5 +65,5 @@ export function useCompletion(userId) {
     return Boolean(entry?.played || (entry?.attempts ?? 0) > 0 || entry?.completed)
   }
 
-  return { completions, markComplete, isComplete }
+  return { completions, markComplete, isComplete, refresh: loadFromSupabase }
 }

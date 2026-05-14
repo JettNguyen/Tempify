@@ -108,7 +108,7 @@ export default function Era() {
 
   return (
     <GameShell>
-      <Link to="/" className="game-back-link">← Back</Link>
+      <Link to={dateParam ? `/archive/${dateParam}` : '/'} replace className="game-back-link">← Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">era</p>
@@ -151,10 +151,9 @@ export default function Era() {
             artist: puzzle.metadata?.artist,
             src: resultArtwork || puzzle.metadata?.artwork_url,
           }}
-          emojiGrid={correct ? '🟩' : '⬜'}
           gameSlug="era"
           puzzleDate={dateParam}
-          timeSeconds={finalTime}
+          timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
           nextGame={{ path: '/game/cover-or-not', label: 'Cover or Not' }}
           showLeaderboard={profile?.competitive_mode !== false}
         />

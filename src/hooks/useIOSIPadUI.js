@@ -14,7 +14,10 @@ function shouldUseIPadUI() {
 
 export function useIOSIPadUI() {
   useEffect(() => {
+    const isNativeIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios'
+
     function syncIPadClass() {
+      document.body.classList.toggle('ios-native-app', isNativeIOS)
       document.body.classList.toggle('ios-ipad-ui', shouldUseIPadUI())
     }
 
@@ -25,6 +28,7 @@ export function useIOSIPadUI() {
     return () => {
       window.removeEventListener('resize', syncIPadClass)
       window.removeEventListener('orientationchange', syncIPadClass)
+      document.body.classList.remove('ios-native-app')
       document.body.classList.remove('ios-ipad-ui')
     }
   }, [])

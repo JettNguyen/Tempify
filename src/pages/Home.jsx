@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import { getPuzzleArtworkUrls, prefetchArtworkUrls } from '../lib/artwork'
 import { GAMES } from '../lib/games'
 import GameTile from '../components/GameTile'
+import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
 import './Home.css'
 
 const dateLabel = () =>
@@ -14,30 +16,45 @@ const dateLabel = () =>
 
 export default function Home() {
   const { user } = useAuth()
-  const { isComplete } = useCompletion(user?.id)
+  const { isComplete, refresh: refreshCompletions } = useCompletion(user?.id)
   const [genres, setGenres] = useState({})
 
-  useEffect(() => {
+  const fetchGenres = useCallback(async () => {
     const today = todayEST()
-    supabase
+    const { data } = await supabase
       .from('puzzles')
       .select('game_slug, genre, metadata')
       .eq('scheduled_date', today)
-      .then(({ data }) => {
-        if (!data) return
-        const map = {}
-        data.forEach((p) => { if (p.genre) map[p.game_slug] = p.genre })
-        setGenres(map)
-        prefetchArtworkUrls(data.flatMap((p) => getPuzzleArtworkUrls(p)))
-      })
+    if (!data) return
+    const map = {}
+    data.forEach((p) => { if (p.genre) map[p.game_slug] = p.genre })
+    setGenres(map)
+    prefetchArtworkUrls(data.flatMap((p) => getPuzzleArtworkUrls(p)))
   }, [])
+
+  useEffect(() => { fetchGenres() }, [fetchGenres])
+
+  const onRefresh = useCallback(async () => {
+    await fetchGenres()
+    refreshCompletions?.()
+  }, [fetchGenres, refreshCompletions])
+
+  const { pullDistance, isRefreshing, isDragging } = usePullToRefresh(onRefresh)
 
   const [featured, ...rest] = GAMES
   const middle = rest.slice(0, 2)
   const bottom = rest.slice(2)
 
   return (
-    <div className="page-shell-wide">
+    <div
+      className="page-shell-wide"
+      style={{
+        transform: `translateY(${pullDistance}px)`,
+        transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      }}
+    >
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+
       <div className="home-header">
         <p className="home-date">{dateLabel()}</p>
         <h1 className="home-title">Today's games</h1>

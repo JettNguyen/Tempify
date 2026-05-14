@@ -1,0 +1,41 @@
+.ptr-indicator {
+  position: fixed;
+  /* 52px = navbar height; 14px gap below navbar */
+  top: calc(env(safe-area-inset-top) + 52px + 14px);
+  left: 50%;
+  z-index: 101;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  /* translateX(-50%) is applied inline; scale is also inline */
+  pointer-events: none;
+}
+
+.ptr-arrow {
+  transition: transform 0.2s ease;
+  display: block;
+}
+
+.ptr-arrow--flip {
+  transform: rotate(180deg);
+}
+
+/* CSS spinner for refreshing state */
+.ptr-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: ptr-spin 0.7s linear infinite;
+}
+
+@keyframes ptr-spin {
+  to { transform: rotate(360deg); }
+}

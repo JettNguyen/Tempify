@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
@@ -8,10 +8,12 @@ import {
   getAllScores, getStreaks,
 } from '../lib/scores'
 import { GAME_SLUGS, getGameName } from '../lib/games'
-import { fmtTime } from '../lib/date'
+import { fmtTime, todayEST } from '../lib/date'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
 import StreakDisplay from '../components/StreakDisplay'
 import DelayedSpinner from '../components/DelayedSpinner'
+import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
 import './Dashboard.css'
 import './PublicProfile.css'
 
@@ -115,6 +117,7 @@ export default function PublicProfile() {
   const [followingCount, setFollowingCount] = useState(0)
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [followLoading, setFollowLoading] = useState(false)
+  const [freezesUsed, setFreezesUsed] = useState(0)
 
   // Followers/following panel
   const [panel, setPanel] = useState(null) // null | 'followers' | 'following'
@@ -125,45 +128,61 @@ export default function PublicProfile() {
   // For isMe, use AuthContext's profile which applies premium-email overrides.
   const isTargetPremium = isMe ? myProfile?.is_subscribed : target?.is_subscribed
 
-  useEffect(() => {
+  const fetchProfile = useCallback(async () => {
     if (!username) return
-    setLoadingProfile(true)
-    setPanel(null)
-
     const premiumEmails = (import.meta.env.VITE_PREMIUM_EMAILS || '')
       .split(',')
       .map(e => e.trim().toLowerCase())
       .filter(Boolean)
-    supabase
+    const { data, error } = await supabase
       .from('users')
       .select('id, username, avatar_icon, avatar_color, email, is_subscribed, leaderboard_visibility')
       .eq('username', username.toLowerCase())
       .maybeSingle()
-      .then(async ({ data, error }) => {
-        if (error || !data) { setTarget(null); setLoadingProfile(false); return }
-        if (premiumEmails.length && premiumEmails.includes((data.email || '').trim().toLowerCase())) {
-          data.is_subscribed = true
-        }
-        setTarget(data)
+    if (error || !data) { setTarget(null); return }
+    if (premiumEmails.length && premiumEmails.includes((data.email || '').trim().toLowerCase())) {
+      data.is_subscribed = true
+    }
+    setTarget(data)
 
-        const [sc, st, followers, followingIds] = await Promise.all([
-          getAllScores(data.id),
-          getStreaks(data.id),
-          getFollowerProfiles(data.id),
-          getFollowingProfiles(data.id),
-        ])
-        setScores(sc)
-        setStreaks(st)
-        setFollowerCount(followers.length)
-        setFollowingCount(followingIds.length)
+    const [sc, st, followers, followingIds] = await Promise.all([
+      getAllScores(data.id),
+      getStreaks(data.id),
+      getFollowerProfiles(data.id),
+      getFollowingProfiles(data.id),
+    ])
+    setScores(sc)
+    setStreaks(st)
+    setFollowerCount(followers.length)
+    setFollowingCount(followingIds.length)
 
-        if (user && user.id !== data.id) {
-          const f = await isFollowing(user.id, data.id)
-          setFollowing(f)
-        }
-        setLoadingProfile(false)
-      })
+    if (user && user.id !== data.id) {
+      const f = await isFollowing(user.id, data.id)
+      setFollowing(f)
+    }
   }, [username, user])
+
+  const fetchFreezes = useCallback(async () => {
+    if (!user || !myProfile?.is_subscribed) return
+    const { data } = await supabase
+      .from('streak_freezes')
+      .select('tokens_used')
+      .eq('user_id', user.id)
+      .eq('month', todayEST().slice(0, 7))
+    setFreezesUsed((data || []).reduce((sum, r) => sum + r.tokens_used, 0))
+  }, [user, myProfile?.is_subscribed])
+
+  useEffect(() => {
+    setLoadingProfile(true)
+    setPanel(null)
+    Promise.all([fetchProfile(), fetchFreezes()]).finally(() => setLoadingProfile(false))
+  }, [fetchProfile, fetchFreezes])
+
+  const onRefresh = useCallback(async () => {
+    await Promise.all([fetchProfile(), fetchFreezes()])
+  }, [fetchProfile, fetchFreezes])
+
+  const { pullDistance, isRefreshing, isDragging } = usePullToRefresh(onRefresh)
 
   async function openPanel(type) {
     if (panel === type) { setPanel(null); return }
@@ -216,7 +235,7 @@ export default function PublicProfile() {
   const highlightSpeed = !!stats?.fastestWin
 
   return (
-    <Shell>
+    <Shell pullDistance={pullDistance} isRefreshing={isRefreshing} isDragging={isDragging}>
       <Link to="/" className="profile-back">← Home</Link>
 
       {/* Header */}
@@ -286,7 +305,14 @@ export default function PublicProfile() {
 
       {/* Streaks */}
       <section className="dashboard-section">
-        <p className="dashboard-section-label">current streaks</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+          <p className="dashboard-section-label" style={{ marginBottom: 0 }}>current streaks</p>
+          {isMe && isTargetPremium && (
+            <span style={{ fontSize: '11px', color: freezesUsed >= GAME_SLUGS.length * 2 ? 'var(--text-dim)' : 'var(--amber)' }}>
+              🧊 {Math.max(0, GAME_SLUGS.length * 2 - freezesUsed)} freeze token{Math.max(0, GAME_SLUGS.length * 2 - freezesUsed) !== 1 ? 's' : ''} left this month
+            </span>
+          )}
+        </div>
         <StreakDisplay streaks={streaks} />
       </section>
 
@@ -296,7 +322,7 @@ export default function PublicProfile() {
 
         {/* Always-visible basics */}
         <div className="dashboard-stat-grid" style={{ marginBottom: '1rem' }}>
-          <StatCard label="Win rate"    value={pct(stats?.winRate ?? 0)}  detail={`${stats?.wins ?? 0} of ${stats?.plays ?? 0} played`} />
+          <StatCard label="Win rate"    value={pct(stats?.winRate ?? 0)}  detail={`${stats?.wins ?? 0} of ${stats?.plays ?? 0} won`} />
           <StatCard label="Days played" value={stats?.uniqueDays ?? 0}     detail="Unique puzzle days" />
         </div>
 
@@ -389,7 +415,20 @@ export default function PublicProfile() {
   )
 }
 
-function Shell({ children }) { return <div className="page-shell-wide">{children}</div> }
+function Shell({ children, pullDistance = 0, isRefreshing = false, isDragging = false }) {
+  return (
+    <div
+      className="page-shell-wide"
+      style={{
+        transform: `translateY(${pullDistance}px)`,
+        transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      }}
+    >
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+      {children}
+    </div>
+  )
+}
 
 function StatCard({ label, value, detail, highlight }) {
   return (

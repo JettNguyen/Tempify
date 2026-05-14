@@ -106,7 +106,7 @@ export default function Sampled() {
 
   return (
     <GameShell>
-      <Link to="/" className="game-back-link">← Back</Link>
+      <Link to={dateParam ? `/archive/${dateParam}` : '/'} replace className="game-back-link">← Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">sampled</p>
@@ -179,10 +179,9 @@ export default function Sampled() {
               `Originally released in ${puzzle.metadata?.sample_year}`,
               puzzle.metadata?.note,
             ].filter(Boolean).join(' · ')}
-            emojiGrid={correct ? '🟩' : '⬜'}
             gameSlug="sampled"
             puzzleDate={dateParam}
-            timeSeconds={finalTime}
+            timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
             nextGame={{ path: '/game/era', label: 'Era' }}
             showLeaderboard={profile?.competitive_mode !== false}
           />

@@ -24,6 +24,10 @@ function addDays(dateStr, n) {
   return d.toISOString().split('T')[0]
 }
 
+function norm(v) {
+  return String(v || '').toLowerCase().trim()
+}
+
 function dateRange(start, count) {
   return Array.from({ length: count }, (_, i) => addDays(start, i))
 }
@@ -602,6 +606,9 @@ function FlipFields({ f, set }) {
           <Field label="Artist"><Input value={f.coverSongArtist} onChange={v => set('coverSongArtist', v)} placeholder="Artist" /></Field>
           <Field label="Year"><Input value={f.coverSongYear} onChange={v => set('coverSongYear', v)} placeholder="Year" type="number" /></Field>
         </div>
+        <Field label="Audio URL">
+          <Input value={f.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
+        </Field>
       </div>
 
       {/* Is it a cover? */}
@@ -774,7 +781,7 @@ export default function Admin() {
     if (!showForm || !isAdmin) return
     supabase
       .from('puzzles')
-      .select('id, answer, metadata')
+      .select('id, answer, metadata, scheduled_date')
       .eq('game_slug', form.game)
       .then(({ data }) => setGamePuzzles(data || []))
   }, [form.game, showForm, isAdmin])
@@ -809,19 +816,35 @@ export default function Admin() {
     setDeletingId(null)
   }
 
-  function songKeyFromRow(gameSlug, answer, metadata) {
+  function presentedSongKeyFromRow(gameSlug, answer, metadata) {
     switch (gameSlug) {
-      case 'era':          return (metadata?.title      || '').toLowerCase().trim()
-      case 'cover-or-not': return (metadata?.song_title || '').toLowerCase().trim()
-      default:             return (answer               || '').toLowerCase().trim()
+      case 'one-bar':
+      case 'hit-or-miss':
+        return `${norm(answer)}|${norm(metadata?.artist)}`
+      case 'sampled':
+        return `${norm(metadata?.source_song)}|${norm(metadata?.source_artist)}`
+      case 'era':
+        return `${norm(metadata?.title)}|${norm(metadata?.artist)}`
+      case 'cover-or-not':
+        return `${norm(metadata?.song_title)}|${norm(metadata?.song_artist)}`
+      default:
+        return ''
     }
   }
 
-  function songKeyFromForm(f) {
+  function presentedSongKeyFromForm(f) {
     switch (f.game) {
-      case 'era':          return f.songTitle.toLowerCase().trim()
-      case 'cover-or-not': return f.coverSongTitle.toLowerCase().trim()
-      default:             return f.answer.toLowerCase().trim()
+      case 'one-bar':
+      case 'hit-or-miss':
+        return `${norm(f.answer)}|${norm(f.artist)}`
+      case 'sampled':
+        return `${norm(f.sourceSong)}|${norm(f.sourceArtist)}`
+      case 'era':
+        return `${norm(f.songTitle)}|${norm(f.artist)}`
+      case 'cover-or-not':
+        return `${norm(f.coverSongTitle)}|${norm(f.coverSongArtist)}`
+      default:
+        return ''
     }
   }
 
@@ -1092,15 +1115,15 @@ export default function Admin() {
             </div>
 
             {(() => {
-              const key = songKeyFromForm(form)
+              const key = presentedSongKeyFromForm(form)
               if (!key) return null
               const dupe = gamePuzzles.find(p =>
-                p.id !== editingId && songKeyFromRow(form.game, p.answer, p.metadata) === key
+                p.id !== editingId && presentedSongKeyFromRow(form.game, p.answer, p.metadata) === key
               )
               if (!dupe) return null
               return (
                 <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '0.75rem' }}>
-                  This song has already been used as a {GAMES.find(g => g.slug === form.game)?.short} puzzle (scheduled {dupe.scheduled_date}). Pick a different song.
+                  This presented song has already been used as a {GAMES.find(g => g.slug === form.game)?.short} puzzle (scheduled {dupe.scheduled_date}). Pick a different song.
                 </p>
               )
             })()}
@@ -1112,9 +1135,9 @@ export default function Admin() {
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
               {(() => {
                 const dateConflict = !editingId && !!scheduled[`${form.date}|${form.game}`]
-                const songKey = songKeyFromForm(form)
+                const songKey = presentedSongKeyFromForm(form)
                 const songConflict = !!songKey && gamePuzzles.some(p =>
-                  p.id !== editingId && songKeyFromRow(form.game, p.answer, p.metadata) === songKey
+                  p.id !== editingId && presentedSongKeyFromRow(form.game, p.answer, p.metadata) === songKey
                 )
                 const blocked = saving || dateConflict || songConflict
                 return (
