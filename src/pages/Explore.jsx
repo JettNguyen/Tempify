@@ -14,6 +14,11 @@ import './Explore.css'
 import './Archive.css'
 
 const FIRST_PUZZLE_DATE = '2026-04-28'
+const WHEEL_LINE_PX = 16
+const WHEEL_SMOOTH_FACTOR = 0.2
+const WHEEL_STOP_EPSILON = 0.5
+
+const horizontalScrollState = new WeakMap()
 
 function updateScrollGradient(el) {
   if (!el) return
@@ -32,6 +37,60 @@ function updateScrollGradient(el) {
   }
   el.style.webkitMaskImage = mask
   el.style.maskImage = mask
+}
+
+function isDesktopPointer() {
+  if (typeof window === 'undefined' || !window.matchMedia) return false
+  return window.matchMedia('(hover: hover) and (pointer: fine)').matches
+}
+
+function getWheelDelta(e) {
+  // Prefer explicit horizontal delta when present, otherwise map vertical wheel to x.
+  const raw = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+  if (e.deltaMode === 1) return raw * WHEEL_LINE_PX
+  if (e.deltaMode === 2) return raw * window.innerHeight
+  return raw
+}
+
+function canScrollHorizontally(el, delta) {
+  if (!el || el.scrollWidth <= el.clientWidth) return false
+  const atStart = el.scrollLeft <= 0
+  const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1
+  if ((delta < 0 && atStart) || (delta > 0 && atEnd)) return false
+  return true
+}
+
+function smoothScrollHorizontally(el, delta) {
+  if (!el || !delta) return
+
+  const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth)
+  if (maxScroll <= 0) return
+
+  const state = horizontalScrollState.get(el) || { target: el.scrollLeft, rafId: null }
+  state.target = Math.min(maxScroll, Math.max(0, state.target + delta))
+
+  if (state.rafId === null) {
+    const step = () => {
+      const next = el.scrollLeft + (state.target - el.scrollLeft) * WHEEL_SMOOTH_FACTOR
+      el.scrollLeft = next
+      updateScrollGradient(el)
+
+      if (Math.abs(state.target - el.scrollLeft) <= WHEEL_STOP_EPSILON) {
+        el.scrollLeft = state.target
+        updateScrollGradient(el)
+        state.rafId = null
+        horizontalScrollState.set(el, state)
+        return
+      }
+
+      state.rafId = requestAnimationFrame(step)
+      horizontalScrollState.set(el, state)
+    }
+
+    state.rafId = requestAnimationFrame(step)
+  }
+
+  horizontalScrollState.set(el, state)
 }
 
 function getDisplayArtist(puzzle) {
@@ -75,13 +134,13 @@ export default function Explore() {
   const pillsRef = useRef(null)
   useEffect(() => {
     const el = pillsRef.current
-    if (!el) return
+    if (!el || !isDesktopPointer()) return
     updateScrollGradient(el)
     const onWheel = (e) => {
-      if (el.scrollWidth <= el.clientWidth) return
+      const delta = getWheelDelta(e)
+      if (!canScrollHorizontally(el, delta)) return
       e.preventDefault()
-      el.scrollLeft += e.deltaY
-      updateScrollGradient(el)
+      smoothScrollHorizontally(el, delta)
     }
     const onScroll = () => updateScrollGradient(el)
     el.addEventListener('wheel', onWheel, { passive: false })
@@ -98,16 +157,18 @@ export default function Explore() {
   const gamesRef = useRef(null)
   useEffect(() => {
     const el = gamesRef.current
-    if (!el) return
+    if (!el || !isDesktopPointer()) return
     requestAnimationFrame(() => {
       el.querySelectorAll('.explore-game-row__scroll').forEach(updateScrollGradient)
     })
     const onWheel = (e) => {
+      if (!(e.target instanceof Element)) return
       const row = e.target.closest('.explore-game-row__scroll')
-      if (!row || row.scrollWidth <= row.clientWidth) return
+      if (!row) return
+      const delta = getWheelDelta(e)
+      if (!canScrollHorizontally(row, delta)) return
       e.preventDefault()
-      row.scrollLeft += e.deltaY
-      updateScrollGradient(row)
+      smoothScrollHorizontally(row, delta)
     }
     const onScroll = (e) => {
       if (e.target.classList?.contains('explore-game-row__scroll')) {
