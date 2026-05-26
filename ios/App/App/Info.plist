@@ -91,5 +91,34 @@
 	</dict>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleDarkContent</string>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>me.tempify.play</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Play Game</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Start a new round</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>me.tempify.leaderboard</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Leaderboard</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Check rankings</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>me.tempify.profile</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Profile</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>View your stats</string>
+		</dict>
+	</array>
 </dict>
 </plist>
