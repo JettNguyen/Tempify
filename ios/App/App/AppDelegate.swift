@@ -1,17 +1,31 @@
 import UIKit
+import AVFoundation
 import Capacitor
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Configure audio session for optimal music playback
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: [.duckOthers])
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            NSLog("Audio session configuration failed: %@", error.localizedDescription)
+        }
+        
         return true
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+        
+        // Notify web app of app state change
+        DispatchQueue.main.async {
+            // Web view will be updated by Capacitor App plugin
+        }
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
@@ -25,6 +39,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        
+        // Ensure audio session is active when app returns to foreground
+        do {
+            try AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            NSLog("Failed to activate audio session: %@", error.localizedDescription)
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
