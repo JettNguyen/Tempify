@@ -6,7 +6,14 @@
 
 **Five daily music games. One app for people who know their songs.**
 
-[Download on the App Store](https://apps.apple.com/us/app/tempify-me/id6765572192) · [Play on the web](https://JettNguyen.github.io/Tempify/)
+<p align="left">
+  <a href="https://apps.apple.com/us/app/tempify-me/id6765572192?ppid=f2aa16bb-7d62-49df-bafe-8c35f58c63ad">
+    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="48" />
+  </a>
+</p>
+
+or [Play on the web](https://JettNguyen.github.io/Tempify/)
+
 
 ---
 
