@@ -113,27 +113,19 @@ export default function OneBar() {
     return attempts.map((a) => (a.correct ? '🟩' : '⬜')).join('')
   }
 
-  async function handleGuess(song) {
-    if (done || attempts.length >= MAX_ATTEMPTS) return
-    hapticImportantTap()
-
-    const titleMatch = stripVariant(song.title).toLowerCase() === puzzle.answer.toLowerCase().trim()
-    const artistMatch = !puzzle.metadata?.artist ||
-      song.artist.toLowerCase().trim() === puzzle.metadata.artist.toLowerCase().trim()
-    const isCorrect = titleMatch && artistMatch
-
-    const newAttempts = [...attempts, { title: song.title, artist: song.artist, correct: isCorrect }]
+  async function registerAttempt(attempt) {
+    const newAttempts = [...attempts, attempt]
     setAttempts(newAttempts)
 
-    if (isCorrect || newAttempts.length >= MAX_ATTEMPTS) {
-      setCorrect(isCorrect)
+    if (attempt.correct || newAttempts.length >= MAX_ATTEMPTS) {
+      setCorrect(attempt.correct)
       setDone(true)
       localStorage.removeItem(progressKey(puzzleDate))
-      markComplete('one-bar', puzzleDate, newAttempts.length, isCorrect)
+      markComplete('one-bar', puzzleDate, newAttempts.length, attempt.correct)
       if (user) {
         try {
-          await saveScore({ userId: user.id, gameSlug: 'one-bar', puzzleDate, attempts: newAttempts.length, completed: isCorrect })
-          if (isCorrect) await updateStreak(user.id, 'one-bar')
+          await saveScore({ userId: user.id, gameSlug: 'one-bar', puzzleDate, attempts: newAttempts.length, completed: attempt.correct })
+          if (attempt.correct) await updateStreak(user.id, 'one-bar')
         } catch (err) {
           console.error('[Tempify] OneBar score save error:', err.message)
         }
@@ -144,6 +136,25 @@ export default function OneBar() {
       setRevealSeconds(nextReveal)
       localStorage.setItem(progressKey(puzzleDate), JSON.stringify({ attempts: newAttempts, revealSeconds: nextReveal }))
     }
+  }
+
+  async function handleGuess(song) {
+    if (done || attempts.length >= MAX_ATTEMPTS) return
+    hapticImportantTap()
+
+    const titleMatch = stripVariant(song.title).toLowerCase() === puzzle.answer.toLowerCase().trim()
+    const artistMatch = !puzzle.metadata?.artist ||
+      song.artist.toLowerCase().trim() === puzzle.metadata.artist.toLowerCase().trim()
+    const isCorrect = titleMatch && artistMatch
+
+    await registerAttempt({ title: song.title, artist: song.artist, correct: isCorrect })
+  }
+
+  async function handleSkip() {
+    if (done || attempts.length >= MAX_ATTEMPTS) return
+    hapticImportantTap()
+
+    await registerAttempt({ title: 'Skipped', artist: '', correct: false, skipped: true })
   }
 
   if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
@@ -187,7 +198,12 @@ export default function OneBar() {
       </div>
 
       {!done && (
-        <GuessInput ref={guessInputRef} onGuess={handleGuess} disabled={done} />
+        <>
+          <GuessInput ref={guessInputRef} onGuess={handleGuess} disabled={done} />
+          <button type="button" onClick={handleSkip} className="one-bar__skip btn-press">
+            Skip — unlock more audio
+          </button>
+        </>
       )}
 
       {attempts.length > 0 && !done && (
@@ -195,7 +211,7 @@ export default function OneBar() {
           {attempts.map((a, i) => (
             <div key={i} className="one-bar__guess-row">
               <span className="one-bar__guess-x">✕</span>
-              <span>{a.title} by {a.artist}</span>
+              <span>{a.skipped ? 'Skipped' : `${a.title} by ${a.artist}`}</span>
             </div>
           ))}
         </div>

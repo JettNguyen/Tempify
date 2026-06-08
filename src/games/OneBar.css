@@ -47,6 +47,28 @@
   margin-top: 0.5rem;
 }
 
+.one-bar__skip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.75rem;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.one-bar__skip:hover {
+  background: #222222;
+  border-color: #363636;
+  color: var(--text-primary);
+}
+
 .one-bar__guesses {
   margin-top: 0.75rem;
   display: flex;
