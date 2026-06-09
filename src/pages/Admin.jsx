@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { GENRES } from '../lib/genres'
-import { searchSongs } from '../lib/itunes'
+import { searchSongs, fetchTrackDetails } from '../lib/deezer'
 import { searchRecordings } from '../lib/musicbrainz'
 import { lookupBillboardPeak, lookupBillboard200Peak } from '../lib/billboard'
 import { todayEST } from '../lib/date'
@@ -342,7 +342,7 @@ function WhoSampledFields({ f, set, setGenre }) {
       <div style={{ padding: '1rem', background: '#0d0d0d', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
         {sectionHead('A - The newer song (players hear this)')}
         <SongSearch
-          placeholder="Search iTunes for the newer song…"
+          placeholder="Search for the newer song…"
           onSelect={song => {
             if (song.previewUrl) set('audioUrl', song.previewUrl)
             if (song.title)      set('sourceSong', song.title)
@@ -354,10 +354,10 @@ function WhoSampledFields({ f, set, setGenre }) {
           }}
         />
         <Field label="Audio URL">
-          <Input value={f.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
+          <Input value={f.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://..." />
         </Field>
-        <Field label="iTunes link">
-          <Input value={f.sourceItunesUrl} onChange={v => set('sourceItunesUrl', v)} placeholder="https://music.apple.com/..." />
+        <Field label="Music link">
+          <Input value={f.sourceItunesUrl} onChange={v => set('sourceItunesUrl', v)} placeholder="https://..." />
         </Field>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem' }}>
           <Field label="Song title"><Input value={f.sourceSong} onChange={v => set('sourceSong', v)} placeholder="e.g. Stronger" /></Field>
@@ -389,7 +389,7 @@ function WhoSampledFields({ f, set, setGenre }) {
           </span>
         </div>
         <SongSearch
-          placeholder="Search iTunes for the original sample…"
+          placeholder="Search for the original sample…"
           onSelect={song => {
             if (song.title)      set('answer', song.title)
             if (song.artist)     set('correctArtist', song.artist)
@@ -405,10 +405,10 @@ function WhoSampledFields({ f, set, setGenre }) {
           <Field label="Year"><Input value={f.sampleYear} onChange={v => set('sampleYear', v)} type="number" placeholder="2001" /></Field>
         </div>
         <Field label="Sample audio URL">
-          <Input value={f.sampleAudioUrl} onChange={v => set('sampleAudioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/…" />
+          <Input value={f.sampleAudioUrl} onChange={v => set('sampleAudioUrl', v)} placeholder="https://..." />
         </Field>
-        <Field label="iTunes link">
-          <Input value={f.correctItunesUrl} onChange={v => set('correctItunesUrl', v)} placeholder="https://music.apple.com/..." />
+        <Field label="Music link">
+          <Input value={f.correctItunesUrl} onChange={v => set('correctItunesUrl', v)} placeholder="https://..." />
         </Field>
       </div>
 
@@ -424,7 +424,7 @@ function WhoSampledFields({ f, set, setGenre }) {
         ].map(opt => (
           <div key={opt.n} style={{ marginBottom: opt.n < 4 ? '1rem' : 0 }}>
             <SongSearch
-              placeholder={`Search iTunes for wrong option ${opt.n}...`}
+              placeholder={`Search for wrong option ${opt.n}...`}
               onSelect={song => {
                 set(opt.title, song.title || '')
                 set(opt.artist, song.artist || '')
@@ -438,10 +438,10 @@ function WhoSampledFields({ f, set, setGenre }) {
               <Input value={f[opt.artist]} onChange={v => set(opt.artist, v)} placeholder="Artist" />
             </div>
             <Field label={`Wrong option ${opt.n} sample audio URL`}>
-              <Input value={f[opt.audio]} onChange={v => set(opt.audio, v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
+              <Input value={f[opt.audio]} onChange={v => set(opt.audio, v)} placeholder="https://..." />
             </Field>
-            <Field label={`Wrong option ${opt.n} iTunes link`}>
-              <Input value={f[opt.itunes]} onChange={v => set(opt.itunes, v)} placeholder="https://music.apple.com/..." />
+            <Field label={`Wrong option ${opt.n} music link`}>
+              <Input value={f[opt.itunes]} onChange={v => set(opt.itunes, v)} placeholder="https://..." />
             </Field>
           </div>
         ))}
@@ -580,11 +580,11 @@ function MBSearch({ label, onPick }) {
   )
 }
 
-function FlipFields({ f, set }) {
+function FlipFields({ f, set, setGenre }) {
   return (
     <>
       <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '1rem' }}>
-        Search iTunes for the cover version - fills title, artist, year, and audio automatically.
+        Search for the cover version — fills title, artist, year, genre, and audio automatically.
       </p>
 
       {/* The cover song */}
@@ -593,12 +593,13 @@ function FlipFields({ f, set }) {
           Cover song
         </p>
         <SongSearch
-          placeholder="Search iTunes for the cover…"
+          placeholder="Search for the cover…"
           onSelect={song => {
             if (song.title)      set('coverSongTitle', song.title)
             if (song.artist)     set('coverSongArtist', song.artist)
             if (song.year)       set('coverSongYear', String(song.year))
             if (song.previewUrl) set('audioUrl', song.previewUrl)
+            if (song.genre)      setGenre(song.genre)
           }}
         />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: '0.75rem', marginBottom: '0.5rem' }}>
@@ -607,7 +608,7 @@ function FlipFields({ f, set }) {
           <Field label="Year"><Input value={f.coverSongYear} onChange={v => set('coverSongYear', v)} placeholder="Year" type="number" /></Field>
         </div>
         <Field label="Audio URL">
-          <Input value={f.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
+          <Input value={f.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://..." />
         </Field>
       </div>
 
@@ -636,7 +637,7 @@ function FlipFields({ f, set }) {
             Original song
           </p>
           <SongSearch
-            placeholder="Search iTunes for the original…"
+            placeholder="Search for the original…"
             onSelect={song => {
               if (song.title)      set('originalTitle', song.title)
               if (song.artist)     set('originalArtist', song.artist)
@@ -650,7 +651,7 @@ function FlipFields({ f, set }) {
             <Field label="Year"><Input value={f.originalYear} onChange={v => set('originalYear', v)} placeholder="Year" type="number" /></Field>
           </div>
           <Field label="Original audio URL (optional)">
-            <Input value={f.originalAudio} onChange={v => set('originalAudio', v)} placeholder="https://audio-ssl.itunes.apple.com/… (optional)" />
+            <Input value={f.originalAudio} onChange={v => set('originalAudio', v)} placeholder="https://... (optional)" />
           </Field>
         </div>
       )}
@@ -660,7 +661,7 @@ function FlipFields({ f, set }) {
   )
 }
 
-// ─── iTunes song search ──────────────────────────────────────────────────────
+// ─── Song search ─────────────────────────────────────────────────────────────
 function SongSearch({ onSelect, placeholder = 'Search for a song...' }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -686,17 +687,18 @@ function SongSearch({ onSelect, placeholder = 'Search for a song...' }) {
     }, 280)
   }
 
-  function pick(song) {
-    onSelect(song)
-    setQuery('')
-    setResults([])
+  async function pick(song) {
     setOpen(false)
+    setResults([])
+    setQuery('')
+    const details = song.albumId ? await fetchTrackDetails(song.albumId) : {}
+    onSelect({ ...song, ...details })
   }
 
   return (
     <div ref={wrap} style={{ position: 'relative', marginBottom: '1.25rem' }}>
       <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>
-        Search iTunes - fills in audio URL, title, artist & year automatically
+        Search — fills in audio URL, title, artist, year & genre automatically
       </p>
       <input
         value={query}
@@ -880,9 +882,9 @@ export default function Admin() {
         if (!f.opt2AudioUrl) err.push('Option 2 sample audio URL')
         if (!f.opt3AudioUrl) err.push('Option 3 sample audio URL')
         if (!f.opt4AudioUrl) err.push('Option 4 sample audio URL')
-        if (!f.opt2ItunesUrl) err.push('Option 2 iTunes link')
-        if (!f.opt3ItunesUrl) err.push('Option 3 iTunes link')
-        if (!f.opt4ItunesUrl) err.push('Option 4 iTunes link')
+        if (!f.opt2ItunesUrl) err.push('Option 2 music link')
+        if (!f.opt3ItunesUrl) err.push('Option 3 music link')
+        if (!f.opt4ItunesUrl) err.push('Option 4 music link')
         break
       case 'era':
         if (!f.audioUrl)  err.push('Audio URL')
@@ -1038,7 +1040,7 @@ export default function Admin() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* iTunes search - hidden for sampled and cover-or-not (they have their own search) */}
+            {/* Song search - hidden for sampled and cover-or-not (they have their own search) */}
             {form.game !== 'sampled' && form.game !== 'cover-or-not' && (
               <SongSearch onSelect={song => {
                 setForm(f => ({
@@ -1095,7 +1097,7 @@ export default function Admin() {
             {/* Audio URL + Answer - common to most games; sampled handles these internally */}
             {form.game !== 'sampled' && form.game !== 'cover-or-not' && (
               <Field label="Audio URL">
-                <Input value={form.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://audio-ssl.itunes.apple.com/..." />
+                <Input value={form.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://..." />
               </Field>
             )}
 
@@ -1111,7 +1113,7 @@ export default function Admin() {
               {form.game === 'hit-or-miss'     && <HitOrMissFields f={form} set={set} />}
               {form.game === 'sampled'         && <WhoSampledFields f={form} set={set} setGenre={v => set('genre', v)} />}
               {form.game === 'era'            && <EraFields        f={form} set={set} />}
-              {form.game === 'cover-or-not'    && <FlipFields       f={form} set={set} />}
+              {form.game === 'cover-or-not'    && <FlipFields       f={form} set={set} setGenre={v => set('genre', v)} />}
             </div>
 
             {(() => {

@@ -6,11 +6,10 @@ export default defineConfig(({ command }) => ({
   base: '/',
   server: {
     proxy: {
-      // Proxies /itunes/* → https://itunes.apple.com/* in dev to avoid CORS
-      '/itunes': {
-        target: 'https://itunes.apple.com',
+      '/deezer': {
+        target: 'https://api.deezer.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/itunes/, ''),
+        rewrite: (path) => path.replace(/^\/deezer/, ''),
       },
     },
   },

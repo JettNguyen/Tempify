@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { findArtwork } from '../lib/itunes'
+import { findArtwork } from '../lib/deezer'
 import { optimizeArtworkUrl } from '../lib/artwork'
 import './TrackArtwork.css'
 
@@ -31,7 +31,7 @@ export default function TrackArtwork({ title, artist, src, label, size = 'medium
           alt=""
           className="track-artwork__img"
           loading={size === 'medium' ? 'eager' : 'lazy'}
-          fetchPriority={size === 'medium' ? 'high' : 'auto'}
+          fetchpriority={size === 'medium' ? 'high' : 'auto'}
           decoding="async"
         />
       ) : (

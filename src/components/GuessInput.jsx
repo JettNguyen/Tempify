@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
-import { searchSongs, getCachedSongSearch } from '../lib/itunes'
+import { searchSongs, getCachedSongSearch } from '../lib/deezer'
 import './GuessInput.css'
 
 const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placeholder = 'Search for a song...' }, ref) {

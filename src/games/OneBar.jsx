@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { todayEST } from '../lib/date'
 import { getPuzzle } from '../lib/puzzles'
-import { findArtwork, stripVariant } from '../lib/itunes'
+import { findArtwork, stripVariant } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
@@ -174,7 +174,7 @@ export default function OneBar() {
         </h1>
       </div>
 
-      <AudioPlayer src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} autoplay={profile?.autoplay_audio !== false} />
+      <AudioPlayer key={done ? 'done' : 'playing'} src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} autoplay={done ? true : profile?.autoplay_audio !== false} />
 
       <div className="one-bar__progress">
         <div className="one-bar__bars">
