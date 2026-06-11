@@ -94,7 +94,7 @@ function mapGenre(raw) {
   return GENRE_MAP[raw.toLowerCase()] ?? null
 }
 
-const VARIANT_RE = /\s*[\(\[]\s*(feat\.|ft\.|featuring|remix|remixed|remaster|remastered|live|edit|version|radio\s*edit|acoustic|instrumental|deluxe|extended|mix|reprise|cover|tribute|explicit|clean|mono|stereo|single\s*version|original\s*mix|bonus)\b.*[\)\]]\s*$/gi
+const VARIANT_RE = /\s*[\(\[]\s*(feat\.|ft\.|featuring|remix|remixed|remaster|remastered|live|edit|version|radio\s*edit|acoustic|instrumental|deluxe|extended|mix|reprise|cover|tribute|explicit|clean|mono|stereo|single\s*version|original\s*mix|bonus).*[\)\]]\s*$/gi
 
 export function stripVariant(title) {
   return title.replace(VARIANT_RE, '').trim()
@@ -176,7 +176,8 @@ export async function searchSongs(query) {
   if (cache.has(key)) return cache.get(key)
 
   try {
-    const url = new URL(`${BASE}/search`, window.location.origin)
+    const baseStr = BASE.startsWith('/') ? `${window.location.origin}${BASE}` : BASE
+    const url = new URL(`${baseStr}/search`)
     url.searchParams.set('q', query)
     url.searchParams.set('limit', '25')
 
@@ -203,7 +204,8 @@ export async function searchSongs(query) {
 export async function fetchTrackDetails(albumId) {
   if (!albumId) return {}
   try {
-    const url = new URL(`${BASE}/album/${albumId}`, window.location.origin)
+    const baseStr = BASE.startsWith('/') ? `${window.location.origin}${BASE}` : BASE
+    const url = new URL(`${baseStr}/album/${albumId}`)
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 3000)
     const res = await fetch(url.toString(), { signal: controller.signal })

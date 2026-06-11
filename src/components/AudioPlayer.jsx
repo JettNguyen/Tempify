@@ -11,23 +11,13 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
 
   useImperativeHandle(ref, () => ({
     pause() {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        setPlaying(false)
-      }
+      if (audioRef.current) audioRef.current.pause()
     },
     play() {
       const audio = audioRef.current
       if (!audio) return Promise.resolve()
       onPlay?.()
-      const playPromise = audio.play()
-      setPlaying(true)
-      if (playPromise && typeof playPromise.catch === 'function') {
-        return playPromise.catch(() => {
-          setPlaying(false)
-        })
-      }
-      return Promise.resolve()
+      return audio.play() ?? Promise.resolve()
     },
   }))
 
@@ -41,27 +31,28 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
       if (maxDuration && audio.currentTime >= maxDuration) {
         audio.pause()
         audio.currentTime = 0
-        setPlaying(false)
         setCurrentTime(0)
       }
     }
-    const onEnded = () => {
-      setPlaying(false)
-      setCurrentTime(0)
-    }
+    const onEnded = () => setCurrentTime(0)
+    const onPlayEvent = () => setPlaying(true)
+    const onPauseEvent = () => setPlaying(false)
 
     audio.addEventListener('loadedmetadata', onLoaded)
     audio.addEventListener('timeupdate', onTime)
     audio.addEventListener('ended', onEnded)
+    audio.addEventListener('play', onPlayEvent)
+    audio.addEventListener('pause', onPauseEvent)
     return () => {
       audio.removeEventListener('loadedmetadata', onLoaded)
       audio.removeEventListener('timeupdate', onTime)
       audio.removeEventListener('ended', onEnded)
+      audio.removeEventListener('play', onPlayEvent)
+      audio.removeEventListener('pause', onPauseEvent)
     }
   }, [maxDuration])
 
   useEffect(() => {
-    setPlaying(false)
     setCurrentTime(0)
     const audio = audioRef.current
     if (!audio) return
@@ -71,9 +62,8 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
     if (!autoplay || !src) return
 
     onPlay?.()
-    setPlaying(true)
     const p = audio.play()
-    if (p?.catch) p.catch(() => setPlaying(false))
+    if (p?.catch) p.catch(() => {})
   }, [src, autoplay])
 
   function togglePlay() {
@@ -81,10 +71,8 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
     if (!audio) return
     if (playing) {
       audio.pause()
-      setPlaying(false)
     } else {
       audio.play()
-      setPlaying(true)
       onPlay?.()
     }
   }
