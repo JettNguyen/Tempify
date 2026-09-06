@@ -169,11 +169,16 @@ function toTracks(dataArray) {
     .filter((track) => track.artworkUrl)
 }
 
-export async function searchSongs(query) {
-  if (!query || query.trim().length < 2) return []
+// Returns { tracks, failed }. `failed` is true only when the request itself
+// could not complete (offline, timeout, proxy error) so callers can tell
+// "nothing matched" apart from "search is broken right now". Failed lookups are
+// never cached, otherwise one flaky request would poison that query for the
+// rest of the session.
+export async function searchSongsWithStatus(query) {
+  if (!query || query.trim().length < 2) return { tracks: [], failed: false }
 
   const key = query.trim().toLowerCase()
-  if (cache.has(key)) return cache.get(key)
+  if (cache.has(key)) return { tracks: cache.get(key), failed: false }
 
   try {
     const baseStr = BASE.startsWith('/') ? `${window.location.origin}${BASE}` : BASE
@@ -186,19 +191,20 @@ export async function searchSongs(query) {
     const res = await fetch(url.toString(), { signal: controller.signal })
     clearTimeout(timeout)
 
-    if (!res.ok) {
-      cache.set(key, [])
-      return []
-    }
+    if (!res.ok) return { tracks: [], failed: true }
 
     const json = await res.json()
     const results = deduplicate(toTracks(json.data)).slice(0, 8)
     cache.set(key, results)
-    return results
+    return { tracks: results, failed: false }
   } catch {
-    cache.set(key, [])
-    return []
+    return { tracks: [], failed: true }
   }
+}
+
+export async function searchSongs(query) {
+  const { tracks } = await searchSongsWithStatus(query)
+  return tracks
 }
 
 export async function fetchTrackDetails(albumId) {
