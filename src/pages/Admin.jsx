@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import { GENRES } from '../lib/genres'
 import { searchSongs, fetchTrackDetails } from '../lib/deezer'
 import { getGameName } from '../lib/games'
+import Icon from '../components/Icon'
+import './Admin.css'
 import { searchRecordings } from '../lib/musicbrainz'
 import { lookupBillboardPeak, lookupBillboard200Peak } from '../lib/billboard'
 import { todayEST } from '../lib/date'
@@ -756,6 +758,7 @@ export default function Admin() {
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  const [armedDeleteId, setArmedDeleteId] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [gamePuzzles, setGamePuzzles] = useState([])
 
@@ -797,6 +800,12 @@ export default function Admin() {
 
   function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
 
+  useEffect(() => {
+    if (!armedDeleteId) return
+    const t = setTimeout(() => setArmedDeleteId(null), 4000)
+    return () => clearTimeout(t)
+  }, [armedDeleteId])
+
   function openForm(date, gameSlug) {
     setEditingId(null)
     setForm({ ...BLANK, date, game: gameSlug })
@@ -809,6 +818,17 @@ export default function Admin() {
     setForm(parseRow(puzzle))
     setShowForm(true)
     setTimeout(() => document.getElementById('admin-form')?.scrollIntoView({ behavior: 'smooth' }), 50)
+  }
+
+  // Two taps: the first arms, the second deletes. The old button was an 11px
+  // glyph nobody hit by accident; a 40px one needs a guard.
+  function requestDelete(id) {
+    if (armedDeleteId !== id) {
+      setArmedDeleteId(id)
+      return
+    }
+    setArmedDeleteId(null)
+    handleDelete(id)
   }
 
   async function handleDelete(id) {
@@ -948,80 +968,84 @@ export default function Admin() {
       </div>
 
       {/* Week navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => setWeekOffset(w => w - 1)} style={navBtn}>← prev</button>
-        <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-          {fmtDate(startDate)} - {fmtDate(endDate)}
-        </span>
-        <button onClick={() => setWeekOffset(w => w + 1)} style={navBtn}>next →</button>
+      <div className="admin-weeknav">
+        <button onClick={() => setWeekOffset(w => w - 1)} className="admin-weeknav__btn btn-press">
+          <Icon name="chevronLeft" size={13} />Prev
+        </button>
+        <button onClick={() => setWeekOffset(w => w + 1)} className="admin-weeknav__btn btn-press">
+          Next<Icon name="chevronRight" size={13} />
+        </button>
         {weekOffset !== 0 && (
-          <button onClick={() => setWeekOffset(0)} style={{ ...navBtn, color: 'var(--amber)' }}>today</button>
+          <button onClick={() => setWeekOffset(0)} className="admin-weeknav__btn admin-weeknav__btn--today btn-press">
+            Today
+          </button>
         )}
+        <span className="admin-weeknav__range">{fmtDate(startDate)} - {fmtDate(endDate)}</span>
       </div>
 
-      {/* Schedule grid */}
-      <div style={{ overflowX: 'auto', marginBottom: '2.5rem' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Date</th>
-              {GAMES.map(g => <th key={g.slug} style={thStyle}>{g.short}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {dates.map(date => (
-              <tr key={date}>
-                <td style={{ ...tdStyle, color: date === today ? 'var(--amber)' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                  {fmtDate(date)}
-                  {date === today && <span style={{ marginLeft: '4px', fontSize: '10px' }}>·today</span>}
-                </td>
-                {GAMES.map(game => {
-                  const key = `${date}|${game.slug}`
-                  const existing = scheduled[key]
-                  return (
-                    <td key={game.slug} style={tdStyle}>
-                      {existing ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{
-                            display: 'inline-block', width: '7px', height: '7px',
-                            borderRadius: '50%', background: 'var(--green)', flexShrink: 0,
-                          }} />
-                          <span style={{ color: 'var(--text-muted)', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60px' }} title={existing.answer}>
-                            {existing.answer}
-                          </span>
+      {/* Schedule: one card per day, each game on its own full-width row so
+          nothing is truncated and the page never scrolls sideways. */}
+      <div className="admin-schedule">
+        {dates.map(date => {
+          const filled = GAMES.filter(g => scheduled[`${date}|${g.slug}`]).length
+          const isToday = date === today
+          return (
+            <section key={date} className={`admin-day${isToday ? ' admin-day--today' : ''}`}>
+              <header className="admin-day__header">
+                <span className="admin-day__date">{fmtDate(date)}</span>
+                {isToday && <span className="admin-day__today">today</span>}
+                <span className={`admin-day__count${filled === GAMES.length ? ' admin-day__count--full' : ''}`}>
+                  {filled}/{GAMES.length}
+                </span>
+              </header>
+
+              {GAMES.map(game => {
+                const existing = scheduled[`${date}|${game.slug}`]
+                const armed = existing && armedDeleteId === existing.id
+                return (
+                  <div key={game.slug} className="admin-slot">
+                    <span className="admin-slot__game">{game.short}</span>
+
+                    {existing ? (
+                      <>
+                        <span className="admin-slot__answer" title={existing.answer}>
+                          {existing.answer || 'no answer set'}
+                        </span>
+                        <span className="admin-slot__actions">
                           <button
                             onClick={() => openEdit(existing)}
-                            style={{ marginLeft: 'auto', color: 'var(--text-dim)', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+                            className="admin-slot__btn"
+                            aria-label={`Edit ${game.short} for ${date}`}
                             title="Edit"
-                          >✎</button>
+                          >
+                            <Icon name="edit" size={15} />
+                          </button>
                           <button
-                            onClick={() => handleDelete(existing.id)}
+                            onClick={() => requestDelete(existing.id)}
                             disabled={deletingId === existing.id}
-                            style={{ color: 'var(--text-dim)', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
-                            title="Delete"
-                          >✕</button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => openForm(date, game.slug)}
-                          style={{
-                            color: 'var(--text-dim)', fontSize: '16px', lineHeight: 1,
-                            background: 'none', border: '1px dashed var(--border)',
-                            borderRadius: '4px', width: '100%', padding: '2px 0',
-                            cursor: 'pointer', transition: 'border-color 80ms ease, color 80ms ease',
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--amber)'; e.currentTarget.style.color = 'var(--amber)' }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-dim)' }}
-                          title={`Add ${game.short} for ${date}`}
-                        >+</button>
-                      )}
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                            className={`admin-slot__btn admin-slot__btn--danger${armed ? ' is-armed' : ''}`}
+                            aria-label={armed ? `Confirm delete ${game.short} for ${date}` : `Delete ${game.short} for ${date}`}
+                            title={armed ? 'Tap again to delete' : 'Delete'}
+                          >
+                            {armed ? 'Confirm' : <Icon name="trash" size={15} />}
+                          </button>
+                        </span>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => openForm(date, game.slug)}
+                        className="admin-slot__add"
+                        title={`Add ${game.short} for ${date}`}
+                      >
+                        <Icon name="plus" size={13} />Add
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </section>
+          )
+        })}
       </div>
 
       {/* Add puzzle form */}
@@ -1179,16 +1203,3 @@ export default function Admin() {
   )
 }
 
-const thStyle = {
-  textAlign: 'left', padding: '8px 10px', fontSize: '11px',
-  color: 'var(--text-dim)', borderBottom: '1px solid var(--border)',
-  fontWeight: 500,
-}
-const tdStyle = {
-  padding: '8px 10px', borderBottom: '1px solid var(--border)',
-  verticalAlign: 'middle',
-}
-const navBtn = {
-  fontSize: '12px', color: 'var(--text-muted)', background: 'none', border: 'none',
-  cursor: 'pointer', padding: '4px 0',
-}

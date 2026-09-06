@@ -1,0 +1,210 @@
+/* Admin is otherwise inline-styled, but the schedule needs real hover, active
+   and responsive rules — which inline styles can't express without the
+   onMouseEnter/onMouseLeave workarounds this replaces. */
+
+/* ── Week navigation ─────────────────────────────────────────────────────── */
+.admin-weeknav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.admin-weeknav__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-weeknav__btn--today {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+.admin-weeknav__range {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin: 0 auto 0 0.25rem;
+}
+
+/* ── Schedule ────────────────────────────────────────────────────────────── */
+/* Cards instead of a wide table: every game gets a full-width row, so nothing
+   is cut off and the page never scrolls sideways. */
+.admin-schedule {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+}
+
+.admin-day {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.admin-day--today {
+  border-color: var(--amber);
+}
+
+.admin-day__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-day__date {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.admin-day--today .admin-day__date {
+  color: var(--amber);
+}
+
+.admin-day__today {
+  font-size: var(--fs-2xs);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.admin-day__count {
+  margin-left: auto;
+  font-size: var(--fs-2xs);
+  color: var(--text-dim);
+}
+
+.admin-day__count--full {
+  color: var(--green);
+}
+
+/* ── One game slot ───────────────────────────────────────────────────────── */
+.admin-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.4rem 0.3rem 0.75rem;
+  min-height: 44px;
+}
+
+.admin-slot + .admin-slot {
+  border-top: 1px solid var(--border);
+}
+
+.admin-slot__game {
+  font-size: var(--fs-2xs);
+  color: var(--text-dim);
+  width: 76px;
+  flex-shrink: 0;
+}
+
+.admin-slot__answer {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-slot__actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+/* 40px so these are actually hittable — they were 11px glyphs with no padding. */
+.admin-slot__btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-slot__btn:active {
+  background: #262626;
+}
+
+.admin-slot__btn--danger.is-armed {
+  background: var(--red);
+  color: #0f0f0f;
+  width: auto;
+  padding: 0 12px;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+}
+
+.admin-slot__add {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 34px;
+  margin-right: 0.35rem;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: var(--fs-2xs);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.admin-slot__add:active {
+  background: #1e1e1e;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-weeknav__btn:hover {
+    background: #232323;
+    border-color: #3a3a3a;
+    color: var(--text-primary);
+  }
+  .admin-slot__btn:hover {
+    background: #262626;
+    color: var(--text-primary);
+  }
+  .admin-slot__btn--danger:hover {
+    color: var(--red);
+  }
+  .admin-slot__btn--danger.is-armed:hover {
+    color: #0f0f0f;
+  }
+  .admin-slot__add:hover {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+}
+
+/* The form is scrolled to on open; without this it lands under the fixed nav. */
+#admin-form {
+  scroll-margin-top: calc(72px + env(safe-area-inset-top));
+}
