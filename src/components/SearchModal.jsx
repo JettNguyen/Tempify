@@ -11,6 +11,7 @@ export default function SearchModal({ onClose }) {
   const [searching, setSearching] = useState(false)
   const debounce = useRef(null)
   const inputRef = useRef(null)
+  const requestId = useRef(0)
 
   useLayoutEffect(() => {
     const focusInput = () => {
@@ -40,14 +41,24 @@ export default function SearchModal({ onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  useEffect(() => () => clearTimeout(debounce.current), [])
+
   function handleChange(e) {
     const val = e.target.value
     setQuery(val)
+    const id = ++requestId.current
     clearTimeout(debounce.current)
-    if (val.trim().length < 2) { setResults([]); return }
+    if (val.trim().length < 2) { setResults([]); setSearching(false); return }
     setSearching(true)
     debounce.current = setTimeout(async () => {
-      const hits = await searchUsers(val)
+      let hits = []
+      try {
+        hits = await searchUsers(val)
+      } catch {
+        // Treat a failed lookup as no matches rather than hanging on "Searching…".
+      }
+      // Drop responses that a newer keystroke has already superseded.
+      if (id !== requestId.current) return
       setResults(hits)
       setSearching(false)
     }, 280)

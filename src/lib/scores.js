@@ -269,7 +269,11 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
 
 export async function searchUsers(query) {
   if (!query || query.trim().length < 2) return []
-  const q = query.trim().toLowerCase()
+  // Commas, parens and quotes are separators in a PostgREST `or` filter, so a
+  // query containing them would build a malformed filter and quietly match
+  // nothing. Strip them rather than let the search look broken.
+  const q = query.trim().toLowerCase().replace(/[,()"\\]/g, ' ').trim()
+  if (q.length < 2) return []
   const premiumEmails = (import.meta.env.VITE_PREMIUM_EMAILS || '')
     .split(',')
     .map(e => e.trim().toLowerCase())
