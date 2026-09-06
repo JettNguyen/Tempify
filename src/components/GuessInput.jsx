@@ -74,10 +74,16 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
     debounceRef.current = setTimeout(async () => {
       const { tracks, failed } = await searchSongsWithStatus(val)
       if (requestId !== requestIdRef.current) return
+      setOpen(true)
+      // On failure keep whatever rows are already on screen — they are still
+      // real songs the player can pick — and just say the refresh didn't land.
+      if (failed) {
+        setStatus('error')
+        return
+      }
       setResults(tracks)
       setActiveIndex(-1)
-      setStatus(failed ? 'error' : tracks.length > 0 ? 'ready' : 'empty')
-      setOpen(true)
+      setStatus(tracks.length > 0 ? 'ready' : 'empty')
     }, 180)
   }
 
@@ -168,14 +174,14 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
 
       {showList && (
         <div className="guess-input__dropdown">
-          {status === 'error' && results.length === 0 && (
-            <p className="guess-input__message">Couldn't reach search — check your connection.</p>
-          )}
-          {status === 'empty' && (
-            <p className="guess-input__message">No songs found for “{query.trim()}”.</p>
-          )}
-          {status === 'loading' && results.length === 0 && (
-            <p className="guess-input__message">Searching…</p>
+          {results.length === 0 && (
+            <p className="guess-input__message">
+              {status === 'error'
+                ? "Couldn't reach search — check your connection."
+                : status === 'empty'
+                  ? `No songs found for “${query.trim()}”.`
+                  : 'Searching…'}
+            </p>
           )}
 
           {results.length > 0 && (
@@ -198,8 +204,10 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
             </div>
           )}
 
-          {status === 'loading' && results.length > 0 && (
-            <p className="guess-input__message guess-input__message--footer">Searching…</p>
+          {results.length > 0 && (status === 'loading' || status === 'error') && (
+            <p className="guess-input__message guess-input__message--footer">
+              {status === 'error' ? "Couldn't refresh — showing earlier matches." : 'Searching…'}
+            </p>
           )}
         </div>
       )}
