@@ -61,7 +61,14 @@
 }
 
 /* Cap the list so a full set of hits can't run off a phone screen. */
+/* Opens upward when the keyboard leaves more room above the field than below. */
+.guess-input__dropdown--up {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 .guess-input__options {
+  /* Overridden inline with the space actually visible above the keyboard. */
   max-height: 260px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;

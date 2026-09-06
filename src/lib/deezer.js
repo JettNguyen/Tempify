@@ -126,11 +126,44 @@ function normalizeForSearch(value) {
 function filterByQuery(results, query) {
   const q = normalizeForSearch(query)
   if (!q) return results
+  const tokens = q.split(' ').filter(Boolean)
   return results.filter((track) => {
-    const title = normalizeForSearch(track.title)
-    const artist = normalizeForSearch(track.artist)
-    return title.includes(q) || artist.includes(q) || `${title} ${artist}`.includes(q)
+    const hay = `${normalizeForSearch(track.title)} ${normalizeForSearch(track.artist)}`
+    // Every word has to appear, but not in order — "beatles hey jude" should
+    // still find "Hey Jude" by The Beatles.
+    return tokens.every((t) => hay.includes(t))
   })
+}
+
+// Deezer orders by popularity, which is a good default but buries an exact
+// title match under a more famous song that merely contains the words. Nudge
+// the obvious answer up while keeping popularity as the tie-break.
+function relevance(track, q, tokens) {
+  const title = normalizeForSearch(track.title)
+  const artist = normalizeForSearch(track.artist)
+  const hay = `${title} ${artist}`
+  let score = 0
+
+  if (title === q) score += 100
+  else if (title.startsWith(q)) score += 60
+  else if (title.includes(q)) score += 25
+
+  if (artist === q) score += 45
+  else if (artist.startsWith(q)) score += 18
+
+  if (tokens.length > 1 && tokens.every((t) => hay.includes(t))) score += 15
+  if (track.previewUrl) score += 6
+
+  return score
+}
+
+function rankResults(tracks, query) {
+  const q = normalizeForSearch(query)
+  const tokens = q.split(' ').filter(Boolean)
+  return tracks
+    .map((track, i) => ({ track, i, score: relevance(track, q, tokens) }))
+    .sort((a, b) => b.score - a.score || a.i - b.i)
+    .map((entry) => entry.track)
 }
 
 export function getCachedSongSearch(query) {
@@ -174,11 +207,18 @@ function toTracks(dataArray) {
 // "nothing matched" apart from "search is broken right now". Failed lookups are
 // never cached, otherwise one flaky request would poison that query for the
 // rest of the session.
-export async function searchSongsWithStatus(query) {
+export async function searchSongsWithStatus(query, { signal } = {}) {
   if (!query || query.trim().length < 2) return { tracks: [], failed: false }
 
   const key = query.trim().toLowerCase()
   if (cache.has(key)) return { tracks: cache.get(key), failed: false }
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 3000)
+  // Caller can cancel too, so a superseded keystroke drops its connection
+  // instead of competing with the request the user is actually waiting on.
+  const forwardAbort = () => controller.abort()
+  signal?.addEventListener('abort', forwardAbort)
 
   try {
     const baseStr = BASE.startsWith('/') ? `${window.location.origin}${BASE}` : BASE
@@ -186,19 +226,19 @@ export async function searchSongsWithStatus(query) {
     url.searchParams.set('q', query)
     url.searchParams.set('limit', '25')
 
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 3000)
     const res = await fetch(url.toString(), { signal: controller.signal })
-    clearTimeout(timeout)
-
     if (!res.ok) return { tracks: [], failed: true }
 
     const json = await res.json()
-    const results = deduplicate(toTracks(json.data)).slice(0, 8)
+    const results = rankResults(deduplicate(toTracks(json.data)), query).slice(0, 8)
     cache.set(key, results)
     return { tracks: results, failed: false }
   } catch {
-    return { tracks: [], failed: true }
+    // A cancelled request isn't a failure — the caller moved on.
+    return { tracks: [], failed: !signal?.aborted }
+  } finally {
+    clearTimeout(timeout)
+    signal?.removeEventListener('abort', forwardAbort)
   }
 }
 

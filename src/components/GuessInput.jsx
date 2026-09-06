@@ -14,11 +14,16 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
   // idle | loading | ready | empty | error
   const [status, setStatus] = useState('idle')
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [dropUp, setDropUp] = useState(false)
+  const [listMax, setListMax] = useState(260)
   const debounceRef = useRef(null)
   const containerRef = useRef(null)
   const inputRef = useRef(null)
   const listRef = useRef(null)
   const requestIdRef = useRef(0)
+  const abortRef = useRef(null)
+
+  const showList = open && !disabled
 
   function reset() {
     clearTimeout(debounceRef.current)
@@ -45,8 +50,44 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('touchstart', handleClickOutside)
       clearTimeout(debounceRef.current)
+      abortRef.current?.abort()
     }
   }, [])
+
+  // The on-screen keyboard covers the bottom of the window, so a list sized to
+  // the window runs underneath it and can't be scrolled to. visualViewport
+  // reports the area actually visible, so size the list to that — and flip the
+  // list above the field when there's more room up there.
+  useEffect(() => {
+    if (!showList) return
+
+    function measure() {
+      const el = containerRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const vv = window.visualViewport
+      const viewTop = vv ? vv.offsetTop : 0
+      const viewBottom = vv ? vv.offsetTop + vv.height : window.innerHeight
+
+      const below = viewBottom - rect.bottom - 16
+      const above = rect.top - viewTop - 16
+      const flip = below < 168 && above > below
+
+      setDropUp(flip)
+      setListMax(Math.max(112, Math.min(280, Math.floor(flip ? above : below))))
+    }
+
+    measure()
+    const vv = window.visualViewport
+    vv?.addEventListener('resize', measure)
+    vv?.addEventListener('scroll', measure)
+    window.addEventListener('resize', measure)
+    return () => {
+      vv?.removeEventListener('resize', measure)
+      vv?.removeEventListener('scroll', measure)
+      window.removeEventListener('resize', measure)
+    }
+  }, [showList, results.length, status])
 
   // Keep the keyboard-highlighted row visible when the list scrolls.
   useEffect(() => {
@@ -75,7 +116,10 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
     setOpen(true)
 
     debounceRef.current = setTimeout(async () => {
-      const { tracks, failed } = await searchSongsWithStatus(val)
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+      const { tracks, failed } = await searchSongsWithStatus(val, { signal: controller.signal })
       if (requestId !== requestIdRef.current) return
       setOpen(true)
       // On failure keep whatever rows are already on screen — they are still
@@ -87,7 +131,7 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
       setResults(tracks)
       setActiveIndex(-1)
       setStatus(tracks.length > 0 ? 'ready' : 'empty')
-    }, 180)
+    }, 150)
   }
 
   function handleKeyDown(e) {
@@ -110,14 +154,16 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
     }
 
     if (e.key === 'Enter') {
-      // Only submit a highlighted row, or the top hit once the results on
-      // screen are known to match what was typed — never a stale cached row.
-      const target = activeIndex >= 0
-        ? results[activeIndex]
-        : status === 'ready' ? results[0] : null
-      if (!target) return
       e.preventDefault()
-      selectResult(target)
+      // Only a row you actually highlighted gets submitted. On a phone the
+      // return key reads as "done typing", and guessing the top hit for you
+      // spends one of six attempts on a song you never picked.
+      if (activeIndex >= 0 && results[activeIndex]) {
+        selectResult(results[activeIndex])
+        return
+      }
+      // Nothing chosen: put the keyboard away and leave the list up to tap.
+      dismissKeyboard()
     }
   }
 
@@ -140,8 +186,6 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
     reset()
     inputRef.current?.focus()
   }
-
-  const showList = open && !disabled
 
   return (
     <div ref={containerRef} className="guess-input">
@@ -181,7 +225,7 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
       </div>
 
       {showList && (
-        <div className="guess-input__dropdown">
+        <div className={`guess-input__dropdown${dropUp ? ' guess-input__dropdown--up' : ''}`}>
           {results.length === 0 && (
             <p className="guess-input__message">
               {status === 'error'
@@ -193,7 +237,13 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
           )}
 
           {results.length > 0 && (
-            <div ref={listRef} id={LISTBOX_ID} role="listbox" className="guess-input__options">
+            <div
+              ref={listRef}
+              id={LISTBOX_ID}
+              role="listbox"
+              className="guess-input__options"
+              style={{ maxHeight: `${listMax}px` }}
+            >
               {results.map((song, i) => (
                 <button
                   key={song.id}
