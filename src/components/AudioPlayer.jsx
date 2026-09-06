@@ -1,10 +1,15 @@
-import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
+import { useState, useRef, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react'
 import './AudioPlayer.css'
 
 // Bar count is mirrored by the nth-child heights in AudioPlayer.css.
 const WAVE_BARS = 9
 
-const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpan, label, onPlay, autoplay }, ref) {
+// Owned here rather than in CSS because the scrubber's width has to account for
+// the gaps to line up with the segment boundaries.
+const SEGMENT_GAP = 3
+const EPS = 1e-6
+
+const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpan, segmentStops, label, onPlay, autoplay }, ref) {
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -101,7 +106,34 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   const hasBar = barTotal > 0 && isFinite(barTotal)
 
   const progress = hasBar ? Math.min(currentTime / barTotal, 1) : 0
-  const unlockedPct = hasBar ? Math.min(playable / barTotal, 1) * 100 : 100
+  const unlockedRatio = hasBar ? Math.min(playable / barTotal, 1) : 1
+
+  // `segmentStops` are cumulative points inside the span where the bar is cut.
+  // One Bar passes the seconds each guess unlocks, so the timeline *is* the
+  // guess ladder — one control to read instead of two rows that must agree.
+  const segments = useMemo(() => {
+    if (!segmentStops?.length || !hasBar) return null
+    const out = []
+    let prev = 0
+    for (const stop of segmentStops) {
+      const end = Math.min(stop, barTotal)
+      if (end > prev) out.push({ start: prev, end })
+      prev = end
+      if (prev >= barTotal) break
+    }
+    return out.length ? out : null
+  }, [segmentStops, hasBar, barTotal])
+
+  const unlockedCount = segments
+    ? segments.filter((seg) => seg.end <= playable + EPS).length
+    : 0
+
+  // Percentages measure the bar including its gaps, so a plain percentage would
+  // drift from the segment edge it is meant to stop at. Take the gaps out, scale
+  // what is left, then add back the gaps that fall inside the unlocked run.
+  const scrubWidth = segments
+    ? `calc((100% - ${(segments.length - 1) * SEGMENT_GAP}px) * ${unlockedRatio} + ${Math.max(0, unlockedCount - 1) * SEGMENT_GAP}px)`
+    : `${unlockedRatio * 100}%`
 
   function handleSeek(event) {
     const audio = audioRef.current
@@ -143,23 +175,43 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
         </button>
 
         <div className="audio-player__progress">
-          <label className="audio-player__track" aria-label="Audio position">
-            {trackSpan ? (
-              <span
-                className="audio-player__unlocked"
-                style={{ width: `${unlockedPct}%` }}
-              />
-            ) : null}
-            <span
-              className="audio-player__fill"
-              style={{ width: `${progress * 100}%` }}
-            />
+          <label
+            className={`audio-player__track${segments ? ' audio-player__track--segmented' : ''}`}
+            style={segments ? { gap: `${SEGMENT_GAP}px` } : undefined}
+            aria-label="Audio position"
+          >
+            {segments ? segments.map((seg, i) => {
+              const span = seg.end - seg.start
+              const played = Math.min(Math.max((currentTime - seg.start) / span, 0), 1)
+              return (
+                <span
+                  key={i}
+                  className={`audio-player__segment${seg.end <= playable + EPS ? ' audio-player__segment--unlocked' : ''}`}
+                  style={{ flexGrow: span }}
+                >
+                  <span className="audio-player__segment-fill" style={{ width: `${played * 100}%` }} />
+                </span>
+              )
+            }) : (
+              <>
+                {trackSpan ? (
+                  <span
+                    className="audio-player__unlocked"
+                    style={{ width: `${unlockedRatio * 100}%` }}
+                  />
+                ) : null}
+                <span
+                  className="audio-player__fill"
+                  style={{ width: `${progress * 100}%` }}
+                />
+              </>
+            )}
             {/* Narrowed to the unlocked stretch: dragging past it would seek
                 into audio that can't play, and the thumb would sit nowhere
                 near the finger. */}
             <input
               className="audio-player__scrubber"
-              style={{ width: `${unlockedPct}%` }}
+              style={{ width: scrubWidth }}
               type="range"
               min="0"
               max={playable > 0 && isFinite(playable) ? playable : 0}

@@ -20,32 +20,6 @@
   margin-bottom: 1.25rem;
 }
 
-.one-bar__bars {
-  display: flex;
-  gap: 4px;
-  margin-top: 0.75rem;
-}
-
-.one-bar__bar {
-  /* flex-grow is set per bar in JS, in proportion to the seconds it unlocks.
-     The floor keeps the half-second first two from shrinking to a hairline —
-     flexbox freezes them here and shares the rest out among the wider ones. */
-  flex: 1;
-  min-width: 6px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border);
-  transition: background-color 0.2s ease;
-}
-
-.one-bar__bar--used {
-  background: var(--text-dim);
-}
-
-.one-bar__bar--correct {
-  background: var(--green);
-}
-
 .one-bar__progress-label {
   font-size: var(--fs-xs);
   color: var(--text-dim);

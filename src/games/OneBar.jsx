@@ -229,24 +229,9 @@ export default function OneBar() {
         </h1>
       </div>
 
-      <AudioPlayer ref={audioRef} key={done ? 'done' : 'playing'} src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} trackSpan={done ? undefined : MAX_REVEAL} autoplay={done ? true : profile?.autoplay_audio !== false} />
+      <AudioPlayer ref={audioRef} key={done ? 'done' : 'playing'} src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} trackSpan={done ? undefined : MAX_REVEAL} segmentStops={done ? undefined : REVEAL_TIMINGS} autoplay={done ? true : profile?.autoplay_audio !== false} />
 
       <div className="one-bar__progress">
-        <div className="one-bar__bars">
-          {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => {
-            const attempt = attempts[i]
-            return (
-              <div
-                key={i}
-                // Each bar is as wide as the audio that guess gets you, so the
-                // row reads as the same widening ladder the player shows rather
-                // than six identical slots.
-                style={{ flexGrow: REVEAL_TIMINGS[i] ?? 1 }}
-                className={`one-bar__bar${attempt ? attempt.correct ? ' one-bar__bar--correct' : ' one-bar__bar--used' : ''}`}
-              />
-            )
-          })}
-        </div>
         <p className="one-bar__progress-label">
           {done
             ? correct
