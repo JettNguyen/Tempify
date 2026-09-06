@@ -99,7 +99,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
     <div className="audio-player">
       {label && <p className="audio-player__label">{label}</p>}
 
-      <audio ref={audioRef} src={src} preload="metadata" />
+      <audio ref={audioRef} src={src} preload="auto" playsInline />
 
       <div className="audio-player__controls">
         <button

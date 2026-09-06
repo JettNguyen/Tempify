@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
-import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
-import { getPuzzleArtworkUrls, prefetchArtworkUrls } from '../lib/artwork'
+import { prefetchPuzzlesForDate } from '../lib/puzzles'
 import { GAMES } from '../lib/games'
 import GameTile from '../components/GameTile'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
@@ -19,17 +18,13 @@ export default function Home() {
   const { isComplete, refresh: refreshCompletions } = useCompletion(user?.id)
   const [genres, setGenres] = useState({})
 
+  // Doubles as a warm-up: the puzzles land in the shared cache, so tapping a
+  // tile opens the game with no fetch and no spinner.
   const fetchGenres = useCallback(async () => {
-    const today = todayEST()
-    const { data } = await supabase
-      .from('puzzles')
-      .select('game_slug, genre, metadata')
-      .eq('scheduled_date', today)
-    if (!data) return
+    const puzzles = await prefetchPuzzlesForDate(todayEST())
     const map = {}
-    data.forEach((p) => { if (p.genre) map[p.game_slug] = p.genre })
+    puzzles.forEach((p) => { if (p.genre) map[p.game_slug] = p.genre })
     setGenres(map)
-    prefetchArtworkUrls(data.flatMap((p) => getPuzzleArtworkUrls(p)))
   }, [])
 
   useEffect(() => { fetchGenres() }, [fetchGenres])
