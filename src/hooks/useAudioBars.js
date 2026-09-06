@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { getAnalyser, primeAudioContext, onContextStateChange } from '../lib/audioAnalyser'
 
-// Bars never collapse to nothing — a flat line reads as broken, not as quiet.
-// Scaling is about the centre line, so this is a half-height either way.
-const FLOOR = 0.05
+// Bars never collapse to nothing. The floor is set so the shortest bar stays
+// taller than it is wide — below that the pill ends round it off into a dot.
+const FLOOR = 0.2
 const FIRST_BIN = 1              // bin 0 is DC, always junk
 const TOP_FRACTION = 0.7         // above this there is nothing but hiss
 
@@ -36,7 +36,7 @@ function binRanges(barCount, binCount) {
  * Does nothing at all when no analyser is available — the canned CSS animation
  * is left running in its place, which is the common case rather than an error.
  */
-export function useAudioBars(audioRef, waveRef, playing) {
+export function useAudioBars(audioRef, waveRef, playing, barCount) {
   useEffect(() => {
     if (!playing) return
     const audio = audioRef.current
@@ -97,5 +97,5 @@ export function useAudioBars(audioRef, waveRef, playing) {
       // Hand the bars back to the CSS animation exactly as it found them.
       bars.forEach((bar) => { bar.style.transform = '' })
     }
-  }, [playing, audioRef, waveRef])
+  }, [playing, audioRef, waveRef, barCount])
 }

@@ -1,11 +1,16 @@
 // One symbol per game, drawn on a 120x120 grid. These sit behind the tile
 // content as a large watermark, so they're built from bold, simple shapes that
 // stay readable at low opacity rather than fine detail that turns to mud.
+// The bar heights of the One Bar symbol, in its 120-unit box. Exported
+// because the audio player draws its visualiser from the same shape, and
+// two copies of these numbers would drift apart.
+export const ONE_BAR_SILHOUETTE = [30, 62, 98, 46, 80, 38, 22]
+
 const GLYPHS = {
   // A clip of a waveform — the sliver of audio you get to hear.
   'one-bar': (
     <g>
-      {[30, 62, 98, 46, 80, 38, 22].map((h, i) => (
+      {ONE_BAR_SILHOUETTE.map((h, i) => (
         <rect key={i} x={8 + i * 16} y={60 - h / 2} width="10" height={h} rx="5" fill="currentColor" />
       ))}
     </g>

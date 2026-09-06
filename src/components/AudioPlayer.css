@@ -140,9 +140,10 @@
   inset: 0;
   display: flex;
   align-items: center;
-  /* The symbol's bars are 10 wide with 6 between them; as a share of the row
-     that ratio comes out here, so the proportions hold at any card width. */
-  gap: 5.66%;
+  /* Fixed rather than proportional: the bar count grows with the card, so the
+     spacing should stay put. Roughly half the slot, which leaves the bars about
+     as wide as the space between them. */
+  gap: 8px;
   border-radius: inherit;
   overflow: hidden;
   opacity: 0;
@@ -159,8 +160,8 @@
 .audio-player__wave-bar {
   flex: 1;
   min-width: 0;
-  /* The symbol's tallest bar fills 82% of its box, and every resting scale below
-     is measured against that one. */
+  /* The symbol's tallest bar fills 82% of its box; every resting scale is
+     measured against that one, and set per bar in JS. */
   height: 82%;
   /* Scaled about its middle, so a bar grows and shrinks in both directions off
      the centre line rather than rising off the floor. */
@@ -182,17 +183,6 @@
 .audio-player__wave--live .audio-player__wave-bar {
   animation: none;
 }
-
-/* The symbol's own bar heights — 30, 62, 98, 46, 80, 38, 22 out of 120 — as
-   fractions of its tallest. At rest the card carries the logo exactly; the
-   mismatched durations then set it breathing without ever growing past it. */
-.audio-player__wave-bar:nth-child(1) { --rest: 0.306; animation-duration: 1.15s; animation-delay: 0.21s; }
-.audio-player__wave-bar:nth-child(2) { --rest: 0.633; animation-duration: 0.85s; animation-delay: 0.06s; }
-.audio-player__wave-bar:nth-child(3) { --rest: 1;     animation-duration: 1.3s;  animation-delay: 0.33s; }
-.audio-player__wave-bar:nth-child(4) { --rest: 0.469; animation-duration: 0.95s; animation-delay: 0.15s; }
-.audio-player__wave-bar:nth-child(5) { --rest: 0.816; animation-duration: 1.05s; animation-delay: 0.39s; }
-.audio-player__wave-bar:nth-child(6) { --rest: 0.388; animation-duration: 0.75s; animation-delay: 0.27s; }
-.audio-player__wave-bar:nth-child(7) { --rest: 0.224; animation-duration: 1.45s; animation-delay: 0.09s; }
 
 @keyframes audio-wave {
   0%, 100% { transform: scaleY(var(--rest)); }

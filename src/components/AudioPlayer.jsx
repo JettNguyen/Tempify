@@ -1,11 +1,41 @@
 import { useState, useRef, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react'
 import { armAudioContext, primeAudioContext } from '../lib/audioAnalyser'
+import { ONE_BAR_SILHOUETTE } from './GameGlyph'
 import { useAudioBars } from '../hooks/useAudioBars'
 import './AudioPlayer.css'
 
-// Seven, because that is what One Bar's own symbol is: the player at rest is the
-// game's logo stretched across the card, and playing sets it moving.
-const WAVE_BARS = 7
+// One bar plus its gap. The count follows the card's width from this rather than
+// being fixed: seven bars stretched over a phone are wider than they are tall,
+// which rounds them into dots instead of bars.
+const WAVE_SLOT_PX = 16
+const WAVE_MIN_BARS = 8
+const WAVE_MAX_BARS = 64
+
+/**
+ * The One Bar symbol resampled to however many bars fit. Its seven heights are
+ * the control points, read across at whatever resolution the card allows, so the
+ * player at rest still carries the game's shape rather than an unrelated one.
+ */
+function restingScales(count) {
+  const last = ONE_BAR_SILHOUETTE.length - 1
+  const sampled = Array.from({ length: count }, (_, i) => {
+    const at = count > 1 ? (i / (count - 1)) * last : 0
+    const lo = Math.min(Math.floor(at), last - 1)
+    const blend = at - lo
+    return ONE_BAR_SILHOUETTE[lo] * (1 - blend) + ONE_BAR_SILHOUETTE[lo + 1] * blend
+  })
+  // Re-normalised rather than divided by the symbol's own peak: unless a bar
+  // lands exactly on the tallest point, resampling misses it, and the shape
+  // would sit slightly shorter at some widths than others.
+  const peak = Math.max(...sampled, 1)
+  return sampled.map((h) => h / peak)
+}
+
+/** Stable per-bar jitter, so the idle animation never visibly repeats. */
+function scatter(i, salt) {
+  const x = Math.sin((i + 1) * salt) * 10000
+  return x - Math.floor(x)
+}
 
 // Owned here rather than in CSS because the scrubber's width has to account for
 // the gaps to line up with the segment boundaries.
@@ -56,6 +86,7 @@ function barToTime(segments, x) {
 const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpan, segmentStops, label, onPlay, autoplay }, ref) {
   const audioRef = useRef(null)
   const waveRef = useRef(null)
+  const [barCount, setBarCount] = useState(WAVE_MIN_BARS)
   const [playing, setPlaying] = useState(false)
   // Reading the audio back requires crossOrigin, which a host that sends no CORS
   // headers refuses outright. Start optimistic, and drop it if the load fails:
@@ -128,7 +159,28 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   // The first tap anywhere starts the audio context; Safari accepts nothing else.
   useEffect(() => { armAudioContext() }, [])
 
-  useAudioBars(audioRef, waveRef, playing)
+  // Bar count follows the card, so the same slot width holds on a phone and on a
+  // wide window instead of the bars stretching to fill.
+  useEffect(() => {
+    const wave = waveRef.current
+    if (!wave) return
+    const measure = () => {
+      const width = wave.getBoundingClientRect().width
+      if (!width) return
+      const fits = Math.round(width / WAVE_SLOT_PX)
+      setBarCount(Math.max(WAVE_MIN_BARS, Math.min(WAVE_MAX_BARS, fits)))
+    }
+    measure()
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure)
+      return () => window.removeEventListener('resize', measure)
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(wave)
+    return () => observer.disconnect()
+  }, [])
+
+  useAudioBars(audioRef, waveRef, playing, barCount)
 
   // Fetching again without crossOrigin, once, after a load that it refused.
   useEffect(() => {
@@ -287,8 +339,16 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
         className={`audio-player__wave${playing ? ' audio-player__wave--active' : ''}`}
         aria-hidden="true"
       >
-        {Array.from({ length: WAVE_BARS }).map((_, i) => (
-          <span key={i} className="audio-player__wave-bar" />
+        {restingScales(barCount).map((rest, i) => (
+          <span
+            key={i}
+            className="audio-player__wave-bar"
+            style={{
+              '--rest': rest.toFixed(3),
+              animationDuration: `${(0.75 + scatter(i, 12.9898) * 0.7).toFixed(2)}s`,
+              animationDelay: `${(scatter(i, 78.233) * 0.45).toFixed(2)}s`,
+            }}
+          />
         ))}
       </span>
 
