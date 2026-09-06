@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
-import { todayEST } from '../lib/date'
+import { todayEST, fmtDayShort } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork } from '../lib/deezer'
@@ -121,7 +121,7 @@ export default function Era() {
       <Link to={exitTarget(dateParam, fromParam)} replace className="game-back-link">← Back</Link>
 
       <div className="game-header">
-        <p className="game-header__eyebrow">era</p>
+        <p className="game-header__eyebrow">era<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
         <h1 className="game-header__title">What decade is this song from?</h1>
         {!done && profile?.competitive_mode !== false && hasStarted && <p className="game-timer">{display}</p>}
         {!done && profile?.competitive_mode !== false && !hasStarted && <p className="game-timer">Press play to start timer</p>}

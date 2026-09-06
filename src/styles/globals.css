@@ -593,6 +593,17 @@ body.ios-ipad-ui .page-shell-admin {
   margin-bottom: 0.5rem;
 }
 
+/* The date the puzzle ran, sat on the eyebrow line. Without it an archive
+   puzzle looks exactly like today's. */
+.puzzle-date {
+  color: var(--text-dim);
+}
+
+.puzzle-date::before {
+  content: '·';
+  margin: 0 0.4rem;
+}
+
 .game-header__title {
   font-size: var(--fs-lg);
   font-weight: 500;

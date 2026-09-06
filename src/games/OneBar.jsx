@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
-import { todayEST } from '../lib/date'
+import { todayEST, fmtDayShort } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork, stripVariant } from '../lib/deezer'
@@ -223,7 +223,7 @@ export default function OneBar() {
       <Link to={exitTarget(dateParam, fromParam)} replace className="game-back-link">← Back</Link>
 
       <div className="one-bar__header">
-        <p className="one-bar__eyebrow">one bar</p>
+        <p className="one-bar__eyebrow">one bar<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
         <h1 className="one-bar__title">
           Name the song from a short clip. Each wrong guess unlocks a bit more.
         </h1>

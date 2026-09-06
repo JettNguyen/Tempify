@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { supabase } from '../lib/supabase'
-import { todayEST } from '../lib/date'
+import { todayEST, fmtDayShort } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
 import { ALL_GAMES } from '../lib/games'
 import { EXPLORE_ORIGIN } from '../lib/gameExit'
@@ -408,7 +408,7 @@ export default function Explore() {
                     const played = playedSlugs.has(`${p.scheduled_date}|${p.game_slug}`)
                       || isComplete(p.game_slug, p.scheduled_date)
                     const gameLink = `${game.path}?date=${p.scheduled_date}&from=${EXPLORE_ORIGIN}`
-                    const dateStr = new Date(p.scheduled_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    const dateStr = fmtDayShort(p.scheduled_date)
                     const answer = getDisplayAnswer(p)
                     const artistLine = getDisplayArtist(p)
                     const genreColors = p.genre ? GENRE_COLORS[p.genre] : null

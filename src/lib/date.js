@@ -18,3 +18,13 @@ export function fmtTime(s) {
   const tenths = Math.floor((s % 1) * 10)
   return mins > 0 ? `${mins}:${String(secs).padStart(2, '0')}` : `${secs}.${tenths}s`
 }
+
+/** "Sat Sep 5" — a puzzle's date at a glance. Parsed at midday so a plain
+ *  YYYY-MM-DD never slips a day when read west of UTC. */
+export function fmtDayShort(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(`${dateStr}T12:00:00`)
+  if (isNaN(d.getTime())) return ''
+  const weekday = d.toLocaleDateString('en-US', { weekday: 'short' })
+  return `${weekday} ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+}

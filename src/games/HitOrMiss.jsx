@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
-import { todayEST } from '../lib/date'
+import { todayEST, fmtDayShort } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
@@ -87,7 +87,7 @@ export default function HitOrMiss() {
       <Link to={exitTarget(dateParam, fromParam)} replace className="game-back-link">← Back</Link>
 
       <div className="game-header">
-        <p className="game-header__eyebrow">hit or miss</p>
+        <p className="game-header__eyebrow">hit or miss<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
         <h1 className="game-header__title">Did this song ever chart on the Billboard Hot 100?</h1>
         {!done && profile?.competitive_mode !== false && <p className="game-timer">{display}</p>}
       </div>
