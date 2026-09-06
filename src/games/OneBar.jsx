@@ -238,6 +238,10 @@ export default function OneBar() {
             return (
               <div
                 key={i}
+                // Each bar is as wide as the audio that guess gets you, so the
+                // row reads as the same widening ladder the player shows rather
+                // than six identical slots.
+                style={{ flexGrow: REVEAL_TIMINGS[i] ?? 1 }}
                 className={`one-bar__bar${attempt ? attempt.correct ? ' one-bar__bar--correct' : ' one-bar__bar--used' : ''}`}
               />
             )

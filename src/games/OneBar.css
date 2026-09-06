@@ -27,10 +27,15 @@
 }
 
 .one-bar__bar {
+  /* flex-grow is set per bar in JS, in proportion to the seconds it unlocks.
+     The floor keeps the half-second first two from shrinking to a hairline —
+     flexbox freezes them here and shares the rest out among the wider ones. */
   flex: 1;
+  min-width: 6px;
   height: 4px;
   border-radius: 2px;
   background: var(--border);
+  transition: background-color 0.2s ease;
 }
 
 .one-bar__bar--used {
