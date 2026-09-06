@@ -9,6 +9,11 @@ const WAVE_BARS = 9
 const SEGMENT_GAP = 3
 const EPS = 1e-6
 
+// How long the playhead takes to travel back to the start when a clip finishes.
+// Fixed for the whole trip rather than a fixed speed, so the sweep is just as
+// visible after a half-second clip as after the full thirty.
+const RETREAT_MS = 380
+
 // Segments are laid out on a stylised scale, not in real seconds. In seconds the
 // first two guesses each buy the same half-second, so they render as twin blocks
 // — and every concave rescaling of the real timings makes the second segment
@@ -165,11 +170,14 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
     })
   }, [segmentStops, hasBar, barTotal])
 
-  // A rewind or a backwards drag has to land instantly. With a transition every
-  // filled segment shrinks on its own clock at the same moment, which reads as
-  // several playheads retreating at once rather than one going back to the start.
   const prevTimeRef = useRef(0)
-  const rewound = currentTime < prevTimeRef.current - EPS
+  const prevTime = prevTimeRef.current
+  const wentBack = currentTime < prevTime - EPS
+  // A finished clip rewinds to zero. Every filled segment would otherwise empty
+  // on its own clock at the same moment — several playheads retreating at once
+  // rather than one going home — so the emptying is sequenced right to left. A
+  // backwards drag still lands instantly, to stay under the finger.
+  const retreating = wentBack && currentTime <= EPS
   useEffect(() => { prevTimeRef.current = currentTime }, [currentTime])
 
   // One coordinate system for the bar whether or not it is segmented: 0-1 across
@@ -189,6 +197,26 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   const scrubWidth = segments
     ? `calc((100% - ${(segments.length - 1) * SEGMENT_GAP}px) * ${unlockedBar} + ${Math.max(0, unlockedCount - 1) * SEGMENT_GAP}px)`
     : `${unlockedBar * 100}%`
+
+  // Where the playhead is retreating from, in bar coordinates.
+  const retreatFrom = retreating ? toBar(prevTime) : 0
+
+  // Each piece of fill empties during the slice of the trip when the playhead is
+  // crossing it: it waits out everything to its right, then takes a share of the
+  // time matching its own width. Linear, so the pieces join into one motion
+  // instead of easing separately and stuttering at every boundary.
+  function fillTransition(offset, width) {
+    if (retreating && retreatFrom > EPS) {
+      const filled = Math.max(0, Math.min(offset + width, retreatFrom) - offset)
+      // Round the two edge times rather than the duration: neighbours then share
+      // an identical boundary and the sweep has no seam between them.
+      const at = (x) => Math.max(0, Math.round(((retreatFrom - x) / retreatFrom) * RETREAT_MS))
+      const start = at(offset + filled)
+      return `width ${at(offset) - start}ms linear ${start}ms`
+    }
+    // Any other jump backwards — a drag — should not animate at all.
+    return wentBack ? 'none' : undefined
+  }
 
   function handleSeek(event) {
     const audio = audioRef.current
@@ -248,7 +276,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
                 >
                   <span
                     className="audio-player__segment-fill"
-                    style={{ width: `${played * 100}%`, transition: rewound ? 'none' : undefined }}
+                    style={{ width: `${played * 100}%`, transition: fillTransition(seg.offset, seg.width) }}
                   />
                 </span>
               )
@@ -262,7 +290,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
                 ) : null}
                 <span
                   className="audio-player__fill"
-                  style={{ width: `${progress * 100}%`, transition: rewound ? 'none' : undefined }}
+                  style={{ width: `${progress * 100}%`, transition: fillTransition(0, 1) }}
                 />
               </>
             )}
