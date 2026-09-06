@@ -102,6 +102,33 @@ function smoothScrollHorizontally(el, delta) {
   horizontalScrollState.set(el, state)
 }
 
+// Taking the wheel over is a desktop-only affordance: a trackpad's horizontal
+// delta arrives in coarse jumps worth easing, whereas touch already scrolls
+// smoothly by itself and must keep its native momentum. Only this part is
+// gated on the pointer type — the fade below has to run everywhere.
+function bindSmoothWheel(el, rowFrom) {
+  if (!isDesktopPointer()) return null
+  const onWheel = (e) => {
+    const row = rowFrom(e)
+    if (!row) return
+    const delta = getWheelDelta(e)
+    if (!canScrollHorizontally(row, delta)) return
+    e.preventDefault()
+    smoothScrollHorizontally(row, delta)
+  }
+  el.addEventListener('wheel', onWheel, { passive: false })
+  return () => el.removeEventListener('wheel', onWheel)
+}
+
+// A row only carries a fade while it actually overflows, so a rotation or a
+// resized window can flip one on or off without anything having scrolled.
+function observeWidth(el, fn) {
+  if (typeof ResizeObserver === 'undefined') return () => {}
+  const observer = new ResizeObserver(fn)
+  observer.observe(el)
+  return () => observer.disconnect()
+}
+
 function getDisplayArtist(puzzle) {
   if (puzzle.game_slug === 'sampled')
     return puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist || null
@@ -167,20 +194,18 @@ export default function Explore() {
   const pillsRef = useRef(null)
   useEffect(() => {
     const el = pillsRef.current
-    if (!el || !isDesktopPointer()) return
+    if (!el) return
     updateScrollGradient(el)
-    const onWheel = (e) => {
-      const delta = getWheelDelta(e)
-      if (!canScrollHorizontally(el, delta)) return
-      e.preventDefault()
-      smoothScrollHorizontally(el, delta)
-    }
+
     const onScroll = () => updateScrollGradient(el)
-    el.addEventListener('wheel', onWheel, { passive: false })
-    el.addEventListener('scroll', onScroll)
+    el.addEventListener('scroll', onScroll, { passive: true })
+    const unbindWheel = bindSmoothWheel(el, () => el)
+    const unobserve = observeWidth(el, () => updateScrollGradient(el))
+
     return () => {
-      el.removeEventListener('wheel', onWheel)
       el.removeEventListener('scroll', onScroll)
+      unbindWheel?.()
+      unobserve()
     }
   }, [])
   useEffect(() => {
@@ -190,31 +215,34 @@ export default function Explore() {
   const gamesRef = useRef(null)
   useEffect(() => {
     const el = gamesRef.current
-    if (!el || !isDesktopPointer()) return
-    requestAnimationFrame(() => {
-      el.querySelectorAll('.explore-game-row__scroll').forEach(updateScrollGradient)
-    })
-    const onWheel = (e) => {
-      if (!(e.target instanceof Element)) return
-      const row = e.target.closest('.explore-game-row__scroll')
-      if (!row) return
-      const delta = getWheelDelta(e)
-      if (!canScrollHorizontally(row, delta)) return
-      e.preventDefault()
-      smoothScrollHorizontally(row, delta)
-    }
+    if (!el) return
+
+    const paint = () => el.querySelectorAll('.explore-game-row__scroll').forEach(updateScrollGradient)
+    const raf = requestAnimationFrame(paint)
+
+    // Scroll does not bubble, so catch it on the way down. That also covers
+    // rows rendered after this ran, which is why it binds to the container.
     const onScroll = (e) => {
       if (e.target.classList?.contains('explore-game-row__scroll')) {
         updateScrollGradient(e.target)
       }
     }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    el.addEventListener('scroll', onScroll, { capture: true })
+    el.addEventListener('scroll', onScroll, { capture: true, passive: true })
+    const unbindWheel = bindSmoothWheel(el, (e) => (
+      e.target instanceof Element ? e.target.closest('.explore-game-row__scroll') : null
+    ))
+    const unobserve = observeWidth(el, paint)
+
     return () => {
-      el.removeEventListener('wheel', onWheel)
+      cancelAnimationFrame(raf)
       el.removeEventListener('scroll', onScroll, { capture: true })
+      unbindWheel?.()
+      unobserve()
     }
-  }, [allPuzzles])
+    // Rows come and go with the fetch and the view, and the filter changes how
+    // far each one scrolls, so watching allPuzzles alone left stale fades on
+    // rows that had stopped overflowing.
+  }, [allPuzzles, fetching, view, genresParam])
 
   const fetchData = useCallback(async () => {
     const [scoresRes, puzzlesRes] = await Promise.all([
