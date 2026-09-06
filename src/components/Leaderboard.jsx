@@ -17,10 +17,14 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
 
   useEffect(() => {
     if (!user) { setLoading(false); return }
+    let cancelled = false
     setLoading(true)
     getLeaderboard(user.id, gameSlug, date, tab)
-      .then(setEntries)
-      .finally(() => setLoading(false))
+      .then((rows) => { if (!cancelled) setEntries(rows) })
+      .catch(() => { if (!cancelled) setEntries([]) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    // Switching tabs mid-fetch must not let the slower response win.
+    return () => { cancelled = true }
   }, [user, gameSlug, date, tab])
 
   const isTimeBased = gameSlug !== 'one-bar'
