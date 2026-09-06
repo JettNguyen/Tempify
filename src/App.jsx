@@ -29,9 +29,6 @@ import { useAuth } from './hooks/useAuth'
 // Admin is a large, single-user screen — keep it out of everyone else's bundle.
 const Admin = lazy(() => import('./pages/Admin'))
 
-// Re-keying on pathname remounts the routed view, so the enter animation
-// replays on every navigation. Query changes (?date=, ?view=) keep the same
-// key on purpose — those are in-page state, not a new screen.
 // Lives inside AuthProvider so it can wait for the session check to settle —
 // otherwise the splash hands off to a signed-out navbar that then pops.
 function SplashGate() {
@@ -40,6 +37,9 @@ function SplashGate() {
   return null
 }
 
+// Re-keying on pathname remounts the routed view, so the enter animation
+// replays on every navigation. Query changes (?date=, ?view=) keep the same
+// key on purpose — those are in-page state, not a new screen.
 function PageTransition({ children }) {
   const { pathname } = useLocation()
   const navigationType = useNavigationType()
