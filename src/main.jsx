@@ -1,6 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+// Self-hosted so a cold start never waits on the Google Fonts CDN, and the
+// app renders in its real typeface offline.
+import '@fontsource/inter/latin-400.css'
+import '@fontsource/inter/latin-500.css'
+import '@fontsource/inter/latin-600.css'
 import './styles/globals.css'
 
 // Polyfill crypto.randomUUID for environments that lack it
