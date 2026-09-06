@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { todayEST } from '../lib/date'
+import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork, stripVariant } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
@@ -26,6 +27,7 @@ export default function OneBar() {
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
+  const fromParam = searchParams.get('from')
   const puzzleDate = dateParam || todayEST()
 
   // Seeded from the session cache the home screen warmed, so a tapped tile
@@ -197,7 +199,7 @@ export default function OneBar() {
 
   return (
     <GameShell>
-      <Link to={dateParam ? `/archive/${dateParam}` : '/'} replace className="game-back-link">← Back</Link>
+      <Link to={exitTarget(dateParam, fromParam)} replace className="game-back-link">← Back</Link>
 
       <div className="one-bar__header">
         <p className="one-bar__eyebrow">one bar</p>

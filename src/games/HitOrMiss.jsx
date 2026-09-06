@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
+import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
@@ -18,6 +19,7 @@ export default function HitOrMiss() {
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
+  const fromParam = searchParams.get('from')
   const puzzleDate = dateParam || todayEST()
 
   // Seeded from the session cache the home screen warmed, so a tapped tile
@@ -82,7 +84,7 @@ export default function HitOrMiss() {
 
   return (
     <GameShell>
-      <Link to={dateParam ? `/archive/${dateParam}` : '/'} replace className="game-back-link">← Back</Link>
+      <Link to={exitTarget(dateParam, fromParam)} replace className="game-back-link">← Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">hit or miss</p>

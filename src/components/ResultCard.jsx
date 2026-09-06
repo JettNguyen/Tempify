@@ -5,6 +5,7 @@ import TrackArtwork from './TrackArtwork'
 import Icon from './Icon'
 import Leaderboard from './Leaderboard'
 import { hapticWinCelebration, hapticFailure } from '../lib/haptics'
+import { resultAction } from '../lib/gameExit'
 import { fmtTime } from '../lib/date'
 import './ResultCard.css'
 
@@ -14,16 +15,7 @@ export default function ResultCard({
   puzzleDate, timeSeconds, attempts, showLeaderboard, justFinished,
 }) {
   const [searchParams] = useSearchParams()
-  const dateParam = searchParams.get('date')
-
-  // When playing an archive date, preserve it through the next-game chain.
-  // If the final destination is "/" (CoverOrNot's "Back to games"), send to
-  // the archive day instead so the user lands back on that day's list.
-  function resolveNextPath(path) {
-    if (!dateParam) return path
-    if (path === '/') return `/archive/${dateParam}`
-    return `${path}?date=${dateParam}`
-  }
+  const action = resultAction(nextGame, searchParams.get('date'), searchParams.get('from'))
 
   const timeLabel = gameSlug !== 'one-bar' ? fmtTime(timeSeconds) : null
 
@@ -67,9 +59,9 @@ export default function ResultCard({
           timeSeconds={timeSeconds}
           puzzleDate={puzzleDate}
         />
-        {nextGame && (
-          <Link to={resolveNextPath(nextGame.path)} replace className="result-card__next btn-press btn-amber">
-            {nextGame.label} →
+        {action && (
+          <Link to={action.to} replace className="result-card__next btn-press btn-amber">
+            {action.label}
           </Link>
         )}
       </div>
