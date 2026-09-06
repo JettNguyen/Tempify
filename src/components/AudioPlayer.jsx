@@ -3,8 +3,9 @@ import { armAudioContext } from '../lib/audioAnalyser'
 import { useAudioBars } from '../hooks/useAudioBars'
 import './AudioPlayer.css'
 
-// Bar count is mirrored by the nth-child heights in AudioPlayer.css.
-const WAVE_BARS = 9
+// Enough to read as a spectrum across the full width of the card. The resting
+// shape cycles through eight variants in CSS, so this need not be a multiple.
+const WAVE_BARS = 32
 
 // Owned here rather than in CSS because the scrubber's width has to account for
 // the gaps to line up with the segment boundaries.
@@ -275,6 +276,19 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
 
   return (
     <div className="audio-player">
+      {/* Behind everything, spanning the card: it only says "sound is coming out
+          right now", so it stays mounted and fades rather than popping in and
+          out. Paused animations cost nothing, so an idle player is free. */}
+      <span
+        ref={waveRef}
+        className={`audio-player__wave${playing ? ' audio-player__wave--active' : ''}`}
+        aria-hidden="true"
+      >
+        {Array.from({ length: WAVE_BARS }).map((_, i) => (
+          <span key={i} className="audio-player__wave-bar" />
+        ))}
+      </span>
+
       {label && <p className="audio-player__label">{label}</p>}
 
       {/* Keyed by src so each clip gets its own element. Once an element is
@@ -361,20 +375,6 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
           </label>
           <div className="audio-player__times">
             <span className="audio-player__time">{fmt(currentTime)}</span>
-
-            {/* Decorative: it only says "sound is coming out right now", so it
-                stays mounted and fades rather than popping in and out. Paused
-                animations cost nothing, so an idle player is free. */}
-            <span
-              ref={waveRef}
-              className={`audio-player__wave${playing ? ' audio-player__wave--active' : ''}`}
-              aria-hidden="true"
-            >
-              {Array.from({ length: WAVE_BARS }).map((_, i) => (
-                <span key={i} className="audio-player__wave-bar" />
-              ))}
-            </span>
-
             <span className="audio-player__time audio-player__time--total">
               {hasBar ? fmt(barTotal) : '--:--'}
             </span>

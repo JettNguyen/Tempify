@@ -2,9 +2,30 @@ import { useEffect } from 'react'
 import { getAnalyser } from '../lib/audioAnalyser'
 
 // Bars never collapse to nothing — a flat line reads as broken, not as quiet.
-const FLOOR = 0.22
-const BIN_START = 1        // bin 0 is DC, always junk
-const BINS_PER_BAR = 3
+const FLOOR = 0.06
+const FIRST_BIN = 1              // bin 0 is DC, always junk
+const TOP_FRACTION = 0.7         // above this there is nothing but hiss
+
+/**
+ * Musical detail is bunched at the bottom of the spectrum, so the bars are
+ * spaced logarithmically. Split linearly and two thirds of the row would sit on
+ * frequencies almost no music reaches, leaving that stretch permanently flat.
+ */
+function binRanges(barCount, binCount) {
+  const top = Math.max(FIRST_BIN + 1, Math.floor(binCount * TOP_FRACTION))
+  const step = Math.log(top / FIRST_BIN) / barCount
+  const ranges = []
+  let cursor = FIRST_BIN
+  for (let i = 0; i < barCount; i++) {
+    // Carried forward rather than recomputed, so the lowest bars — where the
+    // curve is flattest — get a bin each instead of all sharing the first one.
+    const from = Math.max(cursor, Math.floor(FIRST_BIN * Math.exp(step * i)))
+    const to = Math.min(binCount, Math.max(from + 1, Math.floor(FIRST_BIN * Math.exp(step * (i + 1)))))
+    ranges.push([from, to])
+    cursor = to
+  }
+  return ranges
+}
 
 /**
  * Drives the waveform bars from the audio actually playing, when that is
@@ -29,19 +50,20 @@ export function useAudioBars(audioRef, waveRef, playing) {
 
     const bars = Array.from(wave.children)
     const bins = new Uint8Array(analyser.frequencyBinCount)
+    const ranges = binRanges(bars.length, analyser.frequencyBinCount)
     wave.classList.add('audio-player__wave--live')
 
     let frame = requestAnimationFrame(function draw() {
       analyser.getByteFrequencyData(bins)
       for (let i = 0; i < bars.length; i++) {
+        const [from, to] = ranges[i]
         let sum = 0
-        const from = BIN_START + i * BINS_PER_BAR
-        for (let b = from; b < from + BINS_PER_BAR; b++) sum += bins[b] || 0
-        const avg = sum / BINS_PER_BAR / 255
-        // Musical energy falls away steeply with frequency, so without a lift
-        // that grows across the row the right-hand bars sit flat all song.
-        const lifted = Math.min(1, avg * (1 + i * 0.22))
-        const scale = FLOOR + (1 - FLOOR) * Math.pow(lifted, 0.75)
+        for (let b = from; b < to; b++) sum += bins[b]
+        const avg = sum / (to - from) / 255
+        // Energy still falls away towards the top even on a log scale, so lift
+        // the higher bars or the right-hand end sits flat all song.
+        const lifted = Math.min(1, avg * (1 + i * 0.045))
+        const scale = FLOOR + (1 - FLOOR) * Math.pow(lifted, 0.8)
         bars[i].style.transform = `scaleY(${scale.toFixed(3)})`
       }
       frame = requestAnimationFrame(draw)

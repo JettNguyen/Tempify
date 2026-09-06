@@ -62,7 +62,9 @@ export function getAnalyser(el) {
   try {
     const source = c.createMediaElementSource(el)
     const analyser = c.createAnalyser()
-    analyser.fftSize = 64
+    // 512 bins at ~43Hz each. Coarser than this and the lowest bars — where a
+    // log scale wants the most detail — all land on the same bin and move as one.
+    analyser.fftSize = 1024
     analyser.smoothingTimeConstant = 0.75
     source.connect(analyser)
     analyser.connect(c.destination)

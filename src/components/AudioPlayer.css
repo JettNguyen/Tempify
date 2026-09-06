@@ -1,8 +1,16 @@
 .audio-player {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1rem 1.25rem;
+}
+
+/* Positioned so they paint over the waveform behind them — both sit in flow
+   order, and positioned elements win. */
+.audio-player__label,
+.audio-player__controls {
+  position: relative;
 }
 
 .audio-player__label {
@@ -123,32 +131,37 @@
   color: var(--text-dim);
 }
 
-/* Waveform — a quiet "this is playing right now" signal. It sits in the dead
-   space between the two timestamps, shorter than their line box so it adds no
-   height, and it holds its width whether or not it's showing so nothing shifts
-   when playback starts. Left in flow deliberately: positioning this row would
-   paint it over the scrubber's invisible overhang and eat part of the scrub
-   target. */
+/* Waveform — a quiet "this is playing right now" signal, spread across the whole
+   card as a backdrop rather than a badge tucked between the timestamps. Clipped
+   to the card's own corners here rather than with overflow on the card itself,
+   which would have cropped the play button's pulse ring. */
 .audio-player__wave {
+  position: absolute;
+  inset: 0;
   display: flex;
-  align-items: center;
-  gap: 3px;
-  height: 12px;
+  align-items: flex-end;
+  gap: 2px;
+  border-radius: inherit;
+  overflow: hidden;
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.35s ease;
   pointer-events: none;
 }
 
 .audio-player__wave--active {
-  opacity: 0.55;
+  opacity: 0.17;
 }
 
 .audio-player__wave-bar {
-  width: 2px;
-  border-radius: 1px;
-  background: var(--amber);
-  transform: scaleY(0.4);
-  /* Paused until playback starts, so an idle player costs nothing to animate. */
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  /* Grows off the floor like a spectrum, fading out towards the top so the
+     controls sitting over it stay legible. */
+  transform-origin: bottom;
+  transform: scaleY(var(--rest));
+  background: linear-gradient(to top, var(--amber) 0%, rgba(245, 158, 11, 0.1) 100%);
+  border-radius: 2px 2px 0 0;
   animation: audio-wave 1s ease-in-out infinite;
   animation-play-state: paused;
 }
@@ -164,29 +177,29 @@
   animation: none;
 }
 
-/* Uneven resting heights and mismatched durations: the row reads as a waveform
-   rather than a marching wave, and the loop never visibly repeats. */
-.audio-player__wave-bar:nth-child(1) { height: 5px;  animation-duration: 0.9s;  animation-delay: 0s; }
-.audio-player__wave-bar:nth-child(2) { height: 9px;  animation-duration: 1.15s; animation-delay: 0.18s; }
-.audio-player__wave-bar:nth-child(3) { height: 12px; animation-duration: 0.75s; animation-delay: 0.06s; }
-.audio-player__wave-bar:nth-child(4) { height: 7px;  animation-duration: 1s;    animation-delay: 0.24s; }
-.audio-player__wave-bar:nth-child(5) { height: 11px; animation-duration: 0.85s; animation-delay: 0.12s; }
-.audio-player__wave-bar:nth-child(6) { height: 6px;  animation-duration: 1.2s;  animation-delay: 0.3s; }
-.audio-player__wave-bar:nth-child(7) { height: 12px; animation-duration: 0.95s; animation-delay: 0.09s; }
-.audio-player__wave-bar:nth-child(8) { height: 8px;  animation-duration: 1.05s; animation-delay: 0.21s; }
-.audio-player__wave-bar:nth-child(9) { height: 5px;  animation-duration: 0.8s;  animation-delay: 0.15s; }
+/* Eight resting heights and eight mismatched durations, cycled: the row reads as
+   a waveform rather than a marching wave, and across 32 bars the repeat isn't
+   something the eye picks out. */
+.audio-player__wave-bar:nth-child(8n+1) { --rest: 0.16; animation-duration: 1.05s; animation-delay: 0s; }
+.audio-player__wave-bar:nth-child(8n+2) { --rest: 0.30; animation-duration: 0.8s;  animation-delay: 0.24s; }
+.audio-player__wave-bar:nth-child(8n+3) { --rest: 0.22; animation-duration: 1.25s; animation-delay: 0.09s; }
+.audio-player__wave-bar:nth-child(8n+4) { --rest: 0.40; animation-duration: 0.95s; animation-delay: 0.33s; }
+.audio-player__wave-bar:nth-child(8n+5) { --rest: 0.19; animation-duration: 1.15s; animation-delay: 0.15s; }
+.audio-player__wave-bar:nth-child(8n+6) { --rest: 0.34; animation-duration: 0.75s; animation-delay: 0.39s; }
+.audio-player__wave-bar:nth-child(8n+7) { --rest: 0.25; animation-duration: 1.35s; animation-delay: 0.06s; }
+.audio-player__wave-bar:nth-child(8n+8) { --rest: 0.44; animation-duration: 0.9s;  animation-delay: 0.27s; }
 
 @keyframes audio-wave {
-  0%, 100% { transform: scaleY(0.4); }
-  50%      { transform: scaleY(1); }
+  0%, 100% { transform: scaleY(var(--rest)); }
+  50%      { transform: scaleY(calc(var(--rest) + 0.28)); }
 }
 
-/* The global reduced-motion rule collapses every animation to its first frame,
-   which would flatten all nine bars to the same stub. Show the resting
-   silhouette instead — still a waveform, just a still one. */
+/* Without this the global reduced-motion rule freezes every bar on its first
+   frame, and `transform: none` would leave the card a solid amber wash. Hold the
+   resting silhouette instead — still a waveform, just a still one. */
 @media (prefers-reduced-motion: reduce) {
   .audio-player__wave-bar {
-    transform: none;
     animation: none !important;
+    transform: scaleY(var(--rest));
   }
 }
