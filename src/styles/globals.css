@@ -167,6 +167,20 @@ input, textarea {
   border-radius: 3px;
 }
 
+/* Native iOS: a visible scrollbar track is a browser tell — no iOS app draws
+   one. Scrollbars here are CSS ones (the body doesn't scroll, .app-scroll-container
+   does), so hiding the pseudo-element hides them everywhere in the app. The web
+   build keeps its scrollbar. */
+body.ios-native-app::-webkit-scrollbar,
+body.ios-native-app ::-webkit-scrollbar {
+  display: none;
+}
+
+body.ios-native-app,
+body.ios-native-app * {
+  scrollbar-width: none;
+}
+
 /* Focus visible */
 :focus-visible {
   outline: 1.5px solid var(--amber);
