@@ -9,7 +9,7 @@ export default function GameTile({ slug, name, description, path, complete, feat
   return (
     <Link
       to={path}
-      className={`game-tile card-hover btn-press game-theme--${slug}${featured ? ' game-tile--featured' : ''}${className ? ` ${className}` : ''}`}
+      className={`game-tile card-hover btn-press game-theme--${slug}${complete ? ' game-tile--complete' : ''}${featured ? ' game-tile--featured' : ''}${className ? ` ${className}` : ''}`}
     >
       <GameGlyph slug={slug} className="game-tile__glyph" />
 
