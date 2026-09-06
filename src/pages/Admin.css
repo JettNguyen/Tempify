@@ -1,5 +1,5 @@
 /* Admin is otherwise inline-styled, but the schedule needs real hover, active
-   and responsive rules — which inline styles can't express without the
+   and responsive rules, which inline styles can't express without the
    onMouseEnter/onMouseLeave workarounds this replaces. */
 
 /* ── Week navigation ─────────────────────────────────────────────────────── */
@@ -131,7 +131,7 @@
   flex-shrink: 0;
 }
 
-/* 40px so these are actually hittable — they were 11px glyphs with no padding. */
+/* 40px so these are actually hittable, since they were 11px glyphs with no padding. */
 .admin-slot__btn {
   width: 40px;
   height: 40px;

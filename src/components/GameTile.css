@@ -185,7 +185,7 @@
   }
 }
 
-/* Hover lifts the symbol slightly — the tile already handles background. */
+/* Hover lifts the symbol slightly, since the tile already handles background. */
 @media (hover: hover) and (pointer: fine) {
   .game-tile:hover .game-tile__glyph {
     opacity: 0.22;

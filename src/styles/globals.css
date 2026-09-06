@@ -23,7 +23,7 @@ html, body {
   --text-muted: #a0a0a0;
   --text-dim: #555555;
 
-  /* Type scale. Six steps plus a display size — there were thirteen different
+  /* Type scale. Six steps plus a display size. There were thirteen different
      font sizes before this, which is why hierarchy read as arbitrary.
      Pick by role, not by how big it looks:
        2xs  eyebrows, pills, legends, badges
@@ -121,8 +121,8 @@ body.ios-native-app .app-scroll-container {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Native iOS: drop the webview tells — long-press callouts, stray text
-   selection and the grey tap flash — so taps feel like a real app. Web is
+/* Native iOS: drop the webview tells (long-press callouts, stray text
+   selection and the grey tap flash) so taps feel like a real app. Web is
    untouched. Inputs stay selectable so typing and copy still work. */
 body.ios-native-app {
   -webkit-touch-callout: none;
@@ -167,7 +167,7 @@ input, textarea {
   border-radius: 3px;
 }
 
-/* Native iOS: a visible scrollbar track is a browser tell — no iOS app draws
+/* Native iOS: a visible scrollbar track is a browser tell, and no iOS app draws
    one. Scrollbars here are CSS ones (the body doesn't scroll, .app-scroll-container
    does), so hiding the pseudo-element hides them everywhere in the app. The web
    build keeps its scrollbar. */

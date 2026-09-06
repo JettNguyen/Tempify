@@ -301,7 +301,7 @@ function HitOrMissFields({ f, set }) {
 
 function NoteField({ f, set }) {
   return (
-    <Field label="Note (optional) — shown to players after the result">
+    <Field label="Note (optional), shown to players after the result">
       <textarea
         value={f.note}
         onChange={e => set('note', e.target.value)}
@@ -574,7 +574,7 @@ function FlipFields({ f, set, setGenre }) {
   return (
     <>
       <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '1rem' }}>
-        Search for the cover version — fills title, artist, year, genre, and audio automatically.
+        Search for the cover version to fill title, artist, year, genre, and audio automatically.
       </p>
 
       {/* The cover song */}
@@ -688,7 +688,7 @@ function SongSearch({ onSelect, placeholder = 'Search for a song...' }) {
   return (
     <div ref={wrap} style={{ position: 'relative', marginBottom: '1.25rem' }}>
       <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>
-        Search — fills in audio URL, title, artist, year & genre automatically
+        Search to fill in audio URL, title, artist, year & genre automatically
       </p>
       <input
         value={query}
@@ -1077,7 +1077,7 @@ export default function Admin() {
                 <select value={form.game} onChange={e => set('game', e.target.value)} style={inputStyle}>
                   {GAMES.map(g => <option key={g.slug} value={g.slug}>{g.short}</option>)}
                   {/* A retired game can't be scheduled, but an existing puzzle has
-                      to keep showing its own game — otherwise the select falls
+                      to keep showing its own game, otherwise the select falls
                       back to the first option and editing rewrites game_slug. */}
                   {form.game && !GAMES.some(g => g.slug === form.game) && (
                     <option value={form.game} disabled>{getGameName(form.game)} (retired)</option>

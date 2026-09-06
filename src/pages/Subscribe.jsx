@@ -65,7 +65,7 @@ export default function Subscribe() {
           await markSubscribed()
           navigate('/archive')
         }
-        // If dismissed/cancelled, no message — just close.
+        // If dismissed/cancelled, no message, just close.
       } catch (err) {
         setMessage(err?.message || 'Unable to complete purchase right now.')
       } finally {

@@ -15,7 +15,7 @@ const RETIRED_GAMES = [
 /** Games in today's lineup. */
 export const GAMES = ACTIVE_GAMES
 
-/** Everything that has ever shipped — use for archive, names and past stats. */
+/** Everything that has ever shipped: use for archive, names and past stats. */
 export const ALL_GAMES = [...ACTIVE_GAMES, ...RETIRED_GAMES]
 
 export const GAME_SLUGS = ACTIVE_GAMES.map(g => g.slug)

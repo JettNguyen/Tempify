@@ -105,7 +105,7 @@ function smoothScrollHorizontally(el, delta) {
 // Taking the wheel over is a desktop-only affordance: a trackpad's horizontal
 // delta arrives in coarse jumps worth easing, whereas touch already scrolls
 // smoothly by itself and must keep its native momentum. Only this part is
-// gated on the pointer type — the fade below has to run everywhere.
+// gated on the pointer type: the fade below has to run everywhere.
 function bindSmoothWheel(el, rowFrom) {
   if (!isDesktopPointer()) return null
   const onWheel = (e) => {
@@ -157,7 +157,7 @@ export default function Explore() {
   const view = searchParams.get('view') || 'browse'
 
   // Filters live in the URL rather than in state, so opening a puzzle and coming
-  // back doesn't quietly drop them — and so does the view, which used to be
+  // back doesn't quietly drop them, and so does the view, which used to be
   // wiped along with everything else whenever the toggle was pressed.
   const genresParam = searchParams.get('genres') || ''
   const activeGenres = useMemo(
@@ -292,7 +292,7 @@ export default function Explore() {
   const days = getDaysInMonth(viewYear, viewMonth)
   const firstDay = getFirstDayOfMonth(viewYear, viewMonth)
 
-  // Per-date puzzle counts (unfiltered — calendar always shows full picture)
+  // Per-date puzzle counts (unfiltered, since the calendar always shows the full picture)
   const puzzlesByDate = {}
   allPuzzles.forEach(p => { puzzlesByDate[p.scheduled_date] = (puzzlesByDate[p.scheduled_date] || 0) + 1 })
 

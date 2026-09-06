@@ -14,11 +14,11 @@ const ACTIVE_EVENTS = new Set([
 // These event types mean the entitlement has ended immediately.
 const INACTIVE_EVENTS = new Set([
   'EXPIRATION', // billing period ended after cancellation
-  'REFUND',     // Apple issued a refund — immediate revocation
+  'REFUND',     // Apple issued a refund, immediate revocation
 ])
 
 // CANCELLATION: user cancelled but access continues until period end.
-//   RC fires EXPIRATION when access actually ends — we handle that instead.
+//   RC fires EXPIRATION when access actually ends, so we handle that instead.
 // BILLING_ISSUE: grace period still active; EXPIRATION fires if unresolved.
 //   Both are intentionally ignored here.
 
@@ -59,7 +59,7 @@ export default async function handler(req: Request): Promise<Response> {
   const { type, app_user_id: appUserId } = event
 
   if (!appUserId) {
-    // RC anonymous user — no Supabase account to update.
+    // RC anonymous user, so no Supabase account to update.
     console.warn(`[rc-webhook] ${type} has no app_user_id, skipping`)
     return json({ ok: true, skipped: 'no_app_user_id' })
   }

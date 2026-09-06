@@ -19,7 +19,7 @@ export async function initKeyboard() {
     // iPhone only; a no-op elsewhere.
     await Keyboard.setAccessoryBarVisible({ isVisible: true })
   } catch {
-    // Plugin unavailable — the web fallback below still applies.
+    // Plugin unavailable, so the web fallback below still applies.
   }
 }
 

@@ -21,7 +21,7 @@ export default function Terms() {
       <section className="privacy-section">
         <h2>Overview</h2>
         <p>
-          By using Tempify — on the web or in the iOS app — you agree to these terms. If you do not
+          By using Tempify, on the web or in the iOS app, you agree to these terms. If you do not
           agree, please do not use the app.
         </p>
       </section>
@@ -55,7 +55,7 @@ export default function Terms() {
           <li>Monthly and yearly plans renew automatically at the end of each period until cancelled.</li>
           <li>The lifetime plan is a single payment. It does not renew and there is nothing to cancel.</li>
           <li>Purchases are handled by the App Store on iOS and by Stripe on the web.</li>
-          <li>Auto-renewing plans can be cancelled at any time — through your App Store account for iOS purchases, or the billing portal for web purchases. Cancelling stops future charges; access continues until the end of the period you have paid for.</li>
+          <li>Auto-renewing plans can be cancelled at any time, through your App Store account for iOS purchases, or the billing portal for web purchases. Cancelling stops future charges; access continues until the end of the period you have paid for.</li>
           <li>If we change the price of a renewing plan, we will give you notice before it takes effect so you can cancel before the next renewal.</li>
           <li>Where a free trial is offered, it converts to a paid subscription unless you cancel before the trial ends.</li>
           <li>Refunds are handled by Apple or Stripe under their own policies.</li>
@@ -76,7 +76,7 @@ export default function Terms() {
       <section className="privacy-section">
         <h2>Your Content</h2>
         <p>
-          You keep ownership of what you submit — your username, avatar choices, and anything else you
+          You keep ownership of what you submit: your username, avatar choices, and anything else you
           add to your profile. You grant us a non-exclusive, worldwide, royalty-free licence to store
           and display that content within Tempify so the service can work as intended, for as long as
           you keep it on your account. That licence ends when you remove the content or delete your
@@ -125,7 +125,7 @@ export default function Terms() {
         </p>
         <p>
           AI-assisted content can still contain errors. Puzzle content is provided as-is, and nothing
-          in Tempify — including anything produced with AI assistance — is professional advice of any
+          in Tempify, including anything produced with AI assistance, is professional advice of any
           kind. How AI interacts with your personal data is described in our Privacy Policy.
         </p>
       </section>
@@ -135,7 +135,7 @@ export default function Terms() {
         <p>
           We reserve the right to suspend or terminate accounts that violate these terms. You may
           delete your account at any time from the profile screen. Deleting your account does not
-          automatically cancel a subscription billed by Apple or Stripe — cancel that separately.
+          automatically cancel a subscription billed by Apple or Stripe, so cancel that separately.
         </p>
       </section>
 

@@ -19,7 +19,7 @@ export default function ResultCard({
 
   const timeLabel = gameSlug !== 'one-bar' ? fmtTime(timeSeconds) : null
 
-  // Only on a fresh finish — revisiting a played puzzle shouldn't buzz again.
+  // Only on a fresh finish: revisiting a played puzzle shouldn't buzz again.
   useEffect(() => {
     if (!justFinished) return
     if (correct) hapticWinCelebration()

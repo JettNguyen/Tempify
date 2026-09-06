@@ -56,7 +56,7 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
 
   // The on-screen keyboard covers the bottom of the window, so a list sized to
   // the window runs underneath it and can't be scrolled to. visualViewport
-  // reports the area actually visible, so size the list to that — and flip the
+  // reports the area actually visible, so size the list to that, and flip the
   // list above the field when there's more room up there.
   useEffect(() => {
     if (!showList) return
@@ -122,8 +122,8 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
       const { tracks, failed } = await searchSongsWithStatus(val, { signal: controller.signal })
       if (requestId !== requestIdRef.current) return
       setOpen(true)
-      // On failure keep whatever rows are already on screen — they are still
-      // real songs the player can pick — and just say the refresh didn't land.
+      // On failure keep whatever rows are already on screen, since they are still
+      // real songs the player can pick, and just say the refresh didn't land.
       if (failed) {
         setStatus('error')
         return
@@ -169,12 +169,12 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
 
   function selectResult(song) {
     hapticSelection()
-    // The guess is committed — nothing left to type, so get the keyboard out of
+    // The guess is committed, so nothing left to type, so get the keyboard out of
     // the way of the game.
     dismissKeyboard()
     clearTimeout(debounceRef.current)
     requestIdRef.current++
-    setQuery(`${song.title} — ${song.artist}`)
+    setQuery(`${song.title} by ${song.artist}`)
     setOpen(false)
     setResults([])
     setStatus('idle')
@@ -229,7 +229,7 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
           {results.length === 0 && (
             <p className="guess-input__message">
               {status === 'error'
-                ? "Couldn't reach search — check your connection."
+                ? "Couldn't reach search. Check your connection."
                 : status === 'empty'
                   ? `No songs found for “${query.trim()}”.`
                   : 'Searching…'}
@@ -264,7 +264,7 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
 
           {results.length > 0 && (status === 'loading' || status === 'error') && (
             <p className="guess-input__message guess-input__message--footer">
-              {status === 'error' ? "Couldn't refresh — showing earlier matches." : 'Searching…'}
+              {status === 'error' ? "Couldn't refresh. Showing earlier matches." : 'Searching…'}
             </p>
           )}
         </div>

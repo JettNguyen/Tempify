@@ -129,7 +129,7 @@ function filterByQuery(results, query) {
   const tokens = q.split(' ').filter(Boolean)
   return results.filter((track) => {
     const hay = `${normalizeForSearch(track.title)} ${normalizeForSearch(track.artist)}`
-    // Every word has to appear, but not in order — "beatles hey jude" should
+    // Every word has to appear, but not in order, so "beatles hey jude" should
     // still find "Hey Jude" by The Beatles.
     return tokens.every((t) => hay.includes(t))
   })
@@ -234,7 +234,7 @@ export async function searchSongsWithStatus(query, { signal } = {}) {
     cache.set(key, results)
     return { tracks: results, failed: false }
   } catch {
-    // A cancelled request isn't a failure — the caller moved on.
+    // A cancelled request isn't a failure, since the caller moved on.
     return { tracks: [], failed: !signal?.aborted }
   } finally {
     clearTimeout(timeout)

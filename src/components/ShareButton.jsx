@@ -117,7 +117,7 @@ export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, ti
         await Share.share({ title: header, text: body, url, dialogTitle: 'Share your result' })
         return
       } catch (err) {
-        // Dismissing the sheet rejects too — that isn't a failure worth showing.
+        // Dismissing the sheet rejects too, and that isn't a failure worth showing.
         if (/cancel/i.test(err?.message || '')) return
         // Otherwise fall through to the clipboard.
       }

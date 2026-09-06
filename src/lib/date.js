@@ -19,7 +19,7 @@ export function fmtTime(s) {
   return mins > 0 ? `${mins}:${String(secs).padStart(2, '0')}` : `${secs}.${tenths}s`
 }
 
-/** "Sat Sep 5" — a puzzle's date at a glance. Parsed at midday so a plain
+/** "Sat Sep 5", a puzzle's date at a glance. Parsed at midday so a plain
  *  YYYY-MM-DD never slips a day when read west of UTC. */
 export function fmtDayShort(dateStr) {
   if (!dateStr) return ''

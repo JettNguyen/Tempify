@@ -58,7 +58,7 @@
   color: var(--amber);
 }
 
-/* Avatar is the profile "tab" — it needs an active state of its own, since the
+/* Avatar is the profile "tab" and needs an active state of its own, since the
    text links get an underline and this one can't. */
 .navbar__avatar {
   display: inline-flex;

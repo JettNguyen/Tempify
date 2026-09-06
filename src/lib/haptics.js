@@ -45,7 +45,7 @@ export function hapticFailure() {
   notify(NotificationType.Error)
 }
 
-/** An action was refused — a repeat guess, a locked option. */
+/** An action was refused: a repeat guess, a locked option. */
 export function hapticRejected() {
   impact(ImpactStyle.Heavy)
 }

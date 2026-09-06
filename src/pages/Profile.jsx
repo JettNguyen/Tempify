@@ -141,7 +141,7 @@ export default function Profile() {
     setUsernameError('')
     const trimmed = username.trim().toLowerCase()
     if (trimmed && !/^[a-z0-9_]{2,20}$/.test(trimmed)) {
-      setUsernameError('Username must be 2–20 characters: letters, numbers, underscores only.')
+      setUsernameError('Username must be 2-20 characters: letters, numbers, underscores only.')
       return
     }
     if (trimmed && trimmed !== profile?.username) {
@@ -214,7 +214,7 @@ export default function Profile() {
       setBillingMessage('Refund request submitted.')
     } catch (err) {
       const msg = err?.message || ''
-      // AMSErrorDomain Code=6 only occurs in sandbox — refund sheet requires production
+      // AMSErrorDomain Code=6 only occurs in sandbox, since the refund sheet requires production
       if (msg.includes('Engagement Request Cancelled') || msg.includes('AMSError') || msg.includes('sandbox')) {
         setBillingMessage('Refund requests are only available on the App Store in production, not in sandbox.')
       } else {
@@ -515,7 +515,7 @@ export default function Profile() {
               Delete your account?
             </h2>
             <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: '1.5' }}>
-              This permanently deletes your account and all your data — scores, streaks, and profile. This cannot be undone.
+              This permanently deletes your account and all your data: scores, streaks, and profile. This cannot be undone.
             </p>
             {deleteError && (
               <p style={{ fontSize: 'var(--fs-xs)', color: '#ef4444', marginBottom: '12px' }}>{deleteError}</p>

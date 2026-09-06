@@ -27,7 +27,7 @@ export async function signInWithGoogleOAuth() {
         // Signing out of Tempify doesn't sign you out of Google, and the OAuth
         // browser still holds that session. Without this Google silently
         // re-authorises whichever account it saw last, so switching accounts is
-        // impossible — the chooser flashes past and you land back where you were.
+        // impossible: the chooser flashes past and you land back where you were.
         prompt: 'select_account',
       },
     },

@@ -29,10 +29,10 @@ export async function getRecentScores(userId, limit = 20) {
 }
 
 // Fetches all scores for a user, ordered by puzzle date descending.
-// Use this for stats computation — getRecentScores with a low limit produces
+// Use this for stats computation, since getRecentScores with a low limit produces
 // inaccurate aggregates for users with long play histories.
 export async function getAllScores(userId) {
-  // Use RPC so any authenticated user can read any profile's scores —
+  // Use RPC so any authenticated user can read any profile's scores, since
   // direct table queries are blocked by RLS for rows owned by other users.
   const { data, error } = await supabase.rpc('get_public_scores', { p_user_id: userId })
   if (!error) return data || []

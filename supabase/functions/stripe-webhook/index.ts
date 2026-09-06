@@ -30,7 +30,7 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'misconfigured' }, 500)
   }
 
-  // Read raw body — required for signature verification
+  // Read raw body, required for signature verification
   const rawBody = await req.text()
   const sigHeader = req.headers.get('stripe-signature') ?? ''
 

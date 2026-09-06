@@ -21,7 +21,7 @@ export function useScrolling() {
     }
 
     // Scroll events don't bubble, so capture to catch them from whichever
-    // container is actually scrolling — the window on web, .app-scroll-container
+    // container is actually scrolling: the window on web, .app-scroll-container
     // in the native shell.
     document.addEventListener('scroll', handleScroll, { capture: true, passive: true })
 

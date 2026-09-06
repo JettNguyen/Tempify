@@ -50,8 +50,8 @@ const RETREAT_SLOW_MS = 260
 const RETREAT_FAST_MS = 110
 
 // Segments are laid out on a stylised scale, not in real seconds. In seconds the
-// first two guesses each buy the same half-second, so they render as twin blocks
-// — and every concave rescaling of the real timings makes the second segment
+// first two guesses each buy the same half-second, so they render as twin blocks,
+// and every concave rescaling of the real timings makes the second segment
 // *smaller* than the first, which reads worse still. Giving each stage a fixed
 // step more room than the one before is the only arrangement that rises the
 // whole way, and it has a second benefit: a half-second clip sweeps a visible
@@ -228,7 +228,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
 
   // `segmentStops` are cumulative points inside the span where the bar is cut.
   // One Bar passes the seconds each guess unlocks, so the timeline *is* the
-  // guess ladder — one control to read instead of two rows that must agree.
+  // guess ladder: one control to read instead of two rows that must agree.
   const segments = useMemo(() => {
     if (!segmentStops?.length || !hasBar) return null
     const cuts = []
@@ -257,8 +257,8 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   const wentBack = currentTime < prevTimeRef.current - EPS
 
   // A finished clip rewinds to zero. Every filled segment would otherwise empty
-  // on its own clock at the same moment — several playheads retreating at once
-  // rather than one going home — so the emptying is sequenced right to left. A
+  // on its own clock at the same moment, several playheads retreating at once
+  // rather than one going home, so the emptying is sequenced right to left. A
   // backwards drag still lands instantly, to stay under the finger.
   //
   // This has to be held, not derived from the previous render: pausing at the
@@ -308,14 +308,14 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
       const start = at(offset + filled)
       return `width ${at(offset) - start}ms linear ${start}ms`
     }
-    // Any other jump backwards — a drag — should not animate at all.
+    // Any other jump backwards, such as a drag, should not animate at all.
     return wentBack ? 'none' : undefined
   }
 
   function handleSeek(event) {
     const audio = audioRef.current
     if (!audio || !isFinite(playable) || playable <= 0) return
-    // The input runs in bar percent, not seconds — on a segmented bar those are
+    // The input runs in bar percent, not seconds, and on a segmented bar those are
     // no longer the same thing, and only this keeps the thumb under the finger.
     const nextTime = Math.min(fromBar(Number(event.target.value) / 100), playable)
     audio.currentTime = nextTime

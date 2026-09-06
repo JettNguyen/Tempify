@@ -5,7 +5,7 @@ export const DECADES = ['50s', '60s', '70s', '80s', '90s', '00s', '10s', '20s']
 
 const FIRST_YEAR = 1950
 
-/** "19" or "20" — the half of the label that says which century. */
+/** "19" or "20": the half of the label that says which century. */
 export function centuryOf(decade) {
   return Number(decade.slice(0, 2)) >= 50 ? '19' : '20'
 }

@@ -28,11 +28,11 @@ import { initKeyboard } from './lib/keyboard'
 import { useKeyboardDismiss } from './hooks/useKeyboardDismiss'
 import { useAuth } from './hooks/useAuth'
 
-// Admin is a large, single-user screen — keep it out of everyone else's bundle.
+// Admin is a large, single-user screen, so keep it out of everyone else's bundle.
 const Admin = lazy(() => import('./pages/Admin'))
 
-// Lives inside AuthProvider so it can wait for the session check to settle —
-// otherwise the splash hands off to a signed-out navbar that then pops.
+// Lives inside AuthProvider so it can wait for the session check to settle.
+// Otherwise the splash hands off to a signed-out navbar that then pops.
 function SplashGate() {
   const { loading } = useAuth()
   useNativeSplash(!loading)
@@ -41,13 +41,13 @@ function SplashGate() {
 
 // Re-keying on pathname remounts the routed view, so the enter animation
 // replays on every navigation. Query changes (?date=, ?view=) keep the same
-// key on purpose — those are in-page state, not a new screen.
+// key on purpose: those are in-page state, not a new screen.
 function PageTransition({ children }) {
   const { pathname } = useLocation()
   const navigationType = useNavigationType()
 
   useEffect(() => {
-    // Opening a new screen should start at the top. Going back shouldn't —
+    // Opening a new screen should start at the top. Going back shouldn't, so
     // leave the browser's own restoration alone there.
     if (navigationType === 'POP') return
     document.querySelector('.app-scroll-container')?.scrollTo({ top: 0 })

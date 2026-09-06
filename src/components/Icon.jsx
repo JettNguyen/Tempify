@@ -1,5 +1,5 @@
 // Shared line icons. One style throughout: 24x24 box, stroked in currentColor,
-// 1.75 weight, round caps — matching the navbar search icon.
+// 1.75 weight, round caps, matching the navbar search icon.
 //
 // House rule: an icon supports a label, it doesn't replace one. The exceptions
 // are places that are already unambiguous from context (a close button) or that

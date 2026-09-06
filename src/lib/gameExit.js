@@ -9,7 +9,7 @@ export function cameFromExplore(fromParam) {
 }
 
 // Someone who picked one puzzle out of Explore didn't ask for that day's
-// rotation — send them back to the shelf they pulled it off, filters and all.
+// rotation, so send them back to the shelf they pulled it off, filters and all.
 // Takes the whole search string so the return trip can carry more than the date
 // without every game having to know what is in it.
 export function exitTarget(params) {
@@ -32,7 +32,7 @@ function nextPath(path, dateParam) {
 
 // The button under a finished puzzle. Picking a single puzzle out of Explore is
 // a deliberate choice of that one puzzle, so the chain into the rest of the
-// day's rotation isn't what's wanted — offer the way back to browsing instead.
+// day's rotation isn't what's wanted, so offer the way back to browsing instead.
 export function resultAction(nextGame, params) {
   if (cameFromExplore(params.get('from'))) {
     return { to: exitTarget(params), label: '← Back to Explore' }

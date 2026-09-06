@@ -51,7 +51,7 @@
   color: var(--text-dim);
 }
 
-/* Was a 22px target with no surface — too small to hit and nothing happened
+/* Was a 22px target with no surface, too small to hit and nothing happened
    visually when you did. Now a proper 40px circle that fills on press. */
 .search-modal__close {
   width: 40px;

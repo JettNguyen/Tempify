@@ -84,10 +84,10 @@ export default function Privacy() {
           legal bases:
         </p>
         <ul>
-          <li>Performance of a contract — creating and running your account, saving your progress, and providing Tempify+ features you have paid for.</li>
-          <li>Legitimate interests — keeping the service secure, preventing cheating and abuse, and understanding and fixing faults.</li>
-          <li>Consent — optional choices you make, such as setting a username or making your scores visible on leaderboards. You can withdraw consent at any time by changing the setting or deleting your account.</li>
-          <li>Legal obligation — keeping records we are required to keep, such as those relating to purchases and tax.</li>
+          <li>Performance of a contract: creating and running your account, saving your progress, and providing Tempify+ features you have paid for.</li>
+          <li>Legitimate interests: keeping the service secure, preventing cheating and abuse, and understanding and fixing faults.</li>
+          <li>Consent: optional choices you make, such as setting a username or making your scores visible on leaderboards. You can withdraw consent at any time by changing the setting or deleting your account.</li>
+          <li>Legal obligation: keeping records we are required to keep, such as those relating to purchases and tax.</li>
         </ul>
       </section>
 
@@ -110,7 +110,7 @@ export default function Privacy() {
       <section className="privacy-section">
         <h2>What Other People Can See</h2>
         <p>
-          If you set a username, your profile — username, avatar, and premium badge — can be found by
+          If you set a username, your profile (username, avatar, and premium badge) can be found by
           other signed-in users through in-app search. Your scores appear on leaderboards according to
           the leaderboard visibility setting on your profile, which you can change at any time.
           Your email address is never shown to other users.
@@ -124,11 +124,11 @@ export default function Privacy() {
           for its role.
         </p>
         <ul>
-          <li>Supabase — authentication, database, and backend services.</li>
-          <li>Sign in with Apple and Google Sign-In — optional account sign-in.</li>
-          <li>Stripe — subscription and one-time purchases on the web.</li>
-          <li>Apple and RevenueCat — in-app purchases and subscription status on iOS. Your account identifier is shared with RevenueCat so purchases stay tied to your account.</li>
-          <li>Deezer — song search and audio previews for puzzle content, requested through our own proxy so your device does not contact Deezer directly.</li>
+          <li>Supabase: authentication, database, and backend services.</li>
+          <li>Sign in with Apple and Google Sign-In: optional account sign-in.</li>
+          <li>Stripe: subscription and one-time purchases on the web.</li>
+          <li>Apple and RevenueCat: in-app purchases and subscription status on iOS. Your account identifier is shared with RevenueCat so purchases stay tied to your account.</li>
+          <li>Deezer: song search and audio previews for puzzle content, requested through our own proxy so your device does not contact Deezer directly.</li>
         </ul>
       </section>
 
@@ -184,12 +184,12 @@ export default function Privacy() {
           personal data:
         </p>
         <ul>
-          <li>Access — ask for a copy of the personal data we hold about you.</li>
-          <li>Correction — ask us to fix data that is wrong or incomplete.</li>
-          <li>Deletion — ask us to erase your data, which you can also do yourself from the Profile screen.</li>
-          <li>Portability — ask for your data in a portable, machine-readable format.</li>
-          <li>Restriction and objection — ask us to pause or stop certain processing, including processing based on legitimate interests.</li>
-          <li>Withdraw consent — for anything you agreed to optionally, without affecting what happened before you withdrew.</li>
+          <li>Access: ask for a copy of the personal data we hold about you.</li>
+          <li>Correction: ask us to fix data that is wrong or incomplete.</li>
+          <li>Deletion: ask us to erase your data, which you can also do yourself from the Profile screen.</li>
+          <li>Portability: ask for your data in a portable, machine-readable format.</li>
+          <li>Restriction and objection: ask us to pause or stop certain processing, including processing based on legitimate interests.</li>
+          <li>Withdraw consent: for anything you agreed to optionally, without affecting what happened before you withdrew.</li>
         </ul>
         <p>
           To exercise any of these, email{' '}
@@ -227,7 +227,7 @@ export default function Privacy() {
         <p>
           Tempify is not directed to children under 13, and accounts are limited to users 13 and
           older. If you are in the European Economic Area or the United Kingdom, the minimum age for
-          consenting to online services in your country may be higher than 13 — up to 16 — and you
+          consenting to online services in your country may be higher than 13, up to 16, and you
           should not create an account unless you meet it. If you believe a child below the
           applicable age has created an account, contact us and we will delete it.
         </p>

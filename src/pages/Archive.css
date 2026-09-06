@@ -133,7 +133,7 @@
 }
 
 /* Month navigation. The incoming month slides in from the side you moved
-   toward — far enough to read as motion, short enough not to stall. */
+   toward, far enough to read as motion, short enough not to stall. */
 @keyframes calSlideFromRight {
   from { opacity: 0; transform: translateX(18px); }
   to   { opacity: 1; transform: none; }

@@ -12,7 +12,7 @@ async function hideSplash(hiddenRef) {
     const { SplashScreen } = await import('@capacitor/splash-screen')
     await SplashScreen.hide()
   } catch {
-    // Plugin unavailable or already hidden — nothing to recover from.
+    // Plugin unavailable or already hidden, so nothing to recover from.
   }
 }
 

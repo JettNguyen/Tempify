@@ -53,7 +53,7 @@ export default function Sampled() {
   const { stop, display } = useGameTimer(!done, 250, `tempify_game_sampled_${puzzleDate}`)
 
   useEffect(() => {
-    // Already seeded from cache — refetching would only re-run derived
+    // Already seeded from cache, since refetching would only re-run derived
     // state (option order) and make the screen jump.
     if (cachedPuzzle) return
     getPuzzle('sampled', dateParam)

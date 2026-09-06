@@ -18,7 +18,7 @@ export default function UsernameSetupModal() {
 
     const trimmed = username.trim().toLowerCase()
     if (!/^[a-z0-9_]{2,20}$/.test(trimmed)) {
-      setError('2–20 characters: letters, numbers, underscores only.')
+      setError('2-20 characters: letters, numbers, underscores only.')
       return
     }
 
@@ -66,7 +66,7 @@ export default function UsernameSetupModal() {
           {error && <p className="username-modal__error">{error}</p>}
 
           <p className="username-modal__hint">
-            Letters, numbers, underscores · 2–20 characters
+            Letters, numbers, underscores · 2-20 characters
           </p>
 
           <button

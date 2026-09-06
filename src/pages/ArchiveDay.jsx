@@ -57,7 +57,7 @@ export default function ArchiveDay() {
   const tiles = ALL_GAME_SLUGS
     .filter(slug => puzzleMap[slug])
     .map(slug => ({
-      // slug drives the per-game colour and symbol — it was missing here, so
+      // slug drives the per-game colour and symbol, which was missing here, so
       // archive tiles rendered with no theme colour at all.
       slug,
       name: GAME_BY_SLUG[slug].name,

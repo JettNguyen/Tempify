@@ -56,7 +56,7 @@ export default function OneBar() {
   const [notice, setNotice] = useState(null)
 
   useEffect(() => {
-    // Already seeded from cache — refetching would only re-run derived
+    // Already seeded from cache, since refetching would only re-run derived
     // state (option order) and make the screen jump.
     if (cachedPuzzle) return
     getPuzzle('one-bar', dateParam)
@@ -73,7 +73,7 @@ export default function OneBar() {
       const count = stored?.attempts || 1
       const wasCorrect = stored?.completed ?? false
       const fake = Array.from({ length: count }, (_, i) => ({
-        title: i === count - 1 && wasCorrect ? puzzle.answer : '—',
+        title: i === count - 1 && wasCorrect ? puzzle.answer : '-',
         artist: '',
         correct: i === count - 1 && wasCorrect,
       }))
@@ -165,7 +165,7 @@ export default function OneBar() {
         }
       }
     } else {
-      // Wrong, but the round continues — distinct from the failure buzz the
+      // Wrong, but the round continues, distinct from the failure buzz the
       // result card fires when the last guess is spent.
       if (!attempt.skipped) hapticWrong()
       guessInputRef.current?.clear()
@@ -245,7 +245,7 @@ export default function OneBar() {
         <>
           <GuessInput ref={guessInputRef} onGuess={handleGuess} disabled={done} />
           {notice && <p className="one-bar__notice" role="status">{notice}</p>}
-          {/* On the last guess there is nothing left to unlock — the button
+          {/* On the last guess there is nothing left to unlock, so the button
               forfeits the round, and should say so rather than inviting a tap
               that reads as harmless. */}
           <button
@@ -254,7 +254,7 @@ export default function OneBar() {
             className={`one-bar__skip btn-press${remainingGuesses === 1 ? ' one-bar__skip--final' : ''}`}
           >
             <Icon name={remainingGuesses === 1 ? 'alert' : 'skipForward'} size={14} />
-            {remainingGuesses === 1 ? 'Give up — reveal the answer' : 'Skip — unlock more audio'}
+            {remainingGuesses === 1 ? 'Give up and reveal the answer' : 'Skip to unlock more audio'}
           </button>
         </>
       )}

@@ -6,7 +6,7 @@
   padding: 1rem 1.25rem;
 }
 
-/* Positioned so they paint over the waveform behind them — both sit in flow
+/* Positioned so they paint over the waveform behind them, and both sit in flow
    order, and positioned elements win. */
 .audio-player__label,
 .audio-player__controls {
@@ -127,7 +127,7 @@
 }
 
 /* Both a step brighter than they were. Over the visualiser --text-dim measures
-   1.9:1 against the card, which no amount of dialling back the bars fixes — the
+   1.9:1 against the card, which no amount of dialling back the bars fixes, and the
    colour was the problem, not the backdrop. The gap between the two is kept so
    the elapsed time still leads. */
 .audio-player__time {
@@ -139,7 +139,7 @@
   color: var(--text-muted);
 }
 
-/* Waveform — a quiet "this is playing right now" signal, spread across the whole
+/* Waveform: a quiet "this is playing right now" signal, spread across the whole
    card as a backdrop rather than a badge tucked between the timestamps. Clipped
    to the card's own corners here rather than with overflow on the card itself,
    which would have cropped the play button's pulse ring. */
@@ -198,7 +198,7 @@
 
 /* The global reduced-motion rule freezes every animation on its first frame.
    Pin the resting silhouette explicitly rather than depending on which frame
-   that turns out to be — still a waveform, just a still one. */
+   that turns out to be: still a waveform, just a still one. */
 @media (prefers-reduced-motion: reduce) {
   .audio-player__wave-bar {
     animation: none !important;

@@ -7,7 +7,7 @@
 export const ONE_BAR_SILHOUETTE = [30, 62, 98, 46, 80, 38, 22]
 
 const GLYPHS = {
-  // A clip of a waveform — the sliver of audio you get to hear.
+  // A clip of a waveform: the sliver of audio you get to hear.
   'one-bar': (
     <g>
       {ONE_BAR_SILHOUETTE.map((h, i) => (
@@ -23,7 +23,7 @@ const GLYPHS = {
       ))}
     </g>
   ),
-  // A record — the decade you're trying to place.
+  // A record: the decade you're trying to place.
   'era': (
     <g fill="none" stroke="currentColor" strokeWidth="7">
       <circle cx="60" cy="60" r="50" />

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { dismissKeyboard } from '../lib/keyboard'
 
-// Tapping any control leaves focus handling to that control — otherwise this
+// Tapping any control leaves focus handling to that control, since otherwise this
 // would fight buttons that deliberately keep focus, like the search field's
 // clear button.
 const INTERACTIVE = 'input, textarea, select, button, a, label, [role="button"], [contenteditable="true"]'

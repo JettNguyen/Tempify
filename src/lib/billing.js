@@ -84,7 +84,7 @@ export async function initRevenueCat(appUserId = null) {
     return true
   }
 
-  // SDK already running — if a real user ID is now available and differs from
+  // SDK already running, so if a real user ID is now available and differs from
   // what RC currently knows (e.g. was configured anonymously before login),
   // switch the RC customer with logIn() so entitlements resolve correctly.
   if (appUserId && appUserId !== _rcCurrentUserId) {
@@ -151,7 +151,7 @@ export async function presentPaywall() {
  * Present the paywall only if the user doesn't already hold the entitlement.
  * Returns { purchased: boolean, result: PAYWALL_RESULT }.
  *
- * Use this to gate premium features — it silently skips the paywall for
+ * Use this to gate premium features: it silently skips the paywall for
  * subscribers while showing it to free users.
  */
 export async function presentPaywallIfNeeded() {
@@ -181,7 +181,7 @@ export async function presentPaywallIfNeeded() {
 
 /**
  * Restore prior App Store purchases and return whether the entitlement is
- * now active. Required by Apple — always expose this to users.
+ * now active. Required by Apple: always expose this to users.
  */
 export async function restorePurchases() {
   if (!usesNativeIap()) throw new Error('Restore is only available in the mobile app.')
@@ -227,7 +227,7 @@ export async function getNativeManageSubscriptionsUrl() {
 
 /**
  * Opens Apple's native in-app refund request flow for the active entitlement.
- * Shows a system sheet inside the app — no browser required.
+ * Shows a system sheet inside the app, with no browser required.
  */
 export async function requestRefundForActiveEntitlement() {
   if (!usesNativeIap()) throw new Error('Refunds are only available in the mobile app.')

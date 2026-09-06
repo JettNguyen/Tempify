@@ -4,7 +4,7 @@ import { getAnalyser, primeAudioContext, onContextStateChange } from '../lib/aud
 // A bar that is audible at all keeps enough height to stay taller than it is
 // wide, so its rounded ends read as ends rather than as a dot.
 const FLOOR = 0.2
-// Below this a frequency is not quiet, it is absent — those bars come off the
+// Below this a frequency is not quiet, it is absent, so those bars come off the
 // row entirely rather than sitting at the floor pretending to carry something.
 const SILENT = 0.02
 const MAX_HEIGHT = 82        // matches the symbol's tallest bar, as in the CSS
@@ -12,7 +12,7 @@ const MAX_HEIGHT = 82        // matches the symbol's tallest bar, as in the CSS
 // A spectral tilt across the row. Music carries most of its energy at the bottom
 // of the spectrum, so read flat the low bars sit pinned at full height while the
 // top of the row barely stirs. Damping the lows matters as much as lifting the
-// highs — only boosting the highs leaves the bass exactly where it was.
+// highs, and only boosting the highs leaves the bass exactly where it was.
 const LOW_GAIN = 0.6
 const HIGH_GAIN = 2.2
 const FIRST_BIN = 1              // bin 0 is DC, always junk
@@ -29,8 +29,8 @@ function binRanges(barCount, binCount) {
   const ranges = []
   let cursor = FIRST_BIN
   for (let i = 0; i < barCount; i++) {
-    // Carried forward rather than recomputed, so the lowest bars — where the
-    // curve is flattest — get a bin each instead of all sharing the first one.
+    // Carried forward rather than recomputed, so the lowest bars, where the
+    // curve is flattest, get a bin each instead of all sharing the first one.
     const from = Math.max(cursor, Math.floor(FIRST_BIN * Math.exp(step * i)))
     const to = Math.min(binCount, Math.max(from + 1, Math.floor(FIRST_BIN * Math.exp(step * (i + 1)))))
     ranges.push([from, to])
@@ -44,7 +44,7 @@ function binRanges(barCount, binCount) {
  * possible. Writes straight to the DOM: this runs every frame, and putting it
  * through React state would re-render the whole player 60 times a second.
  *
- * Does nothing at all when no analyser is available — the canned CSS animation
+ * Does nothing at all when no analyser is available: the canned CSS animation
  * is left running in its place, which is the common case rather than an error.
  */
 export function useAudioBars(audioRef, waveRef, playing, barCount) {
@@ -98,7 +98,7 @@ export function useAudioBars(audioRef, waveRef, playing, barCount) {
     }
 
     // Resuming the context is asynchronous, so the first play routinely arrives
-    // before it is awake — and with autoplay, before any tap at all. Ask again
+    // before it is awake, and with autoplay, before any tap at all. Ask again
     // when it wakes rather than settling for the canned loop for the whole clip.
     let unsubscribe = () => {}
     const attempt = () => {

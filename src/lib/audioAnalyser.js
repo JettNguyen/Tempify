@@ -2,7 +2,7 @@
 //
 // Web Audio is one-way and unforgiving: the moment an element is routed into a
 // graph, its sound only ever comes out through that graph. Two things then
-// produce silence rather than an error —
+// produce silence rather than an error:
 //   1. a suspended AudioContext (Safari starts every context suspended and only
 //      a user gesture can start one), and
 //   2. media the page can't read cross-origin, which the spec says the source
@@ -28,7 +28,7 @@ function getContext() {
   return ctx
 }
 
-/** Start the context from a real user gesture — the only thing Safari accepts. */
+/** Start the context from a real user gesture, the only thing Safari accepts. */
 export function primeAudioContext() {
   const c = getContext()
   if (c?.state === 'suspended') c.resume().catch(() => {})
@@ -45,7 +45,7 @@ export function armAudioContext() {
 
 /**
  * An AnalyserNode for this element, or null when it isn't safe to connect one.
- * Null is the normal, expected answer — callers fall back to the canned
+ * Null is the normal, expected answer: callers fall back to the canned
  * animation and the audio is never touched.
  */
 export function getAnalyser(el) {
@@ -62,8 +62,8 @@ export function getAnalyser(el) {
   try {
     const source = c.createMediaElementSource(el)
     const analyser = c.createAnalyser()
-    // 512 bins at ~43Hz each. Coarser than this and the lowest bars — where a
-    // log scale wants the most detail — all land on the same bin and move as one.
+    // 512 bins at ~43Hz each. Coarser than this and the lowest bars, where a
+    // log scale wants the most detail, all land on the same bin and move as one.
     analyser.fftSize = 1024
     // Enough smoothing to stop single-frame jitter, little enough to still land
     // on the beat rather than trailing along behind it.
