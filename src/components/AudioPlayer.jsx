@@ -9,6 +9,40 @@ const WAVE_BARS = 9
 const SEGMENT_GAP = 3
 const EPS = 1e-6
 
+// Segments are laid out on a stylised scale, not in real seconds. In seconds the
+// first two guesses each buy the same half-second, so they render as twin blocks
+// — and every concave rescaling of the real timings makes the second segment
+// *smaller* than the first, which reads worse still. Giving each stage a fixed
+// step more room than the one before is the only arrangement that rises the
+// whole way, and it has a second benefit: a half-second clip sweeps a visible
+// segment instead of nudging the playhead two percent of the bar.
+const SEGMENT_GROWTH = 1.45
+
+/** Where a moment in the audio sits on the bar, 0-1. The bar is piecewise
+ *  linear: even pace inside a segment, changing pace at each guess boundary. */
+function timeToBar(segments, t) {
+  const last = segments[segments.length - 1]
+  for (const seg of segments) {
+    if (t < seg.end || seg === last) {
+      const within = (t - seg.start) / (seg.end - seg.start)
+      return seg.offset + seg.width * Math.min(Math.max(within, 0), 1)
+    }
+  }
+  return 1
+}
+
+/** The inverse, for turning a drag back into a seek. */
+function barToTime(segments, x) {
+  const last = segments[segments.length - 1]
+  for (const seg of segments) {
+    if (x < seg.offset + seg.width || seg === last) {
+      const within = (x - seg.offset) / seg.width
+      return seg.start + (seg.end - seg.start) * Math.min(Math.max(within, 0), 1)
+    }
+  }
+  return last.end
+}
+
 const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpan, segmentStops, label, onPlay, autoplay }, ref) {
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
@@ -105,25 +139,39 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   const barTotal = trackSpan ? Math.min(trackSpan, duration || Infinity) : playable
   const hasBar = barTotal > 0 && isFinite(barTotal)
 
-  const progress = hasBar ? Math.min(currentTime / barTotal, 1) : 0
-  const unlockedRatio = hasBar ? Math.min(playable / barTotal, 1) : 1
-
   // `segmentStops` are cumulative points inside the span where the bar is cut.
   // One Bar passes the seconds each guess unlocks, so the timeline *is* the
   // guess ladder — one control to read instead of two rows that must agree.
   const segments = useMemo(() => {
     if (!segmentStops?.length || !hasBar) return null
-    const out = []
+    const cuts = []
     let prev = 0
     for (const stop of segmentStops) {
       const end = Math.min(stop, barTotal)
-      if (end > prev) out.push({ start: prev, end })
+      if (end > prev) cuts.push({ start: prev, end })
       prev = end
       if (prev >= barTotal) break
     }
-    return out.length ? out : null
+    if (!cuts.length) return null
+
+    const weights = cuts.map((_, i) => SEGMENT_GROWTH ** i)
+    const total = weights.reduce((a, b) => a + b, 0)
+    let offset = 0
+    return cuts.map((cut, i) => {
+      const width = weights[i] / total
+      const seg = { ...cut, width, offset }
+      offset += width
+      return seg
+    })
   }, [segmentStops, hasBar, barTotal])
 
+  // One coordinate system for the bar whether or not it is segmented: 0-1 across
+  // the whole track, so the fill, the scrubber and the seek all speak it.
+  const toBar = (t) => (segments ? timeToBar(segments, t) : hasBar ? Math.min(t / barTotal, 1) : 0)
+  const fromBar = (x) => (segments ? barToTime(segments, x) : x * barTotal)
+
+  const progress = toBar(currentTime)
+  const unlockedBar = hasBar ? toBar(playable) : 1
   const unlockedCount = segments
     ? segments.filter((seg) => seg.end <= playable + EPS).length
     : 0
@@ -132,13 +180,15 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   // drift from the segment edge it is meant to stop at. Take the gaps out, scale
   // what is left, then add back the gaps that fall inside the unlocked run.
   const scrubWidth = segments
-    ? `calc((100% - ${(segments.length - 1) * SEGMENT_GAP}px) * ${unlockedRatio} + ${Math.max(0, unlockedCount - 1) * SEGMENT_GAP}px)`
-    : `${unlockedRatio * 100}%`
+    ? `calc((100% - ${(segments.length - 1) * SEGMENT_GAP}px) * ${unlockedBar} + ${Math.max(0, unlockedCount - 1) * SEGMENT_GAP}px)`
+    : `${unlockedBar * 100}%`
 
   function handleSeek(event) {
     const audio = audioRef.current
     if (!audio || !isFinite(playable) || playable <= 0) return
-    const nextTime = Math.min(Number(event.target.value), playable)
+    // The input runs in bar percent, not seconds — on a segmented bar those are
+    // no longer the same thing, and only this keeps the thumb under the finger.
+    const nextTime = Math.min(fromBar(Number(event.target.value) / 100), playable)
     audio.currentTime = nextTime
     setCurrentTime(nextTime)
   }
@@ -187,7 +237,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
                 <span
                   key={i}
                   className={`audio-player__segment${seg.end <= playable + EPS ? ' audio-player__segment--unlocked' : ''}`}
-                  style={{ flexGrow: span }}
+                  style={{ flexGrow: seg.width }}
                 >
                   <span className="audio-player__segment-fill" style={{ width: `${played * 100}%` }} />
                 </span>
@@ -214,9 +264,10 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
               style={{ width: scrubWidth }}
               type="range"
               min="0"
-              max={playable > 0 && isFinite(playable) ? playable : 0}
-              step="0.01"
-              value={Math.min(currentTime, playable || 0)}
+              max={playable > 0 && isFinite(playable) ? unlockedBar * 100 : 0}
+              step="0.5"
+              value={Math.min(progress, unlockedBar) * 100}
+              aria-valuetext={fmt(currentTime)}
               onChange={handleSeek}
               disabled={!src || !isFinite(playable) || playable <= 0}
             />
