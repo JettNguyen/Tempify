@@ -7,6 +7,7 @@ import { todayEST } from '../lib/date'
 import { prefetchPuzzlesForDate } from '../lib/puzzles'
 import { GAMES } from '../lib/games'
 import GameGrid from '../components/GameGrid'
+import DailyCompleteCta from '../components/DailyCompleteCta'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
 import './Home.css'
 
@@ -14,9 +15,10 @@ const dateLabel = () =>
   new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' })
 
 export default function Home() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { isComplete, refresh: refreshCompletions } = useCompletion(user?.id)
   const [genres, setGenres] = useState({})
+  const [scheduledSlugs, setScheduledSlugs] = useState([])
 
   // Doubles as a warm-up: the puzzles land in the shared cache, so tapping a
   // tile opens the game with no fetch and no spinner.
@@ -25,6 +27,7 @@ export default function Home() {
     const map = {}
     puzzles.forEach((p) => { if (p.genre) map[p.game_slug] = p.genre })
     setGenres(map)
+    setScheduledSlugs(GAMES.map(g => g.slug).filter(slug => puzzles.some(p => p.game_slug === slug)))
   }, [])
 
   useEffect(() => { fetchGenres() }, [fetchGenres])
@@ -41,6 +44,11 @@ export default function Home() {
     complete: isComplete(game.slug, todayEST()),
     genre: genres[game.slug],
   }))
+
+  // Measured against what was actually scheduled, so a missing puzzle doesn't
+  // leave someone who played everything available with nothing to move on to.
+  const allComplete = scheduledSlugs.length > 0 &&
+    scheduledSlugs.every(slug => isComplete(slug, todayEST()))
 
   return (
     <div
@@ -59,7 +67,11 @@ export default function Home() {
 
       <GameGrid games={tiles} />
 
-      {!user && (
+      {allComplete && (
+        <DailyCompleteCta user={user} isSubscribed={profile?.is_subscribed} />
+      )}
+
+      {!user && !allComplete && (
         <p className="home-no-account">
           <Link to="/login">Log in</Link> to track streaks and access the archive.
         </p>
