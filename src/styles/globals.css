@@ -438,26 +438,6 @@ body.is-scrolling button:not(:disabled):active {
 }
 
 /* Home page game grid - responsive */
-.home-grid-mid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.home-grid-bot {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: 0.75rem;
-}
-
-/* A row left with one tile spans the full width instead of stranding a gap
-   beside it — the lineup length changes as games come and go. */
-.home-grid-mid > :only-child,
-.home-grid-bot > :only-child {
-  grid-column: 1 / -1;
-}
-
 /* Grid stays 2-column on all sizes - tiles compact themselves instead */
 
 /* Prevent iOS from zooming in on input focus */

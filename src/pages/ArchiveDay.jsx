@@ -7,7 +7,7 @@ import { GAME_BY_SLUG, ALL_GAME_SLUGS } from '../lib/games'
 import { prefetchPuzzlesForDate } from '../lib/puzzles'
 import ArchiveLock from '../components/ArchiveLock'
 import DelayedSpinner from '../components/DelayedSpinner'
-import GameTile from '../components/GameTile'
+import GameGrid from '../components/GameGrid'
 import './ArchiveDay.css'
 import './Home.css'
 
@@ -53,10 +53,18 @@ export default function ArchiveDay() {
   puzzles.forEach(p => { puzzleMap[p.game_slug] = p })
 
   // Retired games still appear on the dates they ran, so history stays playable.
-  const available = ALL_GAME_SLUGS.filter(slug => puzzleMap[slug])
-  const [featuredSlug, ...rest] = available
-  const middle = rest.slice(0, 2)
-  const bottom = rest.slice(2)
+  const tiles = ALL_GAME_SLUGS
+    .filter(slug => puzzleMap[slug])
+    .map(slug => ({
+      // slug drives the per-game colour and symbol — it was missing here, so
+      // archive tiles rendered with no theme colour at all.
+      slug,
+      name: GAME_BY_SLUG[slug].name,
+      description: GAME_BY_SLUG[slug].description,
+      path: `${GAME_BY_SLUG[slug].path}?date=${date}`,
+      complete: completedSlugs.has(slug),
+      genre: puzzleMap[slug]?.genre,
+    }))
 
   return (
     <div className="page-shell-wide">
@@ -71,53 +79,10 @@ export default function ArchiveDay() {
         <ArchiveLock />
       ) : fetching ? (
         <DelayedSpinner active={fetching} label="Loading archive day..." />
-      ) : available.length === 0 ? (
+      ) : tiles.length === 0 ? (
         <p className="archive-day-empty">No puzzles found for this date.</p>
       ) : (
-        <>
-          {featuredSlug && (
-            <div style={{ marginBottom: '0.75rem' }}>
-              <GameTile
-                name={GAME_BY_SLUG[featuredSlug].name}
-                description={GAME_BY_SLUG[featuredSlug].description}
-                path={`${GAME_BY_SLUG[featuredSlug].path}?date=${date}`}
-                complete={completedSlugs.has(featuredSlug)}
-                genre={puzzleMap[featuredSlug]?.genre}
-                featured
-              />
-            </div>
-          )}
-
-          {middle.length > 0 && (
-            <div className="home-grid-mid">
-              {middle.map(slug => (
-                <GameTile
-                  key={slug}
-                  name={GAME_BY_SLUG[slug].name}
-                  description={GAME_BY_SLUG[slug].description}
-                  path={`${GAME_BY_SLUG[slug].path}?date=${date}`}
-                  complete={completedSlugs.has(slug)}
-                  genre={puzzleMap[slug]?.genre}
-                />
-              ))}
-            </div>
-          )}
-
-          {bottom.length > 0 && (
-            <div className="home-grid-bot">
-              {bottom.map(slug => (
-                <GameTile
-                  key={slug}
-                  name={GAME_BY_SLUG[slug].name}
-                  description={GAME_BY_SLUG[slug].description}
-                  path={`${GAME_BY_SLUG[slug].path}?date=${date}`}
-                  complete={completedSlugs.has(slug)}
-                  genre={puzzleMap[slug]?.genre}
-                />
-              ))}
-            </div>
-          )}
-        </>
+        <GameGrid games={tiles} />
       )}
     </div>
   )

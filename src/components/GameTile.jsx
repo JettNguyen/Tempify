@@ -1,26 +1,17 @@
 import { Link } from 'react-router-dom'
 import { GENRE_COLORS } from '../lib/genres'
+import GameGlyph from './GameGlyph'
 import './GameTile.css'
 
-export default function GameTile({ slug, name, description, path, complete, featured, genre }) {
+export default function GameTile({ slug, name, description, path, complete, featured, genre, className = '' }) {
   const genreStyle = genre && GENRE_COLORS[genre]
 
   return (
     <Link
       to={path}
-      className={`game-tile card-hover btn-press game-theme--${slug}${featured ? ' game-tile--featured' : ''}`}
+      className={`game-tile card-hover btn-press game-theme--${slug}${featured ? ' game-tile--featured' : ''}${className ? ` ${className}` : ''}`}
     >
-      {featured && (
-        <svg
-          aria-hidden="true"
-          className="game-tile__waveform"
-          viewBox="0 0 320 60"
-        >
-          {[4,10,18,28,14,22,36,16,30,8,20,32,12,24,40,16,28,8,18,10,6,14,20,12,16,8,4,10,16,6].map((h, i) => (
-            <rect key={i} x={i * 11} y={(60 - h) / 2} width="7" height={h} rx="3" fill="var(--text-primary)" />
-          ))}
-        </svg>
-      )}
+      <GameGlyph slug={slug} className="game-tile__glyph" />
 
       <div className="game-tile__header">
         <div className="game-tile__body">

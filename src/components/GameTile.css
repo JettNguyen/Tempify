@@ -1,38 +1,55 @@
 .game-tile {
-  display: block;
+  /* Column so the footer can be pushed to the bottom when a tile is stretched
+     to fill a taller grid cell. */
+  display: flex;
+  flex-direction: column;
   position: relative;
   border: 1.5px solid var(--game-color);
   border-radius: 10px;
   overflow: hidden;
-  padding: 1.5rem;
+  padding: 1.25rem;
 }
 
 .game-tile--featured {
-  padding: 2rem 1.75rem;
+  padding: 1.75rem 1.5rem;
 }
 
-.game-tile__waveform {
+/* The game's symbol, bled off the bottom-right corner as a watermark. */
+.game-tile__glyph {
   position: absolute;
-  right: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 180px;
-  opacity: 0.06;
+  right: -18px;
+  bottom: -18px;
+  width: 108px;
+  height: 108px;
+  color: var(--game-color);
+  opacity: 0.13;
   pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.game-tile--featured .game-tile__glyph {
+  width: 150px;
+  height: 150px;
+  right: -22px;
+  bottom: -22px;
+  opacity: 0.16;
 }
 
 .game-tile__header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 0.5rem;
 }
 
 .game-tile__body {
   flex: 1;
+  min-width: 0;
 }
 
-.game-tile--featured .game-tile__body {
-  padding-right: 120px;
+.game-tile__header,
+.game-tile__body {
+  position: relative;
 }
 
 .game-tile__name {
@@ -75,7 +92,9 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-top: 1.25rem;
+  margin-top: auto;
+  padding-top: 1.25rem;
+  position: relative;
 }
 
 .game-tile__play-badge {
@@ -111,10 +130,18 @@
 
 @media (max-width: 480px) {
   .game-tile {
-    padding: 1rem 0.9rem;
+    padding: 0.95rem 0.85rem;
   }
   .game-tile--featured {
-    padding: 1.4rem 1.1rem;
+    padding: 1.25rem 1rem;
+  }
+  .game-tile__glyph {
+    width: 84px;
+    height: 84px;
+  }
+  .game-tile--featured .game-tile__glyph {
+    width: 112px;
+    height: 112px;
   }
   .game-tile__name {
     font-size: 13px;
@@ -123,7 +150,7 @@
     font-size: 11px;
   }
   .game-tile__footer {
-    margin-top: 0.85rem;
+    padding-top: 0.85rem;
     gap: 0.4rem;
   }
   .game-tile__play-badge {
@@ -136,9 +163,6 @@
     padding: 3px 7px;
     max-width: 60px;
   }
-  .game-tile--featured .game-tile__body {
-    padding-right: 80px;
-  }
 }
 
 @media (max-width: 420px) {
@@ -150,5 +174,13 @@
 
   .game-tile__genre-pill {
     max-width: 100%;
+  }
+}
+
+/* Hover lifts the symbol slightly — the tile already handles background. */
+@media (hover: hover) and (pointer: fine) {
+  .game-tile:hover .game-tile__glyph {
+    opacity: 0.22;
+    transform: translate(-3px, -3px);
   }
 }
