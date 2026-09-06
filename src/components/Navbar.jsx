@@ -25,10 +25,13 @@ export default function Navbar() {
     return `navbar__link nav-link${active ? ' navbar__link--active' : ''}`
   }
 
+  const profilePath = profile?.username ? `/u/${profile.username}` : '/profile'
+  const profileActive = pathname === '/profile' || pathname === profilePath
+
   return (
     <>
       <nav className="navbar">
-        <Link to="/" className="navbar__brand">
+        <Link to="/" className="navbar__brand btn-press">
           <img src={logoUrl} alt="" aria-hidden="true" className="navbar__logo" />
           <span className="navbar__wordmark">Tempify</span>
         </Link>
@@ -36,7 +39,7 @@ export default function Navbar() {
         <div className="navbar__links">
           {user ? (
             <>
-              <button className="navbar__search-btn" onClick={() => setSearchOpen(true)} title="Search users">
+              <button className="navbar__search-btn btn-press" onClick={() => setSearchOpen(true)} title="Search users" aria-label="Search users">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
@@ -45,7 +48,12 @@ export default function Navbar() {
               {isAdmin && (
                 <Link to="/admin" className={`${linkClass('/admin')} navbar__link--admin`}>Admin</Link>
               )}
-              <Link to={profile?.username ? `/u/${profile.username}` : '/profile'} className="btn-press" title="Your profile">
+              <Link
+                to={profilePath}
+                className={`navbar__avatar btn-press${profileActive ? ' navbar__avatar--active' : ''}`}
+                title="Your profile"
+                aria-current={profileActive ? 'page' : undefined}
+              >
                 <Avatar iconKey={profile?.avatar_icon} color={profile?.avatar_color} initial={initial} size={32} />
               </Link>
             </>

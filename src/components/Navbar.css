@@ -29,6 +29,7 @@
 }
 
 .navbar__wordmark {
+  transition: color 0.2s ease;
   font-family: Inter, system-ui, sans-serif;
   font-weight: 500;
   font-size: 18px;
@@ -57,9 +58,42 @@
   color: var(--amber);
 }
 
+/* Avatar is the profile "tab" — it needs an active state of its own, since the
+   text links get an underline and this one can't. */
+.navbar__avatar {
+  display: inline-flex;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 var(--amber);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.navbar__avatar--active {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--amber);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .navbar__link:hover {
     color: var(--text-primary);
+  }
+
+  .navbar__avatar:hover {
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--border);
+  }
+
+  .navbar__avatar--active:hover {
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--amber-light);
+  }
+
+  .navbar__brand:hover .navbar__wordmark {
+    color: var(--amber-light);
+  }
+
+  .navbar__search-btn:hover {
+    color: var(--text-primary);
+  }
+
+  .navbar__search-result:hover {
+    background: #1a1a1a;
   }
 }
 
@@ -97,10 +131,6 @@
   color: var(--text-muted);
   padding: 4px;
   transition: color 120ms;
-}
-
-.navbar__search-btn:hover {
-  color: var(--text-primary);
 }
 
 .navbar__search-box {
@@ -152,6 +182,3 @@
   border-bottom: none;
 }
 
-.navbar__search-result:hover {
-  background: #1a1a1a;
-}
