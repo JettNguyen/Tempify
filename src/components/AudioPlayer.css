@@ -157,6 +157,13 @@
   animation-play-state: running;
 }
 
+/* Driven by the audio itself. The keyframes have to go: a running animation
+   beats an inline transform, so the two would fight and the canned loop would
+   win. */
+.audio-player__wave--live .audio-player__wave-bar {
+  animation: none;
+}
+
 /* Uneven resting heights and mismatched durations: the row reads as a waveform
    rather than a marching wave, and the loop never visibly repeats. */
 .audio-player__wave-bar:nth-child(1) { height: 5px;  animation-duration: 0.9s;  animation-delay: 0s; }

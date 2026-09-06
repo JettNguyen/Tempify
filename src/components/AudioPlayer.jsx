@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react'
+import { armAudioContext } from '../lib/audioAnalyser'
+import { useAudioBars } from '../hooks/useAudioBars'
 import './AudioPlayer.css'
 
 // Bar count is mirrored by the nth-child heights in AudioPlayer.css.
@@ -52,7 +54,12 @@ function barToTime(segments, x) {
 
 const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpan, segmentStops, label, onPlay, autoplay }, ref) {
   const audioRef = useRef(null)
+  const waveRef = useRef(null)
   const [playing, setPlaying] = useState(false)
+  // Reading the audio back requires crossOrigin, which a host that sends no CORS
+  // headers refuses outright. Start optimistic, and drop it if the load fails:
+  // hearing the clip matters, watching it does not.
+  const [corsBlocked, setCorsBlocked] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
 
@@ -97,21 +104,38 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
     const onPlayEvent = () => setPlaying(true)
     const onPauseEvent = () => setPlaying(false)
 
+    const onError = () => {
+      if (audio.crossOrigin) setCorsBlocked(true)
+    }
+
+    audio.addEventListener('error', onError)
     audio.addEventListener('loadedmetadata', onLoaded)
     audio.addEventListener('timeupdate', onTime)
     audio.addEventListener('ended', onEnded)
     audio.addEventListener('play', onPlayEvent)
     audio.addEventListener('pause', onPauseEvent)
     return () => {
+      audio.removeEventListener('error', onError)
       audio.removeEventListener('loadedmetadata', onLoaded)
       audio.removeEventListener('timeupdate', onTime)
       audio.removeEventListener('ended', onEnded)
       audio.removeEventListener('play', onPlayEvent)
       audio.removeEventListener('pause', onPauseEvent)
     }
-  }, [maxDuration])
+  }, [maxDuration, src])
+
+  // The first tap anywhere starts the audio context; Safari accepts nothing else.
+  useEffect(() => { armAudioContext() }, [])
+
+  useAudioBars(audioRef, waveRef, playing)
+
+  // Fetching again without crossOrigin, once, after a load that it refused.
+  useEffect(() => {
+    if (corsBlocked) audioRef.current?.load()
+  }, [corsBlocked])
 
   useEffect(() => {
+    setCorsBlocked(false)
     setCurrentTime(0)
     const audio = audioRef.current
     if (!audio) return
@@ -253,7 +277,18 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
     <div className="audio-player">
       {label && <p className="audio-player__label">{label}</p>}
 
-      <audio ref={audioRef} src={src} preload="auto" playsInline />
+      {/* Keyed by src so each clip gets its own element. Once an element is
+          routed into the audio graph it can never be un-routed, and dropping
+          crossOrigin on one that is already connected would taint it and play
+          silence. A fresh element per source keeps that decision reversible. */}
+      <audio
+        key={src}
+        ref={audioRef}
+        src={src}
+        crossOrigin={corsBlocked ? undefined : 'anonymous'}
+        preload="auto"
+        playsInline
+      />
 
       <div className="audio-player__controls">
         <button
@@ -331,6 +366,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
                 stays mounted and fades rather than popping in and out. Paused
                 animations cost nothing, so an idle player is free. */}
             <span
+              ref={waveRef}
               className={`audio-player__wave${playing ? ' audio-player__wave--active' : ''}`}
               aria-hidden="true"
             >
