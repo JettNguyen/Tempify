@@ -22,20 +22,21 @@
   opacity: 0.5;
 }
 
+/* Fills the full height of the field so the touch target stays comfortable
+   even though the glyph itself is small. */
 .guess-input__clear {
   position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 26px;
-  height: 26px;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 50%;
   color: var(--text-dim);
+  -webkit-tap-highlight-color: transparent;
   font-size: 12px;
   line-height: 1;
   cursor: pointer;

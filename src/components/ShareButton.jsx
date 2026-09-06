@@ -32,21 +32,33 @@ const RESULT_LINES = {
 }
 
 // navigator.clipboard is missing or blocked in some webviews and on insecure
-// origins, so fall back to a throwaway textarea before giving up.
+// origins, so fall back to a throwaway textarea before giving up. iOS refuses to
+// copy from a readonly field and ignores select(), so the node has to be
+// editable and selected through a Range as well as setSelectionRange().
 function legacyCopy(text) {
+  let area
   try {
-    const area = document.createElement('textarea')
+    area = document.createElement('textarea')
     area.value = text
-    area.setAttribute('readonly', '')
+    area.contentEditable = 'true'
+    area.readOnly = false
     area.style.position = 'fixed'
     area.style.top = '-9999px'
+    area.style.opacity = '0'
     document.body.appendChild(area)
-    area.select()
-    const ok = document.execCommand('copy')
-    document.body.removeChild(area)
-    return ok
+
+    const range = document.createRange()
+    range.selectNodeContents(area)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+    area.setSelectionRange(0, text.length)
+
+    return document.execCommand('copy')
   } catch {
     return false
+  } finally {
+    if (area?.parentNode) area.parentNode.removeChild(area)
   }
 }
 
