@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
+import { Share } from '@capacitor/share'
 import { fmtTime } from '../lib/date'
+import { isNativeApp } from '../lib/oauth'
 import './ShareButton.css'
 
 function fmtShareDate(dateStr) {
@@ -104,9 +106,23 @@ export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, ti
     if (emojiGrid) parts.push(emojiGrid)
     parts.push(resultLine)
     if (timeSeconds != null) parts.push(`⏱ ${fmtTime(timeSeconds)}`)
-    parts.push(url)
 
-    const ok = await copyText(parts.join('\n'))
+    const body = parts.join('\n')
+
+    // In the app, hand off to the system share sheet and pass the link
+    // separately so Messages and friends render a real link preview.
+    if (isNativeApp()) {
+      try {
+        await Share.share({ title: header, text: body, url, dialogTitle: 'Share your result' })
+        return
+      } catch (err) {
+        // Dismissing the sheet rejects too — that isn't a failure worth showing.
+        if (/cancel/i.test(err?.message || '')) return
+        // Otherwise fall through to the clipboard.
+      }
+    }
+
+    const ok = await copyText(`${body}\n${url}`)
     setState(ok ? 'copied' : 'failed')
     clearTimeout(resetRef.current)
     resetRef.current = setTimeout(() => setState('idle'), 2000)
