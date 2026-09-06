@@ -108,6 +108,12 @@
   padding: 0.5rem 0;
 }
 
+.leaderboard__empty-icon {
+  display: block;
+  margin: 0 auto 8px;
+  color: var(--text-dim);
+}
+
 .leaderboard__empty a {
   color: var(--amber);
 }

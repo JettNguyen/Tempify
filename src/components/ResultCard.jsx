@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import ShareButton from './ShareButton'
 import TrackArtwork from './TrackArtwork'
+import Icon from './Icon'
 import Leaderboard from './Leaderboard'
 import { hapticWinCelebration, hapticFailure } from '../lib/haptics'
 import { fmtTime } from '../lib/date'
@@ -36,6 +37,7 @@ export default function ResultCard({
   return (
     <div className={`result-card slide-up${correct ? ' result-card--correct' : ''}`}>
       <div className={`result-card__status${correct ? ' result-card__status--correct' : ''}`}>
+        <Icon name={correct ? 'check' : 'x'} size={15} strokeWidth={2.25} />
         {correct ? 'Correct' : 'Not quite'}
         {timeLabel && <span className="result-card__time"> · {timeLabel}</span>}
       </div>

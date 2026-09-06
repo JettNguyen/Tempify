@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { searchUsers } from '../lib/scores'
 import Avatar from './Avatar'
+import Icon from './Icon'
 import './SearchModal.css'
 
 export default function SearchModal({ onClose }) {
@@ -73,9 +74,7 @@ export default function SearchModal({ onClose }) {
     <div className="search-modal__backdrop" onMouseDown={onClose}>
       <div className="search-modal__card" onMouseDown={e => e.stopPropagation()}>
         <div className="search-modal__input-row">
-          <svg className="search-modal__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
+          <Icon name="search" size={16} strokeWidth={2} className="search-modal__icon" />
           <input
             ref={inputRef}
             autoFocus

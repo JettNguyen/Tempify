@@ -42,6 +42,9 @@
   cursor: pointer;
   background: transparent;
   transition: background-color 0.2s ease, color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .explore-view-btn--active {

@@ -8,6 +8,7 @@ import { GENRES, GENRE_COLORS } from '../lib/genres'
 import { ALL_GAMES } from '../lib/games'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { hapticSelection } from '../lib/haptics'
+import Icon from '../components/Icon'
 import ArchiveLock from '../components/ArchiveLock'
 import DelayedSpinner from '../components/DelayedSpinner'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
@@ -271,11 +272,11 @@ export default function Explore() {
             <button
               onClick={() => setView('browse')}
               className={`explore-view-btn btn-press${view === 'browse' ? ' explore-view-btn--active' : ''}`}
-            >Browse</button>
+            ><Icon name="grid" size={13} />Browse</button>
             <button
               onClick={() => setView('calendar')}
               className={`explore-view-btn btn-press${view === 'calendar' ? ' explore-view-btn--active' : ''}`}
-            >Calendar</button>
+            ><Icon name="calendar" size={13} />Calendar</button>
           </div>
         </div>
       </div>

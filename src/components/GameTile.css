@@ -17,22 +17,25 @@
 /* The game's symbol, bled off the bottom-right corner as a watermark. */
 .game-tile__glyph {
   position: absolute;
-  right: -18px;
-  bottom: -18px;
-  width: 108px;
-  height: 108px;
+  right: -8%;
+  bottom: -12%;
+  /* Sized off viewport height to match the row height, so a taller tile gets a
+     bigger symbol rather than more blank space. */
+  width: clamp(96px, 17vh, 172px);
+  height: clamp(96px, 17vh, 172px);
   color: var(--game-color);
-  opacity: 0.13;
+  opacity: 0.14;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
+/* The hero spans two rows, so its symbol has roughly double the height to fill. */
 .game-tile--featured .game-tile__glyph {
-  width: 150px;
-  height: 150px;
-  right: -22px;
-  bottom: -22px;
-  opacity: 0.16;
+  width: clamp(150px, 30vh, 290px);
+  height: clamp(150px, 30vh, 290px);
+  right: -10%;
+  bottom: -9%;
+  opacity: 0.15;
 }
 
 .game-tile__header {
@@ -136,12 +139,12 @@
     padding: 1.25rem 1rem;
   }
   .game-tile__glyph {
-    width: 84px;
-    height: 84px;
+    width: clamp(84px, 15vh, 140px);
+    height: clamp(84px, 15vh, 140px);
   }
   .game-tile--featured .game-tile__glyph {
-    width: 112px;
-    height: 112px;
+    width: clamp(132px, 27vh, 230px);
+    height: clamp(132px, 27vh, 230px);
   }
   .game-tile__name {
     font-size: 13px;

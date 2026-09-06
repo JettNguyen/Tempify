@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import Icon from './Icon'
 import './ErrorBoundary.css'
 
 class ErrorBoundaryInner extends Component {
@@ -28,6 +29,7 @@ class ErrorBoundaryInner extends Component {
 
     return (
       <div className="page-shell error-boundary">
+        <Icon name="alert" size={30} className="error-boundary__icon" />
         <h1 className="error-boundary__title">Something went wrong</h1>
         <p className="error-boundary__body">
           That screen failed to load. Your progress for today is saved.

@@ -7,6 +7,7 @@ import { GAME_BY_SLUG, ALL_GAME_SLUGS } from '../lib/games'
 import { prefetchPuzzlesForDate } from '../lib/puzzles'
 import ArchiveLock from '../components/ArchiveLock'
 import DelayedSpinner from '../components/DelayedSpinner'
+import Icon from '../components/Icon'
 import GameGrid from '../components/GameGrid'
 import './ArchiveDay.css'
 import './Home.css'
@@ -80,7 +81,10 @@ export default function ArchiveDay() {
       ) : fetching ? (
         <DelayedSpinner active={fetching} label="Loading archive day..." />
       ) : tiles.length === 0 ? (
-        <p className="archive-day-empty">No puzzles found for this date.</p>
+        <p className="archive-day-empty">
+          <Icon name="disc" size={22} className="archive-day-empty-icon" />
+          No puzzles found for this date.
+        </p>
       ) : (
         <GameGrid games={tiles} />
       )}

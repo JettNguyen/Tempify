@@ -5,6 +5,7 @@ import { getLeaderboard } from '../lib/scores'
 import { hapticSelection } from '../lib/haptics'
 import { todayEST, fmtTime } from '../lib/date'
 import DelayedSpinner from './DelayedSpinner'
+import Icon from './Icon'
 import './Leaderboard.css'
 
 export default function Leaderboard({ gameSlug, puzzleDate }) {
@@ -50,12 +51,14 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
 
       {!user ? (
         <p className="leaderboard__empty">
+          <Icon name="users" size={20} className="leaderboard__empty-icon" />
           <Link to="/login">Log in</Link> to see how friends did.
         </p>
       ) : loading ? (
         <DelayedSpinner active={loading} inline label="Loading leaderboard..." />
       ) : entries.length === 0 ? (
         <p className="leaderboard__empty">
+          <Icon name="users" size={20} className="leaderboard__empty-icon" />
           {tab === 'friends'
             ? "None of the people you follow have played yet, or they've set their profile to private."
             : 'No public scores yet for this puzzle.'}
