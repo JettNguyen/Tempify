@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { fmtTime } from '../lib/date'
 import './ShareButton.css'
 
@@ -31,10 +31,44 @@ const RESULT_LINES = {
   },
 }
 
-export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, timeSeconds, puzzleDate }) {
-  const [copied, setCopied] = useState(false)
+// navigator.clipboard is missing or blocked in some webviews and on insecure
+// origins, so fall back to a throwaway textarea before giving up.
+function legacyCopy(text) {
+  try {
+    const area = document.createElement('textarea')
+    area.value = text
+    area.setAttribute('readonly', '')
+    area.style.position = 'fixed'
+    area.style.top = '-9999px'
+    document.body.appendChild(area)
+    area.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(area)
+    return ok
+  } catch {
+    return false
+  }
+}
 
-  function handleShare() {
+async function copyText(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch {
+    // Fall through to the legacy path.
+  }
+  return legacyCopy(text)
+}
+
+export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, timeSeconds, puzzleDate }) {
+  const [state, setState] = useState('idle')
+  const resetRef = useRef(null)
+
+  useEffect(() => () => clearTimeout(resetRef.current), [])
+
+  async function handleShare() {
     const gameName = {
       'one-bar':      'One Bar',
       'hit-or-miss':  'Hit or Miss',
@@ -60,18 +94,20 @@ export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, ti
     if (timeSeconds != null) parts.push(`⏱ ${fmtTime(timeSeconds)}`)
     parts.push(url)
 
-    navigator.clipboard.writeText(parts.join('\n')).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
+    const ok = await copyText(parts.join('\n'))
+    setState(ok ? 'copied' : 'failed')
+    clearTimeout(resetRef.current)
+    resetRef.current = setTimeout(() => setState('idle'), 2000)
   }
+
+  const label = state === 'copied' ? 'Copied' : state === 'failed' ? "Couldn't copy" : 'Share'
 
   return (
     <button
       onClick={handleShare}
-      className={`share-btn btn-press btn-hover${copied ? ' share-btn--copied' : ''}`}
+      className={`share-btn btn-press btn-hover${state === 'copied' ? ' share-btn--copied' : ''}${state === 'failed' ? ' share-btn--failed' : ''}`}
     >
-      {copied ? 'Copied' : 'Share'}
+      {label}
     </button>
   )
 }

@@ -5,8 +5,15 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   transition: color 0.2s ease;
+  /* Hold the width so the label swap doesn't shove the next-game button. */
+  min-width: 104px;
+  text-align: center;
 }
 
 .share-btn--copied {
   color: var(--green);
+}
+
+.share-btn--failed {
+  color: var(--red);
 }
