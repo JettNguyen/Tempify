@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { searchSongsWithStatus, getCachedSongSearch } from '../lib/deezer'
 import { hapticSelection } from '../lib/haptics'
+import { dismissKeyboard } from '../lib/keyboard'
 import './GuessInput.css'
 
 const LISTBOX_ID = 'guess-input-listbox'
@@ -35,6 +36,7 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
     function handleClickOutside(e) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setOpen(false)
+        if (containerRef.current.contains(document.activeElement)) dismissKeyboard()
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -92,6 +94,7 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
     if (e.key === 'Escape') {
       setOpen(false)
       setActiveIndex(-1)
+      dismissKeyboard()
       return
     }
 
@@ -120,6 +123,9 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
 
   function selectResult(song) {
     hapticSelection()
+    // The guess is committed — nothing left to type, so get the keyboard out of
+    // the way of the game.
+    dismissKeyboard()
     clearTimeout(debounceRef.current)
     requestIdRef.current++
     setQuery(`${song.title} — ${song.artist}`)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { searchUsers } from '../lib/scores'
+import { dismissKeyboard } from '../lib/keyboard'
 import Avatar from './Avatar'
 import Icon from './Icon'
 import './SearchModal.css'
@@ -37,7 +38,7 @@ export default function SearchModal({ onClose }) {
   }, [])
 
   useEffect(() => {
-    function onKey(e) { if (e.key === 'Escape') onClose() }
+    function onKey(e) { if (e.key === 'Escape') { dismissKeyboard(); onClose() } }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
@@ -66,12 +67,13 @@ export default function SearchModal({ onClose }) {
   }
 
   function pick(username) {
+    dismissKeyboard()
     onClose()
     navigate(`/u/${username}`)
   }
 
   return (
-    <div className="search-modal__backdrop" onMouseDown={onClose}>
+    <div className="search-modal__backdrop" onMouseDown={() => { dismissKeyboard(); onClose() }}>
       <div className="search-modal__card" onMouseDown={e => e.stopPropagation()}>
         <div className="search-modal__input-row">
           <Icon name="search" size={16} strokeWidth={2} className="search-modal__icon" />
@@ -83,7 +85,7 @@ export default function SearchModal({ onClose }) {
             placeholder="Search users by username…"
             className="search-modal__input"
           />
-          <button className="search-modal__close btn-press" aria-label="Close search" onClick={onClose}>✕</button>
+          <button className="search-modal__close btn-press" aria-label="Close search" onClick={() => { dismissKeyboard(); onClose() }}>✕</button>
         </div>
 
         {query.trim().length >= 2 && (

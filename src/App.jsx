@@ -24,6 +24,8 @@ import CoverOrNot from './games/CoverOrNot'
 import { useIOSIPadUI } from './hooks/useIOSIPadUI'
 import { useScrolling } from './hooks/useScrolling'
 import { useNativeSplash } from './hooks/useNativeSplash'
+import { initKeyboard } from './lib/keyboard'
+import { useKeyboardDismiss } from './hooks/useKeyboardDismiss'
 import { useAuth } from './hooks/useAuth'
 
 // Admin is a large, single-user screen — keep it out of everyone else's bundle.
@@ -58,6 +60,10 @@ function PageTransition({ children }) {
 export default function App() {
   useIOSIPadUI()
   useScrolling()
+
+  // Enables the keyboard's Done button; Capacitor hides it by default.
+  useEffect(() => { initKeyboard() }, [])
+  useKeyboardDismiss()
 
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
