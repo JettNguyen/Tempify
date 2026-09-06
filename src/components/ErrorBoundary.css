@@ -1,0 +1,31 @@
+.error-boundary {
+  text-align: center;
+}
+
+.error-boundary__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.error-boundary__body {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.error-boundary__actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.error-boundary__btn {
+  font-size: 13px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
