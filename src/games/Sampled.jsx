@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
-import { getPuzzle } from '../lib/puzzles'
+import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
@@ -13,6 +13,16 @@ import TrackArtwork from '../components/TrackArtwork'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './Sampled.css'
 
+// Fisher-Yates shuffle algorithm for unbiased randomization
+function fisherYatesShuffle(array) {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 export default function Sampled() {
   const { user, profile } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
@@ -20,13 +30,19 @@ export default function Sampled() {
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()
 
-  const [puzzle, setPuzzle] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // Seeded from the session cache the home screen warmed, so a tapped tile
+  // paints the real screen immediately instead of an empty shell.
+  const cachedPuzzle = getCachedPuzzle('sampled', dateParam)
+  const [puzzle, setPuzzle] = useState(cachedPuzzle)
+  const [loading, setLoading] = useState(!cachedPuzzle)
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
+  const [justFinished, setJustFinished] = useState(false)
   const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
-  const [shuffledOptions, setShuffledOptions] = useState([])
+  const [shuffledOptions, setShuffledOptions] = useState(
+    () => fisherYatesShuffle(cachedPuzzle?.metadata?.options || [])
+  )
   const [finalTime, setFinalTime] = useState(null)
   const [shouldAutoplaySample, setShouldAutoplaySample] = useState(false)
   const sourceRef = useRef(null)
@@ -34,17 +50,10 @@ export default function Sampled() {
 
   const { stop, display } = useGameTimer(!done, 250, `tempify_game_sampled_${puzzleDate}`)
 
-  // Fisher-Yates shuffle algorithm for unbiased randomization
-  const fisherYatesShuffle = (array) => {
-    const shuffled = [...array]
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-    }
-    return shuffled
-  }
-
   useEffect(() => {
+    // Already seeded from cache — refetching would only re-run derived
+    // state (option order) and make the screen jump.
+    if (cachedPuzzle) return
     getPuzzle('sampled', dateParam)
       .then(p => {
         setPuzzle(p)
@@ -88,6 +97,7 @@ export default function Sampled() {
     setChosen(option.title)
     setCorrect(isCorrect)
     setDone(true)
+    setJustFinished(true)
     setShouldAutoplaySample(Boolean(puzzle.metadata?.sample_audio_url))
     markComplete('sampled', puzzleDate, 1, isCorrect)
     if (user) {
@@ -167,6 +177,7 @@ export default function Sampled() {
             </div>
           )}
           <ResultCard
+          justFinished={justFinished}
             correct={correct}
             answer={puzzle.answer}
             artist={puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist}

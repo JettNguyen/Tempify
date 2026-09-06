@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
-import { getPuzzle } from '../lib/puzzles'
+import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
@@ -22,10 +22,14 @@ export default function CoverOrNot() {
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()
 
-  const [puzzle, setPuzzle] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // Seeded from the session cache the home screen warmed, so a tapped tile
+  // paints the real screen immediately instead of an empty shell.
+  const cachedPuzzle = getCachedPuzzle('cover-or-not', dateParam)
+  const [puzzle, setPuzzle] = useState(cachedPuzzle)
+  const [loading, setLoading] = useState(!cachedPuzzle)
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
+  const [justFinished, setJustFinished] = useState(false)
   const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
   const [finalTime, setFinalTime] = useState(null)
@@ -37,6 +41,9 @@ export default function CoverOrNot() {
   const { stop, display } = useGameTimer(!done, 250, `tempify_game_cover-or-not_${puzzleDate}`)
 
   useEffect(() => {
+    // Already seeded from cache — refetching would only re-run derived
+    // state (option order) and make the screen jump.
+    if (cachedPuzzle) return
     getPuzzle('cover-or-not', dateParam)
       .then(setPuzzle)
       .catch(() => setError('No puzzle found for today.'))
@@ -100,6 +107,7 @@ export default function CoverOrNot() {
     setChosen(pick)
     setCorrect(isCorrect)
     setDone(true)
+    setJustFinished(true)
     if (puzzle.answer === 'cover' && puzzle.metadata?.original_audio_url) {
       coverRef.current?.pause()
       setShouldAutoplayOriginal(true)
@@ -177,6 +185,7 @@ export default function CoverOrNot() {
 
       {done && (
         <ResultCard
+          justFinished={justFinished}
           correct={correct}
           answer={isCover
             ? `It's a cover${m.original_title ? ` of "${m.original_title}"` : ''}${m.original_artist ? ` by ${m.original_artist}` : ''}`

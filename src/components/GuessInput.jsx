@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { searchSongsWithStatus, getCachedSongSearch } from '../lib/deezer'
+import { hapticSelection } from '../lib/haptics'
 import './GuessInput.css'
 
 const LISTBOX_ID = 'guess-input-listbox'
@@ -118,6 +119,7 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
   }
 
   function selectResult(song) {
+    hapticSelection()
     clearTimeout(debounceRef.current)
     requestIdRef.current++
     setQuery(`${song.title} — ${song.artist}`)

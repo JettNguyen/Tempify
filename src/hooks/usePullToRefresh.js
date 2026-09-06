@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Haptics, ImpactStyle } from '@capacitor/haptics'
+import { hapticThreshold } from '../lib/haptics'
 
 const THRESHOLD = 72
 const MAX_PULL = 100
@@ -98,7 +98,7 @@ export function usePullToRefresh(onRefresh, containerRef) {
       // Fire haptic exactly once when crossing threshold
       if (eased >= THRESHOLD && !state.current.pastThreshold) {
         state.current.pastThreshold = true
-        Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {})
+        hapticThreshold()
       } else if (eased < THRESHOLD && state.current.pastThreshold) {
         state.current.pastThreshold = false
       }

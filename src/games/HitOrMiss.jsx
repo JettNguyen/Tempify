@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
-import { getPuzzle } from '../lib/puzzles'
+import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
@@ -20,10 +20,14 @@ export default function HitOrMiss() {
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()
 
-  const [puzzle, setPuzzle] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // Seeded from the session cache the home screen warmed, so a tapped tile
+  // paints the real screen immediately instead of an empty shell.
+  const cachedPuzzle = getCachedPuzzle('hit-or-miss', dateParam)
+  const [puzzle, setPuzzle] = useState(cachedPuzzle)
+  const [loading, setLoading] = useState(!cachedPuzzle)
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
+  const [justFinished, setJustFinished] = useState(false)
   const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
   const [finalTime, setFinalTime] = useState(null)
@@ -31,6 +35,9 @@ export default function HitOrMiss() {
   const { stop, display } = useGameTimer(!done, 250, `tempify_game_hit-or-miss_${puzzleDate}`)
 
   useEffect(() => {
+    // Already seeded from cache — refetching would only re-run derived
+    // state (option order) and make the screen jump.
+    if (cachedPuzzle) return
     getPuzzle('hit-or-miss', dateParam)
       .then(setPuzzle)
       .catch(() => setError('No puzzle found for today.'))
@@ -55,6 +62,7 @@ export default function HitOrMiss() {
     setChosen(verdict)
     setCorrect(isCorrect)
     setDone(true)
+    setJustFinished(true)
     markComplete('hit-or-miss', puzzleDate, 1, isCorrect)
     if (user) {
       try {
@@ -121,6 +129,7 @@ export default function HitOrMiss() {
 
       {done && (
         <ResultCard
+          justFinished={justFinished}
           correct={correct}
           answer={correct
             ? isHit

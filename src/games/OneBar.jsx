@@ -3,11 +3,11 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { todayEST } from '../lib/date'
-import { getPuzzle } from '../lib/puzzles'
+import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork, stripVariant } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
-import { hapticImportantTap } from '../lib/haptics'
+import { hapticImportantTap, hapticWrong, hapticRejected } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import GuessInput from '../components/GuessInput'
 import ResultCard from '../components/ResultCard'
@@ -28,20 +28,27 @@ export default function OneBar() {
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()
 
-  const [puzzle, setPuzzle] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // Seeded from the session cache the home screen warmed, so a tapped tile
+  // paints the real screen immediately instead of an empty shell.
+  const cachedPuzzle = getCachedPuzzle('one-bar', dateParam)
+  const [puzzle, setPuzzle] = useState(cachedPuzzle)
+  const [loading, setLoading] = useState(!cachedPuzzle)
   const [error, setError] = useState(null)
 
   const guessInputRef = useRef(null)
 
   const [attempts, setAttempts] = useState([])
   const [done, setDone] = useState(false)
+  const [justFinished, setJustFinished] = useState(false)
   const [correct, setCorrect] = useState(false)
   const [revealSeconds, setRevealSeconds] = useState(BASE_SECONDS)
   const [resultArtwork, setResultArtwork] = useState(null)
   const [notice, setNotice] = useState(null)
 
   useEffect(() => {
+    // Already seeded from cache — refetching would only re-run derived
+    // state (option order) and make the screen jump.
+    if (cachedPuzzle) return
     getPuzzle('one-bar', dateParam)
       .then(setPuzzle)
       .catch(() => setError('No puzzle found for today.'))
@@ -127,6 +134,7 @@ export default function OneBar() {
     if (attempt.correct || newAttempts.length >= MAX_ATTEMPTS) {
       setCorrect(attempt.correct)
       setDone(true)
+      setJustFinished(true)
       localStorage.removeItem(progressKey(puzzleDate))
       markComplete('one-bar', puzzleDate, newAttempts.length, attempt.correct)
       if (user) {
@@ -138,6 +146,9 @@ export default function OneBar() {
         }
       }
     } else {
+      // Wrong, but the round continues — distinct from the failure buzz the
+      // result card fires when the last guess is spent.
+      if (!attempt.skipped) hapticWrong()
       guessInputRef.current?.clear()
       const nextReveal = REVEAL_TIMINGS[Math.min(newAttempts.length, REVEAL_TIMINGS.length - 1)]
       setRevealSeconds(nextReveal)
@@ -154,6 +165,7 @@ export default function OneBar() {
       !a.skipped && `${stripVariant(a.title || '').toLowerCase()}|||${(a.artist || '').toLowerCase()}` === guessKey
     ))
     if (isRepeat) {
+      hapticRejected()
       setNotice(`You already guessed “${song.title}”.`)
       guessInputRef.current?.clear()
       return
@@ -240,6 +252,7 @@ export default function OneBar() {
 
       {done && (
         <ResultCard
+          justFinished={justFinished}
           correct={correct}
           answer={puzzle.answer}
           artist={puzzle.metadata?.artist}

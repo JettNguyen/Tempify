@@ -7,6 +7,7 @@ import { todayEST } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
 import { GAMES } from '../lib/games'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
+import { hapticSelection } from '../lib/haptics'
 import ArchiveLock from '../components/ArchiveLock'
 import DelayedSpinner from '../components/DelayedSpinner'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
@@ -119,7 +120,10 @@ export default function Explore() {
   const { isComplete } = useCompletion(user?.id)
   const [searchParams, setSearchParams] = useSearchParams()
   const view = searchParams.get('view') || 'browse'
-  const setView = (v) => setSearchParams(v === 'browse' ? {} : { view: v }, { replace: true })
+  const setView = (v) => {
+    hapticSelection()
+    setSearchParams(v === 'browse' ? {} : { view: v }, { replace: true })
+  }
   const [activeGenres, setActiveGenres] = useState([])
   const [allPuzzles, setAllPuzzles] = useState([])
   const [playedSlugs, setPlayedSlugs] = useState(new Set())
@@ -283,7 +287,7 @@ export default function Explore() {
           return (
             <button
               key={g}
-              onClick={() => toggleGenre(g)}
+              onClick={() => { hapticSelection(); toggleGenre(g) }}
               className="btn-press btn-hover"
               style={{
                 padding: '6px 13px', borderRadius: '999px', border: '1px solid',
@@ -297,7 +301,7 @@ export default function Explore() {
         })}
         {activeGenres.length > 0 && (
           <button
-            onClick={() => setActiveGenres([])}
+            onClick={() => { hapticSelection(); setActiveGenres([]) }}
             className="btn-press btn-hover"
             style={{ padding: '6px 13px', borderRadius: '999px', border: '1px solid var(--border)', color: 'var(--text-dim)', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
           >Clear ✕</button>

@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
-import { getPuzzle } from '../lib/puzzles'
+import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
@@ -23,10 +23,14 @@ export default function Era() {
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()
 
-  const [puzzle, setPuzzle] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // Seeded from the session cache the home screen warmed, so a tapped tile
+  // paints the real screen immediately instead of an empty shell.
+  const cachedPuzzle = getCachedPuzzle('era', dateParam)
+  const [puzzle, setPuzzle] = useState(cachedPuzzle)
+  const [loading, setLoading] = useState(!cachedPuzzle)
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
+  const [justFinished, setJustFinished] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
   const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
@@ -36,6 +40,9 @@ export default function Era() {
   const { stop, display } = useGameTimer(hasStarted && !done, 250, `tempify_game_era_${puzzleDate}`)
 
   useEffect(() => {
+    // Already seeded from cache — refetching would only re-run derived
+    // state (option order) and make the screen jump.
+    if (cachedPuzzle) return
     getPuzzle('era', dateParam)
       .then(setPuzzle)
       .catch(() => setError('No puzzle found for today.'))
@@ -91,6 +98,7 @@ export default function Era() {
     setChosen(decade)
     setCorrect(isCorrect)
     setDone(true)
+    setJustFinished(true)
     markComplete('era', puzzleDate, 1, isCorrect)
     if (user) {
       try {
@@ -143,6 +151,7 @@ export default function Era() {
 
       {done && (
         <ResultCard
+          justFinished={justFinished}
           correct={correct}
           answer={puzzle.metadata?.title}
           artist={`${puzzle.metadata?.artist} · ${puzzle.metadata?.year}`}

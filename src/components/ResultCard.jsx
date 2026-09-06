@@ -3,14 +3,14 @@ import { Link, useSearchParams } from 'react-router-dom'
 import ShareButton from './ShareButton'
 import TrackArtwork from './TrackArtwork'
 import Leaderboard from './Leaderboard'
-import { hapticWinCelebration } from '../lib/haptics'
+import { hapticWinCelebration, hapticFailure } from '../lib/haptics'
 import { fmtTime } from '../lib/date'
 import './ResultCard.css'
 
 export default function ResultCard({
   correct, answer, artist, detail, emojiGrid,
   gameSlug, nextGame, artwork, children,
-  puzzleDate, timeSeconds, attempts, showLeaderboard,
+  puzzleDate, timeSeconds, attempts, showLeaderboard, justFinished,
 }) {
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date')
@@ -26,11 +26,12 @@ export default function ResultCard({
 
   const timeLabel = gameSlug !== 'one-bar' ? fmtTime(timeSeconds) : null
 
+  // Only on a fresh finish — revisiting a played puzzle shouldn't buzz again.
   useEffect(() => {
-    if (correct) {
-      hapticWinCelebration()
-    }
-  }, [correct])
+    if (!justFinished) return
+    if (correct) hapticWinCelebration()
+    else hapticFailure()
+  }, [justFinished, correct])
 
   return (
     <div className={`result-card slide-up${correct ? ' result-card--correct' : ''}`}>

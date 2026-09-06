@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getLeaderboard } from '../lib/scores'
+import { hapticSelection } from '../lib/haptics'
 import { todayEST, fmtTime } from '../lib/date'
 import DelayedSpinner from './DelayedSpinner'
 import './Leaderboard.css'
@@ -37,11 +38,11 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
           <div className="leaderboard__tabs">
             <button
               className={`leaderboard__tab btn-press${tab === 'friends' ? ' leaderboard__tab--active' : ''}`}
-              onClick={() => setTab('friends')}
+              onClick={() => { hapticSelection(); setTab('friends') }}
             >Friends</button>
             <button
               className={`leaderboard__tab btn-press${tab === 'global' ? ' leaderboard__tab--active' : ''}`}
-              onClick={() => setTab('global')}
+              onClick={() => { hapticSelection(); setTab('global') }}
             >Global</button>
           </div>
         )}

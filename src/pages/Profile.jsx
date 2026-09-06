@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { AVATAR_ICONS, AVATAR_COLORS, saveAvatar, saveProfileSettings, checkUsernameAvailable } from '../lib/avatar'
 import { Browser } from '@capacitor/browser'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
+import { hapticSelection } from '../lib/haptics'
 import { getNativeManageSubscriptionsUrl, usesNativeIap, restorePurchases, requestRefundForActiveEntitlement } from '../lib/billing'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
@@ -21,7 +22,7 @@ function PreferenceToggle({ label, desc, checked, onChange }) {
       </div>
       <button
         type="button"
-        onClick={() => onChange(!checked)}
+        onClick={() => { hapticSelection(); onChange(!checked) }}
         aria-pressed={checked}
         style={{
           flexShrink: 0,
@@ -293,7 +294,7 @@ export default function Profile() {
             const active = visibility === opt.value
             return (
               <button key={opt.value} type="button" disabled={locked}
-                onClick={() => !locked && setVisibility(opt.value)}
+                onClick={() => { if (locked) return; hapticSelection(); setVisibility(opt.value) }}
                 style={{
                   textAlign: 'left', padding: '10px 12px', borderRadius: '8px',
                   border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
