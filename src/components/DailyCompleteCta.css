@@ -1,5 +1,6 @@
 .daily-cta {
-  margin-top: 1rem;
+  /* Sits above the lineup, so the gap belongs underneath it. */
+  margin-bottom: 0.75rem;
   padding: 1.15rem 1.25rem;
   border: 1px solid var(--border);
   border-radius: 12px;

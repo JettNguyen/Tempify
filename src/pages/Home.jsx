@@ -65,11 +65,11 @@ export default function Home() {
         <h1 className="home-title">Today's games</h1>
       </div>
 
-      <GameGrid games={tiles} />
-
       {allComplete && (
         <DailyCompleteCta user={user} isSubscribed={profile?.is_subscribed} />
       )}
+
+      <GameGrid games={tiles} />
 
       {!user && !allComplete && (
         <p className="home-no-account">
