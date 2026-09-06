@@ -1,9 +1,20 @@
 import { useEffect } from 'react'
 import { getAnalyser, primeAudioContext, onContextStateChange } from '../lib/audioAnalyser'
 
-// Bars never collapse to nothing. The floor is set so the shortest bar stays
-// taller than it is wide — below that the pill ends round it off into a dot.
+// A bar that is audible at all keeps enough height to stay taller than it is
+// wide, so its rounded ends read as ends rather than as a dot.
 const FLOOR = 0.2
+// Below this a frequency is not quiet, it is absent — those bars come off the
+// row entirely rather than sitting at the floor pretending to carry something.
+const SILENT = 0.02
+const MAX_HEIGHT = 82        // matches the symbol's tallest bar, as in the CSS
+
+// A spectral tilt across the row. Music carries most of its energy at the bottom
+// of the spectrum, so read flat the low bars sit pinned at full height while the
+// top of the row barely stirs. Damping the lows matters as much as lifting the
+// highs — only boosting the highs leaves the bass exactly where it was.
+const LOW_GAIN = 0.6
+const HIGH_GAIN = 2.2
 const FIRST_BIN = 1              // bin 0 is DC, always junk
 const TOP_FRACTION = 0.7         // above this there is nothing but hiss
 
@@ -54,6 +65,12 @@ export function useAudioBars(audioRef, waveRef, playing, barCount) {
       const ranges = binRanges(bars.length, analyser.frequencyBinCount)
       wave.classList.add('audio-player__wave--live')
 
+      const drawn = new Array(bars.length).fill(-1)
+      // Per-bar gain, precomputed: the bars are log-spaced, so stepping evenly
+      // across the row is stepping evenly across octaves.
+      const gains = bars.map((_, i) =>
+        LOW_GAIN + (HIGH_GAIN - LOW_GAIN) * (bars.length > 1 ? i / (bars.length - 1) : 0))
+
       frame = requestAnimationFrame(function draw() {
         analyser.getByteFrequencyData(bins)
         for (let i = 0; i < bars.length; i++) {
@@ -61,12 +78,20 @@ export function useAudioBars(audioRef, waveRef, playing, barCount) {
           let sum = 0
           for (let b = from; b < to; b++) sum += bins[b]
           const avg = sum / (to - from) / 255
-          // Energy still falls away towards the top even on a log scale, and with
-          // only seven bars the last one carries 6-15kHz by itself — lift it or
-          // that end of the logo never moves.
-          const lifted = Math.min(1, avg * (1 + i * 0.28))
-          const scale = FLOOR + (1 - FLOOR) * Math.pow(lifted, 0.8)
-          bars[i].style.transform = `scaleY(${scale.toFixed(3)})`
+
+          let height = 0
+          if (avg >= SILENT) {
+            const tilted = Math.min(1, avg * gains[i])
+            height = (FLOOR + (1 - FLOOR) * Math.pow(tilted, 0.8)) * MAX_HEIGHT
+          }
+
+          // Skipping unchanged writes keeps a row of silent bars from costing a
+          // style recalculation every frame.
+          const rounded = Math.round(height * 10) / 10
+          if (rounded !== drawn[i]) {
+            drawn[i] = rounded
+            bars[i].style.height = `${rounded}%`
+          }
         }
         frame = requestAnimationFrame(draw)
       })
@@ -95,7 +120,7 @@ export function useAudioBars(audioRef, waveRef, playing, barCount) {
       cancelAnimationFrame(frame)
       wave.classList.remove('audio-player__wave--live')
       // Hand the bars back to the CSS animation exactly as it found them.
-      bars.forEach((bar) => { bar.style.transform = '' })
+      bars.forEach((bar) => { bar.style.height = '' })
     }
   }, [playing, audioRef, waveRef, barCount])
 }

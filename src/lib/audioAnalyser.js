@@ -69,9 +69,12 @@ export function getAnalyser(el) {
     // on the beat rather than trailing along behind it.
     analyser.smoothingTimeConstant = 0.6
     // The defaults (-100/-30 dB) put a music mix near the bottom of the range,
-    // where the bars barely move; this is roughly where a preview actually sits.
-    analyser.minDecibels = -80
-    analyser.maxDecibels = -25
+    // where the bars barely move. The ceiling is kept well clear of where bass
+    // actually sits: clip it here and every low bin returns a flat 255, losing
+    // the difference between loud and very loud before anything downstream can
+    // do something about it.
+    analyser.minDecibels = -85
+    analyser.maxDecibels = -18
     source.connect(analyser)
     analyser.connect(c.destination)
     connected.set(el, analyser)

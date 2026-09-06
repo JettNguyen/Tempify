@@ -160,13 +160,12 @@
 .audio-player__wave-bar {
   flex: 1;
   min-width: 0;
-  /* The symbol's tallest bar fills 82% of its box; every resting scale is
-     measured against that one, and set per bar in JS. */
-  height: 82%;
-  /* Scaled about its middle, so a bar grows and shrinks in both directions off
-     the centre line rather than rising off the floor. */
-  transform-origin: center;
-  transform: scaleY(var(--rest));
+  /* Height rather than a scaleY: a transform squashes the border-radius with the
+     bar, so the rounded ends flatten out at exactly the low levels where they
+     are most visible. The symbol's tallest bar fills 82% of its box, and every
+     resting scale is measured against that one, set per bar in JS. Centred by
+     the row, so a bar still grows in both directions off the middle. */
+  height: calc(var(--rest) * 82%);
   background: var(--amber);
   border-radius: 999px;
   animation: audio-wave 1s ease-in-out infinite;
@@ -178,23 +177,23 @@
 }
 
 /* Driven by the audio itself. The keyframes have to go: a running animation
-   beats an inline transform, so the two would fight and the canned loop would
-   win. */
+   beats an inline style, so the two would fight over the height and the canned
+   loop would win. */
 .audio-player__wave--live .audio-player__wave-bar {
   animation: none;
 }
 
 @keyframes audio-wave {
-  0%, 100% { transform: scaleY(var(--rest)); }
-  50%      { transform: scaleY(calc(var(--rest) * 0.5)); }
+  0%, 100% { height: calc(var(--rest) * 82%); }
+  50%      { height: calc(var(--rest) * 41%); }
 }
 
-/* Without this the global reduced-motion rule freezes every bar on its first
-   frame, and `transform: none` would leave the card a solid amber wash. Hold the
-   resting silhouette instead — still a waveform, just a still one. */
+/* The global reduced-motion rule freezes every animation on its first frame.
+   Pin the resting silhouette explicitly rather than depending on which frame
+   that turns out to be — still a waveform, just a still one. */
 @media (prefers-reduced-motion: reduce) {
   .audio-player__wave-bar {
     animation: none !important;
-    transform: scaleY(var(--rest));
+    height: calc(var(--rest) * 82%);
   }
 }
