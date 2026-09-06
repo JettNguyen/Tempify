@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -22,12 +22,32 @@ import Sampled from './games/Sampled'
 import Era from './games/Era'
 import CoverOrNot from './games/CoverOrNot'
 import { useIOSIPadUI } from './hooks/useIOSIPadUI'
+import { useScrolling } from './hooks/useScrolling'
 
 // Admin is a large, single-user screen — keep it out of everyone else's bundle.
 const Admin = lazy(() => import('./pages/Admin'))
 
+// Re-keying on pathname remounts the routed view, so the enter animation
+// replays on every navigation. Query changes (?date=, ?view=) keep the same
+// key on purpose — those are in-page state, not a new screen.
+function PageTransition({ children }) {
+  const { pathname } = useLocation()
+  const navigationType = useNavigationType()
+
+  useEffect(() => {
+    // Opening a new screen should start at the top. Going back shouldn't —
+    // leave the browser's own restoration alone there.
+    if (navigationType === 'POP') return
+    document.querySelector('.app-scroll-container')?.scrollTo({ top: 0 })
+    window.scrollTo({ top: 0 })
+  }, [pathname, navigationType])
+
+  return <div key={pathname} className="page-enter">{children}</div>
+}
+
 export default function App() {
   useIOSIPadUI()
+  useScrolling()
 
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -37,28 +57,30 @@ export default function App() {
         <div className="app-scroll-container">
           <ErrorBoundary>
             <Suspense fallback={<div className="page-shell"><DelayedSpinner active label="Loading..." /></div>}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/game/one-bar" element={<OneBar />} />
-                <Route path="/game/hit-or-miss" element={<HitOrMiss />} />
-                <Route path="/game/sampled" element={<Sampled />} />
-                <Route path="/game/era" element={<Era />} />
-                <Route path="/game/cover-or-not" element={<CoverOrNot />} />
-                <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
-                <Route path="/archive" element={<Navigate to="/explore" replace />} />
-                <Route path="/archive/:date" element={<ArchiveDay />} />
-                <Route path="/explore" element={<Explore />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/u/:username" element={<PublicProfile />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/subscribe" element={<Subscribe />} />
-                <Route path="/success" element={<Success />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              <PageTransition>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/game/one-bar" element={<OneBar />} />
+                  <Route path="/game/hit-or-miss" element={<HitOrMiss />} />
+                  <Route path="/game/sampled" element={<Sampled />} />
+                  <Route path="/game/era" element={<Era />} />
+                  <Route path="/game/cover-or-not" element={<CoverOrNot />} />
+                  <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
+                  <Route path="/archive" element={<Navigate to="/explore" replace />} />
+                  <Route path="/archive/:date" element={<ArchiveDay />} />
+                  <Route path="/explore" element={<Explore />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/u/:username" element={<PublicProfile />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/subscribe" element={<Subscribe />} />
+                  <Route path="/success" element={<Success />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </PageTransition>
             </Suspense>
           </ErrorBoundary>
         </div>

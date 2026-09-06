@@ -173,6 +173,13 @@ input, textarea {
   to   { opacity: 1; }
 }
 
+/* Route change. Ends on `transform: none` rather than translateY(0) so the
+   wrapper stops being a containing block for fixed children once it settles. */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
 /* Fade in + rise - list items, staggered */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(10px); }
@@ -203,6 +210,49 @@ input, textarea {
   transform: scale(0.95) !important;
 }
 
+/* Fallback so every button reacts to a press, even one that opts into no
+   utility class. Anything with .btn-press overrides this with !important. */
+button {
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* A touch device fires :active the moment a finger lands, so tiles and buttons
+   flash pressed while you are only starting a scroll. useScrolling flags an
+   in-flight scroll and we drop the press transform for its duration. */
+body.is-scrolling .btn-press:active,
+body.is-scrolling .card-hover:active,
+body.is-scrolling .card-lift:active,
+body.is-scrolling button:not(:disabled):active {
+  transform: none !important;
+}
+
+/* Text links can't scale without looking broken mid-sentence, so they dim. */
+.game-back-link,
+.archive-day-back,
+.privacy-back,
+.auth-link,
+.leaderboard__name,
+.home-no-account a,
+.home-legal-links a,
+.leaderboard__empty a {
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.game-back-link:active,
+.archive-day-back:active,
+.privacy-back:active,
+.auth-link:active,
+.leaderboard__name:active,
+.home-no-account a:active,
+.home-legal-links a:active,
+.leaderboard__empty a:active {
+  opacity: 0.6;
+}
+
 /* ================================
    ANIMATION UTILITIES
    ================================ */
@@ -213,6 +263,10 @@ input, textarea {
 
 .fade-in {
   animation: fadeIn 0.15s ease forwards;
+}
+
+.page-enter {
+  animation: pageEnter 0.24s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .fade-in-up {
@@ -342,6 +396,25 @@ input, textarea {
 
   .day-hover:hover {
     background: var(--surface);
+  }
+
+  .game-back-link:hover,
+  .archive-day-back:hover,
+  .privacy-back:hover,
+  .leaderboard__name:hover {
+    color: var(--text-primary);
+  }
+
+  .auth-link:hover,
+  .home-no-account a:hover,
+  .home-legal-links a:hover,
+  .leaderboard__empty a:hover {
+    color: var(--amber-light);
+  }
+
+  .leaderboard__tab:not(.leaderboard__tab--active):hover {
+    background: #222222;
+    color: var(--text-primary);
   }
 
   .nav-btn:hover:not(:disabled) {
@@ -549,5 +622,20 @@ body.ios-ipad-ui .page-shell-admin {
   }
   .dashboard-stat-card__value {
     font-size: 18px;
+  }
+}
+
+/* ================================
+   REDUCED MOTION
+   ================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
