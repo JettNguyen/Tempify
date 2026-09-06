@@ -23,6 +23,8 @@ import Era from './games/Era'
 import CoverOrNot from './games/CoverOrNot'
 import { useIOSIPadUI } from './hooks/useIOSIPadUI'
 import { useScrolling } from './hooks/useScrolling'
+import { useNativeSplash } from './hooks/useNativeSplash'
+import { useAuth } from './hooks/useAuth'
 
 // Admin is a large, single-user screen — keep it out of everyone else's bundle.
 const Admin = lazy(() => import('./pages/Admin'))
@@ -30,6 +32,14 @@ const Admin = lazy(() => import('./pages/Admin'))
 // Re-keying on pathname remounts the routed view, so the enter animation
 // replays on every navigation. Query changes (?date=, ?view=) keep the same
 // key on purpose — those are in-page state, not a new screen.
+// Lives inside AuthProvider so it can wait for the session check to settle —
+// otherwise the splash hands off to a signed-out navbar that then pops.
+function SplashGate() {
+  const { loading } = useAuth()
+  useNativeSplash(!loading)
+  return null
+}
+
 function PageTransition({ children }) {
   const { pathname } = useLocation()
   const navigationType = useNavigationType()
@@ -52,6 +62,7 @@ export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
+        <SplashGate />
         <Navbar />
         <UsernameSetupModal />
         <div className="app-scroll-container">

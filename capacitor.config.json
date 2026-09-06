@@ -6,5 +6,12 @@
   "ios": {
     "backgroundColor": "#0e0e0e",
     "allowsLinkPreview": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#0e0e0e",
+      "fadeOutDuration": 250
+    }
   }
 }
