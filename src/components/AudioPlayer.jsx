@@ -165,6 +165,13 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
     })
   }, [segmentStops, hasBar, barTotal])
 
+  // A rewind or a backwards drag has to land instantly. With a transition every
+  // filled segment shrinks on its own clock at the same moment, which reads as
+  // several playheads retreating at once rather than one going back to the start.
+  const prevTimeRef = useRef(0)
+  const rewound = currentTime < prevTimeRef.current - EPS
+  useEffect(() => { prevTimeRef.current = currentTime }, [currentTime])
+
   // One coordinate system for the bar whether or not it is segmented: 0-1 across
   // the whole track, so the fill, the scrubber and the seek all speak it.
   const toBar = (t) => (segments ? timeToBar(segments, t) : hasBar ? Math.min(t / barTotal, 1) : 0)
@@ -239,7 +246,10 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
                   className={`audio-player__segment${seg.end <= playable + EPS ? ' audio-player__segment--unlocked' : ''}`}
                   style={{ flexGrow: seg.width }}
                 >
-                  <span className="audio-player__segment-fill" style={{ width: `${played * 100}%` }} />
+                  <span
+                    className="audio-player__segment-fill"
+                    style={{ width: `${played * 100}%`, transition: rewound ? 'none' : undefined }}
+                  />
                 </span>
               )
             }) : (
@@ -252,7 +262,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
                 ) : null}
                 <span
                   className="audio-player__fill"
-                  style={{ width: `${progress * 100}%` }}
+                  style={{ width: `${progress * 100}%`, transition: rewound ? 'none' : undefined }}
                 />
               </>
             )}
