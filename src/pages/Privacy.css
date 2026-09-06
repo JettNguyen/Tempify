@@ -51,6 +51,29 @@
   line-height: 1.55;
 }
 
+/* Links inherit body colour globally, which left the EULA link looking like
+   plain text. Give them the accent and an underline. */
+.privacy-section a {
+  color: var(--amber);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .privacy-section a:hover {
+    color: var(--amber-light);
+  }
+}
+
+.privacy-section p + ul {
+  margin-top: 0.45rem;
+}
+
+.privacy-section ul + p {
+  margin-top: 0.55rem;
+}
+
 .privacy-section ul {
   list-style: disc;
   list-style-position: outside;
