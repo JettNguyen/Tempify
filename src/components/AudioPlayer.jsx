@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import './AudioPlayer.css'
 
+// Bar count is mirrored by the nth-child heights in AudioPlayer.css.
+const WAVE_BARS = 9
+
 const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, onPlay, autoplay }, ref) {
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
@@ -138,6 +141,19 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
           </label>
           <div className="audio-player__times">
             <span className="audio-player__time">{fmt(currentTime)}</span>
+
+            {/* Decorative: it only says "sound is coming out right now", so it
+                stays mounted and fades rather than popping in and out. Paused
+                animations cost nothing, so an idle player is free. */}
+            <span
+              className={`audio-player__wave${playing ? ' audio-player__wave--active' : ''}`}
+              aria-hidden="true"
+            >
+              {Array.from({ length: WAVE_BARS }).map((_, i) => (
+                <span key={i} className="audio-player__wave-bar" />
+              ))}
+            </span>
+
             <span className="audio-player__time audio-player__time--total">
               {effectiveDuration > 0 && isFinite(effectiveDuration)
                 ? fmt(effectiveDuration)
