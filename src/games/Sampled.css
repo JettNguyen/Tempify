@@ -3,13 +3,13 @@
 }
 
 .sampled__eyebrow {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
 .sampled__title {
-  font-size: 18px;
+  font-size: var(--fs-lg);
   font-weight: 500;
   color: var(--text-primary);
   line-height: 1.4;
@@ -31,14 +31,14 @@
 }
 
 .sampled__source-title {
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--text-primary);
   font-weight: 500;
   margin-bottom: 0.15rem;
 }
 
 .sampled__source-label {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
@@ -80,13 +80,13 @@
 }
 
 .sampled__option-title {
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--text-primary);
   font-weight: 500;
 }
 
 .sampled__option-artist {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -96,7 +96,7 @@
 }
 
 .sampled__original-label {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }

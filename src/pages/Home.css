@@ -3,13 +3,13 @@
 }
 
 .home-date {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.35rem;
 }
 
 .home-title {
-  font-size: 22px;
+  font-size: var(--fs-xl);
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.02em;
@@ -17,7 +17,7 @@
 
 .home-no-account {
   margin-top: 2.5rem;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   text-align: center;
 }
@@ -28,7 +28,7 @@
 
 .home-legal-links {
   margin-top: 2rem;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   text-align: center;
   display: flex;

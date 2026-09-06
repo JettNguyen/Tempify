@@ -12,13 +12,13 @@
 }
 
 .subscribe-eyebrow {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
 .subscribe-title {
-  font-size: 24px;
+  font-size: var(--fs-xl);
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.02em;
@@ -26,7 +26,7 @@
 }
 
 .subscribe-body {
-  font-size: 14px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   margin-bottom: 2rem;
   line-height: 1.7;
@@ -65,7 +65,7 @@
 }
 
 .subscribe-plan-label {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -73,7 +73,7 @@
 }
 
 .subscribe-plan-badge {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 15%, transparent);
@@ -91,18 +91,18 @@
 }
 
 .subscribe-price {
-  font-size: 28px;
+  font-size: var(--fs-2xl);
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .subscribe-price-unit {
-  font-size: 14px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
 .subscribe-fine-print {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   margin-bottom: 0.5rem;
 }
@@ -113,7 +113,7 @@
   background: var(--amber);
   border-radius: 8px;
   color: #0f0f0f;
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: 500;
   cursor: pointer;
 }
@@ -125,18 +125,18 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 
 .subscribe-hint {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   margin-top: 1rem;
   text-align: center;
 }
 
 .subscribe-legal {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
   margin-top: 1.25rem;
   text-align: center;

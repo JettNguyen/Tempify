@@ -3,7 +3,7 @@
 }
 
 .archive-eyebrow {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.35rem;
 }
@@ -15,7 +15,7 @@
 }
 
 .archive-month-title {
-  font-size: 22px;
+  font-size: var(--fs-xl);
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.02em;
@@ -37,7 +37,7 @@
 
 .archive-weekday {
   text-align: center;
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
   padding: 4px 0;
 }
@@ -68,7 +68,7 @@
 }
 
 .archive-day__num {
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 
 .archive-day__num--today {
@@ -116,7 +116,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-muted);
 }
 

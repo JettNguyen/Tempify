@@ -3,7 +3,7 @@
 }
 
 .explore-eyebrow {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.35rem;
 }
@@ -16,7 +16,7 @@
 }
 
 .explore-title {
-  font-size: 22px;
+  font-size: var(--fs-xl);
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.02em;
@@ -36,7 +36,7 @@
   padding: 5px 12px;
   border-radius: 5px;
   border: none;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 400;
   color: var(--text-muted);
   cursor: pointer;
@@ -76,13 +76,13 @@
 }
 
 .explore-game-row__title {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--text-muted);
   margin-bottom: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 11px;
+  font-size: var(--fs-2xs);
 }
 
 .explore-game-row__scroll {
@@ -113,20 +113,20 @@
 }
 
 .explore-game-card__date {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
   margin-bottom: 4px;
 }
 
 .explore-game-card__unplayed {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   font-style: italic;
   flex: 1;
 }
 
 .explore-game-card__answer {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--text-primary);
   overflow: hidden;
@@ -135,7 +135,7 @@
 }
 
 .explore-game-card__artist {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -150,7 +150,7 @@
 }
 
 .explore-game-card__genre {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 999px;
@@ -163,7 +163,7 @@
 }
 
 .explore-game-card__played-label {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-weight: 500;
   color: var(--green);
   margin-left: auto;
@@ -178,7 +178,7 @@
 }
 
 .explore-cal-title {
-  font-size: 18px;
+  font-size: var(--fs-lg);
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.02em;
@@ -190,6 +190,6 @@
 }
 
 .explore-empty {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }

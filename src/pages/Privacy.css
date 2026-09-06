@@ -1,5 +1,5 @@
 .privacy-back {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   display: inline-block;
   margin-bottom: 1.25rem;
@@ -10,7 +10,7 @@
 }
 
 .privacy-eyebrow {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-dim);
@@ -18,14 +18,14 @@
 }
 
 .privacy-title {
-  font-size: 22px;
+  font-size: var(--fs-xl);
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 0.35rem;
 }
 
 .privacy-updated {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
 }
 
@@ -38,7 +38,7 @@
 }
 
 .privacy-section h2 {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 0.45rem;
@@ -46,7 +46,7 @@
 
 .privacy-section p,
 .privacy-section li {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   line-height: 1.55;
 }

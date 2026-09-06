@@ -21,7 +21,7 @@
 }
 
 .delayed-spinner__label {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
 }
 

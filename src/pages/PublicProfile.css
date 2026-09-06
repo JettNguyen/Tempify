@@ -10,7 +10,7 @@
 }
 
 .pubprofile__name {
-  font-size: 18px;
+  font-size: var(--fs-lg);
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 2px;
@@ -19,7 +19,7 @@
 .pubprofile__meta {
   display: flex;
   gap: 0.5rem;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   margin-top: 5px;
   color: var(--text-muted);
 }
@@ -27,7 +27,7 @@
 .pubprofile__follow-btn {
   padding: 7px 16px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 500;
   cursor: pointer;
   border: 1px solid var(--amber);
@@ -74,7 +74,7 @@
 }
 
 .pubprofile__premium-label {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   color: var(--amber);
   text-transform: uppercase;
@@ -86,7 +86,7 @@
   background: none;
   border: none;
   padding: 0;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   cursor: pointer;
   transition: color 0.2s ease;
@@ -110,7 +110,7 @@
 }
 
 .pubprofile__panel-title {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   color: var(--text-dim);
   text-transform: uppercase;
@@ -141,7 +141,7 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-primary);
   text-decoration: none;
   flex: 1;
@@ -152,7 +152,7 @@
 }
 
 .pubprofile__unfollow-btn {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-muted);
   background: transparent;
   border: 1px solid var(--border);
@@ -174,7 +174,7 @@
     gap: 0.75rem;
   }
   .pubprofile__name {
-    font-size: 16px;
+    font-size: var(--fs-md);
   }
   .pubprofile__follow-btn {
     width: 100%;

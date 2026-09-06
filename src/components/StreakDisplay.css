@@ -8,7 +8,7 @@
 }
 
 .streak-card__value {
-  font-size: 22px;
+  font-size: var(--fs-xl);
   font-weight: 500;
   color: var(--text-dim);
   line-height: 1;
@@ -20,7 +20,7 @@
 }
 
 .streak-card__label {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-muted);
   line-height: 1.3;
 }

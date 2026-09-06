@@ -21,7 +21,7 @@
 }
 
 .username-modal__eyebrow {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--amber);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -30,7 +30,7 @@
 }
 
 .username-modal__title {
-  font-size: 22px;
+  font-size: var(--fs-xl);
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.02em;
@@ -38,7 +38,7 @@
 }
 
 .username-modal__sub {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   margin-bottom: 1.5rem;
   line-height: 1.5;
@@ -62,7 +62,7 @@
 
 .username-modal__at {
   color: var(--amber);
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: 500;
   flex-shrink: 0;
 }
@@ -73,7 +73,7 @@
   border: none;
   outline: none;
   padding: 10px 0;
-  font-size: 15px;
+  font-size: var(--fs-md);
   color: var(--text-primary);
   font-family: inherit;
 }
@@ -88,12 +88,12 @@
 }
 
 .username-modal__error {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: #ef4444;
 }
 
 .username-modal__hint {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
 }
 
@@ -102,7 +102,7 @@
   padding: 11px;
   background: var(--amber);
   color: #0f0f0f;
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 600;
   border: none;
   border-radius: 8px;

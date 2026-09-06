@@ -11,7 +11,7 @@
 }
 
 .result-card__status {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.5rem;
   font-weight: 500;
@@ -25,7 +25,7 @@
 }
 
 .result-card__answer {
-  font-size: 18px;
+  font-size: var(--fs-lg);
   color: var(--text-primary);
   font-weight: 500;
   margin-bottom: 2px;
@@ -44,12 +44,12 @@
 }
 
 .result-card__artist {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
 .result-card__detail {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   margin-top: 0.25rem;
 }
@@ -62,7 +62,7 @@
 
 .result-card__emoji {
   font-family: monospace;
-  font-size: 18px;
+  font-size: var(--fs-lg);
   letter-spacing: 2px;
   margin-top: 1rem;
   margin-bottom: 0.25rem;
@@ -86,7 +86,7 @@
   border-radius: 8px;
   background: var(--amber);
   color: #0f0f0f;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
 }
 
@@ -95,7 +95,7 @@
     padding: 1.1rem;
   }
   .result-card__answer {
-    font-size: 16px;
+    font-size: var(--fs-md);
   }
   .result-card__actions {
     align-items: stretch;

@@ -3,13 +3,13 @@
 }
 
 .one-bar__eyebrow {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
 .one-bar__title {
-  font-size: 18px;
+  font-size: var(--fs-lg);
   font-weight: 500;
   color: var(--text-primary);
   line-height: 1.4;
@@ -42,7 +42,7 @@
 }
 
 .one-bar__progress-label {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   margin-top: 0.5rem;
 }
@@ -56,7 +56,7 @@
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
@@ -80,7 +80,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   padding: 6px 0;
   border-bottom: 1px solid var(--border);
@@ -92,6 +92,6 @@
 
 .one-bar__notice {
   margin-top: 0.5rem;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }

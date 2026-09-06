@@ -17,8 +17,8 @@ function PreferenceToggle({ label, desc, checked, onChange }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
       <div>
-        <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>{label}</div>
-        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{desc}</div>
+        <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-primary)', fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 'var(--fs-2xs)', color: 'var(--text-muted)', marginTop: '2px' }}>{desc}</div>
       </div>
       <button
         type="button"
@@ -258,7 +258,7 @@ export default function Profile() {
           </span>
         </div>
         {profile?.username && (
-          <Link to={`/u/${profile.username}`} style={{ fontSize: '12px', color: 'var(--amber)', whiteSpace: 'nowrap' }}>
+          <Link to={`/u/${profile.username}`} style={{ fontSize: 'var(--fs-xs)', color: 'var(--amber)', whiteSpace: 'nowrap' }}>
             My profile →
           </Link>
         )}
@@ -278,11 +278,11 @@ export default function Profile() {
             style={{
               width: '100%', background: '#111', border: '1px solid var(--border)',
               borderRadius: '6px', padding: '8px 10px', color: 'var(--text-primary)',
-              fontSize: '13px', outline: 'none',
+              fontSize: 'var(--fs-sm)', outline: 'none',
             }}
           />
-          {usernameError && <p style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>{usernameError}</p>}
-          <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '4px' }}>
+          {usernameError && <p style={{ fontSize: 'var(--fs-2xs)', color: '#ef4444', marginTop: '4px' }}>{usernameError}</p>}
+          <p style={{ fontSize: 'var(--fs-2xs)', color: 'var(--text-dim)', marginTop: '4px' }}>
             Letters, numbers, underscores. Used for your public profile URL.
           </p>
         </div>
@@ -301,11 +301,11 @@ export default function Profile() {
                   background: active ? 'var(--amber-glow)' : 'transparent',
                   cursor: locked ? 'not-allowed' : 'pointer', opacity: locked ? 0.4 : 1,
                 }}>
-                <div style={{ fontSize: '13px', color: active ? 'var(--amber)' : 'var(--text-primary)', fontWeight: 500 }}>
+                <div style={{ fontSize: 'var(--fs-sm)', color: active ? 'var(--amber)' : 'var(--text-primary)', fontWeight: 500 }}>
                   {opt.label}
-                  {opt.premium && !isSubscribed && <span style={{ fontSize: '10px', marginLeft: '6px', color: 'var(--amber)' }}>Premium</span>}
+                  {opt.premium && !isSubscribed && <span style={{ fontSize: 'var(--fs-2xs)', marginLeft: '6px', color: 'var(--amber)' }}>Premium</span>}
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{opt.desc}</div>
+                <div style={{ fontSize: 'var(--fs-2xs)', color: 'var(--text-muted)', marginTop: '2px' }}>{opt.desc}</div>
               </button>
             )
           })}
@@ -383,7 +383,7 @@ export default function Profile() {
         {isSubscribed ? (
           <>
             <p className="profile-section-label">subscription</p>
-            <p style={{ fontSize: '13px', color: 'var(--text-primary)', marginBottom: '1rem' }}>
+            <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-primary)', marginBottom: '1rem' }}>
               Tempify+ is active.
             </p>
             {usesNativeIap() ? (
@@ -421,7 +421,7 @@ export default function Profile() {
               </a>
             )}
             {billingMessage && (
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '10px' }}>{billingMessage}</p>
+              <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--text-muted)', marginTop: '10px' }}>{billingMessage}</p>
             )}
           </>
         ) : (
@@ -442,7 +442,7 @@ export default function Profile() {
               </button>
             )}
             {billingMessage && (
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>{billingMessage}</p>
+              <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--text-muted)', marginTop: '8px' }}>{billingMessage}</p>
             )}
           </>
         )}
@@ -463,7 +463,7 @@ export default function Profile() {
               borderRadius: '8px',
               border: '1px solid var(--border)',
               color: 'var(--text-muted)',
-              fontSize: '12px',
+              fontSize: 'var(--fs-xs)',
             }}
           >
             Privacy Policy →
@@ -479,7 +479,7 @@ export default function Profile() {
               borderRadius: '8px',
               border: '1px solid var(--border)',
               color: 'var(--text-muted)',
-              fontSize: '12px',
+              fontSize: 'var(--fs-xs)',
             }}
           >
             Terms of Service →
@@ -511,14 +511,14 @@ export default function Profile() {
             background: 'var(--bg-card, #1a1a1a)', border: '1px solid var(--border)',
             borderRadius: '12px', padding: '24px', maxWidth: '360px', width: '100%',
           }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+            <h2 style={{ fontSize: 'var(--fs-lg)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
               Delete your account?
             </h2>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: '1.5' }}>
+            <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: '1.5' }}>
               This permanently deletes your account and all your data — scores, streaks, and profile. This cannot be undone.
             </p>
             {deleteError && (
-              <p style={{ fontSize: '12px', color: '#ef4444', marginBottom: '12px' }}>{deleteError}</p>
+              <p style={{ fontSize: 'var(--fs-xs)', color: '#ef4444', marginBottom: '12px' }}>{deleteError}</p>
             )}
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
@@ -527,7 +527,7 @@ export default function Profile() {
                 style={{
                   flex: 1, padding: '10px', borderRadius: '8px',
                   border: '1px solid var(--border)', background: 'transparent',
-                  color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',
+                  color: 'var(--text-muted)', fontSize: 'var(--fs-sm)', cursor: 'pointer',
                 }}
               >
                 Cancel
@@ -538,7 +538,7 @@ export default function Profile() {
                 style={{
                   flex: 1, padding: '10px', borderRadius: '8px',
                   border: 'none', background: '#ef4444',
-                  color: '#fff', fontSize: '13px', fontWeight: 600,
+                  color: '#fff', fontSize: 'var(--fs-sm)', fontWeight: 600,
                   cursor: deletingAccount ? 'not-allowed' : 'pointer',
                   opacity: deletingAccount ? 0.6 : 1,
                 }}

@@ -302,7 +302,7 @@ export default function Explore() {
                 borderColor: active ? (colors?.text ?? 'var(--amber)') : 'var(--border)',
                 background: active ? (colors?.bg ?? 'var(--amber-glow)') : 'transparent',
                 color: active ? (colors?.text ?? 'var(--amber)') : 'var(--text-muted)',
-                fontSize: '12px', fontWeight: active ? 500 : 400, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontSize: 'var(--fs-xs)', fontWeight: active ? 500 : 400, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >{g}</button>
           )
@@ -311,7 +311,7 @@ export default function Explore() {
           <button
             onClick={() => { hapticSelection(); setActiveGenres([]) }}
             className="btn-press btn-hover"
-            style={{ padding: '6px 13px', borderRadius: '999px', border: '1px solid var(--border)', color: 'var(--text-dim)', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            style={{ padding: '6px 13px', borderRadius: '999px', border: '1px solid var(--border)', color: 'var(--text-dim)', fontSize: 'var(--fs-xs)', cursor: 'pointer', whiteSpace: 'nowrap' }}
           >Clear ✕</button>
         )}
       </div>
@@ -452,7 +452,7 @@ function CalNavBtn({ onClick, label, disabled }) {
       width: 32, height: 32, background: 'var(--surface)', border: '1px solid var(--border)',
       borderRadius: '6px', color: disabled ? 'var(--text-dim)' : 'var(--text-muted)',
       cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex',
-      alignItems: 'center', justifyContent: 'center', fontSize: '14px',
+      alignItems: 'center', justifyContent: 'center', fontSize: 'var(--fs-md)',
     }}>{label}</button>
   )
 }

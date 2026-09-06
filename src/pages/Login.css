@@ -17,7 +17,7 @@ body.ios-ipad-ui .auth-page {
 }
 
 .auth-title {
-  font-size: 20px;
+  font-size: var(--fs-xl);
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
@@ -25,7 +25,7 @@ body.ios-ipad-ui .auth-page {
 }
 
 .auth-subtitle {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   margin-bottom: 2rem;
 }
@@ -41,7 +41,7 @@ body.ios-ipad-ui .auth-page {
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: var(--fs-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -68,7 +68,7 @@ body.ios-ipad-ui .auth-page {
 }
 
 .auth-divider__text {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
 }
 
@@ -85,7 +85,7 @@ body.ios-ipad-ui .auth-page {
   border-radius: 8px;
   padding: 10px 14px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: var(--fs-md);
   outline: none;
 }
 
@@ -103,18 +103,18 @@ body.ios-ipad-ui .auth-page {
   right: 12px;
   transform: translateY(-50%);
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   line-height: 1;
 }
 
 .auth-password-rules {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
   margin-top: -2px;
 }
 
 .auth-error {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: #ef4444;
 }
 
@@ -124,7 +124,7 @@ body.ios-ipad-ui .auth-page {
   background: var(--amber);
   border-radius: 8px;
   color: #0f0f0f;
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 500;
   margin-top: 0.25rem;
   cursor: pointer;
@@ -136,7 +136,7 @@ body.ios-ipad-ui .auth-page {
 }
 
 .auth-hint {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   margin-top: 1rem;
   text-align: center;
@@ -154,13 +154,13 @@ body.ios-ipad-ui .auth-page {
 }
 
 .auth-sent-title {
-  font-size: 18px;
+  font-size: var(--fs-lg);
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .auth-sent-body {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }

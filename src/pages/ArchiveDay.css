@@ -1,5 +1,5 @@
 .archive-day-back {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   display: inline-block;
   margin-bottom: 1.5rem;
@@ -10,20 +10,20 @@
 }
 
 .archive-day-eyebrow {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.35rem;
 }
 
 .archive-day-title {
-  font-size: 22px;
+  font-size: var(--fs-xl);
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
 .archive-day-empty {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
@@ -41,14 +41,14 @@
 }
 
 .archive-puzzle-name {
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 
 .archive-puzzle-answer {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 

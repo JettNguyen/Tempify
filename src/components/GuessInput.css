@@ -14,7 +14,7 @@
   border-radius: 8px;
   padding: 10px 38px 10px 14px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: var(--fs-md);
   outline: none;
 }
 
@@ -37,7 +37,7 @@
   border: none;
   color: var(--text-dim);
   -webkit-tap-highlight-color: transparent;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   line-height: 1;
   cursor: pointer;
 }
@@ -85,27 +85,27 @@
 }
 
 .guess-input__option-title {
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--text-primary);
   font-weight: 500;
 }
 
 .guess-input__option-artist {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-top: 1px;
 }
 
 .guess-input__message {
   padding: 12px 14px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
 .guess-input__message--footer {
   padding-top: 8px;
   padding-bottom: 10px;
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
   border-top: 1px solid var(--border);
 }

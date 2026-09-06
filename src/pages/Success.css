@@ -24,14 +24,14 @@
 }
 
 .success-title {
-  font-size: 20px;
+  font-size: var(--fs-xl);
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .success-body {
-  font-size: 14px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   margin-bottom: 1.75rem;
 }
@@ -46,7 +46,7 @@
   display: inline-block;
   background: var(--amber);
   color: #0f0f0f;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   padding: 9px 20px;
   border-radius: 999px;
@@ -54,7 +54,7 @@
 
 .success-btn-secondary {
   display: inline-block;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   padding: 9px 20px;
   border: 1px solid var(--border);

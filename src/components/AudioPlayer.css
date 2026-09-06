@@ -6,7 +6,7 @@
 }
 
 .audio-player__label {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.75rem;
 }
@@ -64,7 +64,7 @@
 }
 
 .audio-player__time {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-muted);
 }
 

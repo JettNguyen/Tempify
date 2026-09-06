@@ -9,14 +9,14 @@
 }
 
 .error-boundary__title {
-  font-size: 20px;
+  font-size: var(--fs-xl);
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .error-boundary__body {
-  font-size: 14px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   margin-bottom: 1.25rem;
 }
@@ -29,7 +29,7 @@
 }
 
 .error-boundary__btn {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   padding: 9px 18px;
   border-radius: 999px;
   border: 1px solid var(--border);

@@ -23,6 +23,24 @@ html, body {
   --text-muted: #a0a0a0;
   --text-dim: #555555;
 
+  /* Type scale. Six steps plus a display size — there were thirteen different
+     font sizes before this, which is why hierarchy read as arbitrary.
+     Pick by role, not by how big it looks:
+       2xs  eyebrows, pills, legends, badges
+       xs   meta and supporting captions
+       sm   body copy, descriptions, nav
+       md   item titles, inputs, primary buttons
+       lg   section headings and key figures
+       xl   page titles
+       2xl  display (pricing) */
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+
   /* Game brand colors */
   --game-one-bar: #f59e0b;
   --game-hit-or-miss: #3b82f6;
@@ -544,7 +562,7 @@ body.ios-ipad-ui .page-shell-admin {
 
 /* Shared back link used in all game pages */
 .game-back-link {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   display: inline-block;
   margin-bottom: 1.5rem;
@@ -556,13 +574,13 @@ body.ios-ipad-ui .page-shell-admin {
 }
 
 .game-header__eyebrow {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
 .game-header__title {
-  font-size: 20px;
+  font-size: var(--fs-lg);
   font-weight: 500;
   color: var(--text-primary);
   line-height: 1.4;
@@ -577,7 +595,7 @@ body.ios-ipad-ui .page-shell-admin {
 
 /* Live game timer shown while playing */
 .game-timer {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
   margin-top: 4px;
@@ -604,19 +622,16 @@ body.ios-ipad-ui .page-shell-admin {
   }
 
   /* Smaller game header title */
-  .game-header__title {
-    font-size: 17px;
-  }
 
   /* Compact streak cards */
   .streak-card {
     padding: 0.55rem 0.5rem;
   }
   .streak-card__value {
-    font-size: 18px;
+    font-size: var(--fs-lg);
   }
   .streak-card__label {
-    font-size: 10px;
+    font-size: var(--fs-2xs);
   }
 
   /* Stat grid stays 2-col but tighter */
@@ -624,7 +639,7 @@ body.ios-ipad-ui .page-shell-admin {
     padding: 0.7rem 0.75rem;
   }
   .dashboard-stat-card__value {
-    font-size: 18px;
+    font-size: var(--fs-lg);
   }
 }
 

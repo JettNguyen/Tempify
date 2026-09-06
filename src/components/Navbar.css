@@ -32,7 +32,7 @@
   transition: color 0.2s ease;
   font-family: Inter, system-ui, sans-serif;
   font-weight: 500;
-  font-size: 18px;
+  font-size: var(--fs-lg);
   letter-spacing: -0.04em;
   color: var(--text-primary);
 }
@@ -45,7 +45,7 @@
 
 .navbar__link {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-sm);
   transition: color 120ms ease;
 }
 
@@ -124,7 +124,7 @@
 .navbar__signup {
   background: var(--amber);
   color: #0f0f0f;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   padding: 10px 15px;
   border-radius: 999px;
@@ -167,7 +167,7 @@
   border: 1px solid var(--amber);
   border-radius: 6px;
   padding: 5px 10px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-primary);
   outline: none;
   font-family: inherit;
@@ -192,7 +192,7 @@
   gap: 8px;
   width: 100%;
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-primary);
   background: transparent;
   border: none;

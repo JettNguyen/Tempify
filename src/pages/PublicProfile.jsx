@@ -225,7 +225,7 @@ export default function PublicProfile() {
   if (!target) return (
     <Shell>
       <p style={{ color: 'var(--text-muted)' }}>User not found.</p>
-      <Link to="/" style={{ color: 'var(--amber)', fontSize: '13px' }}>← Home</Link>
+      <Link to="/" style={{ color: 'var(--amber)', fontSize: 'var(--fs-sm)' }}>← Home</Link>
     </Shell>
   )
 
@@ -250,7 +250,7 @@ export default function PublicProfile() {
             <h1 className="pubprofile__name">@{target.username}</h1>
             {isTargetPremium && (
               <span style={{
-                fontSize: '10px', fontWeight: 600, letterSpacing: '0.06em',
+                fontSize: 'var(--fs-2xs)', fontWeight: 600, letterSpacing: '0.06em',
                 textTransform: 'uppercase', color: '#0f0f0f',
                 background: 'var(--amber)', borderRadius: '999px',
                 padding: '2px 8px', lineHeight: 1.6, flexShrink: 0,
@@ -284,7 +284,7 @@ export default function PublicProfile() {
           {panelLoading ? (
             <DelayedSpinner active={panelLoading} inline label="Loading..." />
           ) : panelUsers.length === 0 ? (
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)' }}>
               {panel === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
             </p>
           ) : (
@@ -312,7 +312,7 @@ export default function PublicProfile() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
           <p className="dashboard-section-label" style={{ marginBottom: 0 }}>current streaks</p>
           {isMe && isTargetPremium && (
-            <span style={{ fontSize: '11px', color: freezesUsed >= GAME_SLUGS.length * 2 ? 'var(--text-dim)' : 'var(--amber)' }}>
+            <span style={{ fontSize: 'var(--fs-2xs)', color: freezesUsed >= GAME_SLUGS.length * 2 ? 'var(--text-dim)' : 'var(--amber)' }}>
               🧊 {Math.max(0, GAME_SLUGS.length * 2 - freezesUsed)} freeze token{Math.max(0, GAME_SLUGS.length * 2 - freezesUsed) !== 1 ? 's' : ''} left this month
             </span>
           )}
@@ -334,16 +334,16 @@ export default function PublicProfile() {
           <div className="pubprofile__premium-lock">
             <span className="pubprofile__lock-icon">🔒</span>
             <div>
-              <p style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500, marginBottom: '2px' }}>
+              <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-primary)', fontWeight: 500, marginBottom: '2px' }}>
                 Premium stats locked
               </p>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--text-muted)' }}>
                 Detailed stats are exclusive to premium members.
               </p>
             </div>
           </div>
         ) : !stats ? (
-          <p style={{ fontSize: '13px', color: 'var(--text-dim)' }}>No games played yet.</p>
+          <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-dim)' }}>No games played yet.</p>
         ) : (
           <>
             {/* Premium-exclusive stat cards */}

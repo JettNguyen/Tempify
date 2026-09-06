@@ -111,7 +111,7 @@ export default function Subscribe() {
             background: 'none',
             border: 'none',
             color: 'var(--text-muted)',
-            fontSize: '13px',
+            fontSize: 'var(--fs-sm)',
             cursor: 'pointer',
             padding: 0,
             marginBottom: '1.5rem',

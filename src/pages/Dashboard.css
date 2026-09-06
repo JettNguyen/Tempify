@@ -6,14 +6,14 @@
 }
 
 .dashboard-title {
-  font-size: 22px;
+  font-size: var(--fs-xl);
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
 .dashboard-badge {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 500;
   padding: 4px 10px;
   border-radius: 999px;
@@ -33,7 +33,7 @@
 }
 
 .dashboard-section-label {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.75rem;
 }
@@ -67,13 +67,13 @@
 }
 
 .dashboard-stat-card__label {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-muted);
   margin-bottom: 0.35rem;
 }
 
 .dashboard-stat-card__value {
-  font-size: 22px;
+  font-size: var(--fs-xl);
   line-height: 1;
   font-weight: 500;
   color: var(--text-primary);
@@ -86,7 +86,7 @@
 }
 
 .dashboard-stat-card__detail {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
 }
 
@@ -137,7 +137,7 @@
 
 .dashboard-game-stat__top {
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   margin-bottom: 0.55rem;
 }
@@ -163,12 +163,12 @@
 }
 
 .dashboard-game-stat__meta {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   color: var(--text-muted);
 }
 
 .dashboard-empty {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
 }
 
@@ -207,23 +207,23 @@
 }
 
 .dashboard-score-name {
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--text-primary);
   font-weight: 500;
 }
 
 .dashboard-score-date {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
 }
 
 .dashboard-score-attempts {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
 .dashboard-billing-link {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   text-decoration: underline;
   text-decoration-color: var(--border);
@@ -237,14 +237,14 @@
 }
 
 .dashboard-upsell-title {
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .dashboard-upsell-body {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   margin-bottom: 1.25rem;
 }
@@ -253,7 +253,7 @@
   display: inline-block;
   background: var(--amber);
   color: #0f0f0f;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   padding: 8px 18px;
   border-radius: 999px;
@@ -269,10 +269,7 @@
   .dashboard-game-stat {
     padding: 0.75rem;
   }
-  .dashboard-game-stat__meta {
-    font-size: 10px;
-  }
   .dashboard-score-name {
-    font-size: 13px;
+    font-size: var(--fs-sm);
   }
 }

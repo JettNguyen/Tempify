@@ -3,13 +3,13 @@
 }
 
 .cover-or-not__eyebrow {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
 .cover-or-not__title {
-  font-size: 18px;
+  font-size: var(--fs-lg);
   font-weight: 500;
   color: var(--text-primary);
   line-height: 1.4;
@@ -31,14 +31,14 @@
 }
 
 .cover-or-not__song-name {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 0.15rem;
 }
 
 .cover-or-not__song-meta {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
@@ -53,7 +53,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 500;
   cursor: pointer;
   transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
@@ -76,20 +76,20 @@
 }
 
 .cover-or-not__original-label {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 0.75rem;
 }
 
 .cover-or-not__original-name {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 0.15rem;
 }
 
 .cover-or-not__original-meta {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   margin-bottom: 0.75rem;
 }
