@@ -4,7 +4,7 @@ import './AudioPlayer.css'
 // Bar count is mirrored by the nth-child heights in AudioPlayer.css.
 const WAVE_BARS = 9
 
-const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, onPlay, autoplay }, ref) {
+const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpan, label, onPlay, autoplay }, ref) {
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -90,13 +90,23 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
     }
   }
 
-  const effectiveDuration = maxDuration || duration
-  const progress = effectiveDuration > 0 ? Math.min(currentTime / effectiveDuration, 1) : 0
+  // What can actually be heard right now.
+  const playable = maxDuration || duration
+
+  // `trackSpan` lets the bar stand for the whole length the clip can grow to
+  // rather than just the part that plays, so the locked remainder stays on
+  // screen instead of the bar rescaling to look full at every stage. Capped by
+  // the real audio so the bar never promises more than exists.
+  const barTotal = trackSpan ? Math.min(trackSpan, duration || Infinity) : playable
+  const hasBar = barTotal > 0 && isFinite(barTotal)
+
+  const progress = hasBar ? Math.min(currentTime / barTotal, 1) : 0
+  const unlockedPct = hasBar ? Math.min(playable / barTotal, 1) * 100 : 100
 
   function handleSeek(event) {
     const audio = audioRef.current
-    if (!audio || !isFinite(effectiveDuration) || effectiveDuration <= 0) return
-    const nextTime = Math.min(Number(event.target.value), effectiveDuration)
+    if (!audio || !isFinite(playable) || playable <= 0) return
+    const nextTime = Math.min(Number(event.target.value), playable)
     audio.currentTime = nextTime
     setCurrentTime(nextTime)
   }
@@ -134,19 +144,29 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
 
         <div className="audio-player__progress">
           <label className="audio-player__track" aria-label="Audio position">
+            {trackSpan ? (
+              <span
+                className="audio-player__unlocked"
+                style={{ width: `${unlockedPct}%` }}
+              />
+            ) : null}
             <span
               className="audio-player__fill"
               style={{ width: `${progress * 100}%` }}
             />
+            {/* Narrowed to the unlocked stretch: dragging past it would seek
+                into audio that can't play, and the thumb would sit nowhere
+                near the finger. */}
             <input
               className="audio-player__scrubber"
+              style={{ width: `${unlockedPct}%` }}
               type="range"
               min="0"
-              max={effectiveDuration > 0 && isFinite(effectiveDuration) ? effectiveDuration : 0}
+              max={playable > 0 && isFinite(playable) ? playable : 0}
               step="0.01"
-              value={Math.min(currentTime, effectiveDuration || 0)}
+              value={Math.min(currentTime, playable || 0)}
               onChange={handleSeek}
-              disabled={!src || !isFinite(effectiveDuration) || effectiveDuration <= 0}
+              disabled={!src || !isFinite(playable) || playable <= 0}
             />
           </label>
           <div className="audio-player__times">
@@ -165,9 +185,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
             </span>
 
             <span className="audio-player__time audio-player__time--total">
-              {effectiveDuration > 0 && isFinite(effectiveDuration)
-                ? fmt(effectiveDuration)
-                : '--:--'}
+              {hasBar ? fmt(barTotal) : '--:--'}
             </span>
           </div>
         </div>

@@ -19,6 +19,9 @@ const MAX_ATTEMPTS = 6
 const BASE_SECONDS = 0.5
 const SECONDS_PER_REVEAL = 0.5
 const REVEAL_TIMINGS = [0.5, 1, 2, 5, 15, 30]
+// What the progress bar stands for while guessing: the full length the clip can
+// reach, so each unlock visibly claims more of it.
+const MAX_REVEAL = REVEAL_TIMINGS[REVEAL_TIMINGS.length - 1]
 
 const progressKey = (date) => `tempify_progress_one-bar_${date}`
 
@@ -226,7 +229,7 @@ export default function OneBar() {
         </h1>
       </div>
 
-      <AudioPlayer ref={audioRef} key={done ? 'done' : 'playing'} src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} autoplay={done ? true : profile?.autoplay_audio !== false} />
+      <AudioPlayer ref={audioRef} key={done ? 'done' : 'playing'} src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} trackSpan={done ? undefined : MAX_REVEAL} autoplay={done ? true : profile?.autoplay_audio !== false} />
 
       <div className="one-bar__progress">
         <div className="one-bar__bars">
