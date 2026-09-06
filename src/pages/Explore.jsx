@@ -133,6 +133,8 @@ export default function Explore() {
   const now = new Date()
   const [viewYear, setViewYear] = useState(now.getFullYear())
   const [viewMonth, setViewMonth] = useState(now.getMonth())
+  // -1 back, 1 forward, 0 on first paint so opening the calendar doesn't slide.
+  const [monthDir, setMonthDir] = useState(0)
   const todayStr = todayEST()
   const todayCalStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 
@@ -230,6 +232,7 @@ export default function Explore() {
   const isEarliestMonth = viewYear === firstPuzzle.getFullYear() && viewMonth === firstPuzzle.getMonth()
   const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth()
   const monthName = new Date(viewYear, viewMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const slideClass = monthDir === 0 ? '' : monthDir > 0 ? ' cal-slide-from-right' : ' cal-slide-from-left'
   const days = getDaysInMonth(viewYear, viewMonth)
   const firstDay = getFirstDayOfMonth(viewYear, viewMonth)
 
@@ -246,11 +249,15 @@ export default function Explore() {
 
   function prevMonth() {
     if (isEarliestMonth) return
+    hapticSelection()
+    setMonthDir(-1)
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
     else setViewMonth(m => m - 1)
   }
   function nextMonth() {
     if (isCurrentMonth) return
+    hapticSelection()
+    setMonthDir(1)
     if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
     else setViewMonth(m => m + 1)
   }
@@ -312,9 +319,9 @@ export default function Explore() {
       {!isSubscribed ? (
         <ArchiveLock />
       ) : view === 'calendar' ? (
-        <div>
+        <div className="explore-cal">
           <div className="explore-cal-header">
-            <h2 className="explore-cal-title">{monthName}</h2>
+            <h2 key={`${viewYear}-${viewMonth}`} className={`explore-cal-title${slideClass}`}>{monthName}</h2>
             <div className="archive-month-nav">
               <CalNavBtn onClick={prevMonth} label="←" disabled={isEarliestMonth} />
               <CalNavBtn onClick={nextMonth} label="→" disabled={isCurrentMonth} />
@@ -325,8 +332,10 @@ export default function Explore() {
               <div key={d} className="archive-weekday">{d}</div>
             ))}
           </div>
-          <div className="archive-grid">
-            {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
+          <div key={`${viewYear}-${viewMonth}`} className={`archive-grid${slideClass}`}>
+            {Array.from({ length: firstDay }).map((_, i) => (
+              <div key={`e-${i}`} className="archive-day-filler" />
+            ))}
             {Array.from({ length: days }).map((_, i) => {
               const day = i + 1
               const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`
@@ -362,6 +371,11 @@ export default function Explore() {
                 </Link>
               )
             })}
+            {/* Months run 4-6 weeks; padding to a fixed six rows keeps the
+                calendar a constant height so switching months doesn't jump. */}
+            {Array.from({ length: Math.max(0, 42 - firstDay - days) }).map((_, i) => (
+              <div key={`t-${i}`} className="archive-day-filler" />
+            ))}
           </div>
           <div className="archive-legend">
             <div className="archive-legend__item">

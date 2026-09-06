@@ -117,3 +117,41 @@
   font-size: 11px;
   color: var(--text-muted);
 }
+
+/* Empty cells still have to claim their row, otherwise a trailing week with no
+   real days collapses and the grid changes height between months. */
+.archive-day-filler {
+  aspect-ratio: 1;
+}
+
+/* The slide overshoots sideways, so clip it here rather than let it push the
+   page into horizontal scroll. */
+.explore-cal {
+  overflow: hidden;
+}
+
+/* Month navigation. The incoming month slides in from the side you moved
+   toward — far enough to read as motion, short enough not to stall. */
+@keyframes calSlideFromRight {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes calSlideFromLeft {
+  from { opacity: 0; transform: translateX(-18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.cal-slide-from-right {
+  animation: calSlideFromRight 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.cal-slide-from-left {
+  animation: calSlideFromLeft 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* The title is smaller, so it travels less and leads very slightly. */
+.explore-cal-title.cal-slide-from-right,
+.explore-cal-title.cal-slide-from-left {
+  animation-duration: 0.24s;
+}
