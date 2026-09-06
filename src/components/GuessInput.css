@@ -42,8 +42,10 @@
   cursor: pointer;
 }
 
-.guess-input__clear:hover {
-  color: var(--text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .guess-input__clear:hover {
+    color: var(--text-primary);
+  }
 }
 
 .guess-input__dropdown {

@@ -84,7 +84,7 @@ export default function SearchModal({ onClose }) {
             placeholder="Search users by username…"
             className="search-modal__input"
           />
-          <button className="search-modal__close" onClick={onClose}>✕</button>
+          <button className="search-modal__close btn-press" aria-label="Close search" onClick={onClose}>✕</button>
         </div>
 
         {query.trim().length >= 2 && (

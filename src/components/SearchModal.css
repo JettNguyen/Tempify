@@ -59,11 +59,13 @@
   cursor: pointer;
   padding: 4px;
   flex-shrink: 0;
-  transition: color 0.2s;
+  transition: color 0.2s, transform 0.2s ease;
 }
 
-.search-modal__close:hover {
-  color: var(--text-muted);
+@media (hover: hover) and (pointer: fine) {
+  .search-modal__close:hover {
+    color: var(--text-muted);
+  }
 }
 
 .search-modal__results {

@@ -162,7 +162,7 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
         {query.length > 0 && !disabled && (
           <button
             type="button"
-            className="guess-input__clear"
+            className="guess-input__clear btn-press"
             aria-label="Clear search"
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleClear}

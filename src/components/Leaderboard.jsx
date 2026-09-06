@@ -36,11 +36,11 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
         {isPremium && (
           <div className="leaderboard__tabs">
             <button
-              className={`leaderboard__tab${tab === 'friends' ? ' leaderboard__tab--active' : ''}`}
+              className={`leaderboard__tab btn-press${tab === 'friends' ? ' leaderboard__tab--active' : ''}`}
               onClick={() => setTab('friends')}
             >Friends</button>
             <button
-              className={`leaderboard__tab${tab === 'global' ? ' leaderboard__tab--active' : ''}`}
+              className={`leaderboard__tab btn-press${tab === 'global' ? ' leaderboard__tab--active' : ''}`}
               onClick={() => setTab('global')}
             >Global</button>
           </div>
