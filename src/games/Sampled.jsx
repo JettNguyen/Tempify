@@ -29,7 +29,6 @@ export default function Sampled() {
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
-  const fromParam = searchParams.get('from')
   const puzzleDate = dateParam || todayEST()
 
   // Seeded from the session cache the home screen warmed, so a tapped tile
@@ -118,7 +117,7 @@ export default function Sampled() {
 
   return (
     <GameShell>
-      <Link to={exitTarget(dateParam, fromParam)} replace className="game-back-link">← Back</Link>
+      <Link to={exitTarget(searchParams)} replace className="game-back-link">← Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">sampled<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>

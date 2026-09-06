@@ -15,7 +15,7 @@ export default function ResultCard({
   puzzleDate, timeSeconds, attempts, showLeaderboard, justFinished,
 }) {
   const [searchParams] = useSearchParams()
-  const action = resultAction(nextGame, searchParams.get('date'), searchParams.get('from'))
+  const action = resultAction(nextGame, searchParams)
 
   const timeLabel = gameSlug !== 'one-bar' ? fmtTime(timeSeconds) : null
 

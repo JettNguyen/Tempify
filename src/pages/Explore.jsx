@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
@@ -25,6 +25,12 @@ const horizontalScrollState = new WeakMap()
 
 function updateScrollGradient(el) {
   if (!el) return
+  // The fade goes on the wrapper, never on the element that scrolls. WebKit
+  // composites a mask on a scroll container against the scrolled content rather
+  // than the visible box, so once you have scrolled and come back the stale
+  // transparent edge is left sitting over the first card.
+  const target = el.parentElement
+  if (!target) return
   const atStart = el.scrollLeft <= 1
   const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2
   const noOverflow = el.scrollWidth <= el.clientWidth + 2
@@ -38,8 +44,8 @@ function updateScrollGradient(el) {
   } else {
     mask = 'linear-gradient(to right, transparent 0, black 48px, black calc(100% - 48px), transparent 100%)'
   }
-  el.style.webkitMaskImage = mask
-  el.style.maskImage = mask
+  target.style.webkitMaskImage = mask
+  target.style.maskImage = mask
 }
 
 function isDesktopPointer() {
@@ -122,11 +128,30 @@ export default function Explore() {
   const { isComplete } = useCompletion(user?.id)
   const [searchParams, setSearchParams] = useSearchParams()
   const view = searchParams.get('view') || 'browse'
+
+  // Filters live in the URL rather than in state, so opening a puzzle and coming
+  // back doesn't quietly drop them — and so does the view, which used to be
+  // wiped along with everything else whenever the toggle was pressed.
+  const genresParam = searchParams.get('genres') || ''
+  const activeGenres = useMemo(
+    () => genresParam.split(',').filter((g) => GENRES.includes(g)),
+    [genresParam],
+  )
+
+  const writeParams = (next) => {
+    const params = new URLSearchParams(searchParams)
+    Object.entries(next).forEach(([key, value]) => {
+      if (value) params.set(key, value)
+      else params.delete(key)
+    })
+    setSearchParams(params, { replace: true })
+  }
+
   const setView = (v) => {
     hapticSelection()
-    setSearchParams(v === 'browse' ? {} : { view: v }, { replace: true })
+    writeParams({ view: v === 'browse' ? '' : v })
   }
-  const [activeGenres, setActiveGenres] = useState([])
+  const setActiveGenres = (list) => writeParams({ genres: list.join(',') })
   const [allPuzzles, setAllPuzzles] = useState([])
   const [playedSlugs, setPlayedSlugs] = useState(new Set())
   const [fetching, setFetching] = useState(true)
@@ -215,7 +240,9 @@ export default function Explore() {
   const isSubscribed = Boolean(user && profile?.is_subscribed)
 
   function toggleGenre(g) {
-    setActiveGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
+    setActiveGenres(activeGenres.includes(g)
+      ? activeGenres.filter((x) => x !== g)
+      : [...activeGenres, g])
   }
 
   const filtered = activeGenres.length === 0
@@ -289,6 +316,7 @@ export default function Explore() {
         </div>
       </div>
 
+      <div className="explore-pills-fade">
       <div className="explore-pills" ref={pillsRef}>
         {GENRES.map(g => {
           const active = activeGenres.includes(g)
@@ -315,6 +343,7 @@ export default function Explore() {
             style={{ padding: '6px 13px', borderRadius: '999px', border: '1px solid var(--border)', color: 'var(--text-dim)', fontSize: 'var(--fs-xs)', cursor: 'pointer', whiteSpace: 'nowrap' }}
           >Clear ✕</button>
         )}
+      </div>
       </div>
 
       {!isSubscribed ? (
@@ -403,11 +432,14 @@ export default function Explore() {
             return (
               <div key={game.slug} className="explore-game-row">
                 <h2 className="explore-game-row__title">{game.name}</h2>
+                <div className="explore-game-row__fade">
                 <div className="explore-game-row__scroll">
                   {puzzles.map(p => {
                     const played = playedSlugs.has(`${p.scheduled_date}|${p.game_slug}`)
                       || isComplete(p.game_slug, p.scheduled_date)
+                    // Carries the filter along so the way back can restore it.
                     const gameLink = `${game.path}?date=${p.scheduled_date}&from=${EXPLORE_ORIGIN}`
+                      + (genresParam ? `&genres=${encodeURIComponent(genresParam)}` : '')
                     const dateStr = fmtDayShort(p.scheduled_date)
                     const answer = getDisplayAnswer(p)
                     const artistLine = getDisplayArtist(p)
@@ -434,6 +466,7 @@ export default function Explore() {
                       </Link>
                     )
                   })}
+                </div>
                 </div>
               </div>
             )

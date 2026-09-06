@@ -9,11 +9,16 @@ export function cameFromExplore(fromParam) {
 }
 
 // Someone who picked one puzzle out of Explore didn't ask for that day's
-// rotation — send them back to the shelf they pulled it off.
-export function exitTarget(dateParam, fromParam) {
-  if (cameFromExplore(fromParam)) return '/explore'
-  if (dateParam) return `/archive/${dateParam}`
-  return '/'
+// rotation — send them back to the shelf they pulled it off, filters and all.
+// Takes the whole search string so the return trip can carry more than the date
+// without every game having to know what is in it.
+export function exitTarget(params) {
+  if (cameFromExplore(params.get('from'))) {
+    const genres = params.get('genres')
+    return genres ? `/explore?genres=${encodeURIComponent(genres)}` : '/explore'
+  }
+  const date = params.get('date')
+  return date ? `/archive/${date}` : '/'
 }
 
 // Carries an archive date through the next-game chain. Cover or Not ends the
@@ -28,8 +33,10 @@ function nextPath(path, dateParam) {
 // The button under a finished puzzle. Picking a single puzzle out of Explore is
 // a deliberate choice of that one puzzle, so the chain into the rest of the
 // day's rotation isn't what's wanted — offer the way back to browsing instead.
-export function resultAction(nextGame, dateParam, fromParam) {
-  if (cameFromExplore(fromParam)) return { to: '/explore', label: '← Back to Explore' }
+export function resultAction(nextGame, params) {
+  if (cameFromExplore(params.get('from'))) {
+    return { to: exitTarget(params), label: '← Back to Explore' }
+  }
   if (!nextGame) return null
-  return { to: nextPath(nextGame.path, dateParam), label: `${nextGame.label} →` }
+  return { to: nextPath(nextGame.path, params.get('date')), label: `${nextGame.label} →` }
 }
