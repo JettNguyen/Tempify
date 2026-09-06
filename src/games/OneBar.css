@@ -99,7 +99,8 @@
 }
 
 .one-bar__guess-x {
-  color: var(--text-dim);
+  flex-shrink: 0;
+  color: var(--text-muted);
 }
 
 .one-bar__notice {

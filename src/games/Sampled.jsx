@@ -10,6 +10,7 @@ import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
+import Icon from '../components/Icon'
 import TrackArtwork from '../components/TrackArtwork'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './Sampled.css'
@@ -117,7 +118,7 @@ export default function Sampled() {
 
   return (
     <GameShell>
-      <Link to={exitTarget(searchParams)} replace className="game-back-link">← Back</Link>
+      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">sampled<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>

@@ -5,6 +5,8 @@
   gap: 6px;
   font-size: var(--fs-sm);
   color: var(--text-muted);
+  /* Matches the next-game button beside it, and clears the 44px minimum. */
+  min-height: 44px;
   padding: 7px 14px;
   border: 1px solid var(--border);
   border-radius: 999px;

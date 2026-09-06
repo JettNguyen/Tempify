@@ -13,6 +13,7 @@ import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
+import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './Era.css'
 
@@ -117,7 +118,7 @@ export default function Era() {
 
   return (
     <GameShell>
-      <Link to={exitTarget(searchParams)} replace className="game-back-link">← Back</Link>
+      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">era<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>

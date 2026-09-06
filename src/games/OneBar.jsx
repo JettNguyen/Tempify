@@ -220,7 +220,7 @@ export default function OneBar() {
 
   return (
     <GameShell>
-      <Link to={exitTarget(searchParams)} replace className="game-back-link">← Back</Link>
+      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
       <div className="one-bar__header">
         <p className="one-bar__eyebrow">one bar<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
@@ -263,7 +263,7 @@ export default function OneBar() {
         <div className="one-bar__guesses">
           {attempts.map((a, i) => (
             <div key={i} className="one-bar__guess-row">
-              <span className="one-bar__guess-x">✕</span>
+              <Icon name="x" size={12} strokeWidth={2.5} className="one-bar__guess-x" />
               <span>{a.skipped ? 'Skipped' : `${a.title} by ${a.artist}`}</span>
             </div>
           ))}

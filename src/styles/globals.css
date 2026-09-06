@@ -575,10 +575,15 @@ body.ios-ipad-ui .page-shell-admin {
 }
 
 /* Shared back link used in all game pages */
+/* Pair it with .tap-target in the markup: the text alone is about 20px tall,
+   which is a small thing to hit at the top of every game. The utility grows the
+   touch area to 44px without changing what is drawn, so the layout is untouched. */
 .game-back-link {
   font-size: var(--fs-sm);
   color: var(--text-muted);
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   margin-bottom: 1.5rem;
 }
 
