@@ -51,20 +51,34 @@
   color: var(--text-dim);
 }
 
+/* Was a 22px target with no surface — too small to hit and nothing happened
+   visually when you did. Now a proper 40px circle that fills on press. */
 .search-modal__close {
-  background: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: none;
+  border-radius: 50%;
   color: var(--text-dim);
-  font-size: 14px;
   cursor: pointer;
-  padding: 4px;
   flex-shrink: 0;
-  transition: color 0.2s, transform 0.2s ease;
+  margin-right: -6px;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.search-modal__close:active {
+  background: #262626;
+  color: var(--text-primary);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .search-modal__close:hover {
-    color: var(--text-muted);
+    background: #232323;
+    color: var(--text-primary);
   }
 }
 

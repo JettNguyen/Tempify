@@ -23,6 +23,13 @@ export async function signInWithGoogleOAuth() {
     options: {
       redirectTo: getOAuthRedirectTo(),
       skipBrowserRedirect: native,
+      queryParams: {
+        // Signing out of Tempify doesn't sign you out of Google, and the OAuth
+        // browser still holds that session. Without this Google silently
+        // re-authorises whichever account it saw last, so switching accounts is
+        // impossible — the chooser flashes past and you land back where you were.
+        prompt: 'select_account',
+      },
     },
   })
 
