@@ -15,21 +15,25 @@
   line-height: 1.4;
 }
 
-/* A fixed four across rather than wrapped pills: seven equal tiles in two tidy
-   rows, the same on every width, instead of a ragged line that rewraps. */
+/* All seven in one row, in order: the decades are a timeline, and reading them
+   as one left to right is the question the game is asking. Four across left an
+   orphaned row of three with a hole in it, which is what looked broken. */
 .era__decades {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
   margin-top: 1.25rem;
 }
 
 .era__decade-btn {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
   gap: 1px;
-  padding: 13px 8px;
+  /* Comfortably past the 44px minimum, which the old pills were under. */
+  min-height: 52px;
+  padding: 8px 4px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -37,19 +41,40 @@
   transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
 }
 
+/* Stacked rather than set beside the years: side by side, an 11px century next
+   to an 18px decade is a jump the eye reads as two things crammed together, and
+   baseline-aligning them leaves the pair sitting low in the tile. */
 .era__decade-century {
   font-size: var(--fs-2xs);
   font-weight: 500;
+  line-height: 1;
   color: var(--text-dim);
   transition: color 0.2s ease;
 }
 
 .era__decade-years {
-  font-size: var(--fs-lg);
-  font-weight: 500;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
   transition: color 0.2s ease;
+}
+
+/* On the narrowest phones the row leaves only a couple of pixels either side of
+   the label, so give it back some room rather than risk it touching the border. */
+@media (max-width: 360px) {
+  .era__decades {
+    gap: 4px;
+  }
+
+  .era__decade-btn {
+    padding: 8px 2px;
+  }
+
+  .era__decade-years {
+    font-size: var(--fs-sm);
+  }
 }
 
 .era__decade-btn--done {
