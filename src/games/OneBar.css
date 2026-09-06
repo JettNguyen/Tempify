@@ -51,6 +51,17 @@
   transition: color 0.2s ease;
 }
 
+/* The last one gives the round away rather than buying more audio, so it reads
+   as a consequence rather than another step. */
+.one-bar__skip--final {
+  border-color: #4a2a2a;
+  color: #d98b8b;
+}
+
+.one-bar__skip--final svg {
+  color: #d98b8b;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .one-bar__skip:hover {
     border-color: var(--amber);
@@ -59,6 +70,14 @@
 
   .one-bar__skip:hover svg {
     color: var(--amber);
+  }
+
+  /* After the amber rules, not before: they carry the same weight, so order is
+     what decides which one a final-guess button gets. */
+  .one-bar__skip--final:hover,
+  .one-bar__skip--final:hover svg {
+    border-color: var(--red);
+    color: var(--red);
   }
 }
 

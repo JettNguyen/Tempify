@@ -31,7 +31,6 @@ export default function OneBar() {
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
-  const fromParam = searchParams.get('from')
   const puzzleDate = dateParam || todayEST()
 
   // Seeded from the session cache the home screen warmed, so a tapped tile
@@ -221,7 +220,7 @@ export default function OneBar() {
 
   return (
     <GameShell>
-      <Link to={exitTarget(dateParam, fromParam)} replace className="game-back-link">← Back</Link>
+      <Link to={exitTarget(searchParams)} replace className="game-back-link">← Back</Link>
 
       <div className="one-bar__header">
         <p className="one-bar__eyebrow">one bar<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
@@ -246,9 +245,16 @@ export default function OneBar() {
         <>
           <GuessInput ref={guessInputRef} onGuess={handleGuess} disabled={done} />
           {notice && <p className="one-bar__notice" role="status">{notice}</p>}
-          <button type="button" onClick={handleSkip} className="one-bar__skip btn-press">
-            <Icon name="skipForward" size={14} />
-            Skip — unlock more audio
+          {/* On the last guess there is nothing left to unlock — the button
+              forfeits the round, and should say so rather than inviting a tap
+              that reads as harmless. */}
+          <button
+            type="button"
+            onClick={handleSkip}
+            className={`one-bar__skip btn-press${remainingGuesses === 1 ? ' one-bar__skip--final' : ''}`}
+          >
+            <Icon name={remainingGuesses === 1 ? 'alert' : 'skipForward'} size={14} />
+            {remainingGuesses === 1 ? 'Give up — reveal the answer' : 'Skip — unlock more audio'}
           </button>
         </>
       )}
