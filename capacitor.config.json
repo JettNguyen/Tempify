@@ -1,5 +1,10 @@
 {
   "appId": "me.tempify",
   "appName": "Tempify",
-  "webDir": "dist"
+  "webDir": "dist",
+  "backgroundColor": "#0e0e0e",
+  "ios": {
+    "backgroundColor": "#0e0e0e",
+    "allowsLinkPreview": false
+  }
 }
