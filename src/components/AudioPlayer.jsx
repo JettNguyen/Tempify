@@ -10,9 +10,11 @@ const SEGMENT_GAP = 3
 const EPS = 1e-6
 
 // How long the playhead takes to travel back to the start when a clip finishes.
-// Fixed for the whole trip rather than a fixed speed, so the sweep is just as
-// visible after a half-second clip as after the full thirty.
-const RETREAT_MS = 380
+// The further it has to come, the quicker it goes: a full bar sweeping home over
+// the same span a sliver gets would drag, and by the last stages the trip is
+// something you have already watched five times.
+const RETREAT_SLOW_MS = 260
+const RETREAT_FAST_MS = 110
 
 // Segments are laid out on a stylised scale, not in real seconds. In seconds the
 // first two guesses each buy the same half-second, so they render as twin blocks
@@ -210,6 +212,8 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
 
   // Where the playhead is retreating from, in bar coordinates.
   const retreatFrom = retreating ? toBar(lastHeardRef.current) : 0
+  const retreatMs = RETREAT_SLOW_MS -
+    (RETREAT_SLOW_MS - RETREAT_FAST_MS) * Math.min(Math.max(retreatFrom, 0), 1)
 
   // Each piece of fill empties during the slice of the trip when the playhead is
   // crossing it: it waits out everything to its right, then takes a share of the
@@ -220,7 +224,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
       const filled = Math.max(0, Math.min(offset + width, retreatFrom) - offset)
       // Round the two edge times rather than the duration: neighbours then share
       // an identical boundary and the sweep has no seam between them.
-      const at = (x) => Math.max(0, Math.round(((retreatFrom - x) / retreatFrom) * RETREAT_MS))
+      const at = (x) => Math.max(0, Math.round(((retreatFrom - x) / retreatFrom) * retreatMs))
       const start = at(offset + filled)
       return `width ${at(offset) - start}ms linear ${start}ms`
     }
