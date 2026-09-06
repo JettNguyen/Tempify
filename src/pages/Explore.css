@@ -53,15 +53,19 @@
   font-weight: 500;
 }
 
+/* Wrapper carries the fade; the scrolling happens inside it. */
+.explore-pills-fade {
+  margin-bottom: 2rem;
+  -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
+  mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
+}
+
 .explore-pills {
   display: flex;
   gap: 6px;
   overflow-x: auto;
   padding-bottom: 4px;
-  margin-bottom: 2rem;
   scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
-  mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
 }
 
 .explore-pills::-webkit-scrollbar {
@@ -85,14 +89,17 @@
   font-size: var(--fs-2xs);
 }
 
+.explore-game-row__fade {
+  -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
+  mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
+}
+
 .explore-game-row__scroll {
   display: flex;
   gap: 0.75rem;
   overflow-x: auto;
   padding-bottom: 8px;
   scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
-  mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
 }
 
 .explore-game-row__scroll::-webkit-scrollbar {
