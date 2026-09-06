@@ -171,14 +171,24 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   }, [segmentStops, hasBar, barTotal])
 
   const prevTimeRef = useRef(0)
-  const prevTime = prevTimeRef.current
-  const wentBack = currentTime < prevTime - EPS
+  const lastHeardRef = useRef(0)
+  const wentBack = currentTime < prevTimeRef.current - EPS
+
   // A finished clip rewinds to zero. Every filled segment would otherwise empty
   // on its own clock at the same moment — several playheads retreating at once
   // rather than one going home — so the emptying is sequenced right to left. A
   // backwards drag still lands instantly, to stay under the finger.
-  const retreating = wentBack && currentTime <= EPS
-  useEffect(() => { prevTimeRef.current = currentTime }, [currentTime])
+  //
+  // This has to be held, not derived from the previous render: pausing at the
+  // cutoff queues its own event, so a second render arrives a few milliseconds
+  // in with the time already zero. Deriving it there would read "not rewinding
+  // any more", drop the stagger mid-sweep, and collapse the lot at once.
+  const retreating = currentTime <= EPS && lastHeardRef.current > EPS
+
+  useEffect(() => {
+    prevTimeRef.current = currentTime
+    if (currentTime > EPS) lastHeardRef.current = currentTime
+  }, [currentTime])
 
   // One coordinate system for the bar whether or not it is segmented: 0-1 across
   // the whole track, so the fill, the scrubber and the seek all speak it.
@@ -199,7 +209,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
     : `${unlockedBar * 100}%`
 
   // Where the playhead is retreating from, in bar coordinates.
-  const retreatFrom = retreating ? toBar(prevTime) : 0
+  const retreatFrom = retreating ? toBar(lastHeardRef.current) : 0
 
   // Each piece of fill empties during the slice of the trip when the playhead is
   // crossing it: it waits out everything to its right, then takes a share of the
