@@ -62,9 +62,20 @@
    text links get an underline and this one can't. */
 .navbar__avatar {
   display: inline-flex;
+  position: relative;
   border-radius: 50%;
   box-shadow: 0 0 0 0 var(--amber);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.navbar__avatar::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
 }
 
 .navbar__avatar--active {
@@ -89,6 +100,7 @@
   }
 
   .navbar__search-btn:hover {
+    background: #232323;
     color: var(--text-primary);
   }
 
@@ -99,7 +111,7 @@
 
 @media (max-width: 480px) {
   .navbar__links {
-    gap: 0.6rem;
+    gap: 0.8rem;
   }
 }
 
@@ -125,12 +137,24 @@
   position: relative;
 }
 
+/* Was a ~23px target. The icon stays 15px; the button grows around it and pulls
+   the extra width back with margins so navbar spacing is unchanged. */
 .navbar__search-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0 -4px;
+  border-radius: 50%;
   color: var(--text-muted);
-  padding: 4px;
-  transition: color 120ms;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 120ms ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.navbar__search-btn:active {
+  background: #232323;
+  color: var(--text-primary);
 }
 
 .navbar__search-box {

@@ -23,7 +23,9 @@
 
 .archive-month-nav {
   display: flex;
-  gap: 0.5rem;
+  /* Wide enough that the arrows' 44px touch areas meet without overlapping,
+     so a tap near the middle can't trigger the wrong direction. */
+  gap: 0.75rem;
 }
 
 .archive-weekdays {

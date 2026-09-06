@@ -448,7 +448,7 @@ export default function Explore() {
 
 function CalNavBtn({ onClick, label, disabled }) {
   return (
-    <button onClick={onClick} disabled={disabled} className="btn-press nav-btn" style={{
+    <button onClick={onClick} disabled={disabled} className="btn-press nav-btn tap-target" style={{
       width: 32, height: 32, background: 'var(--surface)', border: '1px solid var(--border)',
       borderRadius: '6px', color: disabled ? 'var(--text-dim)' : 'var(--text-muted)',
       cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex',

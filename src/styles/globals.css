@@ -209,6 +209,23 @@ input, textarea {
   transform: scale(0.95) !important;
 }
 
+/* Extends a control's touch area out to the 44px Apple asks for, without
+   changing its visual size. For controls whose look is the box itself (a
+   bordered icon button), where padding would just make it bigger. */
+.tap-target {
+  position: relative;
+}
+
+.tap-target::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+}
+
 /* Fallback so every button reacts to a press, even one that opts into no
    utility class. Anything with .btn-press overrides this with !important. */
 button {
