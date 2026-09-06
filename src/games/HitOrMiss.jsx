@@ -10,6 +10,7 @@ import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
+import Icon from '../components/Icon'
 import TrackArtwork from '../components/TrackArtwork'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './HitOrMiss.css'
@@ -83,7 +84,7 @@ export default function HitOrMiss() {
 
   return (
     <GameShell>
-      <Link to={exitTarget(searchParams)} replace className="game-back-link">← Back</Link>
+      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">hit or miss<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
@@ -110,9 +111,12 @@ export default function HitOrMiss() {
         {['hit', 'miss'].map(v => {
           const verdict = puzzle?.metadata?.verdict
           let mod = ''
+          let mark = null
           if (done) {
-            if (v === verdict) mod = ' hit-or-miss__choice-btn--correct'
-            else if (v === chosen) mod = ' hit-or-miss__choice-btn--wrong'
+            // A mark as well as a colour, so the result still reads for anyone
+            // who can't tell the green from the red.
+            if (v === verdict) { mod = ' hit-or-miss__choice-btn--correct'; mark = 'check' }
+            else if (v === chosen) { mod = ' hit-or-miss__choice-btn--wrong'; mark = 'x' }
             else mod = ' hit-or-miss__choice-btn--faded'
           }
           return (
@@ -122,6 +126,7 @@ export default function HitOrMiss() {
               disabled={done}
               className={`hit-or-miss__choice-btn btn-press${!done ? ' btn-hover' : ''}${mod}`}
             >
+              {mark && <Icon name={mark} size={16} strokeWidth={2.25} />}
               {v === 'hit' ? 'Hit' : 'Miss'}
             </button>
           )

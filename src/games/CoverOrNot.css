@@ -48,6 +48,10 @@
 }
 
 .cover-or-not__choice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   flex: 1;
   padding: 1rem;
   border: 1px solid var(--border);
@@ -72,7 +76,17 @@
 }
 
 .cover-or-not__choice-btn--faded {
-  opacity: 0.3;
+  opacity: 0.4;
+}
+
+/* The game's own colour rather than the shared grey hover: this is the whole
+   interaction, and it should feel like this game's button and not any button. */
+@media (hover: hover) and (pointer: fine) {
+  .cover-or-not__choice-btn:not(:disabled):hover {
+    border-color: var(--game-cover-or-not);
+    background: var(--game-cover-or-not-glow);
+    color: var(--game-cover-or-not);
+  }
 }
 
 .cover-or-not__original-label {

@@ -46,6 +46,10 @@
 }
 
 .hit-or-miss__choice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   flex: 1;
   padding: 1.25rem;
   border: 1px solid var(--border);
@@ -70,5 +74,15 @@
 }
 
 .hit-or-miss__choice-btn--faded {
-  opacity: 0.3;
+  opacity: 0.4;
+}
+
+/* The game's own colour rather than the shared grey hover: this is the whole
+   interaction, and it should feel like this game's button and not any button. */
+@media (hover: hover) and (pointer: fine) {
+  .hit-or-miss__choice-btn:not(:disabled):hover {
+    border-color: var(--game-hit-or-miss);
+    background: var(--game-hit-or-miss-glow);
+    color: var(--game-hit-or-miss);
+  }
 }

@@ -12,6 +12,7 @@ import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import ResultCard from '../components/ResultCard'
+import Icon from '../components/Icon'
 import TrackArtwork from '../components/TrackArtwork'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './CoverOrNot.css'
@@ -133,7 +134,7 @@ export default function CoverOrNot() {
 
   return (
     <GameShell>
-      <Link to={exitTarget(searchParams)} replace className="game-back-link">← Back</Link>
+      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">cover or not<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
@@ -166,9 +167,12 @@ export default function CoverOrNot() {
       <div className="stagger-list cover-or-not__choices">
         {[{ value: 'cover', label: "It's a cover" }, { value: 'original', label: "It's original" }].map(({ value, label }) => {
           let mod = ''
+          let mark = null
           if (done) {
-            if (value === puzzle.answer) mod = ' cover-or-not__choice-btn--correct'
-            else if (value === chosen) mod = ' cover-or-not__choice-btn--wrong'
+            // A mark as well as a colour, so the result still reads for anyone
+            // who can't tell the green from the red.
+            if (value === puzzle.answer) { mod = ' cover-or-not__choice-btn--correct'; mark = 'check' }
+            else if (value === chosen) { mod = ' cover-or-not__choice-btn--wrong'; mark = 'x' }
             else mod = ' cover-or-not__choice-btn--faded'
           }
           return (
@@ -178,6 +182,7 @@ export default function CoverOrNot() {
               disabled={done}
               className={`cover-or-not__choice-btn btn-press${!done ? ' btn-hover' : ''}${mod}`}
             >
+              {mark && <Icon name={mark} size={16} strokeWidth={2.25} />}
               {label}
             </button>
           )
