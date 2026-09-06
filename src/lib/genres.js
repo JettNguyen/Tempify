@@ -12,6 +12,7 @@ export const GENRES = [
   'Folk',
   'Reggae',
   'K-Pop',
+  'Soundtrack',
 ]
 
 // Muted pill color per genre - subtle, not rainbow
@@ -29,4 +30,5 @@ export const GENRE_COLORS = {
   'Folk':       { bg: '#f9731618', text: '#fdba74' },
   'Reggae':     { bg: '#22c55e18', text: '#86efac' },
   'K-Pop':      { bg: '#ec489918', text: '#f9a8d4' },
+  'Soundtrack': { bg: '#3b82f618', text: '#60a5fa' },
 }
