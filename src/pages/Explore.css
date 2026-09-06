@@ -53,9 +53,16 @@
   font-weight: 500;
 }
 
-/* Wrapper carries the fade; the scrolling happens inside it. */
+/* Wrapper carries the fade; the scrolling happens inside it. The -2px/+2px
+   gutter pairs below keep the first and last item off the scroller's clip edge.
+   Once a row has been scrolled the browser composites it, and from then on a
+   border sitting exactly on that edge loses a sliver every time you come back
+   to the origin. Padding in, margin out, so the row still lines up with the
+   rest of the page. */
 .explore-pills-fade {
   margin-bottom: 2rem;
+  margin-left: -2px;
+  margin-right: -2px;
   -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
   mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
 }
@@ -65,6 +72,8 @@
   gap: 6px;
   overflow-x: auto;
   padding-bottom: 4px;
+  padding-left: 2px;
+  padding-right: 2px;
   scrollbar-width: none;
 }
 
@@ -90,6 +99,8 @@
 }
 
 .explore-game-row__fade {
+  margin-left: -2px;
+  margin-right: -2px;
   -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
   mask-image: linear-gradient(to right, black 0, black calc(100% - 48px), transparent 100%);
 }
@@ -99,6 +110,8 @@
   gap: 0.75rem;
   overflow-x: auto;
   padding-bottom: 8px;
+  padding-left: 2px;
+  padding-right: 2px;
   scrollbar-width: none;
 }
 
