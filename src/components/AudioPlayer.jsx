@@ -22,6 +22,16 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, label, o
       onPlay?.()
       return audio.play() ?? Promise.resolve()
     },
+    // Play from the top regardless of where the clip was left. Used when more
+    // audio has just been unlocked and the point is to hear it from the start.
+    restart() {
+      const audio = audioRef.current
+      if (!audio) return Promise.resolve()
+      audio.currentTime = 0
+      setCurrentTime(0)
+      onPlay?.()
+      return audio.play() ?? Promise.resolve()
+    },
   }))
 
   useEffect(() => {

@@ -38,6 +38,11 @@ export default function OneBar() {
   const [error, setError] = useState(null)
 
   const guessInputRef = useRef(null)
+  const audioRef = useRef(null)
+  // Set by Skip, consumed once the longer clip length has actually landed on
+  // the player. Playing straight from the handler would race the state update
+  // and cut off at the old limit.
+  const playOnUnlockRef = useRef(false)
 
   const [attempts, setAttempts] = useState([])
   const [done, setDone] = useState(false)
@@ -125,6 +130,15 @@ export default function OneBar() {
     return () => clearTimeout(id)
   }, [notice])
 
+  // Child effects run before parent ones, so by now AudioPlayer has rebound its
+  // cutoff to the newly unlocked length.
+  useEffect(() => {
+    if (!playOnUnlockRef.current) return
+    playOnUnlockRef.current = false
+    const p = audioRef.current?.restart()
+    if (p?.catch) p.catch(() => {})
+  }, [revealSeconds])
+
   function buildEmojiGrid() {
     return attempts.map((a) => (a.correct ? '🟩' : '⬜')).join('')
   }
@@ -188,6 +202,10 @@ export default function OneBar() {
     if (done || attempts.length >= MAX_ATTEMPTS) return
     hapticImportantTap()
 
+    // The whole point of skipping is to hear more, so don't make them press
+    // play as well. A skip that ends the round remounts the player with the
+    // full track on autoplay, so the flag simply goes unused there.
+    playOnUnlockRef.current = true
     await registerAttempt({ title: 'Skipped', artist: '', correct: false, skipped: true })
   }
 
@@ -208,7 +226,7 @@ export default function OneBar() {
         </h1>
       </div>
 
-      <AudioPlayer key={done ? 'done' : 'playing'} src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} autoplay={done ? true : profile?.autoplay_audio !== false} />
+      <AudioPlayer ref={audioRef} key={done ? 'done' : 'playing'} src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} autoplay={done ? true : profile?.autoplay_audio !== false} />
 
       <div className="one-bar__progress">
         <div className="one-bar__bars">
