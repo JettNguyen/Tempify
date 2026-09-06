@@ -18,6 +18,7 @@ const PATHS = {
   chevronLeft: <polyline points="15 18 9 12 15 6" />,
   chevronRight: <polyline points="9 18 15 12 9 6" />,
   skipForward: <><polyline points="6 18 12 12 6 6" /><polyline points="13 18 19 12 13 6" /></>,
+  share: <><path d="M12 15V3" /><path d="m8 7 4-4 4 4" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" /></>,
   alert: <><circle cx="12" cy="12" r="9" /><line x1="12" y1="8" x2="12" y2="13" /><line x1="12" y1="16.5" x2="12" y2="16.6" /></>,
 }
 

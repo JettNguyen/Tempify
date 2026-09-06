@@ -1,4 +1,8 @@
 .share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-size: var(--fs-sm);
   color: var(--text-muted);
   padding: 7px 14px;
@@ -6,8 +10,7 @@
   border-radius: 999px;
   transition: color 0.2s ease;
   /* Hold the width so the label swap doesn't shove the next-game button. */
-  min-width: 104px;
-  text-align: center;
+  min-width: 118px;
 }
 
 .share-btn--copied {

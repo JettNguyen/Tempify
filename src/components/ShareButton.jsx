@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import Icon from './Icon'
 import { Share } from '@capacitor/share'
 import { fmtTime } from '../lib/date'
 import { isNativeApp } from '../lib/oauth'
@@ -129,12 +130,16 @@ export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, ti
   }
 
   const label = state === 'copied' ? 'Copied' : state === 'failed' ? "Couldn't copy" : 'Share'
+  // The icon carries the state alongside the colour, so the result still reads
+  // for anyone who can't tell the green from the red.
+  const icon = state === 'copied' ? 'check' : state === 'failed' ? 'alert' : 'share'
 
   return (
     <button
       onClick={handleShare}
       className={`share-btn btn-press btn-hover${state === 'copied' ? ' share-btn--copied' : ''}${state === 'failed' ? ' share-btn--failed' : ''}`}
     >
+      <Icon name={icon} size={14} />
       {label}
     </button>
   )
