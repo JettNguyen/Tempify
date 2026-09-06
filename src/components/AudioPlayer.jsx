@@ -3,9 +3,9 @@ import { armAudioContext, primeAudioContext } from '../lib/audioAnalyser'
 import { useAudioBars } from '../hooks/useAudioBars'
 import './AudioPlayer.css'
 
-// Enough to read as a spectrum across the full width of the card. The resting
-// shape cycles through eight variants in CSS, so this need not be a multiple.
-const WAVE_BARS = 32
+// Seven, because that is what One Bar's own symbol is: the player at rest is the
+// game's logo stretched across the card, and playing sets it moving.
+const WAVE_BARS = 7
 
 // Owned here rather than in CSS because the scrubber's width has to account for
 // the gaps to line up with the segment boundaries.

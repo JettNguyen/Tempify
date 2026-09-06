@@ -61,9 +61,10 @@ export function useAudioBars(audioRef, waveRef, playing) {
           let sum = 0
           for (let b = from; b < to; b++) sum += bins[b]
           const avg = sum / (to - from) / 255
-          // Energy still falls away towards the top even on a log scale, so lift
-          // the higher bars or the right-hand end sits flat all song.
-          const lifted = Math.min(1, avg * (1 + i * 0.045))
+          // Energy still falls away towards the top even on a log scale, and with
+          // only seven bars the last one carries 6-15kHz by itself — lift it or
+          // that end of the logo never moves.
+          const lifted = Math.min(1, avg * (1 + i * 0.28))
           const scale = FLOOR + (1 - FLOOR) * Math.pow(lifted, 0.8)
           bars[i].style.transform = `scaleY(${scale.toFixed(3)})`
         }

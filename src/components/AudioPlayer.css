@@ -140,7 +140,9 @@
   inset: 0;
   display: flex;
   align-items: center;
-  gap: 2px;
+  /* The symbol's bars are 10 wide with 6 between them; as a share of the row
+     that ratio comes out here, so the proportions hold at any card width. */
+  gap: 5.66%;
   border-radius: inherit;
   overflow: hidden;
   opacity: 0;
@@ -149,24 +151,22 @@
 }
 
 .audio-player__wave--active {
-  opacity: 0.17;
+  /* Solid amber now rather than a fade, matching the flat symbol, so this comes
+     down to keep the controls sitting over it readable. */
+  opacity: 0.13;
 }
 
 .audio-player__wave-bar {
   flex: 1;
   min-width: 0;
-  height: 72%;
+  /* The symbol's tallest bar fills 82% of its box, and every resting scale below
+     is measured against that one. */
+  height: 82%;
   /* Scaled about its middle, so a bar grows and shrinks in both directions off
-     the centre line rather than rising off the floor. Faded at both ends so the
-     controls sitting over it stay legible. */
+     the centre line rather than rising off the floor. */
   transform-origin: center;
   transform: scaleY(var(--rest));
-  background: linear-gradient(
-    to bottom,
-    rgba(245, 158, 11, 0.18) 0%,
-    var(--amber) 50%,
-    rgba(245, 158, 11, 0.18) 100%
-  );
+  background: var(--amber);
   border-radius: 999px;
   animation: audio-wave 1s ease-in-out infinite;
   animation-play-state: paused;
@@ -183,21 +183,20 @@
   animation: none;
 }
 
-/* Eight resting heights and eight mismatched durations, cycled: the row reads as
-   a waveform rather than a marching wave, and across 32 bars the repeat isn't
-   something the eye picks out. */
-.audio-player__wave-bar:nth-child(8n+1) { --rest: 0.20; animation-duration: 1.05s; animation-delay: 0s; }
-.audio-player__wave-bar:nth-child(8n+2) { --rest: 0.42; animation-duration: 0.8s;  animation-delay: 0.24s; }
-.audio-player__wave-bar:nth-child(8n+3) { --rest: 0.30; animation-duration: 1.25s; animation-delay: 0.09s; }
-.audio-player__wave-bar:nth-child(8n+4) { --rest: 0.55; animation-duration: 0.95s; animation-delay: 0.33s; }
-.audio-player__wave-bar:nth-child(8n+5) { --rest: 0.25; animation-duration: 1.15s; animation-delay: 0.15s; }
-.audio-player__wave-bar:nth-child(8n+6) { --rest: 0.48; animation-duration: 0.75s; animation-delay: 0.39s; }
-.audio-player__wave-bar:nth-child(8n+7) { --rest: 0.34; animation-duration: 1.35s; animation-delay: 0.06s; }
-.audio-player__wave-bar:nth-child(8n+8) { --rest: 0.62; animation-duration: 0.9s;  animation-delay: 0.27s; }
+/* The symbol's own bar heights — 30, 62, 98, 46, 80, 38, 22 out of 120 — as
+   fractions of its tallest. At rest the card carries the logo exactly; the
+   mismatched durations then set it breathing without ever growing past it. */
+.audio-player__wave-bar:nth-child(1) { --rest: 0.306; animation-duration: 1.15s; animation-delay: 0.21s; }
+.audio-player__wave-bar:nth-child(2) { --rest: 0.633; animation-duration: 0.85s; animation-delay: 0.06s; }
+.audio-player__wave-bar:nth-child(3) { --rest: 1;     animation-duration: 1.3s;  animation-delay: 0.33s; }
+.audio-player__wave-bar:nth-child(4) { --rest: 0.469; animation-duration: 0.95s; animation-delay: 0.15s; }
+.audio-player__wave-bar:nth-child(5) { --rest: 0.816; animation-duration: 1.05s; animation-delay: 0.39s; }
+.audio-player__wave-bar:nth-child(6) { --rest: 0.388; animation-duration: 0.75s; animation-delay: 0.27s; }
+.audio-player__wave-bar:nth-child(7) { --rest: 0.224; animation-duration: 1.45s; animation-delay: 0.09s; }
 
 @keyframes audio-wave {
   0%, 100% { transform: scaleY(var(--rest)); }
-  50%      { transform: scaleY(calc(var(--rest) + 0.34)); }
+  50%      { transform: scaleY(calc(var(--rest) * 0.5)); }
 }
 
 /* Without this the global reduced-motion rule freezes every bar on its first
