@@ -3,8 +3,8 @@ import { useParams, Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
-import { GAME_BY_SLUG, GAME_SLUGS } from '../lib/games'
-import { getPuzzlesForDate } from '../lib/puzzles'
+import { GAME_BY_SLUG, ALL_GAME_SLUGS } from '../lib/games'
+import { prefetchPuzzlesForDate } from '../lib/puzzles'
 import ArchiveLock from '../components/ArchiveLock'
 import DelayedSpinner from '../components/DelayedSpinner'
 import GameTile from '../components/GameTile'
@@ -24,7 +24,7 @@ export default function ArchiveDay() {
 
   useEffect(() => {
     if (!user) return
-    getPuzzlesForDate(date)
+    prefetchPuzzlesForDate(date)
       .then(setPuzzles)
       .finally(() => setFetching(false))
   }, [date, user])
@@ -52,7 +52,8 @@ export default function ArchiveDay() {
   const puzzleMap = {}
   puzzles.forEach(p => { puzzleMap[p.game_slug] = p })
 
-  const available = GAME_SLUGS.filter(slug => puzzleMap[slug])
+  // Retired games still appear on the dates they ran, so history stays playable.
+  const available = ALL_GAME_SLUGS.filter(slug => puzzleMap[slug])
   const [featuredSlug, ...rest] = available
   const middle = rest.slice(0, 2)
   const bottom = rest.slice(2)

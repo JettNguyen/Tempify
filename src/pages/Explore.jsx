@@ -5,7 +5,7 @@ import { useCompletion } from '../hooks/useCompletion'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
-import { GAMES } from '../lib/games'
+import { ALL_GAMES } from '../lib/games'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { hapticSelection } from '../lib/haptics'
 import ArchiveLock from '../components/ArchiveLock'
@@ -219,7 +219,7 @@ export default function Explore() {
     : allPuzzles.filter(p => p.genre && activeGenres.includes(p.genre))
 
   const byGame = {}
-  GAMES.forEach(g => { byGame[g.slug] = [] })
+  ALL_GAMES.forEach(g => { byGame[g.slug] = [] })
   filtered.forEach(p => {
     if (byGame[p.game_slug]) byGame[p.game_slug].push(p)
   })
@@ -381,7 +381,7 @@ export default function Explore() {
         <DelayedSpinner active={fetching} label="Loading puzzles..." />
       ) : (
         <div className="explore-games" ref={gamesRef}>
-          {GAMES.map(game => {
+          {ALL_GAMES.map(game => {
             const puzzles = byGame[game.slug]
             if (!puzzles?.length) return null
             return (
@@ -422,7 +422,7 @@ export default function Explore() {
               </div>
             )
           })}
-          {GAMES.every(g => !byGame[g.slug]?.length) && (
+          {ALL_GAMES.every(g => !byGame[g.slug]?.length) && (
             <p className="explore-empty">No puzzles found{activeGenres.length ? ' for selected genres' : ''}.</p>
           )}
         </div>

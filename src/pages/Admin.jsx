@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { GENRES } from '../lib/genres'
 import { searchSongs, fetchTrackDetails } from '../lib/deezer'
+import { getGameName } from '../lib/games'
 import { searchRecordings } from '../lib/musicbrainz'
 import { lookupBillboardPeak, lookupBillboard200Peak } from '../lib/billboard'
 import { todayEST } from '../lib/date'
@@ -11,7 +12,6 @@ import { todayEST } from '../lib/date'
 const GAMES = [
   { slug: 'one-bar',        short: 'One Bar' },
   { slug: 'hit-or-miss',    short: 'Hit or Miss' },
-  { slug: 'sampled',        short: 'Sampled' },
   { slug: 'era',            short: 'Era' },
   { slug: 'cover-or-not',   short: 'Cover/Not' },
 ]
@@ -1064,6 +1064,12 @@ export default function Admin() {
               <Field label="Game">
                 <select value={form.game} onChange={e => set('game', e.target.value)} style={inputStyle}>
                   {GAMES.map(g => <option key={g.slug} value={g.slug}>{g.short}</option>)}
+                  {/* A retired game can't be scheduled, but an existing puzzle has
+                      to keep showing its own game — otherwise the select falls
+                      back to the first option and editing rewrites game_slug. */}
+                  {form.game && !GAMES.some(g => g.slug === form.game) && (
+                    <option value={form.game} disabled>{getGameName(form.game)} (retired)</option>
+                  )}
                 </select>
               </Field>
             </div>
@@ -1073,7 +1079,7 @@ export default function Admin() {
               if (!conflict || conflict.id === editingId) return null
               return (
                 <p style={{ fontSize: '12px', color: '#ef4444', marginBottom: '0.75rem' }}>
-                  A {GAMES.find(g => g.slug === form.game)?.short} puzzle already exists for this date ({conflict.answer || 'no answer set'}).
+                  A {GAMES.find(g => g.slug === form.game)?.short ?? getGameName(form.game)} puzzle already exists for this date ({conflict.answer || 'no answer set'}).
                   Use the ✎ button in the grid to edit it instead.
                 </p>
               )
@@ -1125,7 +1131,7 @@ export default function Admin() {
               if (!dupe) return null
               return (
                 <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '0.75rem' }}>
-                  This presented song has already been used as a {GAMES.find(g => g.slug === form.game)?.short} puzzle (scheduled {dupe.scheduled_date}). Pick a different song.
+                  This presented song has already been used as a {GAMES.find(g => g.slug === form.game)?.short ?? getGameName(form.game)} puzzle (scheduled {dupe.scheduled_date}). Pick a different song.
                 </p>
               )
             })()}

@@ -7,7 +7,7 @@ import {
   getFollowerProfiles, getFollowingProfiles,
   getAllScores, getStreaks,
 } from '../lib/scores'
-import { GAME_SLUGS, getGameName } from '../lib/games'
+import { GAME_SLUGS, ALL_GAME_SLUGS, getGameSlugsForDate, getGameName } from '../lib/games'
 import { fmtTime, todayEST } from '../lib/date'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
@@ -37,15 +37,17 @@ function buildStats(scores, streaks = []) {
   const longestStreak = streaks.reduce((max, s) => Math.max(max, s.longest_streak || 0), 0)
   const oneTryWins = scores.filter(s => s.completed && s.attempts === 1).length
 
-  // Perfect days - all 5 games won on the same date
+  // Perfect days - every game in that day's lineup won. Measured against the
+  // lineup as it stood on the date, so retiring a game doesn't retroactively
+  // turn old near-misses into perfect days.
   const byDate = {}
   scores.forEach(s => {
     if (!byDate[s.date_played]) byDate[s.date_played] = []
     byDate[s.date_played].push(s)
   })
-  const perfectDays = Object.values(byDate).filter(day => {
+  const perfectDays = Object.entries(byDate).filter(([date, day]) => {
     const slugs = new Set(day.filter(s => s.completed).map(s => s.game_slug))
-    return GAME_SLUGS.every(g => slugs.has(g))
+    return getGameSlugsForDate(date).every(g => slugs.has(g))
   }).length
 
   // Consistency - % of days since first play that they actually played
@@ -58,7 +60,9 @@ function buildStats(scores, streaks = []) {
   const consistency = Math.round((uniqueDays / totalDaysSinceFirst) * 100)
 
   // Per-game stats
-  const byGame = GAME_SLUGS.map(slug => {
+  // Includes retired games — they're filtered to played-only below, so a
+  // player's Sampled history stays visible without adding an empty row.
+  const byGame = ALL_GAME_SLUGS.map(slug => {
     const plays = scores.filter(s => s.game_slug === slug)
     const w = plays.filter(s => s.completed)
     const allAttempts = plays.map(s => s.attempts).filter(Boolean)

@@ -143,7 +143,7 @@ export default function HitOrMiss() {
           gameSlug="hit-or-miss"
           puzzleDate={dateParam}
           timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
-          nextGame={{ path: '/game/sampled', label: 'Sampled' }}
+          nextGame={{ path: '/game/era', label: 'Era' }}
           showLeaderboard={profile?.competitive_mode !== false}
         />
       )}
