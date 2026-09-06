@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST, fmtDayShort } from '../lib/date'
+import { DECADES, centuryOf } from '../lib/decades'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork } from '../lib/deezer'
@@ -15,10 +16,6 @@ import ResultCard from '../components/ResultCard'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './Era.css'
 
-const DECADES = ['60s', '70s', '80s', '90s', '00s', '10s', '20s']
-// Split so the century can sit small above the years — a plain "60s" gives the
-// eye nothing to catch on, and seven identical pills read as a list of nothing.
-const centuryOf = (decade) => (Number(decade.slice(0, 2)) >= 60 ? '19' : '20')
 
 export default function Era() {
   const { user, profile } = useAuth()

@@ -15,12 +15,11 @@
   line-height: 1.4;
 }
 
-/* All seven in one row, in order: the decades are a timeline, and reading them
-   as one left to right is the question the game is asking. Four across left an
-   orphaned row of three with a hole in it, which is what looked broken. */
+/* Four across, two full rows: eight decades divide evenly, so neither row has a
+   hole in it and every chip is the same size. */
 .era__decades {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   margin-top: 1.25rem;
 }
@@ -59,22 +58,6 @@
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
   transition: color 0.2s ease;
-}
-
-/* On the narrowest phones the row leaves only a couple of pixels either side of
-   the label, so give it back some room rather than risk it touching the border. */
-@media (max-width: 360px) {
-  .era__decades {
-    gap: 4px;
-  }
-
-  .era__decade-btn {
-    padding: 8px 2px;
-  }
-
-  .era__decade-years {
-    font-size: var(--fs-sm);
-  }
 }
 
 .era__decade-btn--done {

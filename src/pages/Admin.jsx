@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import { DECADES, yearToDecade } from '../lib/decades'
 import { GENRES } from '../lib/genres'
 import { searchSongs, fetchTrackDetails } from '../lib/deezer'
 import { getGameName } from '../lib/games'
@@ -18,7 +19,6 @@ const GAMES = [
   { slug: 'cover-or-not',   short: 'Cover/Not' },
 ]
 
-const DECADES = ['60s','70s','80s','90s','00s','10s','20s']
 
 function addDays(dateStr, n) {
   const d = new Date(dateStr + 'T12:00:00')
@@ -452,18 +452,6 @@ function WhoSampledFields({ f, set, setGenre }) {
       <NoteField f={f} set={set} />
     </>
   )
-}
-
-function yearToDecade(year) {
-  const y = parseInt(year, 10)
-  if (!y || y < 1960) return null
-  if (y < 1970) return '60s'
-  if (y < 1980) return '70s'
-  if (y < 1990) return '80s'
-  if (y < 2000) return '90s'
-  if (y < 2010) return '00s'
-  if (y < 2020) return '10s'
-  return '20s'
 }
 
 function EraFields({ f, set }) {
