@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
-import { getAnalyser } from '../lib/audioAnalyser'
+import { getAnalyser, primeAudioContext, onContextStateChange } from '../lib/audioAnalyser'
 
 // Bars never collapse to nothing — a flat line reads as broken, not as quiet.
-const FLOOR = 0.06
+// Scaling is about the centre line, so this is a half-height either way.
+const FLOOR = 0.05
 const FIRST_BIN = 1              // bin 0 is DC, always junk
 const TOP_FRACTION = 0.7         // above this there is nothing but hiss
 
@@ -45,31 +46,51 @@ export function useAudioBars(audioRef, waveRef, playing) {
     // Someone who asked for less motion did not ask for a live equaliser.
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
 
-    const analyser = getAnalyser(audio)
-    if (!analyser) return
-
     const bars = Array.from(wave.children)
-    const bins = new Uint8Array(analyser.frequencyBinCount)
-    const ranges = binRanges(bars.length, analyser.frequencyBinCount)
-    wave.classList.add('audio-player__wave--live')
+    let frame = 0
 
-    let frame = requestAnimationFrame(function draw() {
-      analyser.getByteFrequencyData(bins)
-      for (let i = 0; i < bars.length; i++) {
-        const [from, to] = ranges[i]
-        let sum = 0
-        for (let b = from; b < to; b++) sum += bins[b]
-        const avg = sum / (to - from) / 255
-        // Energy still falls away towards the top even on a log scale, so lift
-        // the higher bars or the right-hand end sits flat all song.
-        const lifted = Math.min(1, avg * (1 + i * 0.045))
-        const scale = FLOOR + (1 - FLOOR) * Math.pow(lifted, 0.8)
-        bars[i].style.transform = `scaleY(${scale.toFixed(3)})`
-      }
-      frame = requestAnimationFrame(draw)
-    })
+    function run(analyser) {
+      const bins = new Uint8Array(analyser.frequencyBinCount)
+      const ranges = binRanges(bars.length, analyser.frequencyBinCount)
+      wave.classList.add('audio-player__wave--live')
+
+      frame = requestAnimationFrame(function draw() {
+        analyser.getByteFrequencyData(bins)
+        for (let i = 0; i < bars.length; i++) {
+          const [from, to] = ranges[i]
+          let sum = 0
+          for (let b = from; b < to; b++) sum += bins[b]
+          const avg = sum / (to - from) / 255
+          // Energy still falls away towards the top even on a log scale, so lift
+          // the higher bars or the right-hand end sits flat all song.
+          const lifted = Math.min(1, avg * (1 + i * 0.045))
+          const scale = FLOOR + (1 - FLOOR) * Math.pow(lifted, 0.8)
+          bars[i].style.transform = `scaleY(${scale.toFixed(3)})`
+        }
+        frame = requestAnimationFrame(draw)
+      })
+    }
+
+    // Resuming the context is asynchronous, so the first play routinely arrives
+    // before it is awake — and with autoplay, before any tap at all. Ask again
+    // when it wakes rather than settling for the canned loop for the whole clip.
+    let unsubscribe = () => {}
+    const attempt = () => {
+      if (frame) return true
+      const analyser = getAnalyser(audio)
+      if (!analyser) return false
+      run(analyser)
+      unsubscribe()
+      return true
+    }
+
+    if (!attempt()) {
+      primeAudioContext()
+      unsubscribe = onContextStateChange(attempt)
+    }
 
     return () => {
+      unsubscribe()
       cancelAnimationFrame(frame)
       wave.classList.remove('audio-player__wave--live')
       // Hand the bars back to the CSS animation exactly as it found them.

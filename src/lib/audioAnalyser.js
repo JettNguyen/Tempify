@@ -65,7 +65,13 @@ export function getAnalyser(el) {
     // 512 bins at ~43Hz each. Coarser than this and the lowest bars — where a
     // log scale wants the most detail — all land on the same bin and move as one.
     analyser.fftSize = 1024
-    analyser.smoothingTimeConstant = 0.75
+    // Enough smoothing to stop single-frame jitter, little enough to still land
+    // on the beat rather than trailing along behind it.
+    analyser.smoothingTimeConstant = 0.6
+    // The defaults (-100/-30 dB) put a music mix near the bottom of the range,
+    // where the bars barely move; this is roughly where a preview actually sits.
+    analyser.minDecibels = -80
+    analyser.maxDecibels = -25
     source.connect(analyser)
     analyser.connect(c.destination)
     connected.set(el, analyser)
@@ -73,6 +79,19 @@ export function getAnalyser(el) {
   } catch {
     return null
   }
+}
+
+/**
+ * Calls back whenever the context wakes or sleeps. Resuming is asynchronous, so
+ * the first play almost always asks for an analyser while the context is still
+ * suspended; without this the answer stays "no" for that whole clip and the
+ * canned animation stands in for audio that is playing perfectly well.
+ */
+export function onContextStateChange(fn) {
+  const c = getContext()
+  if (!c) return () => {}
+  c.addEventListener('statechange', fn)
+  return () => c.removeEventListener('statechange', fn)
 }
 
 /** True once this element is routed through the graph and can't be un-routed. */

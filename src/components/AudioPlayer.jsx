@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react'
-import { armAudioContext } from '../lib/audioAnalyser'
+import { armAudioContext, primeAudioContext } from '../lib/audioAnalyser'
 import { useAudioBars } from '../hooks/useAudioBars'
 import './AudioPlayer.css'
 
@@ -153,6 +153,9 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   function togglePlay() {
     const audio = audioRef.current
     if (!audio) return
+    // A real tap is the only thing Safari will start the audio context on, and
+    // this is the most reliable one the player gets.
+    primeAudioContext()
     if (playing) {
       audio.pause()
     } else {

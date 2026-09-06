@@ -139,7 +139,7 @@
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 2px;
   border-radius: inherit;
   overflow: hidden;
@@ -155,13 +155,19 @@
 .audio-player__wave-bar {
   flex: 1;
   min-width: 0;
-  height: 100%;
-  /* Grows off the floor like a spectrum, fading out towards the top so the
+  height: 72%;
+  /* Scaled about its middle, so a bar grows and shrinks in both directions off
+     the centre line rather than rising off the floor. Faded at both ends so the
      controls sitting over it stay legible. */
-  transform-origin: bottom;
+  transform-origin: center;
   transform: scaleY(var(--rest));
-  background: linear-gradient(to top, var(--amber) 0%, rgba(245, 158, 11, 0.1) 100%);
-  border-radius: 2px 2px 0 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(245, 158, 11, 0.18) 0%,
+    var(--amber) 50%,
+    rgba(245, 158, 11, 0.18) 100%
+  );
+  border-radius: 999px;
   animation: audio-wave 1s ease-in-out infinite;
   animation-play-state: paused;
 }
@@ -180,18 +186,18 @@
 /* Eight resting heights and eight mismatched durations, cycled: the row reads as
    a waveform rather than a marching wave, and across 32 bars the repeat isn't
    something the eye picks out. */
-.audio-player__wave-bar:nth-child(8n+1) { --rest: 0.16; animation-duration: 1.05s; animation-delay: 0s; }
-.audio-player__wave-bar:nth-child(8n+2) { --rest: 0.30; animation-duration: 0.8s;  animation-delay: 0.24s; }
-.audio-player__wave-bar:nth-child(8n+3) { --rest: 0.22; animation-duration: 1.25s; animation-delay: 0.09s; }
-.audio-player__wave-bar:nth-child(8n+4) { --rest: 0.40; animation-duration: 0.95s; animation-delay: 0.33s; }
-.audio-player__wave-bar:nth-child(8n+5) { --rest: 0.19; animation-duration: 1.15s; animation-delay: 0.15s; }
-.audio-player__wave-bar:nth-child(8n+6) { --rest: 0.34; animation-duration: 0.75s; animation-delay: 0.39s; }
-.audio-player__wave-bar:nth-child(8n+7) { --rest: 0.25; animation-duration: 1.35s; animation-delay: 0.06s; }
-.audio-player__wave-bar:nth-child(8n+8) { --rest: 0.44; animation-duration: 0.9s;  animation-delay: 0.27s; }
+.audio-player__wave-bar:nth-child(8n+1) { --rest: 0.20; animation-duration: 1.05s; animation-delay: 0s; }
+.audio-player__wave-bar:nth-child(8n+2) { --rest: 0.42; animation-duration: 0.8s;  animation-delay: 0.24s; }
+.audio-player__wave-bar:nth-child(8n+3) { --rest: 0.30; animation-duration: 1.25s; animation-delay: 0.09s; }
+.audio-player__wave-bar:nth-child(8n+4) { --rest: 0.55; animation-duration: 0.95s; animation-delay: 0.33s; }
+.audio-player__wave-bar:nth-child(8n+5) { --rest: 0.25; animation-duration: 1.15s; animation-delay: 0.15s; }
+.audio-player__wave-bar:nth-child(8n+6) { --rest: 0.48; animation-duration: 0.75s; animation-delay: 0.39s; }
+.audio-player__wave-bar:nth-child(8n+7) { --rest: 0.34; animation-duration: 1.35s; animation-delay: 0.06s; }
+.audio-player__wave-bar:nth-child(8n+8) { --rest: 0.62; animation-duration: 0.9s;  animation-delay: 0.27s; }
 
 @keyframes audio-wave {
   0%, 100% { transform: scaleY(var(--rest)); }
-  50%      { transform: scaleY(calc(var(--rest) + 0.28)); }
+  50%      { transform: scaleY(calc(var(--rest) + 0.34)); }
 }
 
 /* Without this the global reduced-motion rule freezes every bar on its first
