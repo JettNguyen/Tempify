@@ -12,6 +12,7 @@ import { hapticImportantTap, hapticWrong, hapticRejected } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
 import GuessInput from '../components/GuessInput'
 import ResultCard from '../components/ResultCard'
+import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './OneBar.css'
 
@@ -246,6 +247,7 @@ export default function OneBar() {
           <GuessInput ref={guessInputRef} onGuess={handleGuess} disabled={done} />
           {notice && <p className="one-bar__notice" role="status">{notice}</p>}
           <button type="button" onClick={handleSkip} className="one-bar__skip btn-press">
+            <Icon name="skipForward" size={14} />
             Skip — unlock more audio
           </button>
         </>

@@ -26,15 +26,19 @@
   margin-top: 0.5rem;
 }
 
+/* An unfilled pill, not a rounded box on --surface: sitting directly under the
+   guess field, the old style shared its background, border, radius and corner
+   rounding, so it read as a second input rather than a button. Pills are what
+   buttons look like everywhere else in the app. */
 .one-bar__skip {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 7px;
   margin-top: 0.75rem;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 7px 15px;
+  border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: transparent;
   font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--text-muted);
@@ -42,10 +46,20 @@
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.one-bar__skip:hover {
-  background: #222222;
-  border-color: #363636;
-  color: var(--text-primary);
+.one-bar__skip svg {
+  color: var(--text-dim);
+  transition: color 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .one-bar__skip:hover {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  .one-bar__skip:hover svg {
+    color: var(--amber);
+  }
 }
 
 .one-bar__guesses {
