@@ -39,6 +39,7 @@ export default function OneBar() {
   const [correct, setCorrect] = useState(false)
   const [revealSeconds, setRevealSeconds] = useState(BASE_SECONDS)
   const [resultArtwork, setResultArtwork] = useState(null)
+  const [notice, setNotice] = useState(null)
 
   useEffect(() => {
     getPuzzle('one-bar', dateParam)
@@ -109,6 +110,12 @@ export default function OneBar() {
     } catch { /* ignore corrupt data */ }
   }, [puzzle, completions])
 
+  useEffect(() => {
+    if (!notice) return
+    const id = setTimeout(() => setNotice(null), 2500)
+    return () => clearTimeout(id)
+  }, [notice])
+
   function buildEmojiGrid() {
     return attempts.map((a) => (a.correct ? '🟩' : '⬜')).join('')
   }
@@ -140,6 +147,19 @@ export default function OneBar() {
 
   async function handleGuess(song) {
     if (done || attempts.length >= MAX_ATTEMPTS) return
+
+    // A repeat guess tells the player nothing new, so don't let it burn a turn.
+    const guessKey = `${stripVariant(song.title).toLowerCase()}|||${song.artist.toLowerCase()}`
+    const isRepeat = attempts.some((a) => (
+      !a.skipped && `${stripVariant(a.title || '').toLowerCase()}|||${(a.artist || '').toLowerCase()}` === guessKey
+    ))
+    if (isRepeat) {
+      setNotice(`You already guessed “${song.title}”.`)
+      guessInputRef.current?.clear()
+      return
+    }
+
+    setNotice(null)
     hapticImportantTap()
 
     const titleMatch = stripVariant(song.title).toLowerCase() === puzzle.answer.toLowerCase().trim()
@@ -200,6 +220,7 @@ export default function OneBar() {
       {!done && (
         <>
           <GuessInput ref={guessInputRef} onGuess={handleGuess} disabled={done} />
+          {notice && <p className="one-bar__notice" role="status">{notice}</p>}
           <button type="button" onClick={handleSkip} className="one-bar__skip btn-press">
             Skip — unlock more audio
           </button>

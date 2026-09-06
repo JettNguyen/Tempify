@@ -89,3 +89,9 @@
 .one-bar__guess-x {
   color: var(--text-dim);
 }
+
+.one-bar__notice {
+  margin-top: 0.5rem;
+  font-size: 13px;
+  color: var(--text-muted);
+}
