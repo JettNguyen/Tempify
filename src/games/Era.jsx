@@ -16,13 +16,15 @@ import DelayedSpinner from '../components/DelayedSpinner'
 import './Era.css'
 
 const DECADES = ['60s', '70s', '80s', '90s', '00s', '10s', '20s']
+// Split so the century can sit small above the years — a plain "60s" gives the
+// eye nothing to catch on, and seven identical pills read as a list of nothing.
+const centuryOf = (decade) => (Number(decade.slice(0, 2)) >= 60 ? '19' : '20')
 
 export default function Era() {
   const { user, profile } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
-  const fromParam = searchParams.get('from')
   const puzzleDate = dateParam || todayEST()
 
   // Seeded from the session cache the home screen warmed, so a tapped tile
@@ -118,7 +120,7 @@ export default function Era() {
 
   return (
     <GameShell>
-      <Link to={exitTarget(dateParam, fromParam)} replace className="game-back-link">← Back</Link>
+      <Link to={exitTarget(searchParams)} replace className="game-back-link">← Back</Link>
 
       <div className="game-header">
         <p className="game-header__eyebrow">era<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
@@ -137,15 +139,17 @@ export default function Era() {
           let cls = 'era__decade-btn btn-press'
           if (done) {
             cls += ' era__decade-btn--done'
+            // isChosen was worked out here and never used, so a wrong answer
+            // looked exactly like the five decades you didn't pick.
             if (isAnswer) cls += ' era__decade-btn--answer'
+            else if (isChosen) cls += ' era__decade-btn--wrong'
             else cls += ' era__decade-btn--faded'
-          } else {
-            cls += ' btn-hover'
           }
 
           return (
             <button key={decade} onClick={() => handleGuess(decade)} disabled={done} className={cls}>
-              {decade}
+              <span className="era__decade-century">{centuryOf(decade)}</span>
+              <span className="era__decade-years">{decade}</span>
             </button>
           )
         })}
