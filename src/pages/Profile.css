@@ -156,35 +156,53 @@
   padding-bottom: 2rem;
 }
 
+/* Both of these were bare text: no border, no padding, nothing to aim at.
+   They are the two most consequential controls on the screen, so they get a
+   surface and a 44px target like every other button. */
+.profile-signout-btn,
 .profile-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 16px;
   font-size: var(--fs-sm);
-  color: #ef4444;
+  font-weight: 500;
+  border-radius: 10px;
   cursor: pointer;
-  padding: 0;
-  background: none;
-  border: none;
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
-}
-
-.profile-delete-btn:hover {
-  opacity: 1;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .profile-signout-btn {
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0;
-  background: none;
-  border: none;
-  transition: color 0.2s ease;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
-.profile-signout-btn:hover {
-  color: var(--red);
+/* Outlined rather than filled: destructive, but not something to be nudged
+   into by a button that shouts louder than sign out. */
+.profile-delete-btn {
+  color: #ef4444;
+  background: transparent;
+  border: 1px solid #4a2020;
 }
 
-.profile-signout-btn:active {
-  color: var(--red);
+/* The shared label leaves 1.5rem, which reads as a gap rather than a heading
+   once the button below it has a border of its own. */
+.profile-delete-section .profile-section-label {
+  margin-bottom: 0.75rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .profile-signout-btn:hover {
+    border-color: var(--text-muted);
+    background: #202020;
+  }
+
+  .profile-delete-btn:hover {
+    border-color: var(--red);
+    background: rgba(239, 68, 68, 0.08);
+  }
 }

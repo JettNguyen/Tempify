@@ -9,6 +9,7 @@ import { hapticSelection } from '../lib/haptics'
 import { getNativeManageSubscriptionsUrl, usesNativeIap, restorePurchases, requestRefundForActiveEntitlement } from '../lib/billing'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
+import Icon from '../components/Icon'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
 import './Profile.css'
 import './Dashboard.css'
@@ -488,15 +489,16 @@ export default function Profile() {
       </div>
 
       <div className="profile-signout-section">
-        <button onClick={handleSignOut} className="profile-signout-btn">Sign out</button>
+        <button onClick={handleSignOut} className="profile-signout-btn btn-press">Sign out</button>
       </div>
 
       <div className="profile-delete-section">
         <p className="profile-section-label">danger zone</p>
         <button
           onClick={() => { setShowDeleteConfirm(true); setDeleteError('') }}
-          className="profile-delete-btn"
+          className="profile-delete-btn btn-press"
         >
+          <Icon name="trash" size={14} />
           Delete account
         </button>
       </div>
