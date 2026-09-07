@@ -47,9 +47,11 @@ function updateScrollGradient(el) {
   }
   target.style.webkitMaskImage = mask
   target.style.maskImage = mask
-  // Rows open at their newest end, so the older puzzles behind you need
-  // pointing at. The fade alone was too quiet to read as "there is more".
-  target.dataset.moreLeft = !noOverflow && !atStart ? 'true' : 'false'
+  // Only at the far right, which is where a row opens: that is the moment
+  // the older puzzles behind you are invisible and need pointing at. Once
+  // you have started scrolling you already know they are there, and a
+  // chevron that follows you along the row is just something in the way.
+  target.dataset.moreLeft = !noOverflow && atEnd ? 'true' : 'false'
 }
 
 function isDesktopPointer() {
