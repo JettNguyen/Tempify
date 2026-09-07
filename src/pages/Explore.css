@@ -212,6 +212,18 @@
   margin-left: auto;
 }
 
+/* Only ever on the newest card of a retired game's row, which is the end the
+   row now opens on. Muted rather than dim: it is a fact worth reading, and
+   --text-dim only manages 2.6:1 here. */
+.explore-game-card__retired {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 /* Calendar view */
 .explore-cal-header {
   display: flex;

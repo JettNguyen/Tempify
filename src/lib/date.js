@@ -19,12 +19,20 @@ export function fmtTime(s) {
   return mins > 0 ? `${mins}:${String(secs).padStart(2, '0')}` : `${secs}.${tenths}s`
 }
 
-/** "Sat Sep 5", a puzzle's date at a glance. Parsed at midday so a plain
- *  YYYY-MM-DD never slips a day when read west of UTC. */
+/** "Sep 5", the month and day alone. Parsed at midday so a plain YYYY-MM-DD
+ *  never slips a day when read west of UTC. */
+export function fmtMonthDay(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(`${dateStr}T12:00:00`)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+/** "Sat Sep 5", a puzzle's date at a glance. */
 export function fmtDayShort(dateStr) {
   if (!dateStr) return ''
   const d = new Date(`${dateStr}T12:00:00`)
   if (isNaN(d.getTime())) return ''
   const weekday = d.toLocaleDateString('en-US', { weekday: 'short' })
-  return `${weekday} ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+  return `${weekday} ${fmtMonthDay(dateStr)}`
 }
