@@ -25,6 +25,10 @@ const TIME_BUCKETS = [
   { key: '5', label: 'Over 1m' },
 ]
 
+// Below this the only player is you, and "100% of 1 player solved this" is
+// your own result read back to you dressed up as a statistic.
+const MIN_PLAYERS = 2
+
 function timeBucket(seconds) {
   if (seconds == null) return null
   if (seconds < 5) return '0'
@@ -47,9 +51,9 @@ export default function PuzzleStats({ gameSlug, puzzleDate, attempts, timeSecond
     return () => { cancelled = true }
   }, [gameSlug, date])
 
-  // No stats, no players yet, or the project has not run the migration: show
-  // nothing rather than an empty chart claiming nobody solved it.
-  if (!stats || !stats.total) return null
+  // No stats, too few players to say anything, or the project has not run the
+  // migration: show nothing rather than a chart that is really a mirror.
+  if (!stats || !stats.total || stats.total < MIN_PLAYERS) return null
 
   const isOneBar = gameSlug === 'one-bar'
   const buckets = isOneBar ? ONE_BAR_BUCKETS : TIME_BUCKETS
