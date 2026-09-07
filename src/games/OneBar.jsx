@@ -232,13 +232,29 @@ export default function OneBar() {
       <AudioPlayer ref={audioRef} key={done ? 'done' : 'playing'} src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} trackSpan={done ? undefined : MAX_REVEAL} segmentStops={done ? undefined : REVEAL_TIMINGS} autoplay={done ? true : profile?.autoplay_audio !== false} />
 
       <div className="one-bar__progress">
-        <p className="one-bar__progress-label">
-          {done
-            ? correct
-              ? `Got it in ${attempts.length} ${attempts.length === 1 ? 'guess' : 'guesses'}`
-              : 'Better luck tomorrow'
-            : `${remainingGuesses} ${remainingGuesses === 1 ? 'guess' : 'guesses'} left · ${revealSeconds}s unlocked`}
-        </p>
+        {done && correct ? (
+          <div className="one-bar__solved">
+            <p className="one-bar__solved-label">Solved with</p>
+            <p className="one-bar__solved-figure">
+              <span className="one-bar__solved-value">{revealSeconds}s</span>
+              <span className="one-bar__solved-total">of {MAX_REVEAL}s</span>
+            </p>
+            {/* Half a second only reads as good against the thirty it could
+                have taken, so the figure gets something to sit against. */}
+            <div className="one-bar__solved-track">
+              <div
+                className="one-bar__solved-fill"
+                style={{ width: `${Math.max(2, (revealSeconds / MAX_REVEAL) * 100)}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="one-bar__progress-label">
+            {done
+              ? 'Better luck tomorrow'
+              : `${remainingGuesses} ${remainingGuesses === 1 ? 'guess' : 'guesses'} left · ${revealSeconds}s unlocked`}
+          </p>
+        )}
       </div>
 
       {!done && (

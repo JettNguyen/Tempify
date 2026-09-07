@@ -26,6 +26,63 @@
   margin-top: 0.5rem;
 }
 
+/* Replaces the progress line once the puzzle is solved. How little audio it
+   took is the interesting number, and it was previously a dim 12px line that
+   counted guesses instead. */
+.one-bar__solved {
+  margin-top: 0.5rem;
+}
+
+.one-bar__solved-label {
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+
+.one-bar__solved-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-bottom: 9px;
+}
+
+.one-bar__solved-value {
+  font-size: var(--fs-2xl);
+  font-weight: 600;
+  color: var(--amber);
+  line-height: 1;
+}
+
+.one-bar__solved-total {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.one-bar__solved-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+/* min-width keeps the fastest solve visible: half a second of thirty is under
+   two percent, which rounds to nothing on a narrow screen. */
+.one-bar__solved-fill {
+  height: 100%;
+  min-width: 6px;
+  border-radius: 999px;
+  background: var(--amber);
+  transform-origin: left;
+  animation: solvedFill 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+@keyframes solvedFill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
 /* An unfilled pill, not a rounded box on --surface: sitting directly under the
    guess field, the old style shared its background, border, radius and corner
    rounding, so it read as a second input rather than a button. Pills are what
