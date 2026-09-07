@@ -194,11 +194,13 @@ export function AuthProvider({ children }) {
     }
     setProfile(data)
     setLoading(false)
+    return data
   }
 
   // Called after profile mutations so all consumers (Navbar, etc.) update instantly
   async function refreshProfile() {
-    if (user) await fetchProfile(user.id)
+    if (!user) return null
+    return fetchProfile(user.id)
   }
 
   // Called immediately after a confirmed purchase (Apple IAP or Stripe).

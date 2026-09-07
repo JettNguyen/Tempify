@@ -86,6 +86,25 @@ export default function Subscribe() {
     await openExternalUrlInApp(url.toString())
   }
 
+  // Re-runs the whole profile read: the RevenueCat entitlement check, the
+  // Stripe flag on the row, and the email allowlist. Useful when a purchase
+  // or a comp landed after this session started and the app has not noticed.
+  async function handleRefresh() {
+    if (busy || !user) return
+    setBusy(true)
+    setMessage('')
+    try {
+      const fresh = await refreshProfile()
+      setMessage(fresh?.is_subscribed
+        ? 'Tempify+ is active on this account.'
+        : 'No active subscription found on this account.')
+    } catch (err) {
+      setMessage(err?.message || 'Unable to check your status right now.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function handleRestore() {
     if (busy || !nativeIap) return
     setBusy(true)
@@ -163,6 +182,14 @@ export default function Subscribe() {
         {nativeIap && (
           <button onClick={handleRestore} className="subscribe-restore btn-press btn-hover" disabled={busy}>
             Restore purchases
+          </button>
+        )}
+
+        {/* Not gated on nativeIap: a web subscription or a comped account can
+            go stale here too, and restore only ever speaks to the App Store. */}
+        {user && (
+          <button onClick={handleRefresh} className="subscribe-restore btn-press btn-hover" disabled={busy}>
+            {busy ? 'Checking…' : 'Refresh status'}
           </button>
         )}
 
