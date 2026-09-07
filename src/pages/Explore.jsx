@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { supabase } from '../lib/supabase'
-import { todayEST, fmtDayShort, fmtMonthDay } from '../lib/date'
+import { todayEST, fmtDayShort, fmtMonthDayYear } from '../lib/date'
 import { GENRES, GENRE_COLORS } from '../lib/genres'
 import { ALL_GAMES } from '../lib/games'
 import { EXPLORE_ORIGIN } from '../lib/gameExit'
@@ -294,15 +294,6 @@ export default function Explore() {
     if (byGame[p.game_slug]) byGame[p.game_slug].push(p)
   })
 
-  // The very last puzzle a retired game ever got, so the row can say so on it.
-  // Taken from the unfiltered set and keyed by id: a genre filter must not be
-  // able to promote some older card into the final slot and mislabel it.
-  const finalPuzzleId = {}
-  ALL_GAMES.forEach(g => { if (g.retiredOn) finalPuzzleId[g.slug] = null })
-  allPuzzles.forEach(p => {
-    if (p.game_slug in finalPuzzleId) finalPuzzleId[p.game_slug] = p.id
-  })
-
   // Calendar
   const firstPuzzle = new Date(FIRST_PUZZLE_DATE + 'T12:00:00')
   const isEarliestMonth = viewYear === firstPuzzle.getFullYear() && viewMonth === firstPuzzle.getMonth()
@@ -514,14 +505,17 @@ export default function Explore() {
                           )}
                           {played && <span className="explore-game-card__played-label">✓ Played</span>}
                         </div>
-                        {finalPuzzleId[game.slug] === p.id && (
-                          <div className="explore-game-card__retired">
-                            Retired {fmtMonthDay(game.retiredOn)}
-                          </div>
-                        )}
                       </Link>
                     )
                   })}
+                  {game.retiredOn && (
+                    <div className="explore-retired-card">
+                      <GameGlyph slug={game.slug} className="explore-retired-card__glyph" />
+                      <div className="explore-retired-card__label">Retired</div>
+                      <div className="explore-retired-card__date">{fmtMonthDayYear(game.retiredOn)}</div>
+                      <div className="explore-retired-card__note">No new puzzles</div>
+                    </div>
+                  )}
                 </div>
                 </div>
               </div>

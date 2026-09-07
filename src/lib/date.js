@@ -19,20 +19,24 @@ export function fmtTime(s) {
   return mins > 0 ? `${mins}:${String(secs).padStart(2, '0')}` : `${secs}.${tenths}s`
 }
 
-/** "Sep 5", the month and day alone. Parsed at midday so a plain YYYY-MM-DD
- *  never slips a day when read west of UTC. */
-export function fmtMonthDay(dateStr) {
-  if (!dateStr) return ''
+/** Read a plain YYYY-MM-DD at midday, so it never slips a day west of UTC. */
+function parseDay(dateStr) {
+  if (!dateStr) return null
   const d = new Date(`${dateStr}T12:00:00`)
-  if (isNaN(d.getTime())) return ''
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return isNaN(d.getTime()) ? null : d
 }
 
 /** "Sat Sep 5", a puzzle's date at a glance. */
 export function fmtDayShort(dateStr) {
-  if (!dateStr) return ''
-  const d = new Date(`${dateStr}T12:00:00`)
-  if (isNaN(d.getTime())) return ''
+  const d = parseDay(dateStr)
+  if (!d) return ''
   const weekday = d.toLocaleDateString('en-US', { weekday: 'short' })
-  return `${weekday} ${fmtMonthDay(dateStr)}`
+  return `${weekday} ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+}
+
+/** "Jun 15, 2026". Carries the year, for dates read long after the fact. */
+export function fmtMonthDayYear(dateStr) {
+  const d = parseDay(dateStr)
+  if (!d) return ''
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }

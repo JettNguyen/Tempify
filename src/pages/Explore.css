@@ -212,16 +212,52 @@
   margin-left: auto;
 }
 
-/* Only ever on the newest card of a retired game's row, which is the end the
-   row now opens on. Muted rather than dim: it is a fact worth reading, and
-   --text-dim only manages 2.6:1 here. */
-.explore-game-card__retired {
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid var(--border);
+/* Closes out a retired game's row. Deliberately not a puzzle card: dashed
+   rather than solid, centred rather than left-aligned, and inert, so it
+   reads as the end of the shelf instead of something else to play. Matches
+   the puzzle cards only in width, which keeps the row's rhythm. */
+.explore-retired-card {
+  flex-shrink: 0;
+  width: 148px;
+  padding: 0.875rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 3px;
+}
+
+.explore-retired-card__glyph {
+  width: 24px;
+  height: 24px;
+  color: var(--game-color);
+  opacity: 0.5;
+  margin-bottom: 4px;
+}
+
+.explore-retired-card__label {
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.explore-retired-card__date {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* --text-dim manages only 2.6:1 on this background, so the one line that is
+   genuinely secondary still sits at muted. */
+.explore-retired-card__note {
   font-size: var(--fs-2xs);
   color: var(--text-muted);
-  white-space: nowrap;
+  opacity: 0.75;
+  margin-top: 2px;
 }
 
 /* Calendar view */

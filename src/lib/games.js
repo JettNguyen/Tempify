@@ -9,7 +9,7 @@ const ACTIVE_GAMES = [
 // but their past puzzles stay playable from the archive and past scores keep
 // counting, so nobody loses history they earned.
 const RETIRED_GAMES = [
-  { slug: 'sampled', name: 'Sampled', path: '/game/sampled', description: 'Hear the sample, find the source.', retiredOn: '2026-09-05' },
+  { slug: 'sampled', name: 'Sampled', path: '/game/sampled', description: 'Hear the sample, find the source.', retiredOn: '2026-06-15' },
 ]
 
 /** Games in today's lineup. */
