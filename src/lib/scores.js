@@ -265,6 +265,26 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
   return entries
 }
 
+/**
+ * How everyone did on one puzzle: totals and distributions, never rows.
+ * Reading across other people's scores is exactly what RLS forbids, so this
+ * goes through a security-definer function that can only emit counts.
+ *
+ * Returns null when the function is missing, so a project that has not run
+ * migration 009 yet simply shows no stats instead of an error.
+ */
+export async function getPuzzleStats(gameSlug, date) {
+  const { data, error } = await supabase.rpc('get_puzzle_stats', {
+    p_game_slug: gameSlug,
+    p_date: date,
+  })
+  if (error) {
+    console.warn('[Tempify] getPuzzleStats unavailable:', error.message)
+    return null
+  }
+  return data || null
+}
+
 // ─── User search ──────────────────────────────────────────────────────────────
 
 export async function searchUsers(query) {

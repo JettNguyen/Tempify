@@ -4,6 +4,7 @@ import ShareButton from './ShareButton'
 import TrackArtwork from './TrackArtwork'
 import Icon from './Icon'
 import Leaderboard from './Leaderboard'
+import PuzzleStats from './PuzzleStats'
 import { hapticWinCelebration, hapticFailure } from '../lib/haptics'
 import { resultAction } from '../lib/gameExit'
 import { fmtTime } from '../lib/date'
@@ -65,6 +66,16 @@ export default function ResultCard({
           </Link>
         )}
       </div>
+
+      {gameSlug && (
+        <PuzzleStats
+          gameSlug={gameSlug}
+          puzzleDate={puzzleDate}
+          attempts={attempts}
+          timeSeconds={timeSeconds}
+          correct={correct}
+        />
+      )}
 
       {gameSlug && showLeaderboard !== false && <Leaderboard gameSlug={gameSlug} puzzleDate={puzzleDate} />}
     </div>

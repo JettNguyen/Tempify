@@ -1,0 +1,86 @@
+.puzzle-stats {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.puzzle-stats__title {
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+
+.puzzle-stats__rate {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin-bottom: 11px;
+}
+
+.puzzle-stats__rate strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.puzzle-stats__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.puzzle-stats__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.puzzle-stats__label {
+  flex: 0 0 66px;
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+}
+
+.puzzle-stats__track {
+  flex: 1;
+  height: 14px;
+  border-radius: 4px;
+  background: #171717;
+  overflow: hidden;
+}
+
+/* min-width via the inline style, not here, so an empty bucket stays empty
+   rather than showing a stub that reads as one player. */
+.puzzle-stats__bar {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: #3a3a3a;
+  transform-origin: left;
+  animation: statsBar 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+@keyframes statsBar {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.puzzle-stats__count {
+  flex: 0 0 auto;
+  min-width: 22px;
+  text-align: right;
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Your own row, in the game's colour. */
+.puzzle-stats__row--mine .puzzle-stats__bar {
+  background: var(--game-color);
+}
+
+.puzzle-stats__row--mine .puzzle-stats__label,
+.puzzle-stats__row--mine .puzzle-stats__count {
+  color: var(--text-primary);
+  font-weight: 500;
+}
