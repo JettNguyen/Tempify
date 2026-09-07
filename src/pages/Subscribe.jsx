@@ -123,7 +123,7 @@ export default function Subscribe() {
         <h1 className="subscribe-title">Every day, going back forever.</h1>
         <p className="subscribe-body">
           Unlock the full archive, browse by genre, and get recommendations based on
-          what you actually play. Streaks carry across all five games.
+          what you actually play. Streaks carry across every game.
         </p>
 
         {nativeIap ? (
