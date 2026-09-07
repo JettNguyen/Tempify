@@ -10,6 +10,7 @@ import { EXPLORE_ORIGIN } from '../lib/gameExit'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { hapticSelection } from '../lib/haptics'
 import Icon from '../components/Icon'
+import GameGlyph from '../components/GameGlyph'
 import ArchiveLock from '../components/ArchiveLock'
 import DelayedSpinner from '../components/DelayedSpinner'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
@@ -218,7 +219,15 @@ export default function Explore() {
     if (!el) return
 
     const paint = () => el.querySelectorAll('.explore-game-row__scroll').forEach(updateScrollGradient)
-    const raf = requestAnimationFrame(paint)
+    // Rows run oldest to newest, so the end worth opening on is the right one.
+    // Jump rather than animate: a scroll here would read as the page still
+    // settling, and this re-runs whenever the filter changes.
+    const raf = requestAnimationFrame(() => {
+      el.querySelectorAll('.explore-game-row__scroll').forEach((row) => {
+        row.scrollLeft = row.scrollWidth
+      })
+      paint()
+    })
 
     // Scroll does not bubble, so catch it on the way down. That also covers
     // rows rendered after this ran, which is why it binds to the container.
@@ -250,7 +259,9 @@ export default function Explore() {
       supabase.from('puzzles')
         .select('id, game_slug, scheduled_date, answer, genre, metadata')
         .lte('scheduled_date', todayStr)
-        .order('scheduled_date', { ascending: false }),
+        // Oldest first, so a browse row reads left to right in time and the
+        // newest puzzle lands at the end each row opens on.
+        .order('scheduled_date', { ascending: true }),
     ])
     if (scoresRes.data?.length) setPlayedSlugs(new Set(scoresRes.data.map(s => `${s.date_played}|${s.game_slug}`)))
     setAllPuzzles(puzzlesRes.data || [])
@@ -458,8 +469,11 @@ export default function Explore() {
             const puzzles = byGame[game.slug]
             if (!puzzles?.length) return null
             return (
-              <div key={game.slug} className="explore-game-row">
-                <h2 className="explore-game-row__title">{game.name}</h2>
+              <div key={game.slug} className={`explore-game-row game-theme--${game.slug}`}>
+                <h2 className="explore-game-row__title">
+                  <GameGlyph slug={game.slug} className="explore-game-row__glyph" />
+                  {game.name}
+                </h2>
                 <div className="explore-game-row__fade">
                 <div className="explore-game-row__scroll">
                   {puzzles.map(p => {

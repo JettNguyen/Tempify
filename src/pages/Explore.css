@@ -73,8 +73,14 @@
   overflow-x: auto;
   padding-bottom: 4px;
   padding-left: 2px;
-  padding-right: 2px;
   scrollbar-width: none;
+}
+
+/* The trailing gutter rides on the last item, not on the scroller. A flex
+   scroll container does not reliably honour padding at the far end of its
+   range, and these rows now open scrolled to that end. */
+.explore-pills > :last-child {
+  margin-right: 2px;
 }
 
 .explore-pills::-webkit-scrollbar {
@@ -88,14 +94,28 @@
   gap: 2rem;
 }
 
+/* Carries the game's own colour and symbol, so a row is identifiable before
+   the name is read. Matches how the home tiles colour each game. The stray
+   second font-size here used to override the first one silently. */
 .explore-game-row__title {
-  font-size: var(--fs-sm);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-2xs);
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--game-color);
   margin-bottom: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: var(--fs-2xs);
+}
+
+/* Full strength, unlike the watermark behind a game tile: at 15px this is an
+   icon rather than a background. */
+.explore-game-row__glyph {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--game-color);
 }
 
 .explore-game-row__fade {
@@ -111,8 +131,11 @@
   overflow-x: auto;
   padding-bottom: 8px;
   padding-left: 2px;
-  padding-right: 2px;
   scrollbar-width: none;
+}
+
+.explore-game-row__scroll > :last-child {
+  margin-right: 2px;
 }
 
 .explore-game-row__scroll::-webkit-scrollbar {
