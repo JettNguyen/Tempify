@@ -47,6 +47,9 @@ function updateScrollGradient(el) {
   }
   target.style.webkitMaskImage = mask
   target.style.maskImage = mask
+  // Rows open at their newest end, so the older puzzles behind you need
+  // pointing at. The fade alone was too quiet to read as "there is more".
+  target.dataset.moreLeft = !noOverflow && !atStart ? 'true' : 'false'
 }
 
 function isDesktopPointer() {
@@ -474,6 +477,7 @@ export default function Explore() {
                   <GameGlyph slug={game.slug} className="explore-game-row__glyph" />
                   {game.name}
                 </h2>
+                <div className="explore-game-row__viewport">
                 <div className="explore-game-row__fade">
                 <div className="explore-game-row__scroll">
                   {puzzles.map(p => {
@@ -517,6 +521,18 @@ export default function Explore() {
                     </div>
                   )}
                 </div>
+                </div>
+                <button
+                  type="button"
+                  className="explore-game-row__more"
+                  aria-label={`Show older ${game.name} puzzles`}
+                  onClick={(e) => {
+                    const row = e.currentTarget.parentElement.querySelector('.explore-game-row__scroll')
+                    row?.scrollBy({ left: -row.clientWidth * 0.8, behavior: 'smooth' })
+                  }}
+                >
+                  <Icon name="chevronLeft" size={15} strokeWidth={2.25} />
+                </button>
                 </div>
               </div>
             )

@@ -138,6 +138,54 @@
   margin-right: 2px;
 }
 
+.explore-game-row__viewport {
+  position: relative;
+}
+
+/* Deliberately a sibling of the faded wrapper rather than a child: inside it,
+   the mask dimming the left edge would dim the very thing pointing at what
+   the mask is hiding. */
+.explore-game-row__more {
+  position: absolute;
+  left: 0;
+  top: calc(50% - 4px);
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.82);
+  backdrop-filter: blur(6px);
+  color: var(--text-primary);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* 30px drawn, 44px to hit. */
+.explore-game-row__more::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+}
+
+.explore-game-row__fade[data-more-left='true'] + .explore-game-row__more {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .explore-game-row__more:hover {
+    background: var(--surface);
+    border-color: var(--text-muted);
+  }
+}
+
 .explore-game-row__scroll::-webkit-scrollbar {
   display: none;
 }
