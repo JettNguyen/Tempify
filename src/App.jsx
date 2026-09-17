@@ -5,6 +5,7 @@ import Navbar from './components/Navbar'
 import ErrorBoundary from './components/ErrorBoundary'
 import DelayedSpinner from './components/DelayedSpinner'
 import UsernameSetupModal from './components/UsernameSetupModal'
+import IOSAppPrompt from './components/IOSAppPrompt'
 import Home from './pages/Home'
 import ArchiveDay from './pages/ArchiveDay'
 import Explore from './pages/Explore'
@@ -71,6 +72,7 @@ export default function App() {
         <SplashGate />
         <Navbar />
         <UsernameSetupModal />
+        <IOSAppPrompt />
         <div className="app-scroll-container">
           <ErrorBoundary>
             <Suspense fallback={<div className="page-shell"><DelayedSpinner active label="Loading..." /></div>}>
