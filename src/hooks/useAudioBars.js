@@ -48,6 +48,23 @@ function binRanges(barCount, binCount) {
  * is left running in its place, which is the common case rather than an error.
  */
 export function useAudioBars(audioRef, waveRef, playing, barCount) {
+  // Routing the element into the graph is done here, in the gaps between clips,
+  // rather than at the moment one starts. Safari starts every context asleep
+  // and wakes it asynchronously, so asking on the way into a clip means asking
+  // part way through it, and re-plumbing an element that is already sounding is
+  // heard as a stutter or as the track jumping back to its beginning.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || !audio.paused) return
+    if (getAnalyser(audio)) return
+
+    primeAudioContext()
+    const unsubscribe = onContextStateChange(() => {
+      if (audio.paused && getAnalyser(audio)) unsubscribe()
+    })
+    return unsubscribe
+  }, [audioRef, playing])
+
   useEffect(() => {
     if (!playing) return
     const audio = audioRef.current
@@ -97,26 +114,14 @@ export function useAudioBars(audioRef, waveRef, playing, barCount) {
       })
     }
 
-    // Resuming the context is asynchronous, so the first play routinely arrives
-    // before it is awake, and with autoplay, before any tap at all. Ask again
-    // when it wakes rather than settling for the canned loop for the whole clip.
-    let unsubscribe = () => {}
-    const attempt = () => {
-      if (frame) return true
-      const analyser = getAnalyser(audio)
-      if (!analyser) return false
-      run(analyser)
-      unsubscribe()
-      return true
-    }
-
-    if (!attempt()) {
-      primeAudioContext()
-      unsubscribe = onContextStateChange(attempt)
-    }
+    // Only ever an analyser this element was already routed to, in a gap
+    // between clips. Without one the canned loop stands in for this clip, and
+    // the effect above takes its next chance once the clip has finished.
+    const analyser = getAnalyser(audio)
+    if (!analyser) return
+    run(analyser)
 
     return () => {
-      unsubscribe()
       cancelAnimationFrame(frame)
       wave.classList.remove('audio-player__wave--live')
       // Hand the bars back to the CSS animation exactly as it found them.

@@ -58,6 +58,13 @@ export function getAnalyser(el) {
   if (!c || c.state !== 'running') return null
   // And only ever connect media we know loaded cross-origin readable.
   if (el.crossOrigin !== 'anonymous') return null
+  // And only ever connect one that isn't sounding. Routing a playing element
+  // re-plumbs its output mid-clip, which Safari serves as a stutter or a jump
+  // back to the top of the track while the clock carries on. Safari is also the
+  // only browser this ever comes up on: it starts every context asleep, so the
+  // context wakes part way through a clip rather than before one. There is
+  // always another chance at this in the gap before the next clip.
+  if (!el.paused) return null
 
   try {
     const source = c.createMediaElementSource(el)

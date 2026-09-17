@@ -118,21 +118,42 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   // already zero, and deriving it there would read "not rewinding any more".
   const lastHeardRef = useRef(0)
 
-  // Stopping a clip at its unlocked length is one action, not a repeatable one.
-  // Pausing and rewinding each queue their own events, and an update already in
-  // flight still carries the time from before the rewind, so without this the
-  // stop runs a second time on a clip that has already gone home.
-  const stoppingRef = useRef(false)
+  // Set when a clip has been stopped at its unlocked length, and cleared on the
+  // way back in. It does two jobs: it keeps the stop from running twice, since
+  // pausing queues its own events and one already in flight still carries the
+  // time from before it, and it remembers that the element is still parked at
+  // the cutoff and owes a rewind.
+  const stoppedRef = useRef(false)
 
   function stopAtLimit(audio, at) {
-    if (stoppingRef.current) return
-    stoppingRef.current = true
+    if (stoppedRef.current) return
+    stoppedRef.current = true
     // So the playhead sweeps back from the end of the clip rather than from
     // wherever the last position update happened to land.
     lastHeardRef.current = at
+    // Paused, but deliberately left where it stopped. Seeking an element that
+    // is still sounding is served on a phone by starting the track over while
+    // the clock carries on, so the clip is heard from the top again half way
+    // along the bar. The rewind waits for `begin`, with the element quiet.
     audio.pause()
-    audio.currentTime = 0
     setCurrentTime(0)
+  }
+
+  // The one way back into a clip, so the rewind the cutoff owes is paid once,
+  // on an element that is not sounding.
+  function begin(audio, fromTop) {
+    if (fromTop || stoppedRef.current) {
+      // Quiet first. A seek on an element that is still sounding is the thing
+      // that sends the track back to its beginning behind the clock, which is
+      // the whole reason the cutoff leaves the rewind to here.
+      if (!audio.paused) audio.pause()
+      audio.currentTime = 0
+      setCurrentTime(0)
+    }
+    stoppedRef.current = false
+    const p = audio.play()
+    if (p?.catch) p.catch(() => {})
+    return p ?? Promise.resolve()
   }
 
   useImperativeHandle(ref, () => ({
@@ -142,18 +163,14 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
     play() {
       const audio = audioRef.current
       if (!audio) return Promise.resolve()
-      stoppingRef.current = false
-      return audio.play() ?? Promise.resolve()
+      return begin(audio)
     },
     // Play from the top regardless of where the clip was left. Used when more
     // audio has just been unlocked and the point is to hear it from the start.
     restart() {
       const audio = audioRef.current
       if (!audio) return Promise.resolve()
-      audio.currentTime = 0
-      stoppingRef.current = false
-      setCurrentTime(0)
-      return audio.play() ?? Promise.resolve()
+      return begin(audio, true)
     },
   }))
 
@@ -175,7 +192,6 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
       setCurrentTime(0)
     }
     const onPlayEvent = () => {
-      stoppingRef.current = false
       setPlaying(true)
       // Taken off the element rather than off each call site: however the clip
       // came to be playing, the other player on the screen still gets told to
@@ -265,7 +281,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   useEffect(() => {
     setCorsBlocked(false)
     setCurrentTime(0)
-    stoppingRef.current = false
+    stoppedRef.current = false
     lastHeardRef.current = 0
     const audio = audioRef.current
     if (!audio) return
@@ -274,8 +290,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
 
     if (!autoplay || !src) return
 
-    const p = audio.play()
-    if (p?.catch) p.catch(() => {})
+    begin(audio)
   }, [src, autoplay])
 
   function togglePlay() {
@@ -287,9 +302,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
     if (playing) {
       audio.pause()
     } else {
-      stoppingRef.current = false
-      const p = audio.play()
-      if (p?.catch) p.catch(() => {})
+      begin(audio)
     }
   }
 
@@ -389,6 +402,9 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
     // The input runs in bar percent, not seconds, and on a segmented bar those are
     // no longer the same thing, and only this keeps the thumb under the finger.
     const nextTime = Math.min(fromBar(Number(event.target.value) / 100), playable)
+    // A clip stopped at its limit is parked there owing a rewind. A drag says
+    // where it should pick up instead, so the debt is settled here.
+    stoppedRef.current = false
     audio.currentTime = nextTime
     setCurrentTime(nextTime)
   }
