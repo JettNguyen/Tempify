@@ -133,8 +133,8 @@ export default function OneBar() {
     return () => clearTimeout(id)
   }, [notice])
 
-  // Child effects run before parent ones, so by now AudioPlayer has rebound its
-  // cutoff to the newly unlocked length.
+  // Child effects run before parent ones, so by now the player is holding the
+  // newly unlocked length and will let the clip run that far.
   useEffect(() => {
     if (!playOnUnlockRef.current) return
     playOnUnlockRef.current = false
@@ -151,6 +151,9 @@ export default function OneBar() {
     setAttempts(newAttempts)
 
     if (attempt.correct || newAttempts.length >= MAX_ATTEMPTS) {
+      // A skip that ends the round unlocks nothing, so the flag it set would
+      // sit there armed and fire on whatever moved the clip length next.
+      playOnUnlockRef.current = false
       setCorrect(attempt.correct)
       setDone(true)
       setJustFinished(true)

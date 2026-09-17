@@ -42,6 +42,12 @@ function scatter(i, salt) {
 const SEGMENT_GAP = 3
 const EPS = 1e-6
 
+// How far the clip has to move before the position is pushed into React. The
+// fill carries its own transition, which covers the gaps, and pushing every
+// frame would re-render the whole player sixty times a second to move a bar by
+// a pixel.
+const POSITION_STEP = 0.04
+
 // How long the playhead takes to travel back to the start when a clip finishes.
 // The further it has to come, the quicker it goes: a full bar sweeping home over
 // the same span a sliver gets would drag, and by the last stages the trip is
@@ -95,7 +101,39 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
 
-  const limit = maxDuration || Infinity
+  // What the element's own listeners need to read, held in refs rather than in
+  // their closures so they can be bound once per clip. Rebinding them every
+  // time a guess unlocks more audio drops whatever lands in the gap, and the
+  // event that stops the clip at its limit is exactly the one that lands there.
+  const maxRef = useRef(maxDuration)
+  const onPlayRef = useRef(onPlay)
+  useEffect(() => {
+    maxRef.current = maxDuration
+    onPlayRef.current = onPlay
+  })
+
+  // Where the playhead has to sweep back from when a clip ends. Held rather
+  // than derived from the previous render: pausing at the cutoff queues its own
+  // event, so a second render arrives a few milliseconds in with the time
+  // already zero, and deriving it there would read "not rewinding any more".
+  const lastHeardRef = useRef(0)
+
+  // Stopping a clip at its unlocked length is one action, not a repeatable one.
+  // Pausing and rewinding each queue their own events, and an update already in
+  // flight still carries the time from before the rewind, so without this the
+  // stop runs a second time on a clip that has already gone home.
+  const stoppingRef = useRef(false)
+
+  function stopAtLimit(audio, at) {
+    if (stoppingRef.current) return
+    stoppingRef.current = true
+    // So the playhead sweeps back from the end of the clip rather than from
+    // wherever the last position update happened to land.
+    lastHeardRef.current = at
+    audio.pause()
+    audio.currentTime = 0
+    setCurrentTime(0)
+  }
 
   useImperativeHandle(ref, () => ({
     pause() {
@@ -104,7 +142,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
     play() {
       const audio = audioRef.current
       if (!audio) return Promise.resolve()
-      onPlay?.()
+      stoppingRef.current = false
       return audio.play() ?? Promise.resolve()
     },
     // Play from the top regardless of where the clip was left. Used when more
@@ -113,8 +151,8 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
       const audio = audioRef.current
       if (!audio) return Promise.resolve()
       audio.currentTime = 0
+      stoppingRef.current = false
       setCurrentTime(0)
-      onPlay?.()
       return audio.play() ?? Promise.resolve()
     },
   }))
@@ -125,15 +163,25 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
 
     const onLoaded = () => setDuration(audio.duration)
     const onTime = () => {
-      setCurrentTime(audio.currentTime)
-      if (maxDuration && audio.currentTime >= maxDuration) {
-        audio.pause()
-        audio.currentTime = 0
-        setCurrentTime(0)
+      const max = maxRef.current
+      if (max && audio.currentTime >= max) {
+        stopAtLimit(audio, max)
+        return
       }
+      setCurrentTime(audio.currentTime)
     }
-    const onEnded = () => setCurrentTime(0)
-    const onPlayEvent = () => setPlaying(true)
+    const onEnded = () => {
+      if (audio.duration) lastHeardRef.current = audio.duration
+      setCurrentTime(0)
+    }
+    const onPlayEvent = () => {
+      stoppingRef.current = false
+      setPlaying(true)
+      // Taken off the element rather than off each call site: however the clip
+      // came to be playing, the other player on the screen still gets told to
+      // stop, and the page still hears that the round has started.
+      onPlayRef.current?.()
+    }
     const onPauseEvent = () => setPlaying(false)
 
     const onError = () => {
@@ -153,8 +201,35 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
       audio.removeEventListener('ended', onEnded)
       audio.removeEventListener('play', onPlayEvent)
       audio.removeEventListener('pause', onPauseEvent)
+      // An element carries on sounding after React takes it out of the page, so
+      // a round that ends by swapping one player for another would otherwise
+      // have both of them going at once.
+      audio.pause()
     }
-  }, [maxDuration, src])
+  }, [src])
+
+  // `timeupdate` arrives about four times a second on a phone, and the first
+  // stage of One Bar is half a second long: read off that clock a clip runs on
+  // past its limit by up to half its length again, and the playhead moves in
+  // steps you can count. A frame loop is the only clock fine enough for a bar
+  // this short.
+  useEffect(() => {
+    if (!playing) return
+    const audio = audioRef.current
+    if (!audio) return
+
+    let frame = requestAnimationFrame(function tick() {
+      const at = audio.currentTime
+      const max = maxRef.current
+      if (max && at >= max) {
+        stopAtLimit(audio, max)
+        return
+      }
+      setCurrentTime((shown) => (Math.abs(at - shown) >= POSITION_STEP ? at : shown))
+      frame = requestAnimationFrame(tick)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [playing])
 
   // The first tap anywhere starts the audio context; Safari accepts nothing else.
   useEffect(() => { armAudioContext() }, [])
@@ -190,14 +265,15 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   useEffect(() => {
     setCorsBlocked(false)
     setCurrentTime(0)
+    stoppingRef.current = false
+    lastHeardRef.current = 0
     const audio = audioRef.current
     if (!audio) return
-    audio.currentTime = 0
     audio.pause()
+    audio.currentTime = 0
 
     if (!autoplay || !src) return
 
-    onPlay?.()
     const p = audio.play()
     if (p?.catch) p.catch(() => {})
   }, [src, autoplay])
@@ -211,8 +287,9 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
     if (playing) {
       audio.pause()
     } else {
-      audio.play()
-      onPlay?.()
+      stoppingRef.current = false
+      const p = audio.play()
+      if (p?.catch) p.catch(() => {})
     }
   }
 
@@ -253,18 +330,12 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
   }, [segmentStops, hasBar, barTotal])
 
   const prevTimeRef = useRef(0)
-  const lastHeardRef = useRef(0)
   const wentBack = currentTime < prevTimeRef.current - EPS
 
   // A finished clip rewinds to zero. Every filled segment would otherwise empty
   // on its own clock at the same moment, several playheads retreating at once
   // rather than one going home, so the emptying is sequenced right to left. A
   // backwards drag still lands instantly, to stay under the finger.
-  //
-  // This has to be held, not derived from the previous render: pausing at the
-  // cutoff queues its own event, so a second render arrives a few milliseconds
-  // in with the time already zero. Deriving it there would read "not rewinding
-  // any more", drop the stagger mid-sweep, and collapse the lot at once.
   const retreating = currentTime <= EPS && lastHeardRef.current > EPS
 
   useEffect(() => {
@@ -411,7 +482,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ src, maxDuration, trackSpa
                 {trackSpan ? (
                   <span
                     className="audio-player__unlocked"
-                    style={{ width: `${unlockedRatio * 100}%` }}
+                    style={{ width: `${unlockedBar * 100}%` }}
                   />
                 ) : null}
                 <span

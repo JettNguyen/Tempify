@@ -141,7 +141,7 @@ export default function Sampled() {
             </p>
           </div>
         </div>
-        <AudioPlayer ref={sourceRef} src={puzzle.audio_url} autoplay={profile?.autoplay_audio !== false} />
+        <AudioPlayer ref={sourceRef} src={puzzle.audio_url} onPlay={() => sampleRef.current?.pause()} autoplay={profile?.autoplay_audio !== false} />
       </div>
 
       <div className="stagger-list sampled__options">
@@ -175,7 +175,7 @@ export default function Sampled() {
           {puzzle.metadata?.sample_audio_url && (
             <div className="sampled__original">
               <p className="sampled__original-label">The original sample</p>
-              <AudioPlayer ref={sampleRef} src={puzzle.metadata.sample_audio_url} />
+              <AudioPlayer ref={sampleRef} src={puzzle.metadata.sample_audio_url} onPlay={() => sourceRef.current?.pause()} />
             </div>
           )}
           <ResultCard
