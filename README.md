@@ -4,7 +4,7 @@
 <img src=./public/favicon.svg style=width:150px>
 </p>
 
-**Five daily music games. One app for people who know their songs.**
+**Four daily music games. One app for people who know their songs.**
 
 <p align="left">
   <a href="https://apps.apple.com/us/app/tempify-me/id6765572192?ppid=f2aa16bb-7d62-49df-bafe-8c35f58c63ad">
@@ -19,7 +19,7 @@ or [Play on the web](https://JettNguyen.github.io/Tempify/)
 
 ## Overview
 
-Tempify is a daily music trivia app with five different game modes, fresh challenges every day, and optional accounts for streaks, archives, and genre-based play.
+Tempify is a daily music trivia app with four game modes, fresh challenges every day, and optional accounts for streaks, archives, and genre-based play.
 
 - New puzzles every day
 - Free to play
@@ -42,10 +42,6 @@ Name the song from a half-second clip in up to 6 attempts. Each wrong guess reve
 
 Decide whether a song made the Hot 100 or disappeared without charting.
 
-### Sampled
-
-Pick which song was sampled from four choices.
-
 ### Era
 
 No hints. No context. Just the music. Guess the decade.
@@ -54,25 +50,34 @@ No hints. No context. Just the music. Guess the decade.
 
 Figure out whether the track is the original version or a cover.
 
+### Sampled (retired)
+
+Pick which song was sampled from four choices. Sampled left the daily lineup on
+June 16, 2026. Its puzzles are still playable from the archive and past scores
+still count.
+
 Daily results reset at midnight EST.
 
 ## Accounts and Subscription
 
-You can play all five games without signing up. Game completions are saved locally so progress carries through your session.
+You can play all four games without signing up. Game completions are saved locally so progress carries through your session.
 
 Creating a free account unlocks streak tracking across all games.
 
-Tempify Plus is $3/month and unlocks:
+Tempify Plus unlocks:
 
-- The full archive from day one
-- Genre-based game modes
+- The full archive, going back to day one
+- Browsing by genre
+- Recommendations based on what you play
+
+It costs $3 a month, $25 a year, or $100 once for lifetime access.
 
 ## Tech Stack
 
 Tempify is built with React, Vite, and Tailwind CSS.
 
 - Backend and data: Supabase
-- Payments: Stripe
+- Payments: Stripe on the web, RevenueCat for in-app purchases on iOS
 - iOS app packaging: Capacitor
 
 ## Development
