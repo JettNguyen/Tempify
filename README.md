@@ -30,7 +30,7 @@ Tempify is a daily music trivia app with five different game modes, fresh challe
 
 Tempify is now live on the App Store:
 
-**[Tempify Me on the App Store](https://apps.apple.com/us/app/tempify-me/id6765572192)**
+**[Tempify Me on the App Store](https://apps.apple.com/us/app/tempify-me/id6765572192?ppid=26675011-0f5b-40a0-be60-8efcc0f6c4a1)**
 
 ## Game Modes
 
