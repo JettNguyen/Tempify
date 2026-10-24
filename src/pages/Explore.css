@@ -10,9 +10,10 @@
 
 .explore-title-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem 1rem;
 }
 
 .explore-title {
@@ -20,6 +21,9 @@
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.02em;
+  /* On a screen too narrow for both, the toggle drops below the title instead
+     of the title breaking over two lines beside it. */
+  white-space: nowrap;
 }
 
 .explore-view-toggle {
