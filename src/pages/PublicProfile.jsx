@@ -325,7 +325,7 @@ export default function PublicProfile() {
         <p className="dashboard-section-label">stats</p>
 
         {/* Always-visible basics */}
-        <div className="dashboard-stat-grid" style={{ marginBottom: '1rem' }}>
+        <div className="dashboard-stat-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: '1rem' }}>
           <StatCard label="Win rate"    value={pct(stats?.winRate ?? 0)}  detail={`${stats?.wins ?? 0} of ${stats?.plays ?? 0} won`} />
           <StatCard label="Days played" value={stats?.uniqueDays ?? 0}     detail="Unique puzzle days" />
         </div>

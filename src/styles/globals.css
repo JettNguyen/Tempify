@@ -625,7 +625,10 @@ body.ios-ipad-ui .page-shell-admin {
 /* Streak row - always 5 equal columns, shrinks with screen width */
 .streak-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  /* One column per game, so the row stays full as the lineup changes. Five
+     fixed columns left an empty fifth once Sampled retired. */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 0.5rem;
 }
 
