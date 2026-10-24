@@ -2,15 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  /* Support safe area insets for notch and dynamic island */
-  padding-top: max(env(safe-area-inset-top), 0);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-}
-
 :root {
+  /* The top safe area. Everything that clears the status bar uses this rather
+     than env() directly, so the floor below applies everywhere at once. */
+  --safe-top: env(safe-area-inset-top);
+
   --bg: #0e0e0e;
   --surface: #1a1a1a;
   --border: #2a2a2a;
@@ -104,14 +100,23 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* The side insets (a phone on its side, the iPhone Duo's status bar column) are
+   taken here and nowhere else, so the page shells center in what's left. The
+   navbar and the full-screen overlays inset themselves. */
 .app-scroll-container {
   min-height: 100dvh;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* Native iOS: keep navbar fixed by preventing viewport bounce, but allow
    rubber-band bounce within the page content container. */
 body.ios-native-app {
   overflow: hidden;
+  /* The iPhone Duo runs its status bar down the side and reports no top inset,
+     and so does any iPhone on its side, which put the logo in the display's
+     rounded corner. */
+  --safe-top: max(env(safe-area-inset-top), 16px);
 }
 
 body.ios-native-app .app-scroll-container {
@@ -502,40 +507,40 @@ body.is-scrolling button:not(:disabled):active {
   max-width: 560px;
   margin-left: auto;
   margin-right: auto;
-  padding-top: calc(88px + env(safe-area-inset-top));
-  padding-right: max(1.25rem, env(safe-area-inset-right));
+  padding-top: calc(88px + var(--safe-top));
+  padding-right: 1.25rem;
   padding-bottom: max(4rem, calc(1.5rem + env(safe-area-inset-bottom)));
-  padding-left: max(1.25rem, env(safe-area-inset-left));
+  padding-left: 1.25rem;
 }
 
 .page-shell-wide {
   max-width: 680px;
   margin-left: auto;
   margin-right: auto;
-  padding-top: calc(88px + env(safe-area-inset-top));
-  padding-right: max(1.25rem, env(safe-area-inset-right));
+  padding-top: calc(88px + var(--safe-top));
+  padding-right: 1.25rem;
   padding-bottom: max(4rem, calc(1.5rem + env(safe-area-inset-bottom)));
-  padding-left: max(1.25rem, env(safe-area-inset-left));
+  padding-left: 1.25rem;
 }
 
 .page-shell-narrow {
   max-width: 480px;
   margin-left: auto;
   margin-right: auto;
-  padding-top: calc(88px + env(safe-area-inset-top));
-  padding-right: max(1.25rem, env(safe-area-inset-right));
+  padding-top: calc(88px + var(--safe-top));
+  padding-right: 1.25rem;
   padding-bottom: max(4rem, calc(1.5rem + env(safe-area-inset-bottom)));
-  padding-left: max(1.25rem, env(safe-area-inset-left));
+  padding-left: 1.25rem;
 }
 
 .page-shell-admin {
   max-width: 780px;
   margin-left: auto;
   margin-right: auto;
-  padding-top: calc(88px + env(safe-area-inset-top));
-  padding-right: max(1.25rem, env(safe-area-inset-right));
+  padding-top: calc(88px + var(--safe-top));
+  padding-right: 1.25rem;
   padding-bottom: max(6rem, calc(2rem + env(safe-area-inset-bottom)));
-  padding-left: max(1.25rem, env(safe-area-inset-left));
+  padding-left: 1.25rem;
 }
 
 /* Native iPad UI sizing: slightly larger text/controls and wider shells */
@@ -648,8 +653,8 @@ body.ios-ipad-ui .page-shell-admin {
   .page-shell-wide,
   .page-shell-narrow,
   .page-shell-admin {
-    padding-left: max(0.9rem, env(safe-area-inset-left));
-    padding-right: max(0.9rem, env(safe-area-inset-right));
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
   }
 
   /* Smaller game header title */

@@ -1,7 +1,7 @@
 .ptr-indicator {
   position: fixed;
   /* 52px = navbar height; 14px gap below navbar */
-  top: calc(env(safe-area-inset-top) + 52px + 14px);
+  top: calc(var(--safe-top) + 52px + 14px);
   left: 50%;
   z-index: 101;
   width: 32px;

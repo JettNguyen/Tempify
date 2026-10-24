@@ -31,7 +31,7 @@ body.ios-native-app.result-open .app-scroll-container {
   /* Room at the top for the close button to sit clear of the card once the
      stats and the board make the result long enough to scroll. */
   padding:
-    calc(3.75rem + env(safe-area-inset-top))
+    calc(3.75rem + var(--safe-top))
     max(1rem, env(safe-area-inset-right))
     calc(2rem + env(safe-area-inset-bottom))
     max(1rem, env(safe-area-inset-left));
@@ -48,7 +48,7 @@ body.ios-native-app.result-open .app-scroll-container {
 
 .result-overlay__close {
   position: fixed;
-  top: calc(0.75rem + env(safe-area-inset-top));
+  top: calc(0.75rem + var(--safe-top));
   right: calc(0.75rem + env(safe-area-inset-right));
   z-index: 2;
   width: 40px;

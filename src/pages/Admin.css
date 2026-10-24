@@ -206,5 +206,5 @@
 
 /* The form is scrolled to on open; without this it lands under the fixed nav. */
 #admin-form {
-  scroll-margin-top: calc(72px + env(safe-area-inset-top));
+  scroll-margin-top: calc(72px + var(--safe-top));
 }

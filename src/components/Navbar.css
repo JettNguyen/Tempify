@@ -3,16 +3,24 @@
   top: 0;
   left: 0;
   right: 0;
-  height: calc(52px + env(safe-area-inset-top));
+  height: calc(52px + var(--safe-top));
   background: var(--bg);
   border-bottom: 0.5px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--safe-top);
   padding-left: max(1.25rem, env(safe-area-inset-left));
   padding-right: max(1.25rem, env(safe-area-inset-right));
   z-index: 100;
+}
+
+/* With nothing above it (the iPhone Duo, an iPhone on its side) the bar sits in
+   the display's rounded corners, so it steps in from the sides as the top inset
+   shrinks. Under a status bar this still comes out at 1.25rem. */
+body.ios-native-app .navbar {
+  padding-left: max(1.25rem, env(safe-area-inset-left), calc(2rem - env(safe-area-inset-top)));
+  padding-right: max(1.25rem, env(safe-area-inset-right), calc(2rem - env(safe-area-inset-top)));
 }
 
 .navbar__brand {

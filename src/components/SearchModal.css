@@ -10,7 +10,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: max(5rem, env(safe-area-inset-top) + 4rem);
+  padding-top: max(5rem, var(--safe-top) + 4rem);
   padding-left: 1rem;
   padding-right: 1rem;
 }
