@@ -8,7 +8,7 @@ import {
   getAllScores, getStreaks,
 } from '../lib/scores'
 import { GAME_SLUGS, ALL_GAME_SLUGS, getGameSlugsForDate, getGameName } from '../lib/games'
-import { fmtTime, todayEST } from '../lib/date'
+import { fmtTime, fmtMonthDayYear, todayEST } from '../lib/date'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
 import StreakDisplay from '../components/StreakDisplay'
@@ -354,7 +354,7 @@ export default function PublicProfile() {
               <StatCard label="Perfect days"     value={stats.perfectDays}                         detail="Every game that day" highlight={highlightPerfectDays} />
               <StatCard label="Consistency"      value={`${stats.consistency}%`}                   detail="Days played since first game" highlight={highlightConsistency} />
               <StatCard label="One Bar mastery"  value={stats.obMastery != null ? `${stats.obMastery}%` : '-'} detail="Solved in ≤2 guesses" highlight={highlightOBMastery} />
-              <StatCard label="Speed record"     value={stats.fastestWin ? fmtTime(stats.fastestWin.time) : '-'} detail={stats.fastestWin ? `in ${stats.fastestWin.game} on ${stats.fastestWin.date}` : 'No timed wins yet'} highlight={highlightSpeed} />
+              <StatCard label="Speed record"     value={stats.fastestWin ? fmtTime(stats.fastestWin.time) : '-'} detail={stats.fastestWin ? `in ${stats.fastestWin.game} on ${fmtMonthDayYear(stats.fastestWin.date)}` : 'No timed wins yet'} highlight={highlightSpeed} />
             </div>
 
             {/* Per-game breakdown */}
