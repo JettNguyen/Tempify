@@ -50,6 +50,11 @@
 
 .archive-day {
   aspect-ratio: 1;
+  /* Square on a phone. On a wide screen (the Duo open, an iPad) squares grew
+     past 100px tall and pushed the month's last weeks off the bottom, so they
+     stop at 60px and fill their column's width instead. */
+  max-height: 60px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -124,6 +129,7 @@
    real days collapses and the grid changes height between months. */
 .archive-day-filler {
   aspect-ratio: 1;
+  max-height: 60px;
 }
 
 /* The slide overshoots sideways, so clip it here rather than let it push the
