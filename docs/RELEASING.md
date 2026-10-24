@@ -54,6 +54,11 @@ painted over afterward, through the simulator's web inspector:
 clip keeps the blur inside each cover's rounded corners. The 1.8 set is in
 `~/Desktop/Tempify Files/6.9"/1.8 blurred`.
 
+**The iPhone Duo has a set of its own** (display type `APP_IPHONE_DUO` in the API), taken on the
+open Duo simulator with `xcrun simctl io <device> screenshot --display=primary-1`. Tempify runs
+sideways there, so they are 2853 by 2007, which Apple accepts. The 1.8 Duo set is in
+`~/Desktop/Tempify Files/Duo/1.8 blurred`.
+
 ## iPhone Duo
 
 The Duo's status bar runs down the side of the screen in both postures, so it reports no top
