@@ -241,6 +241,13 @@ body.ios-native-app.result-open .app-scroll-container {
   animation: resultPanel 0.52s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
 }
 
+/* The panel takes focus when it opens so a screen reader starts on the result.
+   A ring around the whole dialog says nothing, and it was square against the
+   card's rounded corners. */
+.result-overlay__panel:focus {
+  outline: none;
+}
+
 /* Lifted off the page, and translucent, so the light behind it is still light
    rather than something happening next to a solid box. */
 .result-overlay .result-card {
