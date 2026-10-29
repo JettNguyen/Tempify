@@ -72,7 +72,25 @@ body.ios-native-app.result-open .app-scroll-container {
    where it was. Tapping anywhere outside the card still closes it too. */
 @media (max-width: 640px) {
   .result-overlay {
-    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
+  }
+
+  /* A long result starts with the board under the button, so the bottom of the
+     screen fades to the backdrop behind it. Without it the button sat on a row
+     of the board, which read as a mistake rather than as more to scroll to.
+     The same height as the padding above, so the end of the result scrolls
+     clear of the fade as well as the button. */
+  .result-overlay::after {
+    content: '';
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    height: calc(7.5rem + env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom, rgba(8, 8, 8, 0), rgba(8, 8, 8, 0.92) 50%);
+    pointer-events: none;
+    animation: fadeIn 0.22s ease both;
   }
 
   .result-overlay__close {
