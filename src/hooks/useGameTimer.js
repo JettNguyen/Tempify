@@ -108,12 +108,21 @@ export function useGameTimer(active = true, delayMs = 0, persistKey = null) {
         startedAtMs: startedAtMsRef.current,
       })
 
+      // The clock shows tenths, so the page only hears about a new tenth. Every
+      // frame re-rendered the whole game screen sixty times a second, and that
+      // screen now has a live stage of its own to draw in the same frames.
+      let shownTenth = -1
       function tick() {
         if (stoppedRef.current) return
         const base = elapsedMsRef.current
         const startedAt = startedAtMsRef.current
         if (startedAt == null) return
-        setElapsed((base + (Date.now() - startedAt)) / 1000)
+        const next = (base + (Date.now() - startedAt)) / 1000
+        const tenth = Math.floor(next * 10)
+        if (tenth !== shownTenth) {
+          shownTenth = tenth
+          setElapsed(next)
+        }
         rafRef.current = requestAnimationFrame(tick)
       }
 

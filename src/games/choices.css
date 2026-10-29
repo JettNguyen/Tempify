@@ -1,0 +1,214 @@
+/* The answers in the pick-one games (Hit or Miss, Era, Cover or Not), and the
+   moment between picking one and finding out.
+
+   A pick lights up in the game's colour and charges for a beat while the
+   others step back, then the answer lands: the right one pops in green, a
+   wrong pick shakes in red. */
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 122px;
+  padding: 15px 15px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(165deg, rgba(var(--game-color-rgb), 0.09), rgba(var(--game-color-rgb), 0) 58%),
+    var(--surface);
+  color: var(--text-primary);
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, opacity 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+  animation: fadeInUp 0.3s ease both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.choice:disabled {
+  cursor: default;
+}
+
+.choice__art {
+  display: block;
+  height: 30px;
+  width: auto;
+  color: var(--game-color);
+  transition: color 0.25s ease;
+}
+
+.choice__label {
+  display: block;
+  font-size: var(--fs-lg);
+  font-weight: 650;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.choice__sub {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+/* The verdict on a card, once there is one. A mark as well as a colour, so it
+   still reads for anyone who can't tell the green from the red. */
+.choice__mark {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: choiceMark 0.45s cubic-bezier(0.2, 1.5, 0.4, 1) 0.05s both;
+}
+
+.choice:not(:disabled):active {
+  transform: scale(0.97);
+  border-color: rgba(var(--game-color-rgb), 0.7);
+}
+
+/* ---- The beat ---- */
+
+.choice--locked {
+  border-color: var(--game-color);
+  background:
+    linear-gradient(165deg, rgba(var(--game-color-rgb), 0.28), rgba(var(--game-color-rgb), 0.08) 70%),
+    var(--surface);
+  box-shadow: 0 0 0 1px var(--game-color), 0 10px 34px rgba(var(--game-color-rgb), 0.32);
+  animation: choiceLock 0.65s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+/* The charge along the bottom edge, filling over the beat. */
+.choice--locked::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--game-color);
+  transform-origin: left center;
+  animation: choiceCharge 0.65s linear both;
+}
+
+/* `animation: none` because the entrance animation fills forwards, and a held
+   animation outranks any plain opacity or transform rule: without this the
+   cards meant to step back stay at full strength. */
+.choice--waiting {
+  animation: none;
+  opacity: 0.38;
+  transform: scale(0.97);
+}
+
+/* ---- The answer ---- */
+
+.choice--correct {
+  border-color: var(--green);
+  background:
+    linear-gradient(165deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05) 70%),
+    var(--surface);
+  box-shadow: 0 8px 30px rgba(34, 197, 94, 0.18);
+  animation: choiceRight 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.choice--correct .choice__art,
+.choice--correct .choice__label {
+  color: var(--green);
+}
+
+.choice--correct .choice__mark {
+  background: var(--green);
+  color: #06210f;
+}
+
+.choice--wrong {
+  border-color: var(--red);
+  background:
+    linear-gradient(165deg, rgba(239, 68, 68, 0.16), rgba(239, 68, 68, 0.04) 70%),
+    var(--surface);
+  animation: choiceWrong 0.5s ease both;
+}
+
+.choice--wrong .choice__art,
+.choice--wrong .choice__label {
+  color: var(--red);
+}
+
+.choice--wrong .choice__mark {
+  background: var(--red);
+  color: #2a0808;
+}
+
+.choice--faded {
+  animation: none;
+  opacity: 0.4;
+}
+
+/* A short phone (an SE, the Duo folded) keeps the answers on the first screen
+   with the stage above them, rather than one scroll below it. */
+@media (max-height: 720px) {
+  .choice {
+    min-height: 100px;
+    gap: 10px;
+    padding: 12px 13px 12px;
+  }
+
+  .choice__art {
+    height: 24px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .choice:not(:disabled):hover {
+    border-color: rgba(var(--game-color-rgb), 0.75);
+    background:
+      linear-gradient(165deg, rgba(var(--game-color-rgb), 0.18), rgba(var(--game-color-rgb), 0.03) 62%),
+      var(--surface);
+  }
+}
+
+@keyframes choiceLock {
+  0%   { transform: scale(0.96); }
+  35%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes choiceCharge {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes choiceRight {
+  0%   { transform: scale(0.97); }
+  55%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes choiceWrong {
+  0%, 100% { transform: translateX(0); }
+  18%      { transform: translateX(-7px); }
+  36%      { transform: translateX(6px); }
+  54%      { transform: translateX(-4px); }
+  72%      { transform: translateX(2px); }
+}
+
+@keyframes choiceMark {
+  from { opacity: 0; transform: scale(0.3) rotate(-30deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0); }
+}

@@ -21,9 +21,9 @@
   inset: 0;
   border-radius: 18px;
   box-shadow:
-    0 0 42px 2px rgba(var(--game-color-rgb), 0.42),
-    0 0 110px 10px rgba(var(--game-color-rgb), 0.16);
-  opacity: calc(0.12 + var(--glow) * 0.88);
+    0 0 40px 1px rgba(var(--game-color-rgb), 0.38),
+    0 0 100px 8px rgba(var(--game-color-rgb), 0.13);
+  opacity: calc(0.12 + var(--glow) * 0.78);
   transition: opacity 0.6s ease;
   pointer-events: none;
 }
@@ -460,6 +460,10 @@
 
 .audio-timeline__label--close {
   color: var(--amber-light);
+}
+
+.audio-timeline__label--right {
+  color: var(--green);
 }
 
 .audio-player__error {

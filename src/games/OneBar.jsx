@@ -8,8 +8,10 @@ import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork, stripVariant } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
-import { hapticImportantTap, hapticWrong, hapticRejected } from '../lib/haptics'
+import { sharesArtist } from '../lib/matching'
+import { hapticImportantTap, hapticWrong, hapticRejected, hapticThreshold } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
+import GameHeader from '../components/GameHeader'
 import GuessInput from '../components/GuessInput'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
@@ -18,11 +20,19 @@ import './OneBar.css'
 
 const MAX_ATTEMPTS = 6
 const BASE_SECONDS = 0.5
-const SECONDS_PER_REVEAL = 0.5
 const REVEAL_TIMINGS = [0.5, 1, 2, 5, 15, 30]
 // What the progress bar stands for while guessing: the full length the clip can
 // reach, so each unlock visibly claims more of it.
 const MAX_REVEAL = REVEAL_TIMINGS[REVEAL_TIMINGS.length - 1]
+// How long a newly won stage of audio stays lit on the ladder.
+const FRESH_MS = 1400
+
+// What a near miss gets told. Said as soon as the guess lands: knowing you are
+// close is the part of the round worth having before the answer.
+const HINTS = {
+  artist: 'Right artist',
+  title: 'Right title, wrong artist',
+}
 
 const progressKey = (date) => `tempify_progress_one-bar_${date}`
 
@@ -54,6 +64,8 @@ export default function OneBar() {
   const [revealSeconds, setRevealSeconds] = useState(BASE_SECONDS)
   const [resultArtwork, setResultArtwork] = useState(null)
   const [notice, setNotice] = useState(null)
+  // The stage of the ladder a wrong guess just won, lit for a moment.
+  const [freshSegment, setFreshSegment] = useState(null)
 
   useEffect(() => {
     // Already seeded from cache, since refetching would only re-run derived
@@ -133,6 +145,12 @@ export default function OneBar() {
     return () => clearTimeout(id)
   }, [notice])
 
+  useEffect(() => {
+    if (freshSegment == null) return
+    const id = setTimeout(() => setFreshSegment(null), FRESH_MS)
+    return () => clearTimeout(id)
+  }, [freshSegment])
+
   // Child effects run before parent ones, so by now the player is holding the
   // newly unlocked length and will let the clip run that far.
   useEffect(() => {
@@ -143,7 +161,7 @@ export default function OneBar() {
   }, [revealSeconds])
 
   function buildEmojiGrid() {
-    return attempts.map((a) => (a.correct ? '🟩' : '⬜')).join('')
+    return attempts.map((a) => (a.correct ? '🟩' : a.hint ? '🟨' : '⬜')).join('')
   }
 
   async function registerAttempt(attempt) {
@@ -169,11 +187,14 @@ export default function OneBar() {
       }
     } else {
       // Wrong, but the round continues, distinct from the failure buzz the
-      // result card fires when the last guess is spent.
-      if (!attempt.skipped) hapticWrong()
+      // result card fires when the last guess is spent. A near miss gets a
+      // firmer, rounder tap than a plain miss.
+      if (attempt.hint) hapticThreshold()
+      else if (!attempt.skipped) hapticWrong()
       guessInputRef.current?.clear()
       const nextReveal = REVEAL_TIMINGS[Math.min(newAttempts.length, REVEAL_TIMINGS.length - 1)]
       setRevealSeconds(nextReveal)
+      setFreshSegment(newAttempts.length)
       localStorage.setItem(progressKey(puzzleDate), JSON.stringify({ attempts: newAttempts, revealSeconds: nextReveal }))
     }
   }
@@ -201,7 +222,15 @@ export default function OneBar() {
       song.artist.toLowerCase().trim() === puzzle.metadata.artist.toLowerCase().trim()
     const isCorrect = titleMatch && artistMatch
 
-    await registerAttempt({ title: song.title, artist: song.artist, correct: isCorrect })
+    // The answer check above stays exact. This only decides whether a wrong
+    // guess was near enough to say so.
+    let hint
+    if (!isCorrect) {
+      if (titleMatch) hint = 'title'
+      else if (puzzle.metadata?.artist && sharesArtist(song.artist, puzzle.metadata.artist)) hint = 'artist'
+    }
+
+    await registerAttempt({ title: song.title, artist: song.artist, correct: isCorrect, ...(hint ? { hint } : {}) })
   }
 
   async function handleSkip() {
@@ -220,73 +249,114 @@ export default function OneBar() {
   if (!puzzle) return null
 
   const remainingGuesses = MAX_ATTEMPTS - attempts.length
+  const nextReveal = REVEAL_TIMINGS[Math.min(attempts.length + 1, REVEAL_TIMINGS.length - 1)]
+
+  // The ladder under the clip: what each guess came to, the stage being played
+  // now, and what is still locked.
+  const ladder = REVEAL_TIMINGS.map((secs, i) => {
+    const a = attempts[i]
+    if (a?.correct) return { content: <Icon name="check" size={11} strokeWidth={3.25} />, tone: 'right' }
+    if (a?.skipped) return { content: <Icon name="skipForward" size={11} strokeWidth={2.5} />, tone: 'skipped' }
+    if (a) return { content: <Icon name="x" size={11} strokeWidth={3.25} />, tone: a.hint ? 'close' : 'wrong' }
+    return { content: `${secs}s`, tone: i === attempts.length ? 'current' : 'locked' }
+  })
 
   return (
     <GameShell>
       <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <div className="one-bar__header">
-        <p className="one-bar__eyebrow">one bar<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
-        <h1 className="one-bar__title">
-          Name the song from a short clip. Each wrong guess unlocks a bit more.
-        </h1>
-      </div>
+      <GameHeader
+        slug="one-bar"
+        name="one bar"
+        date={fmtDayShort(puzzleDate)}
+        title="Name the song from a short clip. Each wrong guess unlocks a bit more."
+      />
 
-      <AudioPlayer ref={audioRef} key={done ? 'done' : 'playing'} src={puzzle.audio_url} maxDuration={done ? undefined : revealSeconds} trackSpan={done ? undefined : MAX_REVEAL} segmentStops={done ? undefined : REVEAL_TIMINGS} autoplay={done ? true : profile?.autoplay_audio !== false} />
+      <AudioPlayer
+        ref={audioRef}
+        key={done ? 'done' : 'playing'}
+        variant="stage"
+        visual="bars"
+        src={puzzle.audio_url}
+        maxDuration={done ? undefined : revealSeconds}
+        trackSpan={done ? undefined : MAX_REVEAL}
+        segmentStops={done ? undefined : REVEAL_TIMINGS}
+        segmentLabels={done ? undefined : ladder}
+        freshSegment={done ? null : freshSegment}
+        autoplay={done ? true : profile?.autoplay_audio !== false}
+      />
 
-      <div className="one-bar__progress">
-        {done && correct ? (
-          <div className="one-bar__solved">
-            <p className="one-bar__solved-label">Solved with</p>
-            <p className="one-bar__solved-figure">
-              <span className="one-bar__solved-value">{revealSeconds}s</span>
-              <span className="one-bar__solved-total">of {MAX_REVEAL}s</span>
-            </p>
-            {/* Half a second only reads as good against the thirty it could
-                have taken, so the figure gets something to sit against. */}
-            <div className="one-bar__solved-track">
-              <div
-                className="one-bar__solved-fill"
-                style={{ width: `${Math.max(2, (revealSeconds / MAX_REVEAL) * 100)}%` }}
-              />
+      {done && (
+        <div className="one-bar__progress">
+          {correct ? (
+            <div className="one-bar__solved">
+              <p className="one-bar__solved-label">Solved with</p>
+              <p className="one-bar__solved-figure">
+                <span className="one-bar__solved-value">{revealSeconds}s</span>
+                <span className="one-bar__solved-total">of {MAX_REVEAL}s</span>
+              </p>
+              {/* Half a second only reads as good against the thirty it could
+                  have taken, so the figure gets something to sit against. */}
+              <div className="one-bar__solved-track">
+                <div
+                  className="one-bar__solved-fill"
+                  style={{ width: `${Math.max(2, (revealSeconds / MAX_REVEAL) * 100)}%` }}
+                />
+              </div>
             </div>
-          </div>
-        ) : (
-          <p className="one-bar__progress-label">
-            {done
-              ? 'Better luck tomorrow'
-              : `${remainingGuesses} ${remainingGuesses === 1 ? 'guess' : 'guesses'} left · ${revealSeconds}s unlocked`}
-          </p>
-        )}
-      </div>
+          ) : (
+            <p className="one-bar__progress-label">Better luck tomorrow</p>
+          )}
+        </div>
+      )}
 
       {!done && (
-        <>
+        <div className="one-bar__play">
           <GuessInput ref={guessInputRef} onGuess={handleGuess} disabled={done} />
           {notice && <p className="one-bar__notice" role="status">{notice}</p>}
-          {/* On the last guess there is nothing left to unlock, so the button
-              forfeits the round, and should say so rather than inviting a tap
-              that reads as harmless. */}
-          <button
-            type="button"
-            onClick={handleSkip}
-            className={`one-bar__skip btn-press${remainingGuesses === 1 ? ' one-bar__skip--final' : ''}`}
-          >
-            <Icon name={remainingGuesses === 1 ? 'alert' : 'skipForward'} size={14} />
-            {remainingGuesses === 1 ? 'Give up and reveal the answer' : 'Skip to unlock more audio'}
-          </button>
-        </>
+
+          <div className="one-bar__actions">
+            {/* On the last guess there is nothing left to unlock, so the button
+                forfeits the round, and should say so rather than inviting a tap
+                that reads as harmless. */}
+            <button
+              type="button"
+              onClick={handleSkip}
+              className={`one-bar__skip btn-press${remainingGuesses === 1 ? ' one-bar__skip--final' : ''}`}
+            >
+              <Icon name={remainingGuesses === 1 ? 'alert' : 'skipForward'} size={14} />
+              {remainingGuesses === 1 ? 'Give up and reveal the answer' : `Skip to hear ${nextReveal}s`}
+            </button>
+            <p className="one-bar__left" aria-live="polite">
+              <span className="one-bar__left-count">{remainingGuesses}</span>
+              {remainingGuesses === 1 ? ' guess left' : ' guesses left'}
+            </p>
+          </div>
+        </div>
       )}
 
       {attempts.length > 0 && !done && (
-        <div className="one-bar__guesses">
+        <ol className="one-bar__guesses">
           {attempts.map((a, i) => (
-            <div key={i} className="one-bar__guess-row">
-              <Icon name="x" size={12} strokeWidth={2.5} className="one-bar__guess-x" />
-              <span>{a.skipped ? 'Skipped' : `${a.title} by ${a.artist}`}</span>
-            </div>
+            <li
+              key={i}
+              className={[
+                'one-bar__guess',
+                a.skipped ? 'one-bar__guess--skipped' : '',
+                a.hint ? 'one-bar__guess--close' : '',
+                i === attempts.length - 1 ? 'one-bar__guess--latest' : '',
+              ].filter(Boolean).join(' ')}
+            >
+              <span className="one-bar__guess-mark">
+                <Icon name={a.skipped ? 'skipForward' : 'x'} size={11} strokeWidth={a.skipped ? 2.5 : 3} />
+              </span>
+              <span className="one-bar__guess-text">
+                {a.skipped ? `Skipped at ${REVEAL_TIMINGS[i]}s` : `${a.title} by ${a.artist}`}
+              </span>
+              {a.hint && <span className="one-bar__guess-tag">{HINTS[a.hint]}</span>}
+            </li>
           ))}
-        </div>
+        </ol>
       )}
 
       {done && (
@@ -313,5 +383,5 @@ export default function OneBar() {
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell">{children}</div>
+  return <div className="page-shell game-theme--one-bar">{children}</div>
 }

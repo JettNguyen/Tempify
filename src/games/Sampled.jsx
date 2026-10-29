@@ -9,6 +9,7 @@ import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
 import AudioPlayer from '../components/AudioPlayer'
+import GameHeader from '../components/GameHeader'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
 import TrackArtwork from '../components/TrackArtwork'
@@ -120,11 +121,13 @@ export default function Sampled() {
     <GameShell>
       <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <div className="game-header">
-        <p className="game-header__eyebrow">sampled<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
-        <h1 className="game-header__title">This song samples a classic. Which one?</h1>
-        {!done && profile?.competitive_mode !== false && <p className="game-timer">{display}</p>}
-      </div>
+      <GameHeader
+        slug="sampled"
+        name="sampled"
+        date={fmtDayShort(puzzleDate)}
+        title="This song samples a classic. Which one?"
+        timer={!done && profile?.competitive_mode !== false ? { text: display, running: true } : null}
+      />
 
       <div className="sampled__source">
         <div className="sampled__source-track">
@@ -205,5 +208,5 @@ export default function Sampled() {
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell">{children}</div>
+  return <div className="page-shell game-theme--sampled">{children}</div>
 }

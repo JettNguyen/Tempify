@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
@@ -11,10 +11,13 @@ import { findArtwork } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
+import { lockInDelay } from '../lib/lockIn'
 import AudioPlayer from '../components/AudioPlayer'
+import GameHeader from '../components/GameHeader'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
+import './choices.css'
 import './Era.css'
 
 
@@ -38,6 +41,7 @@ export default function Era() {
   const [correct, setCorrect] = useState(false)
   const [finalTime, setFinalTime] = useState(null)
   const [resultArtwork, setResultArtwork] = useState(null)
+  const revealRef = useRef(0)
 
   const { stop, display } = useGameTimer(hasStarted && !done, 250, `tempify_game_era_${puzzleDate}`)
 
@@ -52,7 +56,8 @@ export default function Era() {
   }, [])
 
   useEffect(() => {
-    if (!puzzle || done) return
+    // A pick still in its beat reveals itself when the beat is over.
+    if (!puzzle || done || revealRef.current) return
     if (isComplete('era', puzzleDate)) {
       stop()
       const wasCorrect = completions[`era|${puzzleDate}`]?.completed ?? false
@@ -61,6 +66,8 @@ export default function Era() {
       setDone(true)
     }
   }, [puzzle, completions])
+
+  useEffect(() => () => clearTimeout(revealRef.current), [])
 
   useEffect(() => {
     if (!puzzle) return
@@ -92,16 +99,20 @@ export default function Era() {
   }, [puzzle])
 
   async function handleGuess(decade) {
-    if (done) return
+    if (done || chosen) return
     hapticImportantTap()
     const elapsed = stop()
     setFinalTime(elapsed)
     const isCorrect = decade === puzzle.answer
     setChosen(decade)
     setCorrect(isCorrect)
-    setDone(true)
-    setJustFinished(true)
+    // Recorded at the tap rather than after the beat, so leaving during it
+    // can't lose the answer.
     markComplete('era', puzzleDate, 1, isCorrect)
+    revealRef.current = setTimeout(() => {
+      setDone(true)
+      setJustFinished(true)
+    }, lockInDelay())
     if (user) {
       try {
         await saveScore({ userId: user.id, gameSlug: 'era', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: profile?.competitive_mode !== false ? elapsed : null })
@@ -116,38 +127,62 @@ export default function Era() {
   if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
   if (!puzzle) return null
 
+  let timer = null
+  if (!done && profile?.competitive_mode !== false) {
+    timer = hasStarted
+      ? { text: display, running: !chosen }
+      : { text: 'Starts on play', idle: true }
+  }
+
   return (
     <GameShell>
       <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <div className="game-header">
-        <p className="game-header__eyebrow">era<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
-        <h1 className="game-header__title">What decade is this song from?</h1>
-        {!done && profile?.competitive_mode !== false && hasStarted && <p className="game-timer">{display}</p>}
-        {!done && profile?.competitive_mode !== false && !hasStarted && <p className="game-timer">Press play to start timer</p>}
-      </div>
+      <GameHeader
+        slug="era"
+        name="era"
+        date={fmtDayShort(puzzleDate)}
+        title="What decade is this song from?"
+        timer={timer}
+      />
 
-      <AudioPlayer src={puzzle.audio_url} onPlay={() => setHasStarted(true)} autoplay={profile?.autoplay_audio !== false} />
+      <AudioPlayer
+        variant="stage"
+        visual="record"
+        src={puzzle.audio_url}
+        onPlay={() => setHasStarted(true)}
+        autoplay={profile?.autoplay_audio !== false}
+      />
 
-      <div className="stagger-list era__decades">
-        {DECADES.map((decade) => {
-          const isChosen = chosen === decade
+      <div className="choices era__decades">
+        {DECADES.map((decade, i) => {
           const isAnswer = decade === puzzle.answer
-
-          let cls = 'era__decade-btn btn-press'
+          let mod = ''
+          let mark = null
           if (done) {
-            cls += ' era__decade-btn--done'
-            // isChosen was worked out here and never used, so a wrong answer
-            // looked exactly like the five decades you didn't pick.
-            if (isAnswer) cls += ' era__decade-btn--answer'
-            else if (isChosen) cls += ' era__decade-btn--wrong'
-            else cls += ' era__decade-btn--faded'
+            if (isAnswer) { mod = ' choice--correct'; mark = 'check' }
+            else if (decade === chosen) { mod = ' choice--wrong'; mark = 'x' }
+            else mod = ' choice--faded'
+          } else if (chosen) {
+            mod = decade === chosen ? ' choice--locked' : ' choice--waiting'
           }
 
           return (
-            <button key={decade} onClick={() => handleGuess(decade)} disabled={done} className={cls}>
+            <button
+              key={decade}
+              type="button"
+              onClick={() => handleGuess(decade)}
+              disabled={done || Boolean(chosen)}
+              className={`choice era__decade${mod}`}
+              style={{ '--i': i }}
+            >
               <span className="era__decade-century">{centuryOf(decade)}</span>
               <span className="era__decade-years">{decade}</span>
+              {mark && (
+                <span className="choice__mark">
+                  <Icon name={mark} size={10} strokeWidth={3.5} />
+                </span>
+              )}
             </button>
           )
         })}
@@ -176,5 +211,5 @@ export default function Era() {
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell">{children}</div>
+  return <div className="page-shell game-theme--era">{children}</div>
 }

@@ -10,12 +10,40 @@ import { findArtwork } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
+import { lockInDelay } from '../lib/lockIn'
 import AudioPlayer from '../components/AudioPlayer'
+import GameHeader from '../components/GameHeader'
+import StageSong from '../components/StageSong'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
-import TrackArtwork from '../components/TrackArtwork'
 import DelayedSpinner from '../components/DelayedSpinner'
+import './choices.css'
 import './CoverOrNot.css'
+
+// The game's symbol split in two: a cover is two takes on one song, overlapping;
+// an original is the one take there is.
+function CoverArt(props) {
+  return (
+    <svg viewBox="0 0 52 30" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true" {...props}>
+      <circle className="cover-or-not__art-left" cx="18" cy="15" r="12" />
+      <circle className="cover-or-not__art-right" cx="33" cy="15" r="12" />
+    </svg>
+  )
+}
+
+function OriginalArt(props) {
+  return (
+    <svg viewBox="0 0 52 30" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true" {...props}>
+      <circle className="cover-or-not__art-one" cx="15" cy="15" r="12" />
+      <circle cx="15" cy="15" r="3" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+const CHOICES = [
+  { value: 'cover', label: "It's a cover", sub: 'Someone recorded it first', Art: CoverArt },
+  { value: 'original', label: "It's original", sub: 'This is the first version', Art: OriginalArt },
+]
 
 export default function CoverOrNot() {
   const { user, profile } = useAuth()
@@ -39,6 +67,7 @@ export default function CoverOrNot() {
   const [shouldAutoplayOriginal, setShouldAutoplayOriginal] = useState(false)
   const coverRef = useRef(null)
   const originalRef = useRef(null)
+  const revealRef = useRef(0)
 
   const { stop, display } = useGameTimer(!done, 250, `tempify_game_cover-or-not_${puzzleDate}`)
 
@@ -53,7 +82,8 @@ export default function CoverOrNot() {
   }, [])
 
   useEffect(() => {
-    if (!puzzle || done) return
+    // A pick still in its beat reveals itself when the beat is over.
+    if (!puzzle || done || chosen) return
     if (isComplete('cover-or-not', puzzleDate)) {
       stop()
       setCorrect(completions[`cover-or-not|${puzzleDate}`]?.completed ?? false)
@@ -61,6 +91,8 @@ export default function CoverOrNot() {
       setDone(true)
     }
   }, [puzzle, completions])
+
+  useEffect(() => () => clearTimeout(revealRef.current), [])
 
   useEffect(() => {
     if (!puzzle) return
@@ -101,20 +133,26 @@ export default function CoverOrNot() {
   }, [done, shouldAutoplayOriginal])
 
   async function handleGuess(pick) {
-    if (done) return
+    if (done || chosen) return
     hapticImportantTap()
     const elapsed = stop()
     setFinalTime(elapsed)
     const isCorrect = pick === puzzle.answer
     setChosen(pick)
     setCorrect(isCorrect)
-    setDone(true)
-    setJustFinished(true)
-    if (puzzle.answer === 'cover' && puzzle.metadata?.original_audio_url) {
-      coverRef.current?.pause()
-      setShouldAutoplayOriginal(true)
-    }
+    // Recorded at the tap rather than after the beat, so leaving during it
+    // can't lose the answer.
     markComplete('cover-or-not', puzzleDate, 1, isCorrect)
+    revealRef.current = setTimeout(() => {
+      // The cover gives way to the original as the answer lands, so the two
+      // can be heard one after the other.
+      if (puzzle.answer === 'cover' && puzzle.metadata?.original_audio_url) {
+        coverRef.current?.pause()
+        setShouldAutoplayOriginal(true)
+      }
+      setDone(true)
+      setJustFinished(true)
+    }, lockInDelay())
     if (user) {
       try {
         await saveScore({ userId: user.id, gameSlug: 'cover-or-not', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: profile?.competitive_mode !== false ? elapsed : null })
@@ -136,54 +174,60 @@ export default function CoverOrNot() {
     <GameShell>
       <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <div className="game-header">
-        <p className="game-header__eyebrow">cover or not<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
-        <h1 className="game-header__title">Is this song a cover of an earlier track?</h1>
-        {!done && profile?.competitive_mode !== false && <p className="game-timer">{display}</p>}
-      </div>
+      <GameHeader
+        slug="cover-or-not"
+        name="cover or not"
+        date={fmtDayShort(puzzleDate)}
+        title="Is this song a cover of an earlier track?"
+        timer={!done && profile?.competitive_mode !== false ? { text: display, running: !chosen } : null}
+      />
 
-      <div className="cover-or-not__song">
-        <div className="cover-or-not__song-track">
-          <TrackArtwork
-            title={m.song_title}
-            artist={m.song_artist}
-            src={m.artwork_url || m.song_artwork_url}
-            size="medium"
-          />
-          {m.song_title && (
-            <div>
-              <p className="cover-or-not__song-name">{m.song_title}</p>
-              {m.song_artist && (
-                <p className="cover-or-not__song-meta">
-                  {m.song_artist}{m.song_year ? ` · ${m.song_year}` : ''}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-        <AudioPlayer ref={coverRef} src={puzzle.audio_url} onPlay={() => originalRef.current?.pause()} autoplay={profile?.autoplay_audio !== false} />
-      </div>
+      <AudioPlayer
+        ref={coverRef}
+        variant="stage"
+        visual="rings"
+        src={puzzle.audio_url}
+        onPlay={() => originalRef.current?.pause()}
+        autoplay={profile?.autoplay_audio !== false}
+      >
+        <StageSong
+          title={m.song_title}
+          artist={m.song_artist}
+          meta={m.song_year}
+          src={m.artwork_url || m.song_artwork_url}
+        />
+      </AudioPlayer>
 
-      <div className="stagger-list cover-or-not__choices">
-        {[{ value: 'cover', label: "It's a cover" }, { value: 'original', label: "It's original" }].map(({ value, label }) => {
+      <div className="choices">
+        {CHOICES.map(({ value, label, sub, Art }, i) => {
           let mod = ''
           let mark = null
           if (done) {
-            // A mark as well as a colour, so the result still reads for anyone
-            // who can't tell the green from the red.
-            if (value === puzzle.answer) { mod = ' cover-or-not__choice-btn--correct'; mark = 'check' }
-            else if (value === chosen) { mod = ' cover-or-not__choice-btn--wrong'; mark = 'x' }
-            else mod = ' cover-or-not__choice-btn--faded'
+            if (value === puzzle.answer) { mod = ' choice--correct'; mark = 'check' }
+            else if (value === chosen) { mod = ' choice--wrong'; mark = 'x' }
+            else mod = ' choice--faded'
+          } else if (chosen) {
+            mod = value === chosen ? ' choice--locked' : ' choice--waiting'
           }
           return (
             <button
               key={value}
-              onClick={() => !done && handleGuess(value)}
-              disabled={done}
-              className={`cover-or-not__choice-btn btn-press${!done ? ' btn-hover' : ''}${mod}`}
+              type="button"
+              onClick={() => handleGuess(value)}
+              disabled={done || Boolean(chosen)}
+              className={`choice${mod}`}
+              style={{ '--i': i }}
             >
-              {mark && <Icon name={mark} size={16} strokeWidth={2.25} />}
-              {label}
+              <Art className="choice__art" />
+              <span>
+                <span className="choice__label">{label}</span>
+                <span className="choice__sub">{sub}</span>
+              </span>
+              {mark && (
+                <span className="choice__mark">
+                  <Icon name={mark} size={14} strokeWidth={3} />
+                </span>
+              )}
             </button>
           )
         })}
@@ -230,5 +274,5 @@ export default function CoverOrNot() {
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell">{children}</div>
+  return <div className="page-shell game-theme--cover-or-not">{children}</div>
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
@@ -8,12 +8,44 @@ import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
+import { lockInDelay } from '../lib/lockIn'
 import AudioPlayer from '../components/AudioPlayer'
+import GameHeader from '../components/GameHeader'
+import StageSong from '../components/StageSong'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
-import TrackArtwork from '../components/TrackArtwork'
 import DelayedSpinner from '../components/DelayedSpinner'
+import './choices.css'
 import './HitOrMiss.css'
+
+// Each answer drawn as a little chart against the Hot 100 line: a hit's bars
+// climb through it, a miss's never reach it.
+function HitArt(props) {
+  return (
+    <svg viewBox="0 0 52 30" fill="currentColor" aria-hidden="true" {...props}>
+      <line x1="0" y1="10" x2="52" y2="10" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.5" />
+      {[9, 15, 22, 29].map((h, i) => (
+        <rect key={i} className="hit-or-miss__art-bar" style={{ '--n': i }} x={2 + i * 13} y={30 - h} width="9" height={h} rx="2" />
+      ))}
+    </svg>
+  )
+}
+
+function MissArt(props) {
+  return (
+    <svg viewBox="0 0 52 30" fill="currentColor" aria-hidden="true" {...props}>
+      <line x1="0" y1="10" x2="52" y2="10" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.5" />
+      {[12, 7, 15, 9].map((h, i) => (
+        <rect key={i} className="hit-or-miss__art-bar" style={{ '--n': i }} x={2 + i * 13} y={30 - h} width="9" height={h} rx="2" />
+      ))}
+    </svg>
+  )
+}
+
+const CHOICES = [
+  { value: 'hit', label: 'Hit', sub: 'Made the Hot 100', Art: HitArt },
+  { value: 'miss', label: 'Miss', sub: 'Never charted', Art: MissArt },
+]
 
 export default function HitOrMiss() {
   const { user, profile } = useAuth()
@@ -33,6 +65,7 @@ export default function HitOrMiss() {
   const [chosen, setChosen] = useState(null)
   const [correct, setCorrect] = useState(false)
   const [finalTime, setFinalTime] = useState(null)
+  const revealRef = useRef(0)
 
   const { stop, display } = useGameTimer(!done, 250, `tempify_game_hit-or-miss_${puzzleDate}`)
 
@@ -47,7 +80,8 @@ export default function HitOrMiss() {
   }, [])
 
   useEffect(() => {
-    if (!puzzle || done) return
+    // A pick still in its beat reveals itself when the beat is over.
+    if (!puzzle || done || chosen) return
     if (isComplete('hit-or-miss', puzzleDate)) {
       stop()
       setCorrect(completions[`hit-or-miss|${puzzleDate}`]?.completed ?? false)
@@ -55,17 +89,23 @@ export default function HitOrMiss() {
     }
   }, [puzzle, completions])
 
+  useEffect(() => () => clearTimeout(revealRef.current), [])
+
   async function handleGuess(verdict) {
-    if (done) return
+    if (done || chosen) return
     hapticImportantTap()
     const elapsed = stop()
     setFinalTime(elapsed)
     const isCorrect = verdict === puzzle.metadata?.verdict
     setChosen(verdict)
     setCorrect(isCorrect)
-    setDone(true)
-    setJustFinished(true)
+    // Recorded at the tap rather than after the beat, so leaving during it
+    // can't lose the answer.
     markComplete('hit-or-miss', puzzleDate, 1, isCorrect)
+    revealRef.current = setTimeout(() => {
+      setDone(true)
+      setJustFinished(true)
+    }, lockInDelay())
     if (user) {
       try {
         await saveScore({ userId: user.id, gameSlug: 'hit-or-miss', puzzleDate, attempts: 1, completed: isCorrect, timeSeconds: profile?.competitive_mode !== false ? elapsed : null })
@@ -81,53 +121,54 @@ export default function HitOrMiss() {
   if (!puzzle) return null
 
   const isHit = puzzle.metadata?.verdict === 'hit'
+  const verdict = puzzle.metadata?.verdict
 
   return (
     <GameShell>
       <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <div className="game-header">
-        <p className="game-header__eyebrow">hit or miss<span className="puzzle-date">{fmtDayShort(puzzleDate)}</span></p>
-        <h1 className="game-header__title">Did this song ever chart on the Billboard Hot 100?</h1>
-        {!done && profile?.competitive_mode !== false && <p className="game-timer">{display}</p>}
-      </div>
+      <GameHeader
+        slug="hit-or-miss"
+        name="hit or miss"
+        date={fmtDayShort(puzzleDate)}
+        title="Did this song ever chart on the Billboard Hot 100?"
+        timer={!done && profile?.competitive_mode !== false ? { text: display, running: !chosen } : null}
+      />
 
-      <div className="hit-or-miss__song">
-        <TrackArtwork
-          title={puzzle.answer}
-          artist={puzzle.metadata?.artist}
-          src={puzzle.metadata?.artwork_url}
-          size="medium"
-        />
-        <div>
-          <p className="hit-or-miss__song-name">{puzzle.answer}</p>
-          <p className="hit-or-miss__song-artist">{puzzle.metadata?.artist}</p>
-        </div>
-      </div>
+      <AudioPlayer variant="stage" visual="chart" src={puzzle.audio_url} autoplay={profile?.autoplay_audio !== false}>
+        <StageSong title={puzzle.answer} artist={puzzle.metadata?.artist} src={puzzle.metadata?.artwork_url} />
+      </AudioPlayer>
 
-      <AudioPlayer src={puzzle.audio_url} autoplay={profile?.autoplay_audio !== false} />
-
-      <div className="stagger-list hit-or-miss__choices">
-        {['hit', 'miss'].map(v => {
-          const verdict = puzzle?.metadata?.verdict
+      <div className="choices">
+        {CHOICES.map(({ value, label, sub, Art }, i) => {
           let mod = ''
           let mark = null
           if (done) {
-            // A mark as well as a colour, so the result still reads for anyone
-            // who can't tell the green from the red.
-            if (v === verdict) { mod = ' hit-or-miss__choice-btn--correct'; mark = 'check' }
-            else if (v === chosen) { mod = ' hit-or-miss__choice-btn--wrong'; mark = 'x' }
-            else mod = ' hit-or-miss__choice-btn--faded'
+            if (value === verdict) { mod = ' choice--correct'; mark = 'check' }
+            else if (value === chosen) { mod = ' choice--wrong'; mark = 'x' }
+            else mod = ' choice--faded'
+          } else if (chosen) {
+            mod = value === chosen ? ' choice--locked' : ' choice--waiting'
           }
           return (
             <button
-              key={v}
-              onClick={() => !done && handleGuess(v)}
-              disabled={done}
-              className={`hit-or-miss__choice-btn btn-press${!done ? ' btn-hover' : ''}${mod}`}
+              key={value}
+              type="button"
+              onClick={() => handleGuess(value)}
+              disabled={done || Boolean(chosen)}
+              className={`choice${mod}`}
+              style={{ '--i': i }}
             >
-              {mark && <Icon name={mark} size={16} strokeWidth={2.25} />}
-              {v === 'hit' ? 'Hit' : 'Miss'}
+              <Art className="choice__art" />
+              <span>
+                <span className="choice__label">{label}</span>
+                <span className="choice__sub">{sub}</span>
+              </span>
+              {mark && (
+                <span className="choice__mark">
+                  <Icon name={mark} size={14} strokeWidth={3} />
+                </span>
+              )}
             </button>
           )
         })}
@@ -158,5 +199,5 @@ export default function HitOrMiss() {
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell">{children}</div>
+  return <div className="page-shell game-theme--hit-or-miss">{children}</div>
 }

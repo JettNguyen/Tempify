@@ -1,38 +1,19 @@
-.one-bar__header {
-  margin-bottom: 1.5rem;
-}
-
-.one-bar__eyebrow {
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-
-.one-bar__title {
-  font-size: var(--fs-lg);
-  font-weight: 500;
-  color: var(--text-primary);
-  line-height: 1.4;
+.one-bar__play {
+  margin-top: 1rem;
 }
 
 .one-bar__progress {
-  margin-top: 0.5rem;
+  margin-top: 1rem;
   margin-bottom: 1.25rem;
 }
 
 .one-bar__progress-label {
   font-size: var(--fs-xs);
   color: var(--text-dim);
-  margin-top: 0.5rem;
 }
 
-/* Replaces the progress line once the puzzle is solved. How little audio it
-   took is the interesting number, and it was previously a dim 12px line that
-   counted guesses instead. */
-.one-bar__solved {
-  margin-top: 0.5rem;
-}
-
+/* Replaces the guessing controls once the puzzle is solved. How little audio it
+   took is the interesting number. */
 .one-bar__solved-label {
   font-size: var(--fs-2xs);
   text-transform: uppercase;
@@ -83,28 +64,37 @@
   to   { transform: scaleX(1); }
 }
 
+/* Skip on the left, what's left on the right: the two things that change after
+   every guess, read together. */
+.one-bar__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  margin-top: 0.75rem;
+}
+
 /* An unfilled pill, not a rounded box on --surface: sitting directly under the
-   guess field, the old style shared its background, border, radius and corner
-   rounding, so it read as a second input rather than a button. Pills are what
-   buttons look like everywhere else in the app. */
+   guess field, a box with the same background and corners read as a second
+   input rather than a button. */
 .one-bar__skip {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-top: 0.75rem;
   padding: 7px 15px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: transparent;
+  border: 1px solid rgba(var(--game-color-rgb), 0.35);
+  background: rgba(var(--game-color-rgb), 0.06);
   font-size: var(--fs-sm);
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--text-primary);
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .one-bar__skip svg {
-  color: var(--text-dim);
+  color: var(--game-color);
   transition: color 0.2s ease;
 }
 
@@ -112,6 +102,7 @@
    as a consequence rather than another step. */
 .one-bar__skip--final {
   border-color: #4a2a2a;
+  background: transparent;
   color: #d98b8b;
 }
 
@@ -121,47 +112,139 @@
 
 @media (hover: hover) and (pointer: fine) {
   .one-bar__skip:hover {
-    border-color: var(--amber);
-    color: var(--amber);
+    border-color: var(--game-color);
+    background: rgba(var(--game-color-rgb), 0.12);
   }
 
-  .one-bar__skip:hover svg {
-    color: var(--amber);
-  }
-
-  /* After the amber rules, not before: they carry the same weight, so order is
+  /* After the rule above, not before: they carry the same weight, so order is
      what decides which one a final-guess button gets. */
   .one-bar__skip--final:hover,
   .one-bar__skip--final:hover svg {
     border-color: var(--red);
+    background: transparent;
     color: var(--red);
   }
 }
 
-.one-bar__guesses {
-  margin-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.one-bar__guess-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.one-bar__left {
   font-size: var(--fs-sm);
   color: var(--text-muted);
-  padding: 6px 0;
-  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
 }
 
-.one-bar__guess-x {
-  flex-shrink: 0;
-  color: var(--text-muted);
+.one-bar__left-count {
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .one-bar__notice {
   margin-top: 0.5rem;
   font-size: var(--fs-sm);
   color: var(--text-muted);
+}
+
+/* ---- The guesses so far ---- */
+
+.one-bar__guesses {
+  list-style: none;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.one-bar__guess {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.015);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.one-bar__guess-mark {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.14);
+  color: #d98b8b;
+}
+
+.one-bar__guess-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.one-bar__guess--skipped .one-bar__guess-mark {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-dim);
+}
+
+.one-bar__guess--skipped .one-bar__guess-text {
+  color: var(--text-dim);
+}
+
+/* Wrong, but close: the guess is warm, and the tag says how. */
+.one-bar__guess--close {
+  border-color: rgba(252, 211, 77, 0.35);
+  background: rgba(252, 211, 77, 0.05);
+  color: var(--text-primary);
+}
+
+.one-bar__guess--close .one-bar__guess-mark {
+  background: rgba(252, 211, 77, 0.16);
+  color: var(--amber-light);
+}
+
+.one-bar__guess-tag {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--amber-light);
+  color: #241a02;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* The guess that just came back: it shakes no, and a near miss's tag pops. */
+.one-bar__guess--latest {
+  animation: guessIn 0.45s ease both;
+}
+
+.one-bar__guess--latest:not(.one-bar__guess--skipped) {
+  animation: guessIn 0.45s ease both, guessShake 0.4s ease 0.12s;
+}
+
+.one-bar__guess--latest .one-bar__guess-tag {
+  animation: guessTag 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) 0.3s both;
+}
+
+@keyframes guessIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes guessShake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(5px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(2px); }
+}
+
+@keyframes guessTag {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
 }

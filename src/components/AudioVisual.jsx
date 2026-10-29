@@ -56,11 +56,13 @@ function pill(g, x, y, w, h, r) {
 // at rest, how a live reading becomes a height, and how to draw a frame.
 
 const KINDS = {
-  // One Bar. Mirrored about the middle, the way the symbol is drawn.
+  // One Bar. Mirrored about the middle, the way the symbol is drawn. Curved
+  // harder than the faint backdrop: at full strength a mix that is loud across
+  // the board otherwise draws a solid wall, and the shape of the music is lost.
   bars: {
     bands: (w) => clamp(Math.round(w / 16), 8, 64),
     rest: (n) => silhouette(n).map((h) => h * 0.55),
-    live: (v) => (v < SILENT ? 0 : FLOOR + (1 - FLOOR) * Math.pow(v, 0.8)),
+    live: (v) => (v < SILENT ? 0 : 0.12 + 0.88 * Math.pow(v, 1.6)),
     draw: drawBars,
   },
   // The quiet version behind a small player: only there while it plays.
@@ -75,7 +77,9 @@ const KINDS = {
   chart: {
     bands: (w) => clamp(Math.round(w / 15), 10, 40),
     rest: (n) => Array.from({ length: n }, (_, i) => 0.1 + 0.2 * (n > 1 ? i / (n - 1) : 0)),
-    live: (v) => 0.05 + 0.95 * Math.pow(v, 0.85),
+    // Pressed down so most of a mix sits under the line and only its loudest
+    // moments break through. A line that everything crosses says nothing.
+    live: (v) => 0.05 + 0.85 * Math.pow(v, 1.45),
     draw: drawChart,
   },
   // Era. A record that spins up when the clip plays, the spectrum around its rim.
@@ -153,12 +157,6 @@ function drawChart(g, w, h, s) {
   g.lineTo(w, Math.round(lineY) + 0.5)
   g.stroke()
   g.setLineDash?.([])
-  g.globalAlpha = 0.42
-  g.fillStyle = '#ffffff'
-  g.font = '600 9px Inter, system-ui, sans-serif'
-  g.textAlign = 'right'
-  g.textBaseline = 'bottom'
-  g.fillText('HOT 100', w - 8, Math.round(lineY) - 4)
 
   for (let i = 0; i < n; i++) {
     const level = s.levels[i]
@@ -185,12 +183,31 @@ function drawChart(g, w, h, s) {
   g.globalAlpha = 0.12
   g.fillStyle = '#ffffff'
   g.fillRect(0, base + 2, w, 1)
+
+  // The line's name, on a backing so the bars passing behind can't eat it.
+  g.font = '600 9px Inter, system-ui, sans-serif'
+  g.textAlign = 'right'
+  g.textBaseline = 'middle'
+  const label = 'HOT 100'
+  const tw = g.measureText(label).width
+  const ly = Math.round(lineY)
+  g.globalAlpha = 0.85
+  g.fillStyle = '#121212'
+  pill(g, w - tw - 18, ly - 8, tw + 12, 16, 8)
+  g.globalAlpha = 0.6
+  g.fillStyle = '#ffffff'
+  g.fillText(label, w - 12, ly + 0.5)
   g.globalAlpha = 1
 }
 
+// Sized so the rim's loudest ticks still clear the top and bottom of the stage,
+// and the label stays wide enough to show a ring of itself turning around the
+// play button that sits on it.
+const TICK_REACH = 0.26
+
 function recordGeometry(w, h) {
-  const r = Math.min(h * 0.44, w * 0.3)
-  return { cx: w / 2, cy: h / 2, r, label: r * 0.52 }
+  const r = Math.min(h * 0.36, w * 0.3)
+  return { cx: w / 2, cy: h / 2, r, label: Math.max(r * 0.6, 41) }
 }
 
 /** The disc itself never changes, so it is drawn once per size and stamped. */
@@ -253,7 +270,7 @@ function drawRecord(g, w, h, s) {
     const level = s.levels[band]
     const a = (i / ticks) * Math.PI * 2 - Math.PI / 2
     const inner = r + 5
-    const outer = inner + 3 + level * r * 0.34
+    const outer = inner + 3 + level * r * TICK_REACH
     g.globalAlpha = 0.22 + 0.7 * level * (0.4 + 0.6 * s.activity)
     g.beginPath()
     g.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner)

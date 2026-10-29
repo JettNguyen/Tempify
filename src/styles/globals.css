@@ -613,13 +613,44 @@ body.ios-ipad-ui .page-shell-admin {
 
 /* Game header block shared across all game pages */
 .game-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.game-header__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  min-height: 24px;
 }
 
 .game-header__eyebrow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
   font-size: var(--fs-xs);
   color: var(--text-muted);
-  margin-bottom: 0.5rem;
+}
+
+/* The game's symbol from its home tile, so the screen says which game it is
+   before a word of it is read. */
+.game-header__glyph {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-right: 6px;
+  color: var(--game-color);
+}
+
+.game-header__name {
+  color: var(--game-color);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.game-header .puzzle-date {
+  white-space: nowrap;
 }
 
 /* The date the puzzle ran, sat on the eyebrow line. Without it an archive
@@ -650,12 +681,52 @@ body.ios-ipad-ui .page-shell-admin {
   gap: 0.5rem;
 }
 
-/* Live game timer shown while playing */
+/* Live game timer shown while playing. A chip in the game's colour on the
+   header's top line rather than a dim line under the question: when speed
+   counts, the clock is part of the game and should look like it. */
 .game-timer {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* Wide enough for "59.9s" so the chip doesn't twitch as the digits change. */
+  min-width: 4.6rem;
+  justify-content: center;
+  padding: 3px 10px 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--game-color-rgb), 0.3);
+  background: rgba(var(--game-color-rgb), 0.08);
   font-size: var(--fs-xs);
-  color: var(--text-dim);
+  font-weight: 600;
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
-  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.game-timer__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--game-color);
+  opacity: 0.45;
+}
+
+.game-timer--running .game-timer__dot {
+  opacity: 1;
+  animation: timerBeat 1s ease-in-out infinite;
+}
+
+/* Not started yet: says how it starts, quietly. */
+.game-timer--idle {
+  font-weight: 500;
+  color: var(--text-muted);
+  border-color: var(--border);
+  background: transparent;
+}
+
+@keyframes timerBeat {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(0.6); opacity: 0.5; }
 }
 
 /* Time shown on result card status line */

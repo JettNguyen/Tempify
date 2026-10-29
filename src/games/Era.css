@@ -1,101 +1,68 @@
-.era__header {
-  margin-bottom: 1.5rem;
-}
-
-.era__eyebrow {
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-
-.era__title {
-  font-size: var(--fs-lg);
-  font-weight: 500;
-  color: var(--text-primary);
-  line-height: 1.4;
-}
-
 /* Four across, two full rows: eight decades divide evenly, so neither row has a
-   hole in it and every chip is the same size. */
-.era__decades {
-  display: grid;
+   hole in it and every tile is the same size. */
+.choices.era__decades {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  margin-top: 1.25rem;
+  gap: 8px;
 }
 
-.era__decade-btn {
-  display: flex;
-  flex-direction: column;
+/* Scoped through the grid so the tile's own sizes win over the shared card's,
+   whichever order the two stylesheets land in. */
+.era__decades .era__decade {
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  /* Comfortably past the 44px minimum, which the old pills were under. */
-  min-height: 52px;
-  padding: 8px 4px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
+  gap: 3px;
+  /* Comfortably past the 44px minimum. */
+  min-height: 66px;
+  padding: 10px 4px;
+  border-radius: 14px;
 }
 
 /* Stacked rather than set beside the years: side by side, an 11px century next
-   to an 18px decade is a jump the eye reads as two things crammed together, and
+   to a 19px decade is a jump the eye reads as two things crammed together, and
    baseline-aligning them leaves the pair sitting low in the tile. */
 .era__decade-century {
   font-size: var(--fs-2xs);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
   color: var(--text-dim);
   transition: color 0.2s ease;
 }
 
 .era__decade-years {
-  font-size: var(--fs-md);
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 700;
   line-height: 1;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
   transition: color 0.2s ease;
 }
 
-.era__decade-btn--done {
-  cursor: default;
+.era__decade .choice__mark {
+  top: 6px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
 }
 
-.era__decade-btn--answer {
-  border-color: var(--green);
-  background: rgba(34, 197, 94, 0.07);
+.era__decade.choice--locked .era__decade-years,
+.era__decade.choice--locked .era__decade-century {
+  color: var(--game-color);
 }
 
-.era__decade-btn--answer .era__decade-years,
-.era__decade-btn--answer .era__decade-century {
+.era__decade.choice--correct .era__decade-years,
+.era__decade.choice--correct .era__decade-century {
   color: var(--green);
 }
 
-/* What you actually picked, when it wasn't the answer. */
-.era__decade-btn--wrong {
-  border-color: var(--red);
-}
-
-.era__decade-btn--wrong .era__decade-years,
-.era__decade-btn--wrong .era__decade-century {
+.era__decade.choice--wrong .era__decade-years,
+.era__decade.choice--wrong .era__decade-century {
   color: var(--red);
 }
 
-.era__decade-btn--faded {
-  opacity: 0.4;
-}
-
 @media (hover: hover) and (pointer: fine) {
-  .era__decade-btn:not(:disabled):hover {
-    border-color: var(--game-era);
-    background: var(--game-era-glow);
-  }
-
-  .era__decade-btn:not(:disabled):hover .era__decade-years,
-  .era__decade-btn:not(:disabled):hover .era__decade-century {
-    color: var(--game-era);
+  .era__decade:not(:disabled):hover .era__decade-years,
+  .era__decade:not(:disabled):hover .era__decade-century {
+    color: var(--game-color);
   }
 }
