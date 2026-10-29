@@ -34,7 +34,7 @@ function PreferenceToggle({ label, desc, checked, onChange }) {
           background: checked ? 'var(--amber)' : 'var(--border)',
           cursor: 'pointer',
           position: 'relative',
-          transition: 'background 150ms ease',
+          transition: 'background 150ms ease, scale var(--press-up)',
           padding: 0,
         }}
       >
@@ -368,7 +368,7 @@ export default function Profile() {
                   width: '28px', height: '28px', borderRadius: '50%', background: hex,
                   border: 'none', cursor: 'pointer',
                   boxShadow: active ? `0 0 0 2px var(--bg), 0 0 0 4px ${hex}` : 'none',
-                  transition: 'box-shadow 80ms ease',
+                  transition: 'box-shadow 80ms ease, scale var(--press-up)',
                 }} />
             )
           })}

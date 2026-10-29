@@ -73,7 +73,7 @@ body.ios-native-app .navbar {
   position: relative;
   border-radius: 50%;
   box-shadow: 0 0 0 0 var(--amber);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: scale var(--press-up), box-shadow 0.2s ease;
 }
 
 .navbar__avatar::after {
@@ -157,7 +157,7 @@ body.ios-native-app .navbar {
   border-radius: 50%;
   color: var(--text-muted);
   -webkit-tap-highlight-color: transparent;
-  transition: color 120ms ease, background-color 0.2s ease, transform 0.2s ease;
+  transition: scale var(--press-up), color 120ms ease, background-color 0.2s ease;
 }
 
 .navbar__search-btn:active {

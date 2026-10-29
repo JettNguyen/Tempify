@@ -1,9 +1,9 @@
 /* The answers in the pick-one games (Hit or Miss, Era, Cover or Not), and the
    moment between picking one and finding out.
 
-   A pick lights up in the game's colour and charges for a beat while the
-   others step back, then the answer lands: the right one pops in green, a
-   wrong pick shakes in red. */
+   A pick lights up in the game's color for a quarter second while the others
+   dim, then the answer lands: the right one pops in green, a wrong pick
+   shakes in red. */
 
 .choices {
   display: grid;
@@ -30,7 +30,7 @@
   text-align: left;
   overflow: hidden;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, opacity 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+  transition: scale var(--press-up), border-color 0.2s ease, background-color 0.2s ease, opacity 0.3s ease, box-shadow 0.3s ease;
   animation: fadeInUp 0.3s ease both;
   animation-delay: calc(var(--i, 0) * 60ms);
 }
@@ -78,12 +78,12 @@
   animation: choiceMark 0.45s cubic-bezier(0.2, 1.5, 0.4, 1) 0.05s both;
 }
 
+/* The press itself (the card sinking) comes from the shared button rule. */
 .choice:not(:disabled):active {
-  transform: scale(0.97);
   border-color: rgba(var(--game-color-rgb), 0.7);
 }
 
-/* ---- The beat ---- */
+/* ---- The pick ---- */
 
 .choice--locked {
   border-color: var(--game-color);
@@ -91,29 +91,14 @@
     linear-gradient(165deg, rgba(var(--game-color-rgb), 0.28), rgba(var(--game-color-rgb), 0.08) 70%),
     var(--surface);
   box-shadow: 0 0 0 1px var(--game-color), 0 10px 34px rgba(var(--game-color-rgb), 0.32);
-  animation: choiceLock 0.65s cubic-bezier(0.2, 0.9, 0.3, 1) both;
-}
-
-/* The charge along the bottom edge, filling over the beat. */
-.choice--locked::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  background: var(--game-color);
-  transform-origin: left center;
-  animation: choiceCharge 0.65s linear both;
 }
 
 /* `animation: none` because the entrance animation fills forwards, and a held
-   animation outranks any plain opacity or transform rule: without this the
-   cards meant to step back stay at full strength. */
+   animation outranks a plain opacity rule: without this the cards meant to
+   dim stay at full strength. */
 .choice--waiting {
   animation: none;
   opacity: 0.38;
-  transform: scale(0.97);
 }
 
 /* ---- The answer ---- */
@@ -183,19 +168,8 @@
   }
 }
 
-@keyframes choiceLock {
-  0%   { transform: scale(0.96); }
-  35%  { transform: scale(1.03); }
-  100% { transform: scale(1); }
-}
-
-@keyframes choiceCharge {
-  from { transform: scaleX(0); }
-  to   { transform: scaleX(1); }
-}
-
 @keyframes choiceRight {
-  0%   { transform: scale(0.97); }
+  0%   { transform: scale(1); }
   55%  { transform: scale(1.04); }
   100% { transform: scale(1); }
 }

@@ -37,7 +37,7 @@
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
-  transition: opacity 0.2s ease;
+  transition: scale var(--press-up), opacity 0.2s ease;
 }
 
 .pubprofile__follow-btn--following {
@@ -89,7 +89,7 @@
   font-size: var(--fs-xs);
   color: var(--text-muted);
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: scale var(--press-up), color 0.2s ease;
 }
 
 .pubprofile__meta-btn:hover {
@@ -159,7 +159,7 @@
   border-radius: 999px;
   padding: 3px 10px;
   cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition: scale var(--press-up), border-color 0.2s ease, color 0.2s ease;
   flex-shrink: 0;
 }
 

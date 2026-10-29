@@ -24,7 +24,7 @@
   font-size: var(--fs-xs);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: scale var(--press-up), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .admin-weeknav__btn--today {
@@ -144,7 +144,7 @@
   color: var(--text-dim);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: scale var(--press-up), background-color 0.2s ease, color 0.2s ease;
 }
 
 .admin-slot__btn:active {
@@ -175,7 +175,7 @@
   font-size: var(--fs-2xs);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  transition: scale var(--press-up), border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 
 .admin-slot__add:active {

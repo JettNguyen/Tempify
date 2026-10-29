@@ -70,7 +70,7 @@
   flex-shrink: 0;
   margin-right: -6px;
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  transition: scale var(--press-up), color 0.2s ease, background-color 0.2s ease;
 }
 
 .search-modal__close:active {
@@ -107,7 +107,7 @@
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: background-color 0.2s;
+  transition: scale var(--press-up), background-color 0.2s;
 }
 
 .search-modal__result:hover {

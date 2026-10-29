@@ -258,11 +258,23 @@ body.ios-native-app * {
    BUTTON PRESS - all devices
    ================================ */
 
-.btn-press {
-  transition: transform 0.2s ease;
+/* A press sinks quickly and springs back more slowly, so even a quick tap
+   plays the whole motion instead of flickering for a frame.
+
+   It moves `scale` rather than `transform`, so it stacks with any transform a
+   control already has (a centering translate, a hover lift, an entrance
+   animation holding its last frame) instead of replacing it.
+
+   Going down is timed by the :active rule further down. Coming back up runs
+   on the control's own transition list, so any rule that sets `transition` on
+   something pressable has to list `scale var(--press-up)` as well, or the
+   control snaps back when the finger lifts. */
+:root {
+  --press-up: 0.42s cubic-bezier(0.3, 1.45, 0.45, 1);
 }
+
 .btn-press:active {
-  transform: scale(0.95) !important;
+  scale: 0.95 !important;
 }
 
 /* Extends a control's touch area out to the 44px Apple asks for, without
@@ -282,24 +294,25 @@ body.ios-native-app * {
   height: max(100%, 44px);
 }
 
-/* Fallback so every button reacts to a press, even one that opts into no
-   utility class. Anything with .btn-press overrides this with !important. */
-button {
-  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+/* Every button reacts to a press, even one that opts into no utility class.
+   Anything with .btn-press presses deeper, through the !important above. */
+button,
+.btn-press {
+  transition: scale var(--press-up), transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
 
 button:not(:disabled):active {
-  transform: scale(0.97);
+  scale: 0.97;
 }
 
 /* A touch device fires :active the moment a finger lands, so tiles and buttons
    flash pressed while you are only starting a scroll. useScrolling flags an
-   in-flight scroll and we drop the press transform for its duration. */
+   in-flight scroll and we drop the press for its duration. */
 body.is-scrolling .btn-press:active,
 body.is-scrolling .card-hover:active,
 body.is-scrolling .card-lift:active,
 body.is-scrolling button:not(:disabled):active {
-  transform: none !important;
+  scale: none !important;
 }
 
 /* Text links can't scale without looking broken mid-sentence, so they dim. */
@@ -323,6 +336,28 @@ body.is-scrolling button:not(:disabled):active {
 .home-legal-links a:active,
 .leaderboard__empty a:active {
   opacity: 0.6;
+}
+
+/* Going down takes its own quick timing, whatever a control's list says.
+   !important because a few controls set their transition inline. Only when
+   motion is allowed, so the reduced-motion rule at the end still wins. */
+@media (prefers-reduced-motion: no-preference) {
+  button:not(:disabled):active,
+  .btn-press:active,
+  .card-hover:active,
+  .card-lift:active,
+  .btn-hover:active,
+  .game-back-link:active,
+  .archive-day-back:active,
+  .privacy-back:active,
+  .auth-link:active,
+  .leaderboard__name:active,
+  .home-no-account a:active,
+  .home-legal-links a:active,
+  .leaderboard__empty a:active {
+    transition-duration: 0.12s !important;
+    transition-timing-function: cubic-bezier(0.25, 0.8, 0.4, 1) !important;
+  }
 }
 
 /* ================================
@@ -363,29 +398,29 @@ body.is-scrolling button:not(:disabled):active {
 /* Card tiles (bg only - safe for overflow:hidden containers like GameTile) */
 .card-hover {
   background: var(--surface);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition: scale var(--press-up), background-color 0.2s ease, border-color 0.2s ease;
   text-decoration: none;
 }
 
 /* Cards that can show a shadow lift (no overflow:hidden) */
 .card-lift {
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition: scale var(--press-up), background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Buttons with transparent bg */
 .btn-hover {
   background: transparent;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: scale var(--press-up), background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 /* Amber-filled button */
 .btn-amber {
-  transition: filter 0.2s ease;
+  transition: scale var(--press-up), filter 0.2s ease;
 }
 
 /* Audio play button */
 .audio-play-btn {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: scale var(--press-up), transform 0.2s ease, box-shadow 0.2s ease;
   flex-shrink: 0;
 }
 
@@ -401,7 +436,7 @@ body.is-scrolling button:not(:disabled):active {
 
 /* Calendar day cell */
 .day-hover {
-  transition: background-color 0.2s ease;
+  transition: scale var(--press-up), background-color 0.2s ease;
 }
 
 /* Navbar text links */
@@ -502,7 +537,7 @@ body.is-scrolling button:not(:disabled):active {
 .card-hover:active,
 .card-lift:active {
   background: #1e1e1e;
-  transform: scale(0.98) !important;
+  scale: 0.98 !important;
   box-shadow: none !important;
 }
 

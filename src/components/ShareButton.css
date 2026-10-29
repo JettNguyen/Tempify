@@ -10,7 +10,7 @@
   padding: 7px 14px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  transition: color 0.2s ease;
+  transition: scale var(--press-up), color 0.2s ease;
   /* Hold the width so the label swap doesn't shove the next-game button. */
   min-width: 118px;
 }
