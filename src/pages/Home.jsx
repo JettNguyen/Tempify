@@ -5,7 +5,8 @@ import { useCompletion } from '../hooks/useCompletion'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { todayEST } from '../lib/date'
 import { prefetchPuzzlesForDate } from '../lib/puzzles'
-import { GAMES } from '../lib/games'
+import { prefetchClip } from '../lib/audioEngine'
+import { GAMES, GAME_SLUGS } from '../lib/games'
 import GameGrid from '../components/GameGrid'
 import DailyCompleteCta from '../components/DailyCompleteCta'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
@@ -21,11 +22,16 @@ export default function Home() {
   const [scheduledSlugs, setScheduledSlugs] = useState([])
 
   // Doubles as a warm-up: the puzzles land in the shared cache, so tapping a
-  // tile opens the game with no fetch and no spinner.
+  // tile opens the game with no fetch and no spinner. The clips start coming
+  // down too: a game plays its clip from memory, so it needs the whole thing
+  // before the first note, and this is the moment to get it.
   const fetchGenres = useCallback(async () => {
     const puzzles = await prefetchPuzzlesForDate(todayEST())
     const map = {}
-    puzzles.forEach((p) => { if (p.genre) map[p.game_slug] = p.genre })
+    puzzles.forEach((p) => {
+      if (p.genre) map[p.game_slug] = p.genre
+      if (GAME_SLUGS.includes(p.game_slug)) prefetchClip(p.audio_url)
+    })
     setGenres(map)
     setScheduledSlugs(GAMES.map(g => g.slug).filter(slug => puzzles.some(p => p.game_slug === slug)))
   }, [])

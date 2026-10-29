@@ -50,32 +50,49 @@
   --game-sampled-glow: #a855f72f;
   --game-era-glow: #14b8a62f;
   --game-cover-or-not-glow: #f973162f;
+
+  /* The same colours as bare channels, for rgba() at whatever strength a
+     layer needs. Hex with a baked-in alpha only comes in the one strength. */
+  --game-one-bar-rgb: 245, 158, 11;
+  --game-hit-or-miss-rgb: 59, 130, 246;
+  --game-sampled-rgb: 168, 85, 247;
+  --game-era-rgb: 20, 184, 166;
+  --game-cover-or-not-rgb: 249, 115, 22;
+
+  /* Outside any game (a player in a result panel, say) the colour is amber. */
+  --game-color: var(--amber);
+  --game-color-rgb: 245, 158, 11;
 }
 
 /* Shared game color utilities */
 .game-theme--one-bar {
   --game-color: var(--game-one-bar);
   --game-color-glow: var(--game-one-bar-glow);
+  --game-color-rgb: var(--game-one-bar-rgb);
 }
 
 .game-theme--hit-or-miss {
   --game-color: var(--game-hit-or-miss);
   --game-color-glow: var(--game-hit-or-miss-glow);
+  --game-color-rgb: var(--game-hit-or-miss-rgb);
 }
 
 .game-theme--sampled {
   --game-color: var(--game-sampled);
   --game-color-glow: var(--game-sampled-glow);
+  --game-color-rgb: var(--game-sampled-rgb);
 }
 
 .game-theme--era {
   --game-color: var(--game-era);
   --game-color-glow: var(--game-era-glow);
+  --game-color-rgb: var(--game-era-rgb);
 }
 
 .game-theme--cover-or-not {
   --game-color: var(--game-cover-or-not);
   --game-color-glow: var(--game-cover-or-not-glow);
+  --game-color-rgb: var(--game-cover-or-not-rgb);
 }
 
 *, *::before, *::after {
@@ -223,11 +240,12 @@ body.ios-native-app * {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Pulsing ring around play button while audio is playing */
+/* Pulsing ring around play button while audio is playing, in the colour of
+   whichever game it sits in */
 @keyframes playingPulse {
-  0%   { box-shadow: 0 0 0 0    rgba(245, 158, 11, 0.55); }
-  65%  { box-shadow: 0 0 0 11px rgba(245, 158, 11, 0);    }
-  100% { box-shadow: 0 0 0 0    rgba(245, 158, 11, 0);    }
+  0%   { box-shadow: 0 0 0 0    rgba(var(--game-color-rgb), 0.55); }
+  65%  { box-shadow: 0 0 0 11px rgba(var(--game-color-rgb), 0);    }
+  100% { box-shadow: 0 0 0 0    rgba(var(--game-color-rgb), 0);    }
 }
 
 /* Gentle glow on an unplayed status dot */
@@ -436,7 +454,7 @@ body.is-scrolling button:not(:disabled):active {
 
   .audio-play-btn:hover {
     transform: scale(1.1);
-    box-shadow: 0 0 0 8px var(--amber-glow);
+    box-shadow: 0 0 0 8px rgba(var(--game-color-rgb), 0.1);
   }
 
   /* Underline slides in on hover (animation only for pointer devices) */
