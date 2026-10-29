@@ -51,13 +51,13 @@ xcrun simctl status_bar <device> override --time "9:41" --dataNetwork wifi --wif
 Album art has to be blurred for Apple. For 1.8 the blur was put on the running app rather than
 painted over afterward, through the simulator's web inspector:
 `.track-artwork__img { filter: blur(7px) saturate(1.15); clip-path: inset(0 round 8px); }`. The
-clip keeps the blur inside each cover's rounded corners. The 1.8 set is in
-`~/Desktop/Tempify Files/6.9"/1.8 blurred`.
+clip keeps the blur inside each cover's rounded corners. The latest set is in
+`~/Desktop/Tempify Files/6.9"/1.9 blurred`.
 
 **The iPhone Duo has a set of its own** (display type `APP_IPHONE_DUO` in the API), taken on the
 open Duo simulator with `xcrun simctl io <device> screenshot --display=primary-1`. Tempify runs
-sideways there, so they are 2853 by 2007, which Apple accepts. The 1.8 Duo set is in
-`~/Desktop/Tempify Files/Duo/1.8 blurred`.
+sideways there, so they are 2853 by 2007, which Apple accepts. The latest Duo set is in
+`~/Desktop/Tempify Files/Duo/1.9 blurred`.
 
 ## iPhone Duo
 
@@ -65,4 +65,5 @@ The Duo's status bar runs down the side of the screen in both postures, so it re
 inset and a right inset of 84 points. Folded, the app gets 466 by 678 points; open, it runs on
 its side at 951 by 669, below the 744 point short side that turns on the iPad layout. Check both
 postures when a layout changes. Device Hub's bottom toolbar switches the posture, and a second
-Duo simulator boots folded.
+Duo simulator boots folded. Don't quit Device Hub when you're done: quitting it shuts down every
+booted simulator, including ones other work is using.
