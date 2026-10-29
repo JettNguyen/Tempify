@@ -596,6 +596,27 @@ body.is-scrolling button:not(:disabled):active {
   padding-left: 1.25rem;
 }
 
+/* A game screen on a phone fills the screen as a column, so its stage can take
+   whatever height a tall phone has to spare (AudioPlayer.css). Left to its
+   content, the play button and the answers sat in the top two thirds with the
+   bottom of the screen empty, a stretch for the thumb holding the phone. */
+@media (max-width: 640px) {
+  /* svh rather than dvh: in Safari the dynamic height changes as the toolbars
+     slide away, which would resize the stage under a scrolling finger. In the
+     app the two are the same. */
+  .page-shell--fill {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* A column would otherwise stretch the link, and its touch area, across the
+     whole width of the screen. */
+  .page-shell--fill > .game-back-link {
+    align-self: flex-start;
+  }
+}
+
 /* Native iPad UI sizing: slightly larger text/controls and wider shells */
 body.ios-ipad-ui {
   --ios-ipad-ui-scale: 1.12;

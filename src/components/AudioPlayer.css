@@ -55,6 +55,28 @@
   justify-content: center;
 }
 
+/* In a game screen that fills a phone (.page-shell--fill), the stage takes the
+   spare height and hands it all to the visual. The play button, the timeline
+   and the answers under them move down toward the thumb, and the visual grows
+   to fill the room instead of leaving a gap. */
+@media (max-width: 640px) {
+  .page-shell--fill > .audio-stage {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-shell--fill > .audio-stage > .audio-stage__card {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-shell--fill .audio-stage__visual {
+    flex: 1 0 auto;
+  }
+}
+
 .audio-stage__canvas {
   position: absolute;
   inset: 0;

@@ -199,5 +199,5 @@ export default function HitOrMiss() {
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell game-theme--hit-or-miss">{children}</div>
+  return <div className="page-shell page-shell--fill game-theme--hit-or-miss">{children}</div>
 }

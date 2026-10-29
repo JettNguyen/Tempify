@@ -38,11 +38,11 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
         {isPremium && (
           <div className="leaderboard__tabs">
             <button
-              className={`leaderboard__tab btn-press${tab === 'friends' ? ' leaderboard__tab--active' : ''}`}
+              className={`leaderboard__tab btn-press tap-target${tab === 'friends' ? ' leaderboard__tab--active' : ''}`}
               onClick={() => { hapticSelection(); setTab('friends') }}
             >Friends</button>
             <button
-              className={`leaderboard__tab btn-press${tab === 'global' ? ' leaderboard__tab--active' : ''}`}
+              className={`leaderboard__tab btn-press tap-target${tab === 'global' ? ' leaderboard__tab--active' : ''}`}
               onClick={() => { hapticSelection(); setTab('global') }}
             >Global</button>
           </div>

@@ -211,5 +211,5 @@ export default function Era() {
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell game-theme--era">{children}</div>
+  return <div className="page-shell page-shell--fill game-theme--era">{children}</div>
 }

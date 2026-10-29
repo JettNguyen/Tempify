@@ -350,11 +350,11 @@ export default function Explore() {
           <div className="explore-view-toggle">
             <button
               onClick={() => setView('browse')}
-              className={`explore-view-btn btn-press${view === 'browse' ? ' explore-view-btn--active' : ''}`}
+              className={`explore-view-btn btn-press tap-target${view === 'browse' ? ' explore-view-btn--active' : ''}`}
             ><Icon name="grid" size={13} />Browse</button>
             <button
               onClick={() => setView('calendar')}
-              className={`explore-view-btn btn-press${view === 'calendar' ? ' explore-view-btn--active' : ''}`}
+              className={`explore-view-btn btn-press tap-target${view === 'calendar' ? ' explore-view-btn--active' : ''}`}
             ><Icon name="calendar" size={13} />Calendar</button>
           </div>
         </div>

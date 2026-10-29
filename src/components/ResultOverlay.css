@@ -65,6 +65,27 @@ body.ios-native-app.result-open .app-scroll-container {
   animation: fadeIn 0.3s ease 0.35s both;
 }
 
+/* On a phone the close button sits at the bottom, under the thumb holding it,
+   rather than in the top corner, the hardest place on the screen to reach one
+   handed. The result keeps room at the bottom so the end of a long one scrolls
+   clear of the button, and keeps its top padding so a short one stays centered
+   where it was. Tapping anywhere outside the card still closes it too. */
+@media (max-width: 640px) {
+  .result-overlay {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
+  .result-overlay__close {
+    top: auto;
+    right: 0;
+    bottom: calc(1.25rem + env(safe-area-inset-bottom));
+    left: 0;
+    margin-inline: auto;
+    width: 48px;
+    height: 48px;
+  }
+}
+
 /* ================================
    THE LIGHT
    ================================ */
