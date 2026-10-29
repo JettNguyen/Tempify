@@ -67,11 +67,28 @@ function getContext() {
   return ctx
 }
 
+let warmed = false
+
 /** Start the context from a real user gesture, the only thing Safari accepts. */
 export function primeAudioContext() {
   const c = getContext()
   claimPlaybackSession()
-  if (c && c.state !== 'running' && c.state !== 'closed') c.resume().catch(() => {})
+  if (!c) return
+  if (c.state !== 'running' && c.state !== 'closed') c.resume().catch(() => {})
+  // A single silent frame, played inside the tap. iOS brings the output up on
+  // the first sound a page makes, and this makes that sound one nobody hears,
+  // rather than the first moments of a clip only half a second long.
+  if (!warmed) {
+    warmed = true
+    try {
+      const source = c.createBufferSource()
+      source.buffer = c.createBuffer(1, 1, c.sampleRate || 44100)
+      source.connect(c.destination)
+      source.start(0)
+    } catch {
+      warmed = false
+    }
+  }
 }
 
 /** One shared listener: the first tap anywhere in the app starts the context. */

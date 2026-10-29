@@ -92,6 +92,10 @@ const AudioPlayer = forwardRef(function AudioPlayer({
   const scrubRef = useRef(null)
   const retreatRef = useRef(0)
   const finishingRef = useRef(false)
+  // Whether the play button has been pressed for this clip. Autoplay waits on
+  // the clip arriving, and a press in the meantime, play or pause, is the
+  // later and better word on whether it should be playing.
+  const pressedRef = useRef(false)
   useEffect(() => {
     autoplayRef.current = autoplay
     onPlayRef.current = onPlay
@@ -320,6 +324,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({
     setPlayingState(false)
     setHeard(false)
     finishingRef.current = false
+    pressedRef.current = false
     cancelRetreat()
     paint(0)
 
@@ -350,7 +355,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({
         setPendingState(false)
         setStatus('error')
       })
-      if (pendingRef.current || autoplayRef.current) {
+      if (pendingRef.current || (autoplayRef.current && !pressedRef.current)) {
         startRef.current(0, { optimistic: pendingRef.current })
       }
     })
@@ -431,6 +436,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({
     // A real tap is the only thing Safari will start the audio context on, and
     // this is the most reliable one the player gets.
     primeAudioContext()
+    pressedRef.current = true
     if (playingRef.current || pendingRef.current) pausePlayback()
     else startPlayback(undefined, { optimistic: true })
   }
@@ -491,7 +497,12 @@ const AudioPlayer = forwardRef(function AudioPlayer({
     scrubRef.current = null
     setScrubbing(false)
     const voice = voiceRef.current
-    if (!voice) return
+    if (!voice) {
+      // The clip hasn't arrived, so there is nothing to move yet: it will
+      // start from the top, and the playhead says so.
+      paint(0)
+      return
+    }
     // Cancelled means the browser took the touch for a scroll: nobody meant to
     // move the clip, so it goes back to where it was.
     const at = commit ? s.at : s.from
