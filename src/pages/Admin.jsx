@@ -11,7 +11,8 @@ import './Admin.css'
 import { searchRecordings } from '../lib/musicbrainz'
 import { lookupBillboardPeak, lookupBillboard200Peak } from '../lib/billboard'
 import { todayEST } from '../lib/date'
-import RoundsFields, { ROUNDS_GAMES, ROUNDS_ONLY, usedSongs, validateRounds, cleanRounds } from './AdminRounds'
+import RoundsFields, { ROUNDS_GAMES, ROUNDS_ONLY, usedSongs, validateRounds, cleanRounds, firstSongFields } from './AdminRounds'
+import { dayLevel } from '../lib/drafts'
 
 const GAMES = [
   { slug: 'one-bar',        short: 'One Bar' },
@@ -139,16 +140,19 @@ function buildRow(f) {
   let answer = f.answer
 
   if (usesRounds(f)) {
-    const rounds = cleanRounds(ROUNDS_GAMES[f.game], f.rounds)
+    const kind = ROUNDS_GAMES[f.game]
+    const rounds = cleanRounds(kind, f.rounds)
+    const old = firstSongFields(kind, rounds)
     return {
       game_slug: f.game,
       scheduled_date: f.date,
       // The first clip, so the home screen's warm-up starts the day's first song.
       audio_url: rounds[0]?.audio_url || null,
-      // What the schedule grid shows for the day.
-      answer: rounds.map(r => r.title).join(' · '),
+      // What the schedule grid shows for the day, unless older apps need the
+      // first song's answer here.
+      answer: old?.answer ?? rounds.map(r => r.title).join(' · '),
       genre: f.genre || null,
-      metadata: { rounds, note: f.note || null },
+      metadata: { ...old?.metadata, rounds, note: f.note || null, difficulty_tier: dayLevel(f.date) },
     }
   }
 

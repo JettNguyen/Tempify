@@ -8,7 +8,7 @@ const ACTIVE_GAMES = [
   { slug: 'hit-or-miss',  name: 'Hit or Miss',  path: '/game/hit-or-miss',  description: 'Did it enter the Hot 100?' },
   { slug: 'era',          name: 'Era',          path: '/game/era',          description: 'Guess which decade the song is from.' },
   { slug: 'cover-or-not', name: 'Cover or Not', path: '/game/cover-or-not', description: 'Is it a cover of an earlier track?' },
-  { slug: 'tempo',        name: 'Tap the Tempo', path: '/game/tempo',       description: 'Tap the beat of a famous song from memory.', addedOn: null },
+  { slug: 'tempo',        name: 'Tap the Tempo', path: '/game/tempo',       description: 'Tap the beat of a famous song from memory.', addedOn: '2026-11-02' },
 ]
 
 function launchedBy(game, date) {

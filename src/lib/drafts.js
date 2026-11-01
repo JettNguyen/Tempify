@@ -137,17 +137,16 @@ function hitsByArtist(songs) {
 
 // ─── The week ────────────────────────────────────────────────────────────────
 
-// Monday is the easiest day and Saturday the hardest, the way a newspaper
-// crossword's week runs, so someone who plays all week feels it climb. Sunday
-// sits in the middle. Levels run from 0 to 5.
-const WEEK = [2, 0, 1, 2, 3, 4, 5] // Sunday first, the way getDay() counts
-export const MIDDLE_LEVEL = 2
+// Monday is the easiest day and Sunday the hardest, so someone who plays all
+// week feels it climb. Levels run from 1 to 7, the same scale as the
+// `difficulty_tier` the puzzle agent writes on every puzzle.
+export const MIDDLE_LEVEL = 4
 
-/** How hard a date's draft should be, 0 to 5. */
+/** How hard a date's puzzle should be: 1 on a Monday up to 7 on a Sunday. */
 export function dayLevel(date) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return MIDDLE_LEVEL
   const [y, m, d] = date.split('-').map(Number)
-  return WEEK[new Date(y, m - 1, d).getDay()]
+  return new Date(y, m - 1, d).getDay() || 7
 }
 
 // What each level changes, easiest first. Fame is weeks on the chart: a song
@@ -158,16 +157,16 @@ export function dayLevel(date) {
 const ANY = Infinity
 const RAMP = {
   // Weeks on the chart, for a top-20 song in Hit or Miss
-  peakWeeks:     [[20, ANY], [16, ANY], [13, 40], [10, 30], [8, 22], [6, 16]],
+  peakWeeks:     [[20, ANY], [16, ANY], [13, 40], [11, 32], [10, 30], [8, 22], [6, 16]],
   // Hits the act has had, behind a lower peak
-  peakActHits:   [[12, ANY], [9, ANY], [7, ANY], [5, ANY], [4, 40], [3, 20]],
-  timelineWeeks: [[16, ANY], [14, ANY], [12, 40], [10, 30], [9, 24], [8, 20]],
-  tempoWeeks:    [[22, ANY], [19, ANY], [17, ANY], [15, 40], [13, 30], [11, 24]],
+  peakActHits:   [[12, ANY], [9, ANY], [7, ANY], [6, ANY], [5, ANY], [4, 40], [3, 20]],
+  timelineWeeks: [[16, ANY], [14, ANY], [12, 40], [11, 34], [10, 30], [9, 24], [8, 20]],
+  tempoWeeks:    [[22, ANY], [19, ANY], [17, ANY], [16, ANY], [15, 40], [13, 30], [11, 24]],
   // Years between Era's songs
-  timelineGap:   [6, 5, 4, 4, 3, 2],
+  timelineGap:   [6, 5, 4, 4, 4, 3, 2],
 }
 
-const ramp = (knob, level = MIDDLE_LEVEL) => RAMP[knob][Math.min(5, Math.max(0, level))]
+const ramp = (knob, level = MIDDLE_LEVEL) => RAMP[knob][Math.min(7, Math.max(1, level)) - 1]
 const within = ([least, most], n) => n >= least && n <= most
 
 /** The gap Era's songs keep on a level, for Admin's note. */

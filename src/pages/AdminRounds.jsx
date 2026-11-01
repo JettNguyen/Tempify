@@ -5,6 +5,7 @@ import {
   songKey, commonGenre, dayLevel, timelineGap,
 } from '../lib/drafts'
 import { addTap, bpmFromTaps } from '../lib/tempo'
+import { yearToDecade } from '../lib/decades'
 
 // The games whose day is five songs instead of one, and the puzzle kind each
 // one drafts. Hit or Miss is Peak's dial; Era is the timeline.
@@ -33,10 +34,11 @@ const KINDS = {
   },
 }
 
-// How a draft's day of the week reads in Admin, easiest first.
+// How a draft's day of the week reads in Admin, from Monday's 1 to Sunday's 7.
 const LEVEL_NOTES = [
   'the easiest day, so the draft picks songs nearly everyone knows',
   'an easy day, so the draft picks well known songs',
+  'a middle day',
   'a middle day',
   'a middle day',
   'a hard day, so the draft leaves out the most famous songs',
@@ -44,10 +46,43 @@ const LEVEL_NOTES = [
 ]
 
 function levelNote(date) {
-  if (!date) return 'Pick a date first: Mondays draft the easiest songs and Saturdays the hardest.'
+  if (!date) return 'Pick a date first: Mondays draft the easiest songs and Sundays the hardest.'
   const [y, m, d] = date.split('-').map(Number)
   const weekday = new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long' })
-  return `${weekday} is ${LEVEL_NOTES[dayLevel(date)]}.`
+  return `${weekday} is ${LEVEL_NOTES[dayLevel(date) - 1]}.`
+}
+
+/**
+ * The day's first song in the one-song fields. iPhone apps from before
+ * five-song days (1.9 and older) carry their own copy of the games and read
+ * only these, so they play that one song; the five-song games read `rounds`.
+ */
+export function firstSongFields(kind, rounds) {
+  const first = rounds[0]
+  if (!first) return null
+  if (kind === 'peak') {
+    return {
+      answer: first.title,
+      metadata: {
+        artist: first.artist,
+        year: first.year,
+        artwork_url: first.artwork_url,
+        // The old game's "hit" is any song that made the Hot 100 at all.
+        verdict: first.peak ? 'hit' : 'miss',
+        peak_position: first.peak || null,
+        weeks_at_one: first.weeks_at_one || 0,
+        hint: null,
+      },
+    }
+  }
+  if (kind === 'timeline') {
+    const decade = yearToDecade(first.year)
+    return {
+      answer: decade,
+      metadata: { title: first.title, artist: first.artist, year: first.year, decade, artwork_url: first.artwork_url },
+    }
+  }
+  return null
 }
 
 const BLANK_ROUND = { title: '', artist: '', year: '', audio_url: '', artwork_url: '', itunes_url: '' }
