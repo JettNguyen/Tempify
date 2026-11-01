@@ -379,6 +379,7 @@ export default function CoverOrNot() {
           shareLine={scored ? `${correct ? 'Spotted the cover' : 'Got fooled'}, then ${yearOff === 0 ? 'nailed the year' : `${yearOff} year${yearOff === 1 ? '' : 's'} off the original`} · ${fmtPoints(total)} / ${fmtPoints(ROUND_MAX * 2)}` : undefined}
           points={scored ? total : undefined}
           maxPoints={scored ? ROUND_MAX * 2 : undefined}
+          rounds={scored ? { date: puzzleDate, points: steps.map(st => st.points), labels: ['The call', 'The year'] } : undefined}
           answer={isCover
             ? `It's a cover${m.original_title ? ` of "${m.original_title}"` : ''}${m.original_artist ? ` by ${m.original_artist}` : ''}`
             : "It's an original"

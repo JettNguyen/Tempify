@@ -1,3 +1,5 @@
+import { todayEST } from './date'
+
 // Explore's browse cards and an archive day's tiles produce the same
 // /game/<slug>?date=<date> URL, so the game itself can't otherwise tell which
 // one sent the player here. Explore tags its links, and both the back link and
@@ -17,8 +19,16 @@ export function exitTarget(params) {
     const genres = params.get('genres')
     return genres ? `/explore?genres=${encodeURIComponent(genres)}` : '/explore'
   }
-  const date = params.get('date')
+  const date = archiveDate(params)
   return date ? `/archive/${date}` : '/'
+}
+
+// The date a game was opened for, unless it's today's: a challenge link
+// carries its date even when it's opened the same day, and today's games
+// live on the home screen, not in the archive.
+function archiveDate(params) {
+  const date = params.get('date')
+  return date && date !== todayEST() ? date : null
 }
 
 // Carries an archive date through the next-game chain. Cover or Not ends the
@@ -38,5 +48,5 @@ export function resultAction(nextGame, params) {
     return { to: exitTarget(params), label: '← Back to Explore' }
   }
   if (!nextGame) return null
-  return { to: nextPath(nextGame.path, params.get('date')), label: `${nextGame.label} →` }
+  return { to: nextPath(nextGame.path, archiveDate(params)), label: `${nextGame.label} →` }
 }

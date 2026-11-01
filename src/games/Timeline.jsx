@@ -11,10 +11,12 @@ import { hapticImportantTap, hapticSelection } from '../lib/haptics'
 import { lockInDelay } from '../lib/lockIn'
 import { rightGaps, gapPoints, gapLabel } from '../lib/timeline'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
+import { readChallenge } from '../lib/challenge'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import StageSong from '../components/StageSong'
 import ResultCard from '../components/ResultCard'
+import { ChallengeTally } from '../components/Challenge'
 import Icon from '../components/Icon'
 import './Timeline.css'
 
@@ -42,6 +44,8 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
 
   // One result per placed song: rounds[1] onward.
   const [results, setResults] = useState(() => loadRounds(SLUG, puzzleDate).slice(0, toPlace))
+  // A friend's score, when this was opened from their challenge link.
+  const challenge = readChallenge(searchParams, toPlace)
   // The song on the stage. A placed song stays up with its answer until
   // "Next song".
   const [index, setIndex] = useState(() => Math.min(results.length + 1, toPlace))
@@ -179,7 +183,10 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
             return <span key={i} className={`timeline__pip timeline__pip--${state}`} />
           })}
         </span>
-        <span className="timeline__total">{fmtPoints(done ? finalPoints : total)} pts</span>
+        <span className="timeline__total">
+          {fmtPoints(done ? finalPoints : total)} pts
+          <ChallengeTally challenge={challenge} played={results.length} />
+        </span>
       </div>
 
       <AudioPlayer
@@ -252,6 +259,11 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
           shareLine={`${fmtPoints(finalPoints)} / ${fmtPoints(maxPoints)} points`}
           points={finalPoints}
           maxPoints={maxPoints}
+          rounds={{
+            date: puzzleDate,
+            points: results.length === toPlace ? results.map(r => r.points) : [],
+            labels: rounds.slice(1).map(r => r.title),
+          }}
           gameSlug={SLUG}
           puzzleDate={dateParam}
           timeSeconds={competitive ? finalTime : null}

@@ -11,10 +11,12 @@ import { hapticImportantTap, hapticSelection } from '../lib/haptics'
 import { lockInDelay } from '../lib/lockIn'
 import { NEVER_FROM, dialAt, peakAt, peakPoints, peakLabel } from '../lib/peak'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
+import { readChallenge } from '../lib/challenge'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import StageSong from '../components/StageSong'
 import ResultCard from '../components/ResultCard'
+import { ChallengeTally } from '../components/Challenge'
 import Icon from '../components/Icon'
 import Dial from '../components/Dial'
 import './Peak.css'
@@ -55,6 +57,8 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
   const competitive = profile?.competitive_mode !== false
 
   const [results, setResults] = useState(() => loadRounds(SLUG, puzzleDate).slice(0, rounds.length))
+  // A friend's score, when this was opened from their challenge link.
+  const challenge = readChallenge(searchParams, rounds.length)
   // A round stays on screen with its answer until "Next song", so the one
   // showing can be one behind the next one to play.
   const [index, setIndex] = useState(() => Math.min(results.length, rounds.length - 1))
@@ -176,7 +180,10 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
             return <span key={i} className={`peak__pip peak__pip--${state}`} />
           })}
         </span>
-        <span className="peak__total">{fmtPoints(done ? finalPoints : total)} pts</span>
+        <span className="peak__total">
+          {fmtPoints(done ? finalPoints : total)} pts
+          <ChallengeTally challenge={challenge} played={results.length} />
+        </span>
       </div>
 
       <AudioPlayer
@@ -269,6 +276,11 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
           shareLine={`${fmtPoints(finalPoints)} / ${fmtPoints(maxPoints)} points`}
           points={finalPoints}
           maxPoints={maxPoints}
+          rounds={{
+            date: puzzleDate,
+            points: results.length === rounds.length ? results.map(r => r.points) : [],
+            labels: rounds.map(r => r.title),
+          }}
           gameSlug={SLUG}
           puzzleDate={dateParam}
           timeSeconds={competitive ? finalTime : null}

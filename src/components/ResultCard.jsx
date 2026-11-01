@@ -6,9 +6,11 @@ import TrackArtwork from './TrackArtwork'
 import Icon from './Icon'
 import Leaderboard from './Leaderboard'
 import PuzzleStats from './PuzzleStats'
+import { ChallengeResult } from './Challenge'
 import { hapticWinCelebration, hapticFailure } from '../lib/haptics'
 import { resultAction } from '../lib/gameExit'
 import { fmtTime } from '../lib/date'
+import { readChallenge } from '../lib/challenge'
 import './ResultCard.css'
 import './ResultOverlay.css'
 
@@ -47,10 +49,17 @@ export default function ResultCard({
   correct, answer, artist, detail, emojiGrid,
   gameSlug, nextGame, artwork, children,
   puzzleDate, timeSeconds, attempts, showLeaderboard, justFinished,
-  status: statusText, shareLine, points, maxPoints,
+  status: statusText, shareLine, points, maxPoints, rounds,
 }) {
   const [searchParams] = useSearchParams()
   const action = resultAction(nextGame, searchParams)
+  // A points game passes its rounds, { date, points, labels }: its share goes
+  // out as a challenge link, and a challenge link it was opened from is
+  // answered here.
+  const challenge = rounds ? readChallenge(searchParams, rounds.labels.length) : null
+  // Only a day played here in full can be sent on: points from another device
+  // arrive as a total, with nothing song by song.
+  const sendable = rounds && rounds.points.length === rounds.labels.length ? rounds : null
   const panelRef = useRef(null)
 
   const timeLabel = gameSlug !== 'one-bar' ? fmtTime(timeSeconds) : null
@@ -61,7 +70,9 @@ export default function ResultCard({
   // Opens itself on the finish that earned it. Coming back to a puzzle you
   // played days ago, a celebration you have already had would be in the way, so
   // the strip on the page is the whole of it until you ask for more.
-  const [open, setOpen] = useState(Boolean(justFinished))
+  // A challenge link opened after the day was already played opens it too:
+  // the comparison is what the link was for.
+  const [open, setOpen] = useState(Boolean(justFinished) || Boolean(challenge))
   // And the burst is spent once it has played. Reopening gets the glow and the
   // panel, but not the fanfare a second time.
   const [celebrate, setCelebrate] = useState(Boolean(justFinished))
@@ -171,6 +182,10 @@ export default function ResultCard({
 
           {detail && <div className="result-card__detail">{detail}</div>}
 
+          {challenge && (
+            <ChallengeResult challenge={challenge} mine={rounds.points} total={points ?? 0} labels={rounds.labels} />
+          )}
+
           {children && <div className="result-card__extra">{children}</div>}
 
           {emojiGrid && <div className="result-card__emoji">{emojiGrid}</div>}
@@ -184,6 +199,7 @@ export default function ResultCard({
               timeSeconds={timeSeconds}
               puzzleDate={puzzleDate}
               resultLine={shareLine}
+              challenge={sendable}
             />
             {action && (
               <Link to={action.to} replace className="result-card__next btn-press btn-amber">

@@ -3,6 +3,9 @@ import Icon from './Icon'
 import { Share } from '@capacitor/share'
 import { fmtTime } from '../lib/date'
 import { isNativeApp } from '../lib/oauth'
+import { siteUrl, challengeQuery } from '../lib/challenge'
+import { GAME_BY_SLUG } from '../lib/games'
+import { useAuth } from '../hooks/useAuth'
 import './ShareButton.css'
 
 function fmtShareDate(dateStr) {
@@ -77,7 +80,8 @@ async function copyText(text) {
   return legacyCopy(text)
 }
 
-export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, timeSeconds, puzzleDate, resultLine: givenLine }) {
+export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, timeSeconds, puzzleDate, resultLine: givenLine, challenge }) {
+  const { profile } = useAuth()
   const [state, setState] = useState('idle')
   const resetRef = useRef(null)
 
@@ -93,8 +97,15 @@ export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, ti
       'tempo':        'Tap the Tempo',
     }[gameSlug] || 'Tempify'
 
-    const base = import.meta.env.BASE_URL?.replace(/\/$/, '') ?? ''
-    const url = window.location.origin + base
+    // In the app the page's own address is capacitor://localhost, which no
+    // one it's sent to can open, so links point at the public site.
+    const where = { native: isNativeApp(), origin: window.location.origin, base: import.meta.env.BASE_URL || '/' }
+    // A five-song day goes out as a challenge: the link opens the same songs
+    // with this score to beat, song by song.
+    const path = GAME_BY_SLUG[gameSlug]?.path
+    const url = challenge && path
+      ? siteUrl(`${path}?${challengeQuery({ date: challenge.date, points: challenge.points, name: profile?.username })}`, where)
+      : siteUrl('', where)
 
     const dateLabel = fmtShareDate(puzzleDate)
     const header = ['Tempify', gameName, dateLabel].filter(Boolean).join(' · ')
@@ -109,6 +120,7 @@ export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, ti
     if (emojiGrid) parts.push(emojiGrid)
     parts.push(resultLine)
     if (timeSeconds != null) parts.push(`⏱ ${fmtTime(timeSeconds)}`)
+    if (challenge && path) parts.push('Can you beat it?')
 
     const body = parts.join('\n')
 

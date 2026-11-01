@@ -1,0 +1,94 @@
+/* A friend's score from a challenge link: beside your total while you play,
+   and side by side with yours at the end. */
+
+.challenge-tally {
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 100%;
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  color: var(--text-dim);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* A long username gives way before the score does. */
+.challenge-tally__name {
+  max-width: 9ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.challenge-result {
+  margin-top: 1rem;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-align: left;
+}
+
+.challenge-result__verdict {
+  margin-bottom: 10px;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.challenge-result--won .challenge-result__verdict { color: var(--green); }
+
+.challenge-result__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  /* Spaced with padding rather than a column gap, so the line over the
+     total runs unbroken. */
+  row-gap: 6px;
+  align-items: baseline;
+}
+
+.challenge-result__head {
+  min-width: 3.5em;
+  padding-left: 14px;
+  text-align: right;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.challenge-result__head--them {
+  max-width: 8em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.challenge-result__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.challenge-result__points {
+  padding-left: 14px;
+  text-align: right;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.challenge-result__points--ahead {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* Last, so the total row wins over the rows above. */
+.challenge-result__label--total,
+.challenge-result__points--total {
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  color: var(--text-primary);
+  font-weight: 700;
+}
