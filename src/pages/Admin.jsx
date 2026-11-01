@@ -1179,6 +1179,7 @@ export default function Admin() {
                 <>
                   <RoundsFields
                     kind={ROUNDS_GAMES[form.game]}
+                    date={form.date}
                     rounds={form.rounds}
                     setRounds={rounds => set('rounds', rounds)}
                     setGenre={g => set('genre', g)}

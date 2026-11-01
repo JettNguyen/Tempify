@@ -2,7 +2,7 @@ import { useState } from 'react'
 import AudioPlayer from '../components/AudioPlayer'
 import {
   draftPeak, redraftPeakRound, draftTimeline, redraftTimelineRound, draftTempo, redraftTempoRound,
-  songKey, commonGenre,
+  songKey, commonGenre, dayLevel, timelineGap,
 } from '../lib/drafts'
 import { addTap, bpmFromTaps } from '../lib/tempo'
 
@@ -24,13 +24,30 @@ const KINDS = {
   timeline: {
     draft: draftTimeline,
     redraft: redraftTimelineRound,
-    help: 'Five big hits at least three years apart. The first one starts on the line with its year showing; players place the other four. Years are when each song first charted. Listen to each: the clip must be the hit recording.',
+    help: (level) => `Five big hits at least ${timelineGap(level)} years apart. The first one starts on the line with its year showing; players place the other four. Years are when each song first charted. Listen to each: the clip must be the hit recording.`,
   },
   tempo: {
     draft: draftTempo,
     redraft: redraftTempoRound,
     help: "Five top-ten hits with a tempo from Deezer. Deezer sometimes reads a slow song at double time, so play each clip and tap along: if your tap is about half or double the stored tempo, use yours. Pick songs with a steady beat; players count half or double time as right either way.",
   },
+}
+
+// How a draft's day of the week reads in Admin, easiest first.
+const LEVEL_NOTES = [
+  'the easiest day, so the draft picks songs nearly everyone knows',
+  'an easy day, so the draft picks well known songs',
+  'a middle day',
+  'a middle day',
+  'a hard day, so the draft leaves out the most famous songs',
+  'the hardest day, so the draft picks songs mostly fans will know',
+]
+
+function levelNote(date) {
+  if (!date) return 'Pick a date first: Mondays draft the easiest songs and Saturdays the hardest.'
+  const [y, m, d] = date.split('-').map(Number)
+  const weekday = new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long' })
+  return `${weekday} is ${LEVEL_NOTES[dayLevel(date)]}.`
 }
 
 const BLANK_ROUND = { title: '', artist: '', year: '', audio_url: '', artwork_url: '', itunes_url: '' }
@@ -121,19 +138,21 @@ function Mini({ label, children, grow }) {
   )
 }
 
-export default function RoundsFields({ kind, rounds, setRounds, setGenre, used }) {
+export default function RoundsFields({ kind, date, rounds, setRounds, setGenre, used }) {
   const [busy, setBusy] = useState(null) // 'all', or the index being swapped
   const [found, setFound] = useState(0)
   const [message, setMessage] = useState(null)
   const spec = KINDS[kind]
   const usedKeys = new Set(used.keys())
+  const level = dayLevel(date)
+  const help = typeof spec.help === 'function' ? spec.help(level) : spec.help
 
   async function draftAll() {
     setBusy('all')
     setFound(0)
     setMessage(null)
     try {
-      const next = await spec.draft({ used: usedKeys, onProgress: setFound })
+      const next = await spec.draft({ used: usedKeys, level, onProgress: setFound })
       setRounds(next)
       const genre = commonGenre(next)
       if (genre) setGenre(genre)
@@ -151,7 +170,7 @@ export default function RoundsFields({ kind, rounds, setRounds, setGenre, used }
     setBusy(i)
     setMessage(null)
     try {
-      const round = await spec.redraft(rounds, i, { used: usedKeys })
+      const round = await spec.redraft(rounds, i, { used: usedKeys, level })
       if (round) setRounds(rounds.map((r, j) => (j === i ? round : r)))
       else setMessage(`No other song with a clip turned up for song ${i + 1}. Try again, or type one in.`)
     } catch (err) {
@@ -184,7 +203,7 @@ export default function RoundsFields({ kind, rounds, setRounds, setGenre, used }
           </button>
         )}
       </div>
-      <p style={{ fontSize: '11px', color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: '0.75rem' }}>{spec.help}</p>
+      <p style={{ fontSize: '11px', color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: '0.75rem' }}>{levelNote(date)} {help}</p>
       {message && <p style={{ fontSize: '12px', color: 'var(--amber)', marginBottom: '0.75rem' }}>{message}</p>}
 
       {rounds.map((r, i) => {

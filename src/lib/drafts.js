@@ -135,6 +135,44 @@ function hitsByArtist(songs) {
   return hitCounts
 }
 
+// ─── The week ────────────────────────────────────────────────────────────────
+
+// Monday is the easiest day and Saturday the hardest, the way a newspaper
+// crossword's week runs, so someone who plays all week feels it climb. Sunday
+// sits in the middle. Levels run from 0 to 5.
+const WEEK = [2, 0, 1, 2, 3, 4, 5] // Sunday first, the way getDay() counts
+export const MIDDLE_LEVEL = 2
+
+/** How hard a date's draft should be, 0 to 5. */
+export function dayLevel(date) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return MIDDLE_LEVEL
+  const [y, m, d] = date.split('-').map(Number)
+  return WEEK[new Date(y, m - 1, d).getDay()]
+}
+
+// What each level changes, easiest first. Fame is weeks on the chart: a song
+// that stayed 20 weeks is one most people still know, and one that stayed 8
+// is one mostly fans do. Each is a [least, most] range: the harder days leave
+// out the most famous songs too, or a Saturday would still be mostly
+// Monday's songs.
+const ANY = Infinity
+const RAMP = {
+  // Weeks on the chart, for a top-20 song in Hit or Miss
+  peakWeeks:     [[20, ANY], [16, ANY], [13, 40], [10, 30], [8, 22], [6, 16]],
+  // Hits the act has had, behind a lower peak
+  peakActHits:   [[12, ANY], [9, ANY], [7, ANY], [5, ANY], [4, 40], [3, 20]],
+  timelineWeeks: [[16, ANY], [14, ANY], [12, 40], [10, 30], [9, 24], [8, 20]],
+  tempoWeeks:    [[22, ANY], [19, ANY], [17, ANY], [15, 40], [13, 30], [11, 24]],
+  // Years between Era's songs
+  timelineGap:   [6, 5, 4, 4, 3, 2],
+}
+
+const ramp = (knob, level = MIDDLE_LEVEL) => RAMP[knob][Math.min(5, Math.max(0, level))]
+const within = ([least, most], n) => n >= least && n <= most
+
+/** The gap Era's songs keep on a level, for Admin's note. */
+export const timelineGap = (level) => ramp('timelineGap', level)
+
 // ─── Hit or Miss (Peak) ──────────────────────────────────────────────────────
 
 // One song from each stretch of the chart, so a day runs from a #1 to a #90
@@ -159,12 +197,14 @@ function peakRound(song, clip) {
 async function draftChartedPeak(songs, band, ctx) {
   const [lo, hi] = band
   const hits = hitsByArtist(songs)
+  const weeks = ramp('peakWeeks', ctx.level)
+  const actHits = ramp('peakActHits', ctx.level)
   // Low peaks are only a puzzle from an act people know: a #74 by a
   // stranger is just a stranger.
   const pool = songs.filter(s =>
     s.peak >= lo && s.peak <= hi &&
     s.year >= 1965 && s.year < THIS_YEAR &&
-    (hi <= 20 ? s.weeks >= 10 : (hits.get(artistNames(s.artist)[0]) || 0) >= 5),
+    (hi <= 20 ? within(weeks, s.weeks) : within(actHits, hits.get(artistNames(s.artist)[0]) || 0)),
   )
   const found = await pickWithClip(pool, ctx)
   return found && peakRound(found.song, found.clip)
@@ -220,10 +260,13 @@ async function draftNeverCharted(songs, { used, artists }) {
   return null
 }
 
-/** Five songs: one from each stretch of the chart and one that never charted, shuffled. */
-export async function draftPeak({ used = new Set(), onProgress } = {}) {
+/**
+ * Five songs: one from each stretch of the chart and one that never charted,
+ * shuffled. A higher level reaches for songs fewer people remember.
+ */
+export async function draftPeak({ used = new Set(), level, onProgress } = {}) {
   const songs = await loadChartSongs()
-  const ctx = { used, artists: new Set() }
+  const ctx = { used, level, artists: new Set() }
   const rounds = []
   for (const band of PEAK_BANDS) {
     const round = await draftChartedPeak(songs, band, ctx)
@@ -237,10 +280,11 @@ export async function draftPeak({ used = new Set(), onProgress } = {}) {
 }
 
 /** A new song for one round of a Peak draft, from the same stretch of the chart. */
-export async function redraftPeakRound(rounds, index, { used = new Set() } = {}) {
+export async function redraftPeakRound(rounds, index, { used = new Set(), level } = {}) {
   const songs = await loadChartSongs()
   const others = rounds.filter((_, i) => i !== index)
   const ctx = {
+    level,
     used: new Set([...used, ...rounds.map(r => songKey(r.title, r.artist))]),
     artists: new Set(others.map(r => artistNames(r.artist)[0])),
   }
@@ -251,9 +295,6 @@ export async function redraftPeakRound(rounds, index, { used = new Set() } = {})
 }
 
 // ─── Era (Timeline) ──────────────────────────────────────────────────────────
-
-// Years this far apart can be told apart by ear. Closer is a harder day.
-export const TIMELINE_GAP = 3
 
 function timelineRound(song, clip) {
   return {
@@ -267,16 +308,22 @@ function timelineRound(song, clip) {
   }
 }
 
-function timelinePool(songs) {
+function timelinePool(songs, level) {
   // Big hits only: placing a song you have never heard is a guess, not a game.
-  return songs.filter(s => s.peak <= 20 && s.weeks >= 10 && s.year >= 1960 && s.year < THIS_YEAR)
+  const weeks = ramp('timelineWeeks', level)
+  return songs.filter(s => s.peak <= 20 && within(weeks, s.weeks) && s.year >= 1960 && s.year < THIS_YEAR)
 }
 
 const spaced = (years, gap) => (song) => years.every(y => Math.abs(y - song.year) >= gap)
 
-/** Five songs from five different stretches of time. The first is the one placed for you. */
-export async function draftTimeline({ used = new Set(), gap = TIMELINE_GAP, onProgress } = {}) {
-  const pool = timelinePool(await loadChartSongs())
+/**
+ * Five songs from five different stretches of time. The first is the one
+ * placed for you. Years far apart can be told apart by ear, so a higher level
+ * lets them sit closer.
+ */
+export async function draftTimeline({ used = new Set(), level, onProgress } = {}) {
+  const pool = timelinePool(await loadChartSongs(), level)
+  const gap = timelineGap(level)
   const ctx = { used, artists: new Set() }
   const rounds = []
   for (let i = 0; i < 5; i++) {
@@ -287,8 +334,9 @@ export async function draftTimeline({ used = new Set(), gap = TIMELINE_GAP, onPr
   return shuffle(rounds)
 }
 
-export async function redraftTimelineRound(rounds, index, { used = new Set(), gap = TIMELINE_GAP } = {}) {
-  const pool = timelinePool(await loadChartSongs())
+export async function redraftTimelineRound(rounds, index, { used = new Set(), level } = {}) {
+  const pool = timelinePool(await loadChartSongs(), level)
+  const gap = timelineGap(level)
   const others = rounds.filter((_, i) => i !== index)
   const found = await pickWithClip(pool, {
     used: new Set([...used, ...rounds.map(r => songKey(r.title, r.artist))]),
@@ -304,9 +352,10 @@ export async function redraftTimelineRound(rounds, index, { used = new Set(), ga
 // half or double time misread than the song.
 const TAPPABLE = [60, 200]
 
-function tempoPool(songs) {
+function tempoPool(songs, level) {
   // Songs everyone can hear in their head: the beat has to come from memory.
-  return songs.filter(s => s.peak <= 10 && s.weeks >= 15 && s.year >= 1960 && s.year < THIS_YEAR)
+  const weeks = ramp('tempoWeeks', level)
+  return songs.filter(s => s.peak <= 10 && within(weeks, s.weeks) && s.year >= 1960 && s.year < THIS_YEAR)
 }
 
 async function pickTempoSong(pool, { used, artists, tries = 8 }) {
@@ -336,8 +385,8 @@ async function pickTempoSong(pool, { used, artists, tries = 8 }) {
 }
 
 /** Five big hits that Deezer has a tempo for, and a clip each. */
-export async function draftTempo({ used = new Set(), onProgress } = {}) {
-  const pool = tempoPool(await loadChartSongs())
+export async function draftTempo({ used = new Set(), level, onProgress } = {}) {
+  const pool = tempoPool(await loadChartSongs(), level)
   const ctx = { used, artists: new Set() }
   const rounds = []
   for (let i = 0; i < 5; i++) {
@@ -348,8 +397,8 @@ export async function draftTempo({ used = new Set(), onProgress } = {}) {
   return rounds
 }
 
-export async function redraftTempoRound(rounds, index, { used = new Set() } = {}) {
-  const pool = tempoPool(await loadChartSongs())
+export async function redraftTempoRound(rounds, index, { used = new Set(), level } = {}) {
+  const pool = tempoPool(await loadChartSongs(), level)
   const others = rounds.filter((_, i) => i !== index)
   return pickTempoSong(pool, {
     used: new Set([...used, ...rounds.map(r => songKey(r.title, r.artist))]),
