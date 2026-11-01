@@ -1,9 +1,19 @@
+import { todayEST } from './date'
+
+// A game with `addedOn` joins the lineup on that day. Until it has one
+// (null) it's built and schedulable in Admin, and playable by its link, but
+// nowhere a player would find it.
 const ACTIVE_GAMES = [
   { slug: 'one-bar',      name: 'One Bar',      path: '/game/one-bar',      description: 'Name the song from a tiny clip. Wrong guesses unlock more audio.', featured: true },
   { slug: 'hit-or-miss',  name: 'Hit or Miss',  path: '/game/hit-or-miss',  description: 'Did it enter the Hot 100?' },
   { slug: 'era',          name: 'Era',          path: '/game/era',          description: 'Guess which decade the song is from.' },
   { slug: 'cover-or-not', name: 'Cover or Not', path: '/game/cover-or-not', description: 'Is it a cover of an earlier track?' },
+  { slug: 'tempo',        name: 'Tap the Tempo', path: '/game/tempo',       description: 'Tap the beat of a famous song from memory.', addedOn: null },
 ]
+
+function launchedBy(game, date) {
+  return game.addedOn === undefined || (game.addedOn != null && date >= game.addedOn)
+}
 
 // Retired games are no longer scheduled and don't appear in the daily lineup,
 // but their past puzzles stay playable from the archive and past scores keep
@@ -13,16 +23,19 @@ const RETIRED_GAMES = [
 ]
 
 /** Games in today's lineup. */
-export const GAMES = ACTIVE_GAMES
+export const GAMES = ACTIVE_GAMES.filter(g => launchedBy(g, todayEST()))
 
 /** Everything that has ever shipped: use for archive, names and past stats. */
-export const ALL_GAMES = [...ACTIVE_GAMES, ...RETIRED_GAMES]
+export const ALL_GAMES = [...GAMES, ...RETIRED_GAMES]
 
-export const GAME_SLUGS = ACTIVE_GAMES.map(g => g.slug)
+/** Every game Admin can schedule, launched or not. */
+export const SCHEDULABLE_GAMES = ACTIVE_GAMES
+
+export const GAME_SLUGS = GAMES.map(g => g.slug)
 
 export const ALL_GAME_SLUGS = ALL_GAMES.map(g => g.slug)
 
-export const GAME_BY_SLUG = Object.fromEntries(ALL_GAMES.map(g => [g.slug, g]))
+export const GAME_BY_SLUG = Object.fromEntries([...ACTIVE_GAMES, ...RETIRED_GAMES].map(g => [g.slug, g]))
 
 export function getGameName(slug) {
   return GAME_BY_SLUG[slug]?.name ?? slug
@@ -38,7 +51,8 @@ export function isRetiredGame(slug) {
  * retiring a game would retroactively hand out perfect days.
  */
 export function getGameSlugsForDate(date) {
-  return ALL_GAMES
+  return [...ACTIVE_GAMES, ...RETIRED_GAMES]
     .filter(g => !g.retiredOn || (date && date < g.retiredOn))
+    .filter(g => !date || launchedBy(g, date))
     .map(g => g.slug)
 }

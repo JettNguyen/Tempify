@@ -43,6 +43,7 @@
   --game-sampled: #a855f7;
   --game-era: #14b8a6;
   --game-cover-or-not: #f97316;
+  --game-tempo: #ec4899;
 
   /* Game brand color glows */
   --game-one-bar-glow: #f59e0b2f;
@@ -50,6 +51,7 @@
   --game-sampled-glow: #a855f72f;
   --game-era-glow: #14b8a62f;
   --game-cover-or-not-glow: #f973162f;
+  --game-tempo-glow: #ec48992f;
 
   /* The same colours as bare channels, for rgba() at whatever strength a
      layer needs. Hex with a baked-in alpha only comes in the one strength. */
@@ -58,6 +60,7 @@
   --game-sampled-rgb: 168, 85, 247;
   --game-era-rgb: 20, 184, 166;
   --game-cover-or-not-rgb: 249, 115, 22;
+  --game-tempo-rgb: 236, 72, 153;
 
   /* Outside any game (a player in a result panel, say) the colour is amber. */
   --game-color: var(--amber);
@@ -93,6 +96,12 @@
   --game-color: var(--game-cover-or-not);
   --game-color-glow: var(--game-cover-or-not-glow);
   --game-color-rgb: var(--game-cover-or-not-rgb);
+}
+
+.game-theme--tempo {
+  --game-color: var(--game-tempo);
+  --game-color-glow: var(--game-tempo-glow);
+  --game-color-rgb: var(--game-tempo-rgb);
 }
 
 *, *::before, *::after {

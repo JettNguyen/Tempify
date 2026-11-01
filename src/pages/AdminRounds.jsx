@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import AudioPlayer from '../components/AudioPlayer'
 import {
-  draftPeak, redraftPeakRound, draftTimeline, redraftTimelineRound, songKey, commonGenre,
+  draftPeak, redraftPeakRound, draftTimeline, redraftTimelineRound, draftTempo, redraftTempoRound,
+  songKey, commonGenre,
 } from '../lib/drafts'
+import { addTap, bpmFromTaps } from '../lib/tempo'
 
 // The games whose day is five songs instead of one, and the puzzle kind each
 // one drafts. Hit or Miss is Peak's dial; Era is the timeline.
-export const ROUNDS_GAMES = { 'hit-or-miss': 'peak', era: 'timeline' }
+export const ROUNDS_GAMES = { 'hit-or-miss': 'peak', era: 'timeline', tempo: 'tempo' }
+
+// Games that were never one song, so there's no older format to pick.
+export const ROUNDS_ONLY = new Set(['tempo'])
 
 export const ROUND_COUNT = 5
 
@@ -20,6 +25,11 @@ const KINDS = {
     draft: draftTimeline,
     redraft: redraftTimelineRound,
     help: 'Five big hits at least three years apart. The first one starts on the line with its year showing; players place the other four. Years are when each song first charted. Listen to each: the clip must be the hit recording.',
+  },
+  tempo: {
+    draft: draftTempo,
+    redraft: redraftTempoRound,
+    help: "Five top-ten hits with a tempo from Deezer. Deezer sometimes reads a slow song at double time, so play each clip and tap along: if your tap is about half or double the stored tempo, use yours. Pick songs with a steady beat; players count half or double time as right either way.",
   },
 }
 
@@ -47,6 +57,7 @@ export function validateRounds(kind, rounds, used) {
     if (!r.title || !r.artist) err.push(`Song ${n} title and artist`)
     if (!r.audio_url) err.push(`Song ${n} clip`)
     if (kind === 'timeline' && !Number(r.year)) err.push(`Song ${n} year`)
+    if (kind === 'tempo' && !(Number(r.bpm) >= 40 && Number(r.bpm) <= 240)) err.push(`Song ${n} tempo (40 to 240)`)
     if (kind === 'peak' && (r.peak === '' || r.peak == null || Number(r.peak) < 0 || Number(r.peak) > 100)) {
       err.push(`Song ${n} peak (0 to 100)`)
     }
@@ -71,6 +82,7 @@ export function cleanRounds(kind, rounds) {
       out.weeks_on_chart = Number(r.weeks_on_chart) || 0
       out.weeks_at_one = Number(r.weeks_at_one) || 0
     }
+    if (kind === 'tempo') out.bpm = Math.round(Number(r.bpm))
     return out
   })
 }
@@ -84,6 +96,20 @@ const inputStyle = {
 const smallBtn = {
   padding: '6px 12px', borderRadius: '999px', border: '1px solid var(--border)',
   background: 'transparent', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer',
+}
+
+/** Tap along with a clip to read its tempo, for checking or replacing a stored one. */
+function TapAlong({ onUse }) {
+  const [taps, setTaps] = useState([])
+  const bpm = bpmFromTaps(taps)
+  return (
+    <span style={{ display: 'flex', alignItems: 'flex-end', gap: '6px' }}>
+      <button type="button" onPointerDown={() => setTaps(t => addTap(t, performance.now()))} style={{ ...smallBtn, minWidth: '96px' }}>
+        {bpm ? `Tap: ${bpm}` : taps.length ? `Tap (${taps.length})` : 'Tap along'}
+      </button>
+      {bpm && <button type="button" onClick={() => { onUse(bpm); setTaps([]) }} style={smallBtn}>Use {bpm}</button>}
+    </span>
+  )
 }
 
 function Mini({ label, children, grow }) {
@@ -189,6 +215,14 @@ export default function RoundsFields({ kind, rounds, setRounds, setGenre, used }
               <Mini label={kind === 'timeline' ? 'Year it first charted' : 'Year'}>
                 <input value={r.year ?? ''} onChange={e => edit(i, 'year', e.target.value)} type="number" style={{ ...inputStyle, width: '80px' }} />
               </Mini>
+              {kind === 'tempo' && (
+                <>
+                  <Mini label="Tempo (BPM)">
+                    <input value={r.bpm ?? ''} onChange={e => edit(i, 'bpm', e.target.value)} type="number" style={{ ...inputStyle, width: '80px' }} />
+                  </Mini>
+                  <TapAlong onUse={bpm => edit(i, 'bpm', bpm)} />
+                </>
+              )}
               {kind === 'peak' && (
                 <>
                   <Mini label="Peak (0 = never charted)">

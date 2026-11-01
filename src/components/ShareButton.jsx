@@ -90,6 +90,7 @@ export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, ti
       'sampled':      'Sampled',
       'era':          'Era',
       'cover-or-not': 'Cover or Not',
+      'tempo':        'Tap the Tempo',
     }[gameSlug] || 'Tempify'
 
     const base = import.meta.env.BASE_URL?.replace(/\/$/, '') ?? ''

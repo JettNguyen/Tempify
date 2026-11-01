@@ -38,6 +38,13 @@ const GLYPHS = {
       <circle cx="76" cy="60" r="34" />
     </g>
   ),
+  // A metronome, its arm swung to one side.
+  'tempo': (
+    <g fill="none" stroke="currentColor" strokeWidth="7" strokeLinejoin="round" strokeLinecap="round">
+      <path d="M34 106 L50 16 H70 L86 106 Z" />
+      <path d="M60 88 L86 32" />
+    </g>
+  ),
   // Retired, but archive days still render it: a slice lifted off a stack.
   'sampled': (
     <g>

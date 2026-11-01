@@ -8,6 +8,7 @@
 // remaster and compilation dates a store listing carries.
 
 import { searchSongs, stripVariant } from './itunes'
+import { findTrackBpm } from './deezer'
 import { artistNames, sharesArtist } from './matching'
 
 let chartSongs = null
@@ -295,6 +296,65 @@ export async function redraftTimelineRound(rounds, index, { used = new Set(), ga
     fits: spaced(others.map(r => r.year), gap),
   })
   return found && timelineRound(found.song, found.clip)
+}
+
+// ─── Tap the Tempo ──────────────────────────────────────────────────────────
+
+// Tempos a person can tap. Outside this a stored tempo is more likely a
+// half or double time misread than the song.
+const TAPPABLE = [60, 200]
+
+function tempoPool(songs) {
+  // Songs everyone can hear in their head: the beat has to come from memory.
+  return songs.filter(s => s.peak <= 10 && s.weeks >= 15 && s.year >= 1960 && s.year < THIS_YEAR)
+}
+
+async function pickTempoSong(pool, { used, artists, tries = 8 }) {
+  let tried = 0
+  for (const song of shuffle(pool)) {
+    if (tried >= tries) break
+    const lead = artistNames(song.artist)[0]
+    if (used.has(songKey(song.title, song.artist)) || artists.has(lead)) continue
+    tried++
+    const bpm = await findTrackBpm(stripVariant(song.title), leadArtist(song.artist))
+    if (!bpm || bpm < TAPPABLE[0] || bpm > TAPPABLE[1]) continue
+    const clip = await findClip(song.title, song.artist)
+    if (!clip) continue
+    artists.add(lead)
+    return {
+      title: song.title,
+      artist: displayArtist(song.artist),
+      year: song.year,
+      bpm,
+      audio_url: clip.audio_url,
+      artwork_url: clip.artwork_url,
+      itunes_url: clip.itunes_url,
+      genre: clip.genre,
+    }
+  }
+  return null
+}
+
+/** Five big hits that Deezer has a tempo for, and a clip each. */
+export async function draftTempo({ used = new Set(), onProgress } = {}) {
+  const pool = tempoPool(await loadChartSongs())
+  const ctx = { used, artists: new Set() }
+  const rounds = []
+  for (let i = 0; i < 5; i++) {
+    const round = await pickTempoSong(pool, ctx)
+    if (round) rounds.push(round)
+    onProgress?.(rounds.length)
+  }
+  return rounds
+}
+
+export async function redraftTempoRound(rounds, index, { used = new Set() } = {}) {
+  const pool = tempoPool(await loadChartSongs())
+  const others = rounds.filter((_, i) => i !== index)
+  return pickTempoSong(pool, {
+    used: new Set([...used, ...rounds.map(r => songKey(r.title, r.artist))]),
+    artists: new Set(others.map(r => artistNames(r.artist)[0])),
+  })
 }
 
 /** The genre most of a day's songs share, for the puzzle's genre tag. */

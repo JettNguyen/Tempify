@@ -1,0 +1,381 @@
+/* Tap the Tempo. The song is named on a card at the top, with no player: the
+   beat has to come from memory. The pad sits low, under the thumb, and pulses
+   at the tempo being tapped. Once it's locked in, the clip plays and two dots
+   pulse side by side, yours and the song's. */
+
+.tempo__progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.25rem 0 0.6rem;
+}
+
+.tempo__pips {
+  display: flex;
+  gap: 6px;
+}
+
+.tempo__pip {
+  width: 22px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  transition: background-color 0.3s ease, width 0.3s ease;
+}
+
+.tempo__pip--now   { width: 34px; background: var(--game-color); }
+.tempo__pip--close { background: var(--green); }
+.tempo__pip--near  { background: var(--amber); }
+.tempo__pip--far   { background: var(--red); }
+
+.tempo__total {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- The song, named ---- */
+
+.tempo__song {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 1.25rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(var(--game-color-rgb), 0.24);
+  background:
+    radial-gradient(130% 90% at 50% 0%, rgba(var(--game-color-rgb), 0.13), rgba(var(--game-color-rgb), 0) 62%),
+    var(--surface);
+  text-align: center;
+  animation: fadeInUp 0.3s ease both;
+}
+
+.tempo__song .track-artwork,
+.tempo__song > :first-child {
+  margin-bottom: 8px;
+}
+
+.tempo__title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tempo__artist {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* On a phone the card takes the spare height, so the pad lands low. */
+@media (max-width: 640px) {
+  .page-shell--fill > .tempo__song {
+    flex: 1 0 auto;
+  }
+}
+
+/* ---- Tapping ---- */
+
+.tempo__tapping {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 1rem;
+}
+
+.tempo__pad {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(176px, 52vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid rgba(var(--game-color-rgb), 0.6);
+  background:
+    radial-gradient(circle at 50% 35%, rgba(var(--game-color-rgb), 0.28), rgba(var(--game-color-rgb), 0.08) 70%),
+    var(--surface);
+  color: var(--text-primary);
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: scale var(--press-up), border-color 0.2s ease;
+}
+
+.tempo__pad:not(:disabled):active {
+  scale: 0.94;
+}
+
+/* Once there's a tempo, the pad's edge breathes with it. */
+.tempo__pad--steady {
+  animation: tempoBreathe calc(60s / var(--bpm)) ease-out infinite;
+}
+
+.tempo__ripple {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid var(--game-color);
+  opacity: 0;
+  pointer-events: none;
+  animation: tempoRipple 0.6s ease-out;
+}
+
+.tempo__bpm {
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--game-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.tempo__bpm-unit {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tempo__controls {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.tempo__reset {
+  flex-shrink: 0;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.tempo__reset:disabled {
+  opacity: 0.5;
+}
+
+.tempo__action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  background: var(--game-color);
+  color: #0f0f0f;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tempo__action:disabled {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+
+/* ---- The answer ---- */
+
+.tempo__outcome {
+  --tier: var(--game-color);
+  position: relative;
+  margin-top: 0.75rem;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  animation: fadeInUp 0.3s ease both;
+}
+
+.tempo__outcome--close { --tier: var(--green); }
+.tempo__outcome--near  { --tier: var(--amber); }
+.tempo__outcome--far   { --tier: var(--red); }
+
+.tempo__beats {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+}
+
+.tempo__beat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tempo__beat-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  animation: tempoPulse calc(60s / var(--bpm)) ease-out infinite;
+}
+
+.tempo__beat--mine .tempo__beat-dot {
+  background: var(--game-color);
+}
+
+.tempo__beat-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.tempo__beat-bpm {
+  font-size: var(--fs-xl);
+  font-weight: 750;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.tempo__beat--mine .tempo__beat-bpm {
+  color: var(--game-color);
+}
+
+.tempo__beat-label {
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+}
+
+.tempo__verdict {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  margin: 12px 0;
+  font-size: var(--fs-sm);
+}
+
+.tempo__points {
+  font-size: var(--fs-lg);
+  font-weight: 750;
+  color: var(--tier);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- The day, once it's done ---- */
+
+.tempo__summary {
+  position: relative;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 1rem;
+  padding: 0;
+}
+
+.tempo__summary-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  text-align: left;
+  animation: fadeInUp 0.3s ease both;
+}
+
+.tempo__summary-row--on {
+  border-color: rgba(var(--game-color-rgb), 0.7);
+}
+
+.tempo__summary-song {
+  flex: 1;
+  min-width: 0;
+}
+
+.tempo__summary-title,
+.tempo__summary-artist {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tempo__summary-title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.tempo__summary-artist {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.tempo__summary-call {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.tempo__summary-real {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tempo__summary-points {
+  min-width: 44px;
+  text-align: right;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tempo__summary-points--close { color: var(--green); }
+.tempo__summary-points--near  { color: var(--amber); }
+.tempo__summary-points--far   { color: var(--red); }
+
+@keyframes tempoRipple {
+  from { opacity: 0.8; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.25); }
+}
+
+@keyframes tempoBreathe {
+  0%   { box-shadow: 0 0 0 0 rgba(var(--game-color-rgb), 0.45); }
+  100% { box-shadow: 0 0 0 16px rgba(var(--game-color-rgb), 0); }
+}
+
+@keyframes tempoPulse {
+  0%   { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(0.85); opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tempo__song,
+  .tempo__outcome,
+  .tempo__summary-row,
+  .tempo__ripple,
+  .tempo__pad--steady {
+    animation: none;
+  }
+
+  /* The beat dots are the answer, not decoration, so they keep a gentler
+     pulse: a blink instead of a swell. */
+  .tempo__beat-dot {
+    animation-name: tempoBlink;
+  }
+
+  @keyframes tempoBlink {
+    0%, 30% { opacity: 1; }
+    31%, 100% { opacity: 0.4; }
+  }
+}

@@ -295,3 +295,36 @@ export async function findArtwork({ title, artist }) {
 
   return null
 }
+
+/**
+ * A song's tempo from Deezer, for drafting Tap the Tempo, or null when it has
+ * none. It's missing for most new releases and some older hits, and now and
+ * then reads a slow song at double time, so Admin checks it by tapping along.
+ */
+export async function findTrackBpm(title, artist) {
+  const baseStr = BASE.startsWith('/') ? `${window.location.origin}${BASE}` : BASE
+  // A plain search: Deezer's artist:"" track:"" form comes back empty.
+  const search = new URL(`${baseStr}/search`)
+  search.searchParams.set('q', `${title} ${artist}`)
+  search.searchParams.set('limit', '10')
+  const plain = (v) => (v || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  const want = plain(title)
+  const by = plain(artist)
+  try {
+    const res = await fetch(search.toString())
+    if (!res.ok) return null
+    const { data = [] } = await res.json()
+    // The studio recording by this act: not a demo, a live take or a remix
+    // listed under a longer title.
+    const hits = data
+      .filter(t => plain(t.title) === want && plain(t.artist?.name).includes(by))
+      .slice(0, 2)
+    for (const hit of hits) {
+      const track = await fetch(`${baseStr}/track/${hit.id}`).then(r => (r.ok ? r.json() : null))
+      if (track?.bpm > 0) return Math.round(track.bpm)
+    }
+  } catch {
+    // No tempo is a fine answer for a draft; it just tries the next song.
+  }
+  return null
+}

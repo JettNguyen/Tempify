@@ -128,6 +128,11 @@
   --game-color-glow: var(--game-cover-or-not-glow);
 }
 
+.dashboard-game-stat--tempo {
+  --game-color: var(--game-tempo);
+  --game-color-glow: var(--game-tempo-glow);
+}
+
 .dashboard-game-stat__top,
 .dashboard-game-stat__meta {
   display: flex;

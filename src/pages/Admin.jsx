@@ -11,13 +11,16 @@ import './Admin.css'
 import { searchRecordings } from '../lib/musicbrainz'
 import { lookupBillboardPeak, lookupBillboard200Peak } from '../lib/billboard'
 import { todayEST } from '../lib/date'
-import RoundsFields, { ROUNDS_GAMES, usedSongs, validateRounds, cleanRounds } from './AdminRounds'
+import RoundsFields, { ROUNDS_GAMES, ROUNDS_ONLY, usedSongs, validateRounds, cleanRounds } from './AdminRounds'
 
 const GAMES = [
   { slug: 'one-bar',        short: 'One Bar' },
   { slug: 'hit-or-miss',    short: 'Hit or Miss' },
   { slug: 'era',            short: 'Era' },
   { slug: 'cover-or-not',   short: 'Cover/Not' },
+  // Not in the lineup until games.js gives it an addedOn date; schedulable
+  // ahead of that.
+  { slug: 'tempo',          short: 'Tempo' },
 ]
 
 
@@ -127,7 +130,7 @@ function parseRow(p) {
 
 /** A five-song day: Hit or Miss's peaks, or Era's timeline. */
 function usesRounds(f) {
-  return Boolean(ROUNDS_GAMES[f.game]) && f.format === 'rounds'
+  return ROUNDS_ONLY.has(f.game) || (Boolean(ROUNDS_GAMES[f.game]) && f.format === 'rounds')
 }
 
 function buildRow(f) {
@@ -1126,7 +1129,7 @@ export default function Admin() {
               )
             })()}
 
-            {ROUNDS_GAMES[form.game] && (
+            {ROUNDS_GAMES[form.game] && !ROUNDS_ONLY.has(form.game) && (
               <Field label="Format">
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   {[['rounds', ROUNDS_GAMES[form.game] === 'peak' ? 'Five songs on the peak dial' : 'Five songs on a timeline'], ['single', 'One song (the old way)']].map(([v, label]) => (

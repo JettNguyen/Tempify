@@ -22,6 +22,7 @@ import HitOrMiss from './games/HitOrMiss'
 import Sampled from './games/Sampled'
 import Era from './games/Era'
 import CoverOrNot from './games/CoverOrNot'
+import TapTempo from './games/TapTempo'
 import { useIOSIPadUI } from './hooks/useIOSIPadUI'
 import { useScrolling } from './hooks/useScrolling'
 import { useNativeSplash } from './hooks/useNativeSplash'
@@ -84,6 +85,7 @@ export default function App() {
                   <Route path="/game/sampled" element={<Sampled />} />
                   <Route path="/game/era" element={<Era />} />
                   <Route path="/game/cover-or-not" element={<CoverOrNot />} />
+                  <Route path="/game/tempo" element={<TapTempo />} />
                   <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
                   <Route path="/archive" element={<Navigate to="/explore" replace />} />
                   <Route path="/archive/:date" element={<ArchiveDay />} />
