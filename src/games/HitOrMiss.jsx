@@ -16,7 +16,7 @@ import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Peak from './Peak'
-import { isPeakPuzzle } from '../lib/peak'
+import { hasRounds } from '../lib/points'
 import './choices.css'
 import './HitOrMiss.css'
 
@@ -77,7 +77,7 @@ export default function HitOrMiss() {
 
   // Five songs on a dial since Peak; one song, hit or miss, before it. Which a
   // day gets is up to its puzzle, so the archive plays both.
-  return isPeakPuzzle(puzzle)
+  return hasRounds(puzzle)
     ? <Peak puzzle={puzzle} puzzleDate={puzzleDate} dateParam={dateParam} Shell={GameShell} />
     : <OneSong puzzle={puzzle} puzzleDate={puzzleDate} dateParam={dateParam} />
 }

@@ -37,8 +37,3 @@ export function peakPoints(guess, actual) {
 export function peakLabel(peak) {
   return peak ? `#${peak}` : 'Never charted'
 }
-
-/** A Peak puzzle carries its five songs as rounds; an older Hit or Miss doesn't. */
-export function isPeakPuzzle(puzzle) {
-  return Array.isArray(puzzle?.metadata?.rounds) && puzzle.metadata.rounds.length > 0
-}

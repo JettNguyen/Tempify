@@ -4,6 +4,11 @@
 
 export const ROUND_MAX = 1000
 
+/** A day of rounds rather than one song: the older puzzles of each game have none. */
+export function hasRounds(puzzle) {
+  return Array.isArray(puzzle?.metadata?.rounds) && puzzle.metadata.rounds.length > 0
+}
+
 // A day counts as a win, for streaks and the profile's win rate, from half
 // the points on offer. Below that it still has a place on the leaderboard.
 export const WIN_SHARE = 0.5

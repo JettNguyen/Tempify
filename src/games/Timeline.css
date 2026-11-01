@@ -1,0 +1,246 @@
+/* Era as a timeline. The line runs down the screen, earliest at the top, with
+   a gap to tap before, between and after the songs already on it. A placed
+   song lands in its real spot and lights green, amber or red for how close
+   the gap you chose was. */
+
+/* The line grows to five songs and the gaps between them, so the stage gives
+   up height to keep the last gap in reach without a scroll. */
+.timeline .audio-stage__visual {
+  height: clamp(92px, 10vh, 140px);
+}
+
+.timeline__progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.25rem 0 0.6rem;
+}
+
+.timeline__pips {
+  display: flex;
+  gap: 6px;
+}
+
+.timeline__pip {
+  width: 22px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  transition: background-color 0.3s ease, width 0.3s ease;
+}
+
+.timeline__pip--now   { width: 34px; background: var(--game-color); }
+.timeline__pip--close { background: var(--green); }
+.timeline__pip--near  { background: var(--amber); }
+.timeline__pip--far   { background: var(--red); }
+
+.timeline__total {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline__line {
+  position: relative;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 0.6rem;
+  padding: 0 0 0 18px;
+}
+
+/* The line itself, down the left edge. */
+.timeline__line::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 1px;
+  background: linear-gradient(rgba(var(--game-color-rgb), 0.6), rgba(var(--game-color-rgb), 0.15));
+}
+
+.timeline__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeline__song {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 5px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  text-align: left;
+  animation: fadeInUp 0.3s ease both;
+}
+
+/* Rows are only buttons once the day is done (tap one to hear it again); until
+   then they shouldn't look switched off. */
+.timeline__song:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+/* The dot where a song sits on the line. */
+.timeline__song::before {
+  content: '';
+  position: absolute;
+  left: -17px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--tier, var(--game-color));
+  box-shadow: 0 0 0 3px var(--bg);
+}
+
+.timeline__song--anchor { --tier: var(--text-muted); }
+.timeline__song--close  { --tier: var(--green); }
+.timeline__song--near   { --tier: var(--amber); }
+.timeline__song--far    { --tier: var(--red); }
+
+.timeline__song--fresh {
+  border-color: var(--tier);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--tier) 18%, transparent), transparent 70%),
+    var(--surface);
+  animation: timelineLand 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.timeline__song--on {
+  border-color: rgba(var(--game-color-rgb), 0.7);
+}
+
+.timeline__year {
+  min-width: 42px;
+  font-size: var(--fs-md);
+  font-weight: 750;
+  color: var(--tier, var(--game-color));
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline__name {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline__title,
+.timeline__artist {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.timeline__artist {
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+}
+
+.timeline__points {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--tier);
+}
+
+.timeline__start {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ---- The gaps ---- */
+
+.timeline__gap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1.5px dashed rgba(var(--game-color-rgb), 0.55);
+  background: rgba(var(--game-color-rgb), 0.06);
+  color: var(--game-color);
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  transition: scale var(--press-up), opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  animation: fadeIn 0.25s ease both;
+}
+
+.timeline__gap:not(:disabled):active {
+  background: rgba(var(--game-color-rgb), 0.18);
+}
+
+.timeline__gap--locked {
+  border-style: solid;
+  border-color: var(--game-color);
+  background: rgba(var(--game-color-rgb), 0.25);
+  box-shadow: 0 8px 26px rgba(var(--game-color-rgb), 0.3);
+}
+
+.timeline__gap--waiting {
+  opacity: 0.35;
+}
+
+.timeline__gap:disabled {
+  cursor: default;
+}
+
+.timeline__next {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 0.75rem;
+  border-radius: 12px;
+  background: var(--game-color);
+  color: #0f0f0f;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  animation: fadeInUp 0.3s ease 0.15s both;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .timeline__gap:not(:disabled):hover {
+    background: rgba(var(--game-color-rgb), 0.14);
+    border-color: var(--game-color);
+  }
+}
+
+@keyframes timelineLand {
+  0%   { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  60%  { opacity: 1; transform: translateY(0) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline__song,
+  .timeline__song--fresh,
+  .timeline__gap,
+  .timeline__next {
+    animation: none;
+  }
+}

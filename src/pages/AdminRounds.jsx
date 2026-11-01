@@ -5,8 +5,8 @@ import {
 } from '../lib/drafts'
 
 // The games whose day is five songs instead of one, and the puzzle kind each
-// one drafts. Hit or Miss is Peak's dial.
-export const ROUNDS_GAMES = { 'hit-or-miss': 'peak' }
+// one drafts. Hit or Miss is Peak's dial; Era is the timeline.
+export const ROUNDS_GAMES = { 'hit-or-miss': 'peak', era: 'timeline' }
 
 export const ROUND_COUNT = 5
 

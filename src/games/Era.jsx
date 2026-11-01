@@ -17,13 +17,13 @@ import GameHeader from '../components/GameHeader'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
+import Timeline from './Timeline'
+import { hasRounds } from '../lib/points'
 import './choices.css'
 import './Era.css'
 
 
 export default function Era() {
-  const { user, profile } = useAuth()
-  const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()
@@ -34,6 +34,32 @@ export default function Era() {
   const [puzzle, setPuzzle] = useState(cachedPuzzle)
   const [loading, setLoading] = useState(!cachedPuzzle)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    // Already seeded from cache, since refetching would only re-run derived
+    // state (option order) and make the screen jump.
+    if (cachedPuzzle) return
+    getPuzzle('era', dateParam)
+      .then(setPuzzle)
+      .catch(() => setError('No puzzle found for today.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
+  if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
+  if (!puzzle) return null
+
+  // Five songs on a timeline since Timeline; one song and its decade before
+  // it. Which a day gets is up to its puzzle, so the archive plays both.
+  return hasRounds(puzzle)
+    ? <Timeline puzzle={puzzle} puzzleDate={puzzleDate} dateParam={dateParam} Shell={GameShell} />
+    : <OneSong puzzle={puzzle} puzzleDate={puzzleDate} dateParam={dateParam} />
+}
+
+function OneSong({ puzzle, puzzleDate, dateParam }) {
+  const { user, profile } = useAuth()
+  const { markComplete, isComplete, completions } = useCompletion(user?.id)
+  const [searchParams] = useSearchParams()
   const [done, setDone] = useState(false)
   const [justFinished, setJustFinished] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
@@ -46,18 +72,8 @@ export default function Era() {
   const { stop, display } = useGameTimer(hasStarted && !done, 250, `tempify_game_era_${puzzleDate}`)
 
   useEffect(() => {
-    // Already seeded from cache, since refetching would only re-run derived
-    // state (option order) and make the screen jump.
-    if (cachedPuzzle) return
-    getPuzzle('era', dateParam)
-      .then(setPuzzle)
-      .catch(() => setError('No puzzle found for today.'))
-      .finally(() => setLoading(false))
-  }, [])
-
-  useEffect(() => {
     // A pick still in its beat reveals itself when the beat is over.
-    if (!puzzle || done || revealRef.current) return
+    if (done || revealRef.current) return
     if (isComplete('era', puzzleDate)) {
       stop()
       const wasCorrect = completions[`era|${puzzleDate}`]?.completed ?? false
@@ -65,13 +81,11 @@ export default function Era() {
       setCorrect(wasCorrect)
       setDone(true)
     }
-  }, [puzzle, completions])
+  }, [completions])
 
   useEffect(() => () => clearTimeout(revealRef.current), [])
 
   useEffect(() => {
-    if (!puzzle) return
-
     let cancelled = false
     const existing = puzzle.metadata?.artwork_url || null
     if (existing) {
@@ -122,10 +136,6 @@ export default function Era() {
       }
     }
   }
-
-  if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
-  if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
-  if (!puzzle) return null
 
   let timer = null
   if (!done && profile?.competitive_mode !== false) {
@@ -210,6 +220,6 @@ export default function Era() {
   )
 }
 
-function GameShell({ children }) {
-  return <div className="page-shell page-shell--fill game-theme--era">{children}</div>
+function GameShell({ children, className }) {
+  return <div className={`page-shell page-shell--fill game-theme--era${className ? ` ${className}` : ''}`}>{children}</div>
 }
