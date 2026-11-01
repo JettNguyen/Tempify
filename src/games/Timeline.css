@@ -180,7 +180,8 @@
   min-height: 40px;
   border-radius: 12px;
   border: 1.5px dashed rgba(var(--game-color-rgb), 0.55);
-  background: rgba(var(--game-color-rgb), 0.06);
+  /* Solid, tint and all: a see-through gap shows the stage's glow across it. */
+  background: color-mix(in srgb, var(--game-color) 6%, var(--bg));
   color: var(--game-color);
   font-size: var(--fs-xs);
   font-weight: 650;
@@ -189,18 +190,19 @@
 }
 
 .timeline__gap:not(:disabled):active {
-  background: rgba(var(--game-color-rgb), 0.18);
+  background: color-mix(in srgb, var(--game-color) 18%, var(--bg));
 }
 
 .timeline__gap--locked {
   border-style: solid;
   border-color: var(--game-color);
-  background: rgba(var(--game-color-rgb), 0.25);
+  background: color-mix(in srgb, var(--game-color) 25%, var(--bg));
   box-shadow: 0 8px 26px rgba(var(--game-color-rgb), 0.3);
 }
 
 .timeline__gap--waiting {
-  opacity: 0.35;
+  border-color: color-mix(in srgb, var(--game-color) 20%, var(--bg));
+  color: color-mix(in srgb, var(--game-color) 35%, var(--bg));
 }
 
 .timeline__gap:disabled {
@@ -208,6 +210,7 @@
 }
 
 .timeline__next {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -225,7 +228,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .timeline__gap:not(:disabled):hover {
-    background: rgba(var(--game-color-rgb), 0.14);
+    background: color-mix(in srgb, var(--game-color) 14%, var(--bg));
     border-color: var(--game-color);
   }
 }

@@ -48,7 +48,10 @@
 
 /* ---- The dial ---- */
 
+/* Positioned, like everything under a stage, so it paints over the stage's
+   glow rather than under it. */
 .peak-dial {
+  position: relative;
   --thumb: 30px;
   --tier: var(--game-color);
   margin-top: 0.75rem;
@@ -292,6 +295,7 @@
 /* ---- The day, once it's done ---- */
 
 .peak__summary {
+  position: relative;
   list-style: none;
   display: flex;
   flex-direction: column;

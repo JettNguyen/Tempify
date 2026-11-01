@@ -44,7 +44,7 @@
   height: 30px;
   width: auto;
   color: var(--game-color);
-  transition: color 0.25s ease;
+  transition: color 0.25s ease, opacity 0.3s ease;
 }
 
 .choice__label {
@@ -95,9 +95,23 @@
 
 /* `animation: none` because the entrance animation fills forwards, and a held
    animation outranks a plain opacity rule: without this the cards meant to
-   dim stay at full strength. */
+   dim stay at full strength.
+
+   Dimmed with solid colors rather than opacity on the whole card: a card you
+   can see through lets the stage's glow show across it while the clip plays.
+   Mixed into the page's own background, these come out where the old 38% and
+   40% opacity did. */
+:where(.choice) > * {
+  transition: opacity 0.3s ease;
+}
+
 .choice--waiting {
   animation: none;
+  background: color-mix(in srgb, var(--surface) 38%, var(--bg));
+  border-color: color-mix(in srgb, var(--border) 38%, var(--bg));
+}
+
+.choice--waiting > * {
   opacity: 0.38;
 }
 
@@ -142,6 +156,11 @@
 
 .choice--faded {
   animation: none;
+  background: color-mix(in srgb, var(--surface) 40%, var(--bg));
+  border-color: color-mix(in srgb, var(--border) 40%, var(--bg));
+}
+
+.choice--faded > * {
   opacity: 0.4;
 }
 
