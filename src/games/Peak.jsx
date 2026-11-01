@@ -16,6 +16,7 @@ import GameHeader from '../components/GameHeader'
 import StageSong from '../components/StageSong'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
+import Dial from '../components/Dial'
 import './Peak.css'
 
 const SLUG = 'hit-or-miss'
@@ -92,8 +93,7 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
   const finalPoints = results.length === rounds.length ? total : (savedPoints ?? total)
   const guess = revealed ? result.guess : peakAt(position)
 
-  function move(e) {
-    const next = Number(e.target.value) / 1000
+  function move(next) {
     const before = peakAt(position)
     const after = peakAt(next)
     // A tick at the two ends rather than every place: a buzz per number would
@@ -220,61 +220,40 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
           })}
         </ol>
       ) : (
-        <div
-          className={`peak-dial${revealed ? ` peak-dial--revealed peak-dial--${tier}` : ''}${locking ? ' peak-dial--locking' : ''}`}
-          style={{ '--guess': dialAt(guess), '--actual': dialAt(round.peak || 0), '--never': NEVER_FROM }}
+        <Dial
+          position={revealed ? dialAt(result.guess) : position}
+          steps={1000}
+          onMove={move}
+          answerAt={revealed ? dialAt(round.peak || 0) : null}
+          tier={tier}
+          locking={locking}
+          zoneFrom={NEVER_FROM}
+          ticks={[
+            ...TICKS.map(t => ({ at: dialAt(t), label: `#${t}` })),
+            { at: (NEVER_FROM + 1) / 2, label: 'Never', zone: true },
+          ]}
+          value={revealed ? peakLabel(round.peak || 0) : peakLabel(guess)}
+          sub={revealed ? `You said ${peakLabel(result.guess)}` : 'Drag to where it peaked on the Hot 100'}
+          label="Where it peaked on the Hot 100"
+          valueText={peakLabel(guess)}
         >
-          <div className="peak-dial__readout" aria-live="polite">
-            <span key={revealed ? 'answer' : 'guess'} className="peak-dial__value">
-              {revealed ? peakLabel(round.peak || 0) : peakLabel(guess)}
-            </span>
-            <span className="peak-dial__sub">
-              {revealed ? `You said ${peakLabel(result.guess)}` : 'Drag to where it peaked on the Hot 100'}
-            </span>
-          </div>
-
-          <div className="peak-dial__rail">
-            <div className="peak-dial__track" aria-hidden="true">
-              <span className="peak-dial__never" />
-            </div>
-            {revealed && <span className="peak-dial__gap" aria-hidden="true" />}
-            {revealed && <span className="peak-dial__actual" aria-hidden="true" />}
-            <input
-              type="range"
-              className="peak-dial__input"
-              min="0"
-              max="1000"
-              step="1"
-              value={Math.round((revealed ? dialAt(result.guess) : position) * 1000)}
-              onChange={move}
-              disabled={revealed || locking}
-              aria-label="Where it peaked on the Hot 100"
-              aria-valuetext={peakLabel(guess)}
-            />
-          </div>
-
-          <div className="peak-dial__ticks" aria-hidden="true">
-            {TICKS.map(t => <span key={t} style={{ '--at': dialAt(t) }}>#{t}</span>)}
-            <span className="peak-dial__tick-never" style={{ '--at': (NEVER_FROM + 1) / 2 }}>Never</span>
-          </div>
-
           {revealed ? (
-            <div className="peak-dial__outcome">
-              <p className="peak-dial__verdict">
-                <span className="peak-dial__points">+{fmtPoints(result.points)}</span>
+            <div className="dial__outcome">
+              <p className="dial__verdict">
+                <span className="dial__points">+{fmtPoints(result.points)}</span>
                 <span>{verdictText(round)}</span>
               </p>
-              <button type="button" className="peak-dial__action btn-press" onClick={advance}>
+              <button type="button" className="dial__action btn-press" onClick={advance}>
                 {isLast ? 'See how you did' : 'Next song'}
                 <Icon name="chevronRight" size={15} strokeWidth={2.5} />
               </button>
             </div>
           ) : (
-            <button type="button" className="peak-dial__action btn-press" onClick={lockIn} disabled={locking}>
+            <button type="button" className="dial__action btn-press" onClick={lockIn} disabled={locking}>
               Lock in {peakLabel(guess)}
             </button>
           )}
-        </div>
+        </Dial>
       )}
 
       {done && (

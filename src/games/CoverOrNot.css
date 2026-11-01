@@ -53,3 +53,80 @@
   color: var(--text-muted);
   margin-bottom: 0.75rem;
 }
+
+/* ---- The year, on a cover ---- */
+
+/* The call and the year dial need more room than the two answer cards did, so
+   the stage gives some back while they're up. */
+.cover-or-not--year .audio-stage__visual {
+  height: clamp(104px, 15vh, 168px);
+}
+
+/* The call, folded down to one line once it has landed. Positioned so it sits
+   above the stage's glow. */
+.cover-or-not__call {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0.75rem;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  animation: fadeInUp 0.3s ease both;
+}
+
+.cover-or-not__call--right { border-color: rgba(34, 197, 94, 0.45); }
+.cover-or-not__call--wrong { border-color: rgba(239, 68, 68, 0.45); }
+
+.cover-or-not__call-mark {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.cover-or-not__call--right .cover-or-not__call-mark { background: var(--green); color: #06210f; }
+.cover-or-not__call--wrong .cover-or-not__call-mark { background: var(--red); color: #2a0808; }
+
+.cover-or-not__call-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.cover-or-not__call-label,
+.cover-or-not__call-sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cover-or-not__call-label {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+}
+
+.cover-or-not__call-sub {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.cover-or-not__call-points {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cover-or-not__call--right .cover-or-not__call-points { color: var(--green); }
+.cover-or-not__call--wrong .cover-or-not__call-points { color: var(--text-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-or-not__call {
+    animation: none;
+  }
+}

@@ -1,0 +1,284 @@
+/* The dial in the points games: drag to an answer, lock it in, and the real
+   answer drops onto the same rail with a bar between the two showing how far
+   off it was, in green, amber or red. Hit or Miss's peaks and Cover or Not's
+   years. */
+
+/* Positioned, like everything under a stage, so it paints over the stage's
+   glow rather than under it. */
+.dial {
+  position: relative;
+  --thumb: 30px;
+  --tier: var(--game-color);
+  margin-top: 0.75rem;
+  padding: 12px 14px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(165deg, rgba(var(--game-color-rgb), 0.09), rgba(var(--game-color-rgb), 0) 58%),
+    var(--surface);
+  animation: fadeInUp 0.3s ease both;
+}
+
+.dial--close { --tier: var(--green); }
+.dial--near  { --tier: var(--amber); }
+.dial--far   { --tier: var(--red); }
+
+.dial__readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.dial__value {
+  font-size: var(--fs-2xl);
+  font-weight: 750;
+  line-height: 1.1;
+  color: var(--game-color);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.dial--locking .dial__value {
+  animation: dialBeat 0.25s ease both;
+}
+
+.dial--revealed .dial__value {
+  color: var(--tier);
+  animation: dialLand 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.dial__sub {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* Markers sit where the range input draws its thumb: inset by half a thumb at
+   each end, since the thumb never hangs off the track. */
+.dial__rail {
+  position: relative;
+  height: 44px;
+  margin-top: 4px;
+}
+
+.dial__track,
+.dial__gap,
+.dial__actual {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.dial__track {
+  left: 0;
+  right: 0;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgba(var(--game-color-rgb), 0.55), rgba(var(--game-color-rgb), 0.12));
+}
+
+/* An end zone that isn't on the scale, set off in stripes: Peak's "never
+   charted". */
+.dial__zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--zone));
+  background: repeating-linear-gradient(135deg, #2a2a2a 0 4px, #1f1f1f 4px 8px);
+}
+
+.dial__gap {
+  --from: min(var(--guess), var(--actual));
+  --to: max(var(--guess), var(--actual));
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--from));
+  width: calc((100% - var(--thumb)) * (var(--to) - var(--from)));
+  height: 8px;
+  border-radius: 4px;
+  background: var(--tier);
+  transform-origin: left center;
+  animation: dialGap 0.45s ease both;
+}
+
+.dial__actual {
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--actual));
+  width: 14px;
+  height: 34px;
+  margin-left: -7px;
+  border-radius: 7px;
+  background: var(--tier);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 18px var(--tier);
+  animation: dialDrop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) 0.1s both;
+}
+
+.dial__input {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.dial__input:disabled {
+  cursor: default;
+}
+
+.dial__input::-webkit-slider-runnable-track {
+  height: 44px;
+  background: transparent;
+}
+
+.dial__input::-moz-range-track {
+  height: 44px;
+  background: transparent;
+}
+
+.dial__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: calc((44px - var(--thumb)) / 2);
+  border-radius: 50%;
+  border: 3px solid var(--surface);
+  background: var(--game-color);
+  box-shadow: 0 0 0 1px var(--game-color), 0 6px 20px rgba(var(--game-color-rgb), 0.45);
+  transition: scale var(--press-up), background-color 0.2s ease;
+}
+
+.dial__input::-moz-range-thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: 50%;
+  border: 3px solid var(--surface);
+  background: var(--game-color);
+  box-shadow: 0 0 0 1px var(--game-color), 0 6px 20px rgba(var(--game-color-rgb), 0.45);
+}
+
+.dial__input:not(:disabled):active::-webkit-slider-thumb {
+  scale: 1.15;
+}
+
+.dial__input:focus-visible {
+  outline: none;
+}
+
+.dial__input:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--text-primary), 0 6px 20px rgba(var(--game-color-rgb), 0.45);
+}
+
+/* Once the answer is in, the thumb is just where you said: it stays in the
+   game's color and steps back so the real answer is what stands out. */
+.dial--revealed .dial__input::-webkit-slider-thumb {
+  opacity: 0.85;
+  box-shadow: none;
+}
+
+.dial__ticks {
+  position: relative;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.dial__ticks span {
+  position: absolute;
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--at));
+  transform: translateX(-50%);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.dial__ticks .dial__tick-zone {
+  color: var(--text-muted);
+}
+
+.dial__outcome {
+  margin-top: 8px;
+}
+
+.dial__verdict {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-bottom: 10px;
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.dial__points {
+  font-size: var(--fs-lg);
+  font-weight: 750;
+  color: var(--tier);
+  font-variant-numeric: tabular-nums;
+  animation: dialLand 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) 0.15s both;
+}
+
+.dial__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 10px;
+  border-radius: 12px;
+  background: var(--game-color);
+  color: #0f0f0f;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dial__outcome .dial__action {
+  margin-top: 0;
+}
+
+.dial__action:disabled {
+  opacity: 0.6;
+}
+
+@keyframes dialBeat {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes dialLand {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes dialGap {
+  from { opacity: 0; }
+  to   { opacity: 0.55; }
+}
+
+@keyframes dialDrop {
+  from { opacity: 0; transform: translateY(-120%) scale(0.6); }
+  to   { opacity: 1; transform: translateY(-50%) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dial,
+  .dial__value,
+  .dial__points,
+  .dial__gap,
+  .dial__actual {
+    animation: none;
+  }
+
+  .dial__gap {
+    opacity: 0.55;
+  }
+}
