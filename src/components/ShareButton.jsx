@@ -77,7 +77,7 @@ async function copyText(text) {
   return legacyCopy(text)
 }
 
-export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, timeSeconds, puzzleDate }) {
+export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, timeSeconds, puzzleDate, resultLine: givenLine }) {
   const [state, setState] = useState('idle')
   const resetRef = useRef(null)
 
@@ -98,10 +98,11 @@ export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, ti
     const dateLabel = fmtShareDate(puzzleDate)
     const header = ['Tempify', gameName, dateLabel].filter(Boolean).join(' · ')
 
+    // A points game writes its own line, since its score isn't a win or a loss.
     const lines = RESULT_LINES[gameSlug]
-    const resultLine = lines
+    const resultLine = givenLine || (lines
       ? (correct ? lines.win(attempts) : lines.loss(attempts))
-      : (correct ? '✅' : '❌')
+      : (correct ? '✅' : '❌'))
 
     const parts = [header]
     if (emojiGrid) parts.push(emojiGrid)

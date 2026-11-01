@@ -39,7 +39,53 @@ function timeBucket(seconds) {
   return '5'
 }
 
-export default function PuzzleStats({ gameSlug, puzzleDate, attempts, timeSeconds, correct }) {
+/**
+ * A points game's spread, in five bands from the top score down. The server
+ * keys points by the hundred, so the bands are put together from those.
+ */
+function PointsStats({ stats, gameSlug, points, maxPoints }) {
+  const hundreds = Object.entries(stats.points || {}).map(([k, n]) => [Number(k) * 100, n])
+  const scored = hundreds.reduce((sum, [, n]) => sum + n, 0)
+  if (scored < MIN_PLAYERS) return null
+
+  const width = maxPoints / 5
+  const bandOf = (p) => Math.min(4, Math.floor(p / width))
+  const bands = [4, 3, 2, 1, 0].map((b) => ({
+    key: b,
+    label: `${(b * width).toLocaleString('en-US')}+`,
+    n: hundreds.filter(([p]) => bandOf(p) === b).reduce((sum, [, n]) => sum + n, 0),
+  }))
+  const mine = bandOf(points)
+  const max = Math.max(1, ...bands.map((b) => b.n))
+
+  // Only whole hundreds come back, so "beat" counts the hundreds under yours;
+  // a tie inside your own hundred is left out rather than guessed at.
+  const below = hundreds.filter(([p]) => p < Math.floor(points / 100) * 100).reduce((sum, [, n]) => sum + n, 0)
+  const beat = Math.round((below / scored) * 100)
+
+  return (
+    <div className={`puzzle-stats game-theme--${gameSlug}`}>
+      <p className="puzzle-stats__title">How everyone did</p>
+      <p className="puzzle-stats__rate">
+        You beat <strong>{beat}%</strong> of {scored} players
+        {stats.points_avg != null && <> · average {Number(stats.points_avg).toLocaleString('en-US')}</>}
+      </p>
+      <div className="puzzle-stats__rows">
+        {bands.map((b) => (
+          <div key={b.key} className={`puzzle-stats__row${b.key === mine ? ' puzzle-stats__row--mine' : ''}`}>
+            <span className="puzzle-stats__label">{b.label}</span>
+            <span className="puzzle-stats__track">
+              <span className="puzzle-stats__bar" style={{ width: b.n ? `${Math.max(3, (b.n / max) * 100)}%` : 0 }} />
+            </span>
+            <span className="puzzle-stats__count">{b.n}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function PuzzleStats({ gameSlug, puzzleDate, attempts, timeSeconds, correct, points, maxPoints }) {
   const date = puzzleDate || todayEST()
   const [stats, setStats] = useState(null)
 
@@ -54,6 +100,10 @@ export default function PuzzleStats({ gameSlug, puzzleDate, attempts, timeSecond
   // No stats, too few players to say anything, or the project has not run the
   // migration: show nothing rather than a chart that is really a mirror.
   if (!stats || !stats.total || stats.total < MIN_PLAYERS) return null
+
+  if (points != null && maxPoints) {
+    return <PointsStats stats={stats} gameSlug={gameSlug} points={points} maxPoints={maxPoints} />
+  }
 
   const isOneBar = gameSlug === 'one-bar'
   const buckets = isOneBar ? ONE_BAR_BUCKETS : TIME_BUCKETS

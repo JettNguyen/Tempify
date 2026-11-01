@@ -11,6 +11,7 @@ import './Admin.css'
 import { searchRecordings } from '../lib/musicbrainz'
 import { lookupBillboardPeak, lookupBillboard200Peak } from '../lib/billboard'
 import { todayEST } from '../lib/date'
+import RoundsFields, { ROUNDS_GAMES, usedSongs, validateRounds, cleanRounds } from './AdminRounds'
 
 const GAMES = [
   { slug: 'one-bar',        short: 'One Bar' },
@@ -42,6 +43,8 @@ function fmtDate(dateStr) {
 
 const BLANK = {
   date: '', game: 'one-bar', audioUrl: '', answer: '', genre: '',
+  // hit-or-miss and era: five songs a day ('rounds') or the older one ('single')
+  format: 'rounds', rounds: [],
   // shared
   artist: '', year: '',
   // hit-or-miss
@@ -70,6 +73,8 @@ function parseRow(p) {
     audioUrl:      p.audio_url || '',
     answer:        p.answer || '',
     genre:         p.genre || '',
+    format:        Array.isArray(m.rounds) ? 'rounds' : 'single',
+    rounds:        m.rounds || [],
     artist:        m.artist || '',
     year:          m.year ? String(m.year) : '',
     // hit-or-miss
@@ -120,10 +125,29 @@ function parseRow(p) {
   }
 }
 
+/** A five-song day: Hit or Miss's peaks, or Era's timeline. */
+function usesRounds(f) {
+  return Boolean(ROUNDS_GAMES[f.game]) && f.format === 'rounds'
+}
+
 function buildRow(f) {
   let meta = {}
   let audioUrl = f.audioUrl
   let answer = f.answer
+
+  if (usesRounds(f)) {
+    const rounds = cleanRounds(ROUNDS_GAMES[f.game], f.rounds)
+    return {
+      game_slug: f.game,
+      scheduled_date: f.date,
+      // The first clip, so the home screen's warm-up starts the day's first song.
+      audio_url: rounds[0]?.audio_url || null,
+      // What the schedule grid shows for the day.
+      answer: rounds.map(r => r.title).join(' · '),
+      genre: f.genre || null,
+      metadata: { rounds, note: f.note || null },
+    }
+  }
 
   switch (f.game) {
     case 'one-bar':
@@ -843,6 +867,8 @@ export default function Admin() {
   }
 
   function presentedSongKeyFromForm(f) {
+    // Five-song days check each song on its own row instead.
+    if (usesRounds(f)) return ''
     switch (f.game) {
       case 'one-bar':
       case 'hit-or-miss':
@@ -862,6 +888,9 @@ export default function Admin() {
     const err = []
     if (!f.date)  err.push('Date')
     if (!f.genre) err.push('Genre')
+    if (usesRounds(f)) {
+      return [...err, ...validateRounds(ROUNDS_GAMES[f.game], f.rounds, usedSongs(gamePuzzles, editingId))]
+    }
     switch (f.game) {
       case 'one-bar':
         if (!f.audioUrl) err.push('Audio URL')
@@ -1053,7 +1082,7 @@ export default function Admin() {
 
           <form onSubmit={handleSubmit}>
             {/* Song search - hidden for sampled and cover-or-not (they have their own search) */}
-            {form.game !== 'sampled' && form.game !== 'cover-or-not' && (
+            {form.game !== 'sampled' && form.game !== 'cover-or-not' && !usesRounds(form) && (
               <SongSearch onSelect={song => {
                 setForm(f => ({
                   ...f,
@@ -1097,6 +1126,22 @@ export default function Admin() {
               )
             })()}
 
+            {ROUNDS_GAMES[form.game] && (
+              <Field label="Format">
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {[['rounds', ROUNDS_GAMES[form.game] === 'peak' ? 'Five songs on the peak dial' : 'Five songs on a timeline'], ['single', 'One song (the old way)']].map(([v, label]) => (
+                    <button key={v} type="button" onClick={() => set('format', v)} style={{
+                      flex: 1, padding: '7px', borderRadius: '6px', border: '1px solid',
+                      borderColor: form.format === v ? 'var(--amber)' : 'var(--border)',
+                      background: form.format === v ? 'var(--amber-glow)' : 'transparent',
+                      color: form.format === v ? 'var(--amber)' : 'var(--text-muted)',
+                      fontSize: '13px', cursor: 'pointer',
+                    }}>{label}</button>
+                  ))}
+                </div>
+              </Field>
+            )}
+
             {/* Genre */}
             <Field label="Genre">
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -1113,13 +1158,13 @@ export default function Admin() {
             </Field>
 
             {/* Audio URL + Answer - common to most games; sampled handles these internally */}
-            {form.game !== 'sampled' && form.game !== 'cover-or-not' && (
+            {form.game !== 'sampled' && form.game !== 'cover-or-not' && !usesRounds(form) && (
               <Field label="Audio URL">
                 <Input value={form.audioUrl} onChange={v => set('audioUrl', v)} placeholder="https://..." />
               </Field>
             )}
 
-            {form.game !== 'cover-or-not' && form.game !== 'era' && form.game !== 'sampled' && (
+            {form.game !== 'cover-or-not' && form.game !== 'era' && form.game !== 'sampled' && !usesRounds(form) && (
               <Field label="Answer (song title)">
                 <Input value={form.answer} onChange={v => set('answer', v)} placeholder="Exact song title" />
               </Field>
@@ -1127,10 +1172,22 @@ export default function Admin() {
 
             {/* Game-specific fields */}
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+              {usesRounds(form) && (
+                <>
+                  <RoundsFields
+                    kind={ROUNDS_GAMES[form.game]}
+                    rounds={form.rounds}
+                    setRounds={rounds => set('rounds', rounds)}
+                    setGenre={g => set('genre', g)}
+                    used={usedSongs(gamePuzzles, editingId)}
+                  />
+                  <NoteField f={form} set={set} />
+                </>
+              )}
               {form.game === 'one-bar'        && <OneBarFields    f={form} set={set} />}
-              {form.game === 'hit-or-miss'     && <HitOrMissFields f={form} set={set} />}
+              {form.game === 'hit-or-miss'     && !usesRounds(form) && <HitOrMissFields f={form} set={set} />}
               {form.game === 'sampled'         && <WhoSampledFields f={form} set={set} setGenre={v => set('genre', v)} />}
-              {form.game === 'era'            && <EraFields        f={form} set={set} />}
+              {form.game === 'era'            && !usesRounds(form) && <EraFields        f={form} set={set} />}
               {form.game === 'cover-or-not'    && <FlipFields       f={form} set={set} setGenre={v => set('genre', v)} />}
             </div>
 

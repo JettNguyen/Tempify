@@ -1,15 +1,27 @@
 import { supabase } from './supabase'
 import { todayEST, yesterdayEST } from './date'
 
-export async function saveScore({ userId, gameSlug, puzzleDate, attempts, completed, timeSeconds }) {
-  const { error } = await supabase.from('scores').upsert({
+export async function saveScore({ userId, gameSlug, puzzleDate, attempts, completed, timeSeconds, points }) {
+  const row = {
     user_id: userId,
     game_slug: gameSlug,
     date_played: puzzleDate || todayEST(),
     attempts,
     completed,
     time_seconds: timeSeconds ?? null,
-  }, { onConflict: 'user_id,game_slug,date_played' })
+  }
+  // Only the points games send points, so the pick-one games never touch the
+  // column at all.
+  if (points != null) row.points = points
+
+  let { error } = await supabase.from('scores').upsert(row, { onConflict: 'user_id,game_slug,date_played' })
+
+  // A project that has not run migration 010 has no points column. The play
+  // itself still counts, so save it without the points rather than lose it.
+  if (error && 'points' in row && /points/.test(error.message || '')) {
+    delete row.points
+    ;({ error } = await supabase.from('scores').upsert(row, { onConflict: 'user_id,game_slug,date_played' }))
+  }
 
   if (error) {
     console.error('[Tempify] saveScore failed:', gameSlug, error.message)
@@ -227,16 +239,19 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
 
   if (eligibleUserIds.length === 0) return []
 
-  const { data: scores, error } = await supabase
+  // `*` rather than a column list, so a project without migration 010's points
+  // column still gets a board. A points play ranks whether it won or not, the
+  // way a low score still has a place on a scoreboard.
+  const { data: rows, error } = await supabase
     .from('scores')
-    .select('user_id, attempts, completed, time_seconds')
+    .select('*')
     .eq('game_slug', gameSlug)
     .eq('date_played', date)
-    .eq('completed', true)
     .in('user_id', eligibleUserIds)
 
   if (error) { console.error('[leaderboard] scores query failed:', error.message); return [] }
-  if (!scores?.length) return []
+  const scores = (rows || []).filter(s => s.completed || s.points != null)
+  if (!scores.length) return []
 
   const userIds = [...new Set(scores.map(s => s.user_id))]
   const { data: profiles } = await supabase
@@ -254,9 +269,13 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
     avatarColor: profileMap[s.user_id]?.avatar_color,
     attempts: s.attempts,
     timeSeconds: s.time_seconds,
+    points: s.points ?? null,
   }))
 
-  if (gameSlug === 'one-bar') {
+  // A day's puzzle is either all points or none, so one scored row settles it.
+  if (entries.some(e => e.points != null)) {
+    entries.sort((a, b) => (b.points ?? -1) - (a.points ?? -1) || (a.timeSeconds ?? Infinity) - (b.timeSeconds ?? Infinity))
+  } else if (gameSlug === 'one-bar') {
     entries.sort((a, b) => a.attempts - b.attempts)
   } else {
     entries.sort((a, b) => (a.timeSeconds ?? Infinity) - (b.timeSeconds ?? Infinity))

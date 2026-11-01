@@ -15,6 +15,8 @@ import StageSong from '../components/StageSong'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
+import Peak from './Peak'
+import { isPeakPuzzle } from '../lib/peak'
 import './choices.css'
 import './HitOrMiss.css'
 
@@ -48,8 +50,6 @@ const CHOICES = [
 ]
 
 export default function HitOrMiss() {
-  const { user, profile } = useAuth()
-  const { markComplete, isComplete, completions } = useCompletion(user?.id)
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()
@@ -60,14 +60,6 @@ export default function HitOrMiss() {
   const [puzzle, setPuzzle] = useState(cachedPuzzle)
   const [loading, setLoading] = useState(!cachedPuzzle)
   const [error, setError] = useState(null)
-  const [done, setDone] = useState(false)
-  const [justFinished, setJustFinished] = useState(false)
-  const [chosen, setChosen] = useState(null)
-  const [correct, setCorrect] = useState(false)
-  const [finalTime, setFinalTime] = useState(null)
-  const revealRef = useRef(0)
-
-  const { stop, display } = useGameTimer(!done, 250, `tempify_game_hit-or-miss_${puzzleDate}`)
 
   useEffect(() => {
     // Already seeded from cache, since refetching would only re-run derived
@@ -79,15 +71,39 @@ export default function HitOrMiss() {
       .finally(() => setLoading(false))
   }, [])
 
+  if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
+  if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
+  if (!puzzle) return null
+
+  // Five songs on a dial since Peak; one song, hit or miss, before it. Which a
+  // day gets is up to its puzzle, so the archive plays both.
+  return isPeakPuzzle(puzzle)
+    ? <Peak puzzle={puzzle} puzzleDate={puzzleDate} dateParam={dateParam} Shell={GameShell} />
+    : <OneSong puzzle={puzzle} puzzleDate={puzzleDate} dateParam={dateParam} />
+}
+
+function OneSong({ puzzle, puzzleDate, dateParam }) {
+  const { user, profile } = useAuth()
+  const { markComplete, isComplete, completions } = useCompletion(user?.id)
+  const [searchParams] = useSearchParams()
+  const [done, setDone] = useState(false)
+  const [justFinished, setJustFinished] = useState(false)
+  const [chosen, setChosen] = useState(null)
+  const [correct, setCorrect] = useState(false)
+  const [finalTime, setFinalTime] = useState(null)
+  const revealRef = useRef(0)
+
+  const { stop, display } = useGameTimer(!done, 250, `tempify_game_hit-or-miss_${puzzleDate}`)
+
   useEffect(() => {
     // A pick still in its beat reveals itself when the beat is over.
-    if (!puzzle || done || chosen) return
+    if (done || chosen) return
     if (isComplete('hit-or-miss', puzzleDate)) {
       stop()
       setCorrect(completions[`hit-or-miss|${puzzleDate}`]?.completed ?? false)
       setDone(true)
     }
-  }, [puzzle, completions])
+  }, [completions])
 
   useEffect(() => () => clearTimeout(revealRef.current), [])
 
@@ -115,10 +131,6 @@ export default function HitOrMiss() {
       }
     }
   }
-
-  if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
-  if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
-  if (!puzzle) return null
 
   const isHit = puzzle.metadata?.verdict === 'hit'
   const verdict = puzzle.metadata?.verdict
@@ -198,6 +210,6 @@ export default function HitOrMiss() {
   )
 }
 
-function GameShell({ children }) {
-  return <div className="page-shell page-shell--fill game-theme--hit-or-miss">{children}</div>
+function GameShell({ children, className }) {
+  return <div className={`page-shell page-shell--fill game-theme--hit-or-miss${className ? ` ${className}` : ''}`}>{children}</div>
 }

@@ -28,7 +28,9 @@ export function useCompletion(userId) {
   async function loadFromSupabase() {
     const { data } = await supabase
       .from('scores')
-      .select('game_slug, date_played, attempts, completed')
+      // `*` so the points come along where migration 010 has added them, and
+      // nothing breaks where it hasn't.
+      .select('*')
       .eq('user_id', userId)
       .eq('date_played', todayEST())
 
@@ -41,6 +43,7 @@ export function useCompletion(userId) {
           attempts: Math.max(prev?.attempts ?? 0, row.attempts ?? 0),
           completed: Boolean(prev?.completed || row.completed),
           played: true,
+          ...(row.points != null ? { points: Math.max(prev?.points ?? 0, row.points) } : {}),
         }
       })
       const merged = { ...readLocal(userId), ...map }
@@ -49,11 +52,11 @@ export function useCompletion(userId) {
     }
   }
 
-  function markComplete(gameSlug, puzzleDate, attempts, completed = true) {
+  function markComplete(gameSlug, puzzleDate, attempts, completed = true, points = null) {
     const key = `${gameSlug}|${puzzleDate}`
     const updated = {
       ...completions,
-      [key]: { attempts, completed: Boolean(completed), played: true },
+      [key]: { attempts, completed: Boolean(completed), played: true, ...(points != null ? { points } : {}) },
     }
     setCompletions(updated)
     writeLocal(userId, updated)

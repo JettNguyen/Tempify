@@ -47,13 +47,16 @@ export default function ResultCard({
   correct, answer, artist, detail, emojiGrid,
   gameSlug, nextGame, artwork, children,
   puzzleDate, timeSeconds, attempts, showLeaderboard, justFinished,
+  status: statusText, shareLine, points, maxPoints,
 }) {
   const [searchParams] = useSearchParams()
   const action = resultAction(nextGame, searchParams)
   const panelRef = useRef(null)
 
   const timeLabel = gameSlug !== 'one-bar' ? fmtTime(timeSeconds) : null
-  const status = correct ? 'Correct' : 'Not quite'
+  // A points game says its score here instead: "Correct" means nothing on a
+  // day that was partly right.
+  const status = statusText || (correct ? 'Correct' : 'Not quite')
 
   // Opens itself on the finish that earned it. Coming back to a puzzle you
   // played days ago, a celebration you have already had would be in the way, so
@@ -180,6 +183,7 @@ export default function ResultCard({
               attempts={attempts}
               timeSeconds={timeSeconds}
               puzzleDate={puzzleDate}
+              resultLine={shareLine}
             />
             {action && (
               <Link to={action.to} replace className="result-card__next btn-press btn-amber">
@@ -195,6 +199,8 @@ export default function ResultCard({
               attempts={attempts}
               timeSeconds={timeSeconds}
               correct={correct}
+              points={points}
+              maxPoints={maxPoints}
             />
           )}
 

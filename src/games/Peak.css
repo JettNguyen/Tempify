@@ -1,0 +1,410 @@
+/* Hit or Miss as a dial (Peak). Five songs, each dragged to where it peaked on
+   the Hot 100. The thumb is the guess; on lock-in the real peak drops onto the
+   same rail and a bar between the two shows how far off it was, in green,
+   amber or red. */
+
+/* Five songs and a dial need more room under the stage than two answer cards
+   did, so the stage gives some back: the lock-in button has to land on a
+   phone's first screen, in reach of the thumb. */
+.peak .audio-stage__visual {
+  height: clamp(104px, 15vh, 168px);
+}
+
+.peak__progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.25rem 0 0.6rem;
+}
+
+.peak__pips {
+  display: flex;
+  gap: 6px;
+}
+
+.peak__pip {
+  width: 22px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  transition: background-color 0.3s ease, width 0.3s ease;
+}
+
+.peak__pip--now {
+  width: 34px;
+  background: var(--game-color);
+}
+
+.peak__pip--close { background: var(--green); }
+.peak__pip--near  { background: var(--amber); }
+.peak__pip--far   { background: var(--red); }
+
+.peak__total {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- The dial ---- */
+
+.peak-dial {
+  --thumb: 30px;
+  --tier: var(--game-color);
+  margin-top: 0.75rem;
+  padding: 12px 14px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(165deg, rgba(var(--game-color-rgb), 0.09), rgba(var(--game-color-rgb), 0) 58%),
+    var(--surface);
+  animation: fadeInUp 0.3s ease both;
+}
+
+.peak-dial--close { --tier: var(--green); }
+.peak-dial--near  { --tier: var(--amber); }
+.peak-dial--far   { --tier: var(--red); }
+
+.peak-dial__readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.peak-dial__value {
+  font-size: var(--fs-2xl);
+  font-weight: 750;
+  line-height: 1.1;
+  color: var(--game-color);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.peak-dial--locking .peak-dial__value {
+  animation: peakBeat 0.25s ease both;
+}
+
+.peak-dial--revealed .peak-dial__value {
+  color: var(--tier);
+  animation: peakLand 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.peak-dial__sub {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* Markers sit where the range input draws its thumb: inset by half a thumb at
+   each end, since the thumb never hangs off the track. */
+.peak-dial__rail {
+  position: relative;
+  height: 44px;
+  margin-top: 4px;
+}
+
+.peak-dial__track,
+.peak-dial__gap,
+.peak-dial__actual {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.peak-dial__track {
+  left: 0;
+  right: 0;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgba(var(--game-color-rgb), 0.55), rgba(var(--game-color-rgb), 0.12));
+}
+
+/* The never-charted stretch, set off in stripes so it reads as off the chart. */
+.peak-dial__never {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--never));
+  background: repeating-linear-gradient(135deg, #2a2a2a 0 4px, #1f1f1f 4px 8px);
+}
+
+.peak-dial__gap {
+  --from: min(var(--guess), var(--actual));
+  --to: max(var(--guess), var(--actual));
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--from));
+  width: calc((100% - var(--thumb)) * (var(--to) - var(--from)));
+  height: 8px;
+  border-radius: 4px;
+  background: var(--tier);
+  transform-origin: left center;
+  animation: peakGap 0.45s ease both;
+}
+
+.peak-dial__actual {
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--actual));
+  width: 14px;
+  height: 34px;
+  margin-left: -7px;
+  border-radius: 7px;
+  background: var(--tier);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 18px var(--tier);
+  animation: peakDrop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) 0.1s both;
+}
+
+.peak-dial__input {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.peak-dial__input:disabled {
+  cursor: default;
+}
+
+.peak-dial__input::-webkit-slider-runnable-track {
+  height: 44px;
+  background: transparent;
+}
+
+.peak-dial__input::-moz-range-track {
+  height: 44px;
+  background: transparent;
+}
+
+.peak-dial__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: calc((44px - var(--thumb)) / 2);
+  border-radius: 50%;
+  border: 3px solid var(--surface);
+  background: var(--game-color);
+  box-shadow: 0 0 0 1px var(--game-color), 0 6px 20px rgba(var(--game-color-rgb), 0.45);
+  transition: scale var(--press-up), background-color 0.2s ease;
+}
+
+.peak-dial__input::-moz-range-thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: 50%;
+  border: 3px solid var(--surface);
+  background: var(--game-color);
+  box-shadow: 0 0 0 1px var(--game-color), 0 6px 20px rgba(var(--game-color-rgb), 0.45);
+}
+
+.peak-dial__input:not(:disabled):active::-webkit-slider-thumb {
+  scale: 1.15;
+}
+
+.peak-dial__input:focus-visible {
+  outline: none;
+}
+
+.peak-dial__input:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--text-primary), 0 6px 20px rgba(var(--game-color-rgb), 0.45);
+}
+
+/* Once the answer is in, the thumb is just where you said: it stays in the
+   game's color and steps back so the real peak is what stands out. */
+.peak-dial--revealed .peak-dial__input::-webkit-slider-thumb {
+  opacity: 0.85;
+  box-shadow: none;
+}
+
+.peak-dial__ticks {
+  position: relative;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.peak-dial__ticks span {
+  position: absolute;
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--at));
+  transform: translateX(-50%);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.peak-dial__ticks .peak-dial__tick-never {
+  color: var(--text-muted);
+}
+
+.peak-dial__outcome {
+  margin-top: 8px;
+}
+
+.peak-dial__verdict {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-bottom: 10px;
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.peak-dial__points {
+  font-size: var(--fs-lg);
+  font-weight: 750;
+  color: var(--tier);
+  font-variant-numeric: tabular-nums;
+  animation: peakLand 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) 0.15s both;
+}
+
+.peak-dial__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 10px;
+  border-radius: 12px;
+  background: var(--game-color);
+  color: #0f0f0f;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.peak-dial__outcome .peak-dial__action {
+  margin-top: 0;
+}
+
+.peak-dial__action:disabled {
+  opacity: 0.6;
+}
+
+/* ---- The day, once it's done ---- */
+
+.peak__summary {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 1rem;
+  padding: 0;
+}
+
+.peak__summary-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  text-align: left;
+  animation: fadeInUp 0.3s ease both;
+}
+
+.peak__summary li:nth-child(2) .peak__summary-row { animation-delay: 50ms; }
+.peak__summary li:nth-child(3) .peak__summary-row { animation-delay: 100ms; }
+.peak__summary li:nth-child(4) .peak__summary-row { animation-delay: 150ms; }
+.peak__summary li:nth-child(5) .peak__summary-row { animation-delay: 200ms; }
+
+.peak__summary-row--on {
+  border-color: rgba(var(--game-color-rgb), 0.7);
+}
+
+.peak__summary-song {
+  flex: 1;
+  min-width: 0;
+}
+
+.peak__summary-title,
+.peak__summary-artist {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peak__summary-title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.peak__summary-artist {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.peak__summary-call {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.peak__summary-peak {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.peak__summary-points {
+  min-width: 44px;
+  text-align: right;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.peak__summary-points--close { color: var(--green); }
+.peak__summary-points--near  { color: var(--amber); }
+.peak__summary-points--far   { color: var(--red); }
+
+@keyframes peakBeat {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes peakLand {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes peakGap {
+  from { opacity: 0; }
+  to   { opacity: 0.55; }
+}
+
+@keyframes peakDrop {
+  from { opacity: 0; transform: translateY(-120%) scale(0.6); }
+  to   { opacity: 1; transform: translateY(-50%) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peak-dial,
+  .peak-dial__value,
+  .peak-dial__points,
+  .peak-dial__gap,
+  .peak-dial__actual,
+  .peak__summary-row {
+    animation: none;
+  }
+
+  .peak-dial__gap {
+    opacity: 0.55;
+  }
+}
