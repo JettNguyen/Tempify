@@ -200,13 +200,16 @@ function drawChart(g, w, h, s) {
   g.globalAlpha = 1
 }
 
-// Sized so the rim's loudest ticks still clear the top and bottom of the stage,
-// and the label stays wide enough to show a ring of itself turning around the
-// play button that sits on it.
-const TICK_REACH = 0.26
+// Sized so the rim's loudest ticks stop well short of the top and bottom of the
+// stage, with clear space between them and the disc too: at full reach they
+// used to run into both. The label stays wide enough to show a ring of itself
+// around the play button that sits on it.
+const TICK_REACH = 0.2
+const TICK_GAP = 8
+const TICK_COUNT = 60
 
 function recordGeometry(w, h) {
-  const r = Math.min(h * 0.36, w * 0.3)
+  const r = Math.min(h * 0.32, w * 0.27)
   return { cx: w / 2, cy: h / 2, r, label: Math.max(r * 0.6, 41) }
 }
 
@@ -232,8 +235,8 @@ function paintDisc(w, h, dpr) {
     g.arc(cx, cy, gr, 0, Math.PI * 2)
     g.stroke()
   }
-  // Two still highlights. They stay put while the label turns under them,
-  // which is what makes the spin read as a spin.
+  // Two highlights. Grooves are rings and look the same at any angle, so the
+  // light on them, turning with the disc, is what shows the spin.
   for (const start of [-0.95, 2.2]) {
     const sheen = g.createRadialGradient(cx, cy, r * 0.55, cx, cy, r)
     sheen.addColorStop(0, 'rgba(255,255,255,0)')
@@ -260,16 +263,16 @@ function drawRecord(g, w, h, s) {
 
   // The spectrum around the rim, mirrored so the record stays balanced.
   const n = s.levels.length
-  const ticks = 72
+  const ticks = TICK_COUNT
   g.strokeStyle = s.color
   g.lineCap = 'round'
-  g.lineWidth = 2.2
+  g.lineWidth = 2
   for (let i = 0; i < ticks; i++) {
     const half = i < ticks / 2 ? i : ticks - 1 - i
     const band = Math.min(n - 1, Math.floor((half / (ticks / 2)) * n))
     const level = s.levels[band]
     const a = (i / ticks) * Math.PI * 2 - Math.PI / 2
-    const inner = r + 5
+    const inner = r + TICK_GAP
     const outer = inner + 3 + level * r * TICK_REACH
     g.globalAlpha = 0.22 + 0.7 * level * (0.4 + 0.6 * s.activity)
     g.beginPath()
@@ -279,28 +282,19 @@ function drawRecord(g, w, h, s) {
   }
   g.globalAlpha = 1
 
-  if (s.disc) g.drawImage(s.disc, 0, 0, w, h)
+  if (s.disc) {
+    g.save()
+    g.translate(cx, cy)
+    g.rotate(s.angle)
+    g.drawImage(s.disc, -cx, -cy, w, h)
+    g.restore()
+  }
 
-  // The label, in the game's colour, with marks that turn with the record.
+  // The label, plain, in the game's colour.
   g.fillStyle = s.color
   g.beginPath()
   g.arc(cx, cy, label, 0, Math.PI * 2)
   g.fill()
-  g.save()
-  g.translate(cx, cy)
-  g.rotate(s.angle)
-  g.fillStyle = '#000000'
-  g.globalAlpha = 0.28
-  for (let i = 0; i < 3; i++) {
-    const len = label * (0.5 - i * 0.1)
-    pill(g, -len / 2, -label * (0.78 - i * 0.1), len, 2, 1)
-  }
-  g.globalAlpha = 0.5
-  g.beginPath()
-  g.arc(0, label * 0.84, 2.2, 0, Math.PI * 2)
-  g.fill()
-  g.restore()
-  g.globalAlpha = 1
 }
 
 function drawRings(g, w, h, s) {

@@ -3,12 +3,6 @@
    song lands in its real spot and lights green, amber or red for how close
    the gap you chose was. */
 
-/* The line grows to five songs and the gaps between them, so the stage gives
-   up height to keep the last gap in reach without a scroll. */
-.timeline .audio-stage__visual {
-  height: clamp(92px, 10vh, 140px);
-}
-
 .timeline__progress {
   display: flex;
   align-items: center;
