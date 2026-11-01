@@ -1,7 +1,7 @@
 {
   "name": "Tempify",
   "short_name": "Tempify",
-  "description": "Five daily music games. One track each day.",
+  "description": "Five daily music games, with new songs every day.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

@@ -5,8 +5,8 @@ import { todayEST } from './date'
 // nowhere a player would find it.
 const ACTIVE_GAMES = [
   { slug: 'one-bar',      name: 'One Bar',      path: '/game/one-bar',      description: 'Name the song from a tiny clip. Wrong guesses unlock more audio.', featured: true },
-  { slug: 'hit-or-miss',  name: 'Hit or Miss',  path: '/game/hit-or-miss',  description: 'Did it enter the Hot 100?' },
-  { slug: 'era',          name: 'Era',          path: '/game/era',          description: 'Guess which decade the song is from.' },
+  { slug: 'hit-or-miss',  name: 'Hit or Miss',  path: '/game/hit-or-miss',  description: 'How high did five songs chart on the Hot 100?' },
+  { slug: 'era',          name: 'Era',          path: '/game/era',          description: 'Put five songs in order, oldest to newest.' },
   { slug: 'cover-or-not', name: 'Cover or Not', path: '/game/cover-or-not', description: 'Is it a cover of an earlier track?' },
   { slug: 'tempo',        name: 'Tap the Tempo', path: '/game/tempo',       description: 'Tap the beat of a famous song from memory.', addedOn: '2026-11-02' },
 ]
