@@ -2,7 +2,7 @@
 // exact; these only decide whether a wrong guess was close enough to say so.
 
 // Ways a credit joins more than one artist.
-const SEPARATORS = /\s*(?:,|&|\+|\/|\band\b|\bfeat\.?|\bft\.?|\bfeaturing\b|\bwith\b|\bx\b|\bvs\.?)\s*/i
+const SEPARATORS = /\s*(?:,|&|\+|\/|\band\b|\bfeaturing\b|\bfeat\b\.?|\bft\b\.?|\bwith\b|\bx\b|\bvs\.?)\s*/i
 
 function normalize(name) {
   return name

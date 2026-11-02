@@ -45,6 +45,8 @@ function plainTitle(title) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+    // Billboard prints "Show And Tell" where a store has "Show & Tell".
+    .replace(/&/g, ' and ')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
 }

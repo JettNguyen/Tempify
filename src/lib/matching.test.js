@@ -39,3 +39,15 @@ describe('sharesArtist', () => {
     expect(sharesArtist('Dua Lipa', 'Calvin Harris')).toBe(false)
   })
 })
+
+describe('featured credits', () => {
+  it('splits Billboard\'s "Featuring" whole, not as "feat" plus "uring"', () => {
+    expect(artistNames('Lil Nas X Featuring Billy Ray Cyrus')).toHaveLength(2)
+    expect(artistNames('Lil Nas X Featuring Billy Ray Cyrus').some(n => n.includes('uring'))).toBe(false)
+  })
+
+  it('still splits feat. and ft.', () => {
+    expect(artistNames('Drake feat. Rihanna')).toHaveLength(2)
+    expect(artistNames('Drake ft. Rihanna')).toHaveLength(2)
+  })
+})

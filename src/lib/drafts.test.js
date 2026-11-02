@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dayLevel, timelineGap, MIDDLE_LEVEL } from './drafts.js'
+import { dayLevel, timelineGap, MIDDLE_LEVEL, songKey } from './drafts.js'
 
 describe('the week', () => {
   it('climbs from Monday to Sunday, like the agent\'s difficulty_tier', () => {
@@ -14,5 +14,11 @@ describe('the week', () => {
 
   it('lets Era\'s songs sit closer on harder days', () => {
     expect(timelineGap(1)).toBeGreaterThan(timelineGap(7))
+  })
+})
+
+describe('song keys', () => {
+  it('reads & as and, the way Billboard prints it', () => {
+    expect(songKey('Show & Tell', 'Al Wilson')).toBe(songKey('Show And Tell', 'Al Wilson'))
   })
 })
