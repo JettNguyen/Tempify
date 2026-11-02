@@ -115,6 +115,21 @@ Build for production:
 npm run build
 ```
 
+### Supabase functions
+
+Each function in `supabase/functions` hands its handler to `Deno.serve`. Supabase never runs a handler that is only exported, and the request waits until it times out.
+
+Stripe and RevenueCat don't send a Supabase token, so the payment webhooks are deployed without JWT checks; each one checks its own secret instead. The iTunes proxy is open the same way.
+
+```bash
+supabase functions deploy stripe-webhook --no-verify-jwt
+supabase functions deploy rc-webhook --no-verify-jwt
+supabase functions deploy itunes-proxy --no-verify-jwt
+supabase functions deploy username-login
+supabase functions deploy delete-user
+supabase functions deploy deezer-proxy
+```
+
 ## License
 
 Copyright (c) 2026 Jett Nguyen. All rights reserved.
