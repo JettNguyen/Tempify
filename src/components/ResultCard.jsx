@@ -83,9 +83,12 @@ export default function ResultCard({
   )
 
   // Only on a fresh finish: revisiting a played puzzle shouldn't buzz again.
+  // Beating the friend who sent the link is the bigger news, even on a day
+  // that missed the win.
   useEffect(() => {
     if (!justFinished) return
-    if (correct) hapticWinCelebration()
+    if (challenge && (points ?? 0) > challenge.total) hapticWinCelebration('challenge')
+    else if (correct) hapticWinCelebration()
     else hapticFailure()
   }, [justFinished, correct])
 

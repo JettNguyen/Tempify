@@ -9,6 +9,7 @@ import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
 import { prefetchClip } from '../lib/audioEngine'
 import { hapticImportantTap, hapticSelection } from '../lib/haptics'
+import { playVerdict } from '../lib/sounds'
 import { lockInDelay } from '../lib/lockIn'
 import { addTap, bpmFromTaps, tempoOff, tempoPoints, MIN_TAPS } from '../lib/tempo'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
@@ -105,7 +106,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
 
   function tap() {
     if (revealed || locking || done) return
-    hapticSelection()
+    hapticSelection('beat')
     setTaps(prev => addTap(prev, performance.now()))
   }
 
@@ -126,7 +127,8 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
     if (!bpm || locking || revealed || done) return
     hapticImportantTap()
     playedRef.current = true
-    const all = [...results, { bpm, points: tempoPoints(bpm, round.bpm) }]
+    const points = tempoPoints(bpm, round.bpm)
+    const all = [...results, { bpm, points }]
     saveRounds(SLUG, puzzleDate, all)
     if (all.length === rounds.length) {
       const elapsed = stop()
@@ -138,6 +140,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
       revealRef.current = 0
       setLocking(false)
       setResults(all)
+      playVerdict(roundTier(points))
     }, lockInDelay())
   }
 

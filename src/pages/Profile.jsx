@@ -6,6 +6,7 @@ import { AVATAR_ICONS, AVATAR_COLORS, saveAvatar, saveProfileSettings, checkUser
 import { Browser } from '@capacitor/browser'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import { hapticSelection } from '../lib/haptics'
+import { soundEffectsOn, setSoundEffects } from '../lib/sounds'
 import { getNativeManageSubscriptionsUrl, usesNativeIap, restorePurchases, requestRefundForActiveEntitlement } from '../lib/billing'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
@@ -77,6 +78,7 @@ export default function Profile() {
 
   const [autoplayAudio, setAutoplayAudio] = useState(true)
   const [competitiveMode, setCompetitiveMode] = useState(true)
+  const [soundEffects, setSoundEffectsChoice] = useState(soundEffectsOn)
   const [savingPrefs, setSavingPrefs] = useState(false)
   const [savedPrefs, setSavedPrefs] = useState(false)
 
@@ -124,7 +126,8 @@ export default function Profile() {
 
   const prefsDirty =
     autoplayAudio !== (profile?.autoplay_audio ?? true) ||
-    competitiveMode !== (profile?.competitive_mode ?? true)
+    competitiveMode !== (profile?.competitive_mode ?? true) ||
+    soundEffects !== soundEffectsOn()
 
   async function handleSaveAvatar() {
     if (!avatarDirty || savingAvatar) return
@@ -162,6 +165,8 @@ export default function Profile() {
     if (!prefsDirty || savingPrefs) return
     setSavingPrefs(true)
     try {
+      // Kept on this device rather than the account, so it saves even offline.
+      setSoundEffects(soundEffects)
       await saveProfileSettings(user.id, { autoplayAudio, competitiveMode })
       await refreshProfile()
       setSavedPrefs(true)
@@ -334,6 +339,12 @@ export default function Profile() {
             desc="Show the timer and leaderboard during games"
             checked={competitiveMode}
             onChange={setCompetitiveMode}
+          />
+          <PreferenceToggle
+            label="Sound effects"
+            desc="Sounds for taps, answers and results, on this device"
+            checked={soundEffects}
+            onChange={setSoundEffectsChoice}
           />
         </div>
 

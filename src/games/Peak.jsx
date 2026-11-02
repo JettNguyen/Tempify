@@ -8,6 +8,7 @@ import { exitTarget } from '../lib/gameExit'
 import { saveScore, updateStreak } from '../lib/scores'
 import { prefetchClip } from '../lib/audioEngine'
 import { hapticImportantTap, hapticSelection } from '../lib/haptics'
+import { playSound, playVerdict } from '../lib/sounds'
 import { lockInDelay } from '../lib/lockIn'
 import { NEVER_FROM, dialAt, peakAt, peakPoints, peakLabel } from '../lib/peak'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
@@ -30,6 +31,18 @@ const START_AT = NEVER_FROM / 2
 // The top ten take up as much of the dial as #40 to #100, so the marks
 // crowd the top. #100 goes unmarked: it sits right against "Never".
 const TICKS = [1, 10, 25, 50]
+
+// Where a peak sits going down the dial, with never-charted past #100.
+const dialRank = (peak) => (peak === 0 ? 101 : peak)
+
+/** Whether a move lands on a mark, or Never, or skips over one. */
+function passesMark(before, after) {
+  const from = dialRank(before)
+  const to = dialRank(after)
+  const lo = Math.min(from, to)
+  const hi = Math.max(from, to)
+  return [...TICKS, 101].some(m => m >= lo && m <= hi && m !== from)
+}
 
 function weeksText(n, what) {
   return `${n} week${n === 1 ? '' : 's'} ${what}`
@@ -104,8 +117,11 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
     const before = peakAt(position)
     const after = peakAt(next)
     // A tick at the two ends rather than every place: a buzz per number would
-    // be a buzz storm on one swipe.
-    if (after !== before && (after === 0 || after === 1)) hapticSelection()
+    // be a buzz storm on one swipe. The marks between are heard, not felt.
+    if (after !== before) {
+      if (after === 0 || after === 1) hapticSelection('tick')
+      else if (passesMark(before, after)) playSound('tick')
+    }
     setPosition(next)
   }
 
@@ -141,6 +157,7 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
       revealRef.current = 0
       setLocking(false)
       setResults(all)
+      playVerdict(roundTier(points))
     }, lockInDelay())
   }
 

@@ -21,6 +21,9 @@
 
 let ctx = null
 let armed = false
+// Every clip plays through this on its way out, so a sound effect can dip the
+// music under itself (see duckMusic).
+let musicBus = null
 
 // A few milliseconds either side of every start and stop. A clip cut mid-wave
 // clicks, and at One Bar's half second the click is a fair share of the clip.
@@ -64,7 +67,43 @@ function getContext() {
     return null
   }
   claimPlaybackSession()
+  try {
+    musicBus = ctx.createGain()
+    musicBus.connect(ctx.destination)
+  } catch {
+    musicBus = null
+  }
   return ctx
+}
+
+function musicOut(c) {
+  return c === ctx && musicBus ? musicBus : c.destination
+}
+
+/** The shared context if a game has it running, or null. Nothing here starts it. */
+export function runningContext() {
+  return ctx && ctx.state === 'running' ? ctx : null
+}
+
+// How far the music dips under a sound effect: about 9dB, enough for a short
+// sound to read clearly over a song without the song seeming to stop.
+const DUCK_LEVEL = 0.35
+
+/** Dips the clips for `seconds`, so a sound effect can be heard over a song. */
+export function duckMusic(seconds) {
+  if (!ctx || !musicBus) return
+  const now = ctx.currentTime
+  const level = musicBus.gain
+  // Held where it is, so a dip that lands during the last one carries on from
+  // there rather than jumping.
+  if (level.cancelAndHoldAtTime) {
+    level.cancelAndHoldAtTime(now)
+  } else {
+    level.cancelScheduledValues(now)
+    level.setValueAtTime(level.value, now)
+  }
+  level.setTargetAtTime(DUCK_LEVEL, now, 0.015)
+  level.setTargetAtTime(1, now + seconds, 0.12)
 }
 
 let warmed = false
@@ -164,6 +203,13 @@ function decode(c, bytes) {
   })
 }
 
+/** Decodes a short sound for the shared context, which this creates if need be. */
+export function decodeSound(bytes) {
+  const c = getContext()
+  if (!c) return Promise.reject(new Error('Web Audio is not available'))
+  return decode(c, bytes)
+}
+
 /**
  * Starts downloading a clip without decoding it, so opening its game later
  * doesn't wait on the network. Decoding is left until a player asks: it is
@@ -238,7 +284,7 @@ export class BufferVoice {
     this.duration = buffer.duration
     this.ready = Promise.resolve()
     this.analyser = createAnalyser(context)
-    this.analyser.connect(context.destination)
+    this.analyser.connect(musicOut(context))
     this.node = null
     this.startedAt = 0
     this.from = 0

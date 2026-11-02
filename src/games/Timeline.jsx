@@ -8,6 +8,7 @@ import { exitTarget } from '../lib/gameExit'
 import { saveScore, updateStreak } from '../lib/scores'
 import { prefetchClip } from '../lib/audioEngine'
 import { hapticImportantTap, hapticSelection } from '../lib/haptics'
+import { playVerdict } from '../lib/sounds'
 import { lockInDelay } from '../lib/lockIn'
 import { rightGaps, gapPoints, gapLabel } from '../lib/timeline'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
@@ -132,6 +133,7 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
       revealRef.current = 0
       setPicked(null)
       setResults(all)
+      playVerdict(roundTier(points))
     }, lockInDelay())
   }
 

@@ -168,7 +168,8 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
   }
 
   function selectResult(song) {
-    hapticSelection()
+    // The guess's own sound, right or wrong, follows at once.
+    hapticSelection(null)
     // The guess is committed, so nothing left to type, so get the keyboard out of
     // the way of the game.
     dismissKeyboard()

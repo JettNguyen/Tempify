@@ -10,6 +10,7 @@ import { findArtwork } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
 import { hapticImportantTap } from '../lib/haptics'
+import { playSound, playVerdict } from '../lib/sounds'
 import { lockInDelay } from '../lib/lockIn'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
@@ -193,6 +194,7 @@ export default function CoverOrNot() {
       revealRef.current = 0
       if (hasYear) {
         setCallShown(true)
+        playSound(isCorrect ? 'right' : 'wrong')
         return
       }
       showResult()
@@ -233,6 +235,7 @@ export default function CoverOrNot() {
       revealRef.current = 0
       setYearLocking(false)
       setSteps(all)
+      playVerdict(roundTier(all[1].points))
     }, lockInDelay())
     if (user) {
       try {

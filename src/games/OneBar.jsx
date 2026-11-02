@@ -188,8 +188,8 @@ export default function OneBar() {
     } else {
       // Wrong, but the round continues, distinct from the failure buzz the
       // result card fires when the last guess is spent. A near miss gets a
-      // firmer, rounder tap than a plain miss.
-      if (attempt.hint) hapticThreshold()
+      // firmer, rounder tap than a plain miss. Both sound wrong.
+      if (attempt.hint) hapticThreshold('wrong')
       else if (!attempt.skipped) hapticWrong()
       guessInputRef.current?.clear()
       const nextReveal = REVEAL_TIMINGS[Math.min(newAttempts.length, REVEAL_TIMINGS.length - 1)]
@@ -215,7 +215,8 @@ export default function OneBar() {
     }
 
     setNotice(null)
-    hapticImportantTap()
+    // Judged at once, so the guess makes the sound of how it went instead.
+    hapticImportantTap(null)
 
     const titleMatch = stripVariant(song.title).toLowerCase() === puzzle.answer.toLowerCase().trim()
     const artistMatch = !puzzle.metadata?.artist ||
@@ -235,7 +236,7 @@ export default function OneBar() {
 
   async function handleSkip() {
     if (done || attempts.length >= MAX_ATTEMPTS) return
-    hapticImportantTap()
+    hapticImportantTap('tap')
 
     // The whole point of skipping is to hear more, so don't make them press
     // play as well. A skip that ends the round remounts the player with the

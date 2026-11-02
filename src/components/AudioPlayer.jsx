@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, forwardRef, useImperativeHandle } from 'react'
 import { armAudioContext, primeAudioContext, openClip } from '../lib/audioEngine'
+import { loadSounds } from '../lib/sounds'
 import { buildSegments, timeToBar, barToTime, barToPixel, pixelToBar } from '../lib/clipTimeline'
 import AudioVisual from './AudioVisual'
 import './AudioPlayer.css'
@@ -309,7 +310,11 @@ const AudioPlayer = forwardRef(function AudioPlayer({
   }))
 
   // The first tap anywhere starts the audio context; Safari accepts nothing else.
-  useEffect(() => { armAudioContext() }, [])
+  // The game's sound effects load alongside, ready for the first answer.
+  useEffect(() => {
+    armAudioContext()
+    loadSounds()
+  }, [])
 
   useEffect(() => {
     if (!src) {
