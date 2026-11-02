@@ -86,7 +86,12 @@ the page, which goes to App Review in a submission of its own, so that waits for
 takes one of each, with no dark or light choice, so the dark pair is what goes up. They are uploaded
 to the app's asset library as `CREATIVE_ASSETS` and placed on a page's localization with
 `appAssetLibraryPlacements` (`PRODUCT_PAGE_HEADER_ASSET`, `APP_STORE_SEARCH_RESULTS_ASSET`). Since
-November 1, 2026 they are placed on version 2 of both custom product pages, not yet on the main page.
+November 1, 2026 they are placed on 1.10's main page and on version 2 of both custom product pages.
+
+**The main page uses the same designed sets.** Custom product pages are only reached by their links,
+so what people find in the App Store is the main page. From 1.10 on, its 6.9 inch, Duo and iPad sets
+are the studio's seven frames (`screenshots/custom/`, `screenshots-duo/custom/`,
+`screenshots-ipad/custom/`), with the preview below on its 6.9 inch and Duo preview sets.
 
 **The iPad set** is drawn the same way with `--ipad`, from `captures-ipad/` (2064 by 2752, the iPad
 Pro 13-inch (M5) simulator). Two things to know about that simulator. It opens apps in windows,
