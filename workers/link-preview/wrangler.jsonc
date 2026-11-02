@@ -1,6 +1,9 @@
 {
   "name": "tempify-link-preview",
-  // jettuf26@gmail.com's Account, which holds the tempify.me zone.
+  // jettuf26@gmail.com's Account, which holds the tempify.me zone. Wrangler on
+  // this Mac is signed in to jett@otianai.com, so sign in to this one in its own
+  // folder: XDG_CONFIG_HOME=~/.config/wrangler-tempify npx wrangler login, then
+  // deploy with the same XDG_CONFIG_HOME.
   "account_id": "1541babe7e8e9bfd180699bfcfd01984",
   "main": "index.js",
   "compatibility_date": "2026-06-09",
