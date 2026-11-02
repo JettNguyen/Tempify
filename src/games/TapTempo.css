@@ -63,6 +63,7 @@
   font-size: var(--fs-lg);
   font-weight: 700;
   line-height: 1.2;
+  color: var(--text-primary);
 }
 
 .tempo__artist {
@@ -237,6 +238,7 @@
   font-weight: 750;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 
 .tempo__beat--mine .tempo__beat-bpm {

@@ -35,6 +35,9 @@ function weeksText(n, what) {
   return `${n} week${n === 1 ? '' : 's'} ${what}`
 }
 
+// A guess as a sentence goes on: "You said #12", "You said it never charted".
+const saidText = (guess) => (guess ? `#${guess}` : 'it never charted')
+
 function verdictText(round) {
   if (!round.peak) return 'It never made the Hot 100'
   const parts = [`Peaked at #${round.peak}`]
@@ -240,7 +243,7 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
             { at: (NEVER_FROM + 1) / 2, label: 'Never', zone: true },
           ]}
           value={revealed ? peakLabel(round.peak || 0) : peakLabel(guess)}
-          sub={revealed ? `You said ${peakLabel(result.guess)}` : 'Drag to where it peaked on the Hot 100'}
+          sub={revealed ? `You said ${saidText(result.guess)}` : 'Drag to where it peaked on the Hot 100'}
           label="Where it peaked on the Hot 100"
           valueText={peakLabel(guess)}
         >
@@ -270,7 +273,7 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
           status={`${fmtPoints(finalPoints)} points`}
           answer={best != null ? `Closest call: ${rounds[best].title}` : `Out of ${fmtPoints(maxPoints)}`}
           artist={best != null
-            ? `You said ${peakLabel(results[best].guess)}, ${rounds[best].peak ? `it peaked at #${rounds[best].peak}` : 'it never charted'}`
+            ? `You said ${saidText(results[best].guess)}, ${rounds[best].peak ? `it peaked at #${rounds[best].peak}` : results[best].guess ? 'it never charted' : "and it didn't"}`
             : undefined}
           emojiGrid={squares}
           shareLine={`${fmtPoints(finalPoints)} / ${fmtPoints(maxPoints)} points`}
