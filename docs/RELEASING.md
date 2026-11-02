@@ -80,6 +80,14 @@ Drive, `My Drive/Tempify/App Store art/`: captions in `SETS` at the top of
 lays the captures from `captures/` into it. A page's pictures change only through a new version of
 the page, which goes to App Review in a submission of its own, so that waits for Jett.
 
+**Header and search art** (new in iOS 27's App Store) come from the same folder:
+`tempify-app-store-art.html` and `python3 render-art.py` make `header-*.png` (3840 by 1646) and
+`search-*.png` (3840 by 2560), dark and light. The header has to be a PNG; a JPEG fails. Each page
+takes one of each, with no dark or light choice, so the dark pair is what goes up. They are uploaded
+to the app's asset library as `CREATIVE_ASSETS` and placed on a page's localization with
+`appAssetLibraryPlacements` (`PRODUCT_PAGE_HEADER_ASSET`, `APP_STORE_SEARCH_RESULTS_ASSET`). Since
+November 1, 2026 they are placed on version 2 of both custom product pages, not yet on the main page.
+
 ## iPhone Duo
 
 The Duo's status bar runs down the side of the screen in both postures, so it reports no top
