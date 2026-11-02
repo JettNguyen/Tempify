@@ -68,17 +68,21 @@ function clearPersistedEpoch(persistKey) {
 
 /**
  * The time already on the clock when a game opens again. A clock saved as
- * running was never paused: the page went away without unmounting, through a
- * reload or the app or tab being closed. The time since it started counts,
- * or a reload would wind the clock back to its last pause.
+ * running is still running: once a game starts, its clock doesn't stop until
+ * the game is finished, whether the player went back out of it, reloaded, or
+ * closed the app. Anything less let someone hear the song, leave, look it up,
+ * and come back with the clock stopped. Clocks saved before that, paused, pick
+ * up where they stopped.
  */
 export function restoredElapsedMs(state, now = Date.now()) {
   if (state.startedAtMs == null) return state.elapsedMs
   return state.elapsedMs + Math.max(0, now - state.startedAtMs)
 }
 
-// Starts counting up from 0 when the component mounts.
-// Call stop() when the game ends - returns elapsed seconds.
+// Starts counting up from 0 when the component mounts, and keeps counting until
+// stop(), even while the game is closed. stop() returns the elapsed seconds.
+// Only the clock's delay, a moment's grace before it starts, waits for the
+// player to come back.
 export function useGameTimer(active = true, delayMs = 0, persistKey = null) {
   const [elapsed, setElapsed] = useState(0)
   const elapsedMsRef = useRef(0)
@@ -148,14 +152,10 @@ export function useGameTimer(active = true, delayMs = 0, persistKey = null) {
     }
 
     return () => {
-      if (!stoppedRef.current) {
-        if (startedAtMsRef.current != null) {
-          elapsedMsRef.current += Date.now() - startedAtMsRef.current
-          startedAtMsRef.current = null
-          delayRemainingMsRef.current = 0
-        } else if (delayTargetMsRef.current != null) {
-          delayRemainingMsRef.current = Math.max(0, delayTargetMsRef.current - Date.now())
-        }
+      // A running clock was saved with its start, and is left running. A clock
+      // still in its delay saves what is left of the delay.
+      if (!stoppedRef.current && startedAtMsRef.current == null && delayTargetMsRef.current != null) {
+        delayRemainingMsRef.current = Math.max(0, delayTargetMsRef.current - Date.now())
         writePersistedState(persistKey, {
           elapsedMs: elapsedMsRef.current,
           delayRemainingMs: delayRemainingMsRef.current,
