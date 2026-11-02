@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Icon from './Icon'
+import { hapticSelection } from '../lib/haptics'
+import { reminderAvailable, reminderSettings, turnOnReminder, fmtReminderTime } from '../lib/reminder'
 import './DailyCompleteCta.css'
 
 // Where someone goes after finishing the day depends on what they can already
@@ -27,6 +30,37 @@ function copyFor({ user, isSubscribed }) {
   }
 }
 
+// Right after the last game is the moment someone wants tomorrow's, so the
+// reminder is offered here, in the app only. Profile can change its time.
+function ReminderLine() {
+  const [settings, setSettings] = useState(reminderSettings)
+  const [blocked, setBlocked] = useState(false)
+
+  async function turnOn() {
+    hapticSelection()
+    const ok = await turnOnReminder()
+    setBlocked(!ok)
+    setSettings(reminderSettings())
+  }
+
+  if (settings.on) {
+    return <p className="daily-cta__reminder">A reminder comes at {fmtReminderTime(settings.time)} each day.</p>
+  }
+  return (
+    <>
+      <button type="button" onClick={turnOn} className="daily-cta__remind btn-press">
+        <Icon name="bell" size={13} />
+        Remind me each day
+      </button>
+      {blocked && (
+        <p className="daily-cta__reminder">
+          Notifications are off for Tempify. Turn them on in the Settings app, then tap again.
+        </p>
+      )}
+    </>
+  )
+}
+
 export default function DailyCompleteCta({ user, isSubscribed }) {
   const { body, cta, to } = copyFor({ user, isSubscribed })
 
@@ -44,6 +78,8 @@ export default function DailyCompleteCta({ user, isSubscribed }) {
       <Link to={to} className="daily-cta__action btn-press">
         {cta}
       </Link>
+
+      {reminderAvailable() && <ReminderLine />}
     </section>
   )
 }

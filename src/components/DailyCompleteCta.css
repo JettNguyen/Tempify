@@ -50,6 +50,30 @@
   border-radius: 999px;
 }
 
+/* The reminder offer: quieter than the action above it, in the same column. */
+.daily-cta__remind {
+  grid-column: 2;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0.15rem;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.daily-cta__reminder {
+  grid-column: 2;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 @media (max-width: 380px) {
   .daily-cta {
     padding: 1rem;

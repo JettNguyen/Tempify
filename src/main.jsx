@@ -8,6 +8,8 @@ import '@fontsource/inter/latin-500.css'
 import '@fontsource/inter/latin-600.css'
 import './styles/globals.css'
 import { noteArrival } from './lib/plays'
+import { reminderAvailable, refreshReminder } from './lib/reminder'
+import { App as CapApp } from '@capacitor/app'
 
 // Polyfill crypto.randomUUID for environments that lack it
 if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
@@ -22,6 +24,13 @@ if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
 
 // Before the router can tidy the address away.
 noteArrival()
+
+// The reminders are booked a week ahead, so each launch and each return to
+// the app moves that week along.
+if (reminderAvailable()) {
+  refreshReminder()
+  CapApp.addListener('resume', refreshReminder)
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

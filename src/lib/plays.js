@@ -95,6 +95,16 @@ function send(args) {
   }
 }
 
+/** Whether this device finished a game on `day` (YYYY-MM-DD, Eastern). */
+export function playedOn(day) {
+  try {
+    const days = readJson(localStorage, DAYS_KEY, [])
+    return Array.isArray(days) && days.includes(day)
+  } catch {
+    return false
+  }
+}
+
 /** A game finished on this device. Call once per game and puzzle day. */
 export function countPlay(gameSlug, puzzleDate) {
   const today = todayEST()

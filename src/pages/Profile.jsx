@@ -7,6 +7,7 @@ import { Browser } from '@capacitor/browser'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import { hapticSelection } from '../lib/haptics'
 import { fmtMonthDayYear } from '../lib/date'
+import { reminderAvailable, reminderSettings, turnOnReminder, turnOffReminder, setReminderTime, fmtReminderTime } from '../lib/reminder'
 import { soundEffectsOn, setSoundEffects } from '../lib/sounds'
 import { getNativeManageSubscriptionsUrl, usesNativeIap, restorePurchases, requestRefundForActiveEntitlement } from '../lib/billing'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
@@ -15,6 +16,60 @@ import Icon from '../components/Icon'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
 import './Profile.css'
 import './Dashboard.css'
+
+// Every hour from 6 AM to 11 PM.
+const REMINDER_TIMES = Array.from({ length: 18 }, (_, i) => `${String(i + 6).padStart(2, '0')}:00`)
+
+// The daily reminder, in the app only. Unlike the preferences above it, it
+// takes effect at once, since turning it on asks iOS for permission there
+// and then.
+function ReminderSection() {
+  const [settings, setSettings] = useState(reminderSettings)
+  const [blocked, setBlocked] = useState(false)
+
+  async function toggle(on) {
+    if (on) setBlocked(!(await turnOnReminder(settings.time)))
+    else await turnOffReminder()
+    setSettings(reminderSettings())
+  }
+
+  async function pickTime(time) {
+    await setReminderTime(time)
+    setSettings(reminderSettings())
+  }
+
+  return (
+    <div className="profile-section">
+      <p className="profile-section-label">daily reminder</p>
+      <PreferenceToggle
+        label="Remind me each day"
+        desc="One notification a day, skipped once you've played"
+        checked={settings.on}
+        onChange={toggle}
+      />
+      {settings.on && (
+        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginTop: '12px', fontSize: 'var(--fs-sm)', color: 'var(--text-primary)' }}>
+          At
+          <select
+            value={settings.time}
+            onChange={e => pickTime(e.target.value)}
+            style={{
+              background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border)',
+              borderRadius: '8px', padding: '6px 10px', fontSize: 'var(--fs-sm)', fontFamily: 'inherit',
+            }}
+          >
+            {REMINDER_TIMES.map(t => <option key={t} value={t}>{fmtReminderTime(t)}</option>)}
+          </select>
+        </label>
+      )}
+      {blocked && (
+        <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--text-muted)', marginTop: '10px', lineHeight: 1.5 }}>
+          Notifications are off for Tempify. Turn them on in the Settings app, then try again.
+        </p>
+      )}
+    </div>
+  )
+}
 
 function PreferenceToggle({ label, desc, checked, onChange }) {
   return (
@@ -354,6 +409,8 @@ export default function Profile() {
           {savedPrefs ? 'Saved' : savingPrefs ? 'Saving…' : 'Save preferences'}
         </button>
       </div>
+
+      {reminderAvailable() && <ReminderSection />}
 
       {/* Avatar */}
       <div className="profile-section">

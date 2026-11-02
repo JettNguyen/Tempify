@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { todayEST } from '../lib/date'
 import { countPlay } from '../lib/plays'
+import { refreshReminder } from '../lib/reminder'
 
 // v2: keyed by slug|date so archive and today's puzzles don't collide
 const storageKey = (userId) => `tempify_completions_v2_${userId || 'guest'}`
@@ -55,8 +56,12 @@ export function useCompletion(userId) {
 
   function markComplete(gameSlug, puzzleDate, attempts, completed = true, points = null) {
     const key = `${gameSlug}|${puzzleDate}`
-    // Counted once, though Cover or Not marks again when its year is in.
-    if (!completions[key]?.played) countPlay(gameSlug, puzzleDate)
+    // Counted once, though Cover or Not marks again when its year is in. A
+    // day with a game played needs no reminder, so the reminders rebook.
+    if (!completions[key]?.played) {
+      countPlay(gameSlug, puzzleDate)
+      refreshReminder()
+    }
     const updated = {
       ...completions,
       [key]: { attempts, completed: Boolean(completed), played: true, ...(points != null ? { points } : {}) },
