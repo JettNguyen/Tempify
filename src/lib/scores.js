@@ -222,7 +222,7 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
     const candidateIds = [...new Set([userId, ...following])]
     // Filter to those who allow leaderboard visibility (current user always included)
     const { data: users } = await supabase
-      .from('users')
+      .from('profiles')
       .select('id, leaderboard_visibility')
       .in('id', candidateIds)
     eligibleUserIds = (users || [])
@@ -231,7 +231,7 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
   } else {
     // global - users who opted into public
     const { data: users } = await supabase
-      .from('users')
+      .from('profiles')
       .select('id')
       .eq('leaderboard_visibility', 'public')
     eligibleUserIds = (users || []).map(u => u.id)
@@ -255,7 +255,7 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
 
   const userIds = [...new Set(scores.map(s => s.user_id))]
   const { data: profiles } = await supabase
-    .from('users')
+    .from('profiles')
     .select('id, username, avatar_icon, avatar_color')
     .in('id', userIds)
 
@@ -306,32 +306,13 @@ export async function getPuzzleStats(gameSlug, date) {
 
 // ─── User search ──────────────────────────────────────────────────────────────
 
+// Part of a username, or someone's exact email. The match runs in the database
+// (search_profiles, migration 013) so no one's email ever reaches the app.
 export async function searchUsers(query) {
-  if (!query || query.trim().length < 2) return []
-  // Commas, parens and quotes are separators in a PostgREST `or` filter, so a
-  // query containing them would build a malformed filter and quietly match
-  // nothing. Strip them rather than let the search look broken.
-  const q = query.trim().toLowerCase().replace(/[,()"\\]/g, ' ').trim()
+  const q = (query || '').trim()
   if (q.length < 2) return []
-  const premiumEmails = (import.meta.env.VITE_PREMIUM_EMAILS || '')
-    .split(',')
-    .map(e => e.trim().toLowerCase())
-    .filter(Boolean)
-  const { data } = await supabase
-    .from('users')
-    .select('id, username, avatar_icon, avatar_color, email, is_subscribed')
-    .not('username', 'is', null)
-    .or(`username.ilike.%${q}%,email.ilike.%${q}%`)
-    .limit(10)
-
-  return (data || [])
-    .filter(u => u.username)
-    .map(u => ({
-      ...u,
-      is_subscribed: Boolean(
-        u.is_subscribed || premiumEmails.includes((u.email || '').trim().toLowerCase())
-      ),
-    }))
+  const { data } = await supabase.rpc('search_profiles', { p_query: q })
+  return (data || []).filter(u => u.username)
 }
 
 export async function getFollowerProfiles(userId) {
@@ -342,7 +323,7 @@ export async function getFollowerProfiles(userId) {
   const ids = (follows || []).map(f => f.follower_id)
   if (!ids.length) return []
   const { data } = await supabase
-    .from('users')
+    .from('profiles')
     .select('id, username, avatar_icon, avatar_color')
     .in('id', ids)
     .not('username', 'is', null)
@@ -357,7 +338,7 @@ export async function getFollowingProfiles(userId) {
   const ids = (follows || []).map(f => f.following_id)
   if (!ids.length) return []
   const { data } = await supabase
-    .from('users')
+    .from('profiles')
     .select('id, username, avatar_icon, avatar_color')
     .in('id', ids)
     .not('username', 'is', null)

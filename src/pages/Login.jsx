@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { signInWithGoogleOAuth, signInWithApple } from '../lib/oauth'
-import { getEmailByUsername } from '../lib/avatar'
 import { useAuth } from '../hooks/useAuth'
 import './Login.css'
 
@@ -32,17 +31,25 @@ export default function Login() {
     setError(null)
     setLoading(true)
 
-    let email = identifier.trim()
+    const email = identifier.trim()
 
-    // If no @ it's a username - look up the real email
+    // No @ means a username. The server finds the email behind it and signs
+    // in there, so no one's email is ever sent to the app.
     if (!email.includes('@')) {
-      const found = await getEmailByUsername(email)
-      if (!found) {
-        setError('No account found with that username.')
-        setLoading(false)
-        return
+      const { data, error: err } = await supabase.functions.invoke('username-login', {
+        body: { username: email, password },
+      })
+      const signedIn = !err && data?.access_token
+        && !(await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token })).error
+      setLoading(false)
+      if (signedIn) {
+        navigate(from, { replace: true })
+      } else if (err?.context?.status === 429) {
+        setError('Too many tries in a row. Wait a few minutes, then try again.')
+      } else {
+        setError("That username and password don't match. Check both, or sign in with your email instead.")
       }
-      email = found
+      return
     }
 
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })

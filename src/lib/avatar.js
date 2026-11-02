@@ -64,20 +64,10 @@ export async function saveProfileSettings(userId, updates) {
 
 export async function checkUsernameAvailable(username, currentUserId) {
   const { data } = await supabase
-    .from('users')
+    .from('profiles')
     .select('id')
     .eq('username', username.toLowerCase().trim())
     .neq('id', currentUserId)
     .single()
   return !data
-}
-
-// Returns the email for a given username, or null if not found
-export async function getEmailByUsername(username) {
-  const { data } = await supabase
-    .from('users')
-    .select('email')
-    .eq('username', username.toLowerCase().trim())
-    .single()
-  return data?.email ?? null
 }

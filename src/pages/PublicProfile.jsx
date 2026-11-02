@@ -148,19 +148,12 @@ export default function PublicProfile() {
 
   const fetchProfile = useCallback(async () => {
     if (!username) return
-    const premiumEmails = (import.meta.env.VITE_PREMIUM_EMAILS || '')
-      .split(',')
-      .map(e => e.trim().toLowerCase())
-      .filter(Boolean)
     const { data, error } = await supabase
-      .from('users')
-      .select('id, username, avatar_icon, avatar_color, email, is_subscribed, leaderboard_visibility')
+      .from('profiles')
+      .select('id, username, avatar_icon, avatar_color, is_subscribed, leaderboard_visibility')
       .eq('username', username.toLowerCase())
       .maybeSingle()
     if (error || !data) { setTarget(null); return }
-    if (premiumEmails.length && premiumEmails.includes((data.email || '').trim().toLowerCase())) {
-      data.is_subscribed = true
-    }
     setTarget(data)
 
     const [sc, st, followers, followingIds] = await Promise.all([

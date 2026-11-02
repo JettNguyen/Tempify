@@ -150,7 +150,7 @@ export function GivePremium() {
     setComps(data || [])
     const ids = (data || []).map(c => c.user_id)
     if (!ids.length) return
-    const { data: users } = await supabase.from('users').select('id, username').in('id', ids)
+    const { data: users } = await supabase.from('profiles').select('id, username').in('id', ids)
     setNames(Object.fromEntries((users || []).map(u => [u.id, u.username])))
   }, [])
 
@@ -170,7 +170,7 @@ export function GivePremium() {
     if (!name) { setMessage('Type their username.'); return }
     if (!(length >= 1 && length <= 3650)) { setMessage('Days has to be a number from 1 to 3650.'); return }
     setBusy(true)
-    const { data: found } = await supabase.from('users').select('id, username').eq('username', name).maybeSingle()
+    const { data: found } = await supabase.from('profiles').select('id, username').eq('username', name).maybeSingle()
     if (!found) {
       setBusy(false)
       setMessage(`No player is named ${name}. They need an account with a username first.`)

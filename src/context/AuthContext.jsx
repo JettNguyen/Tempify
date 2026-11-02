@@ -180,20 +180,9 @@ export function AuthProvider({ children }) {
       } catch {
         nativePremium = false
       }
-
-      // Sync RC status into rc_subscribed and recompute is_subscribed.
-      // This is a safety net for when webhooks are delayed or missed.
-      // stripe_subscribed is preserved so a cancelled iOS sub never revokes
-      // an active Stripe subscription on the web side.
-      if (data && data.rc_subscribed !== nativePremium) {
-        const newIsSubscribed = Boolean(nativePremium || data.stripe_subscribed || emailBasedPremium)
-        await supabase
-          .from('users')
-          .update({ rc_subscribed: nativePremium, is_subscribed: newIsSubscribed })
-          .eq('id', userId)
-        data.rc_subscribed = nativePremium
-        data.is_subscribed = newIsSubscribed
-      }
+      // Only the RevenueCat webhook records this in the database, the way the
+      // Stripe one does for the web: players can't write their own Premium
+      // flags (migration 013).
     }
 
     if (data) {
@@ -222,14 +211,10 @@ export function AuthProvider({ children }) {
   }
 
   // Called immediately after a confirmed purchase (Apple IAP or Stripe).
-  // Writes is_subscribed=true to the DB and updates local state right away,
-  // so premium features unlock without waiting for a webhook or RC round-trip.
+  // Unlocks Premium on this screen right away, without waiting for the
+  // webhook that records it in the database.
   async function markSubscribed() {
     if (!user) return
-    await supabase
-      .from('users')
-      .update({ is_subscribed: true, rc_subscribed: true })
-      .eq('id', user.id)
     setProfile(p => p ? { ...p, is_subscribed: true, rc_subscribed: true, paid_subscribed: true } : p)
   }
 
