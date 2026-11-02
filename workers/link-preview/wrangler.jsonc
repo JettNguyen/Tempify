@@ -1,0 +1,7 @@
+{
+  "name": "tempify-link-preview",
+  "main": "index.js",
+  "compatibility_date": "2026-06-09",
+  // Needs tempify.me's DNS on Cloudflare, with the site's records proxied.
+  "routes": [{ "pattern": "tempify.me/game/*", "zone_name": "tempify.me" }]
+}
