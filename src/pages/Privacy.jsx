@@ -2,7 +2,7 @@ import BackButton from '../components/BackButton'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import './Privacy.css'
 
-const LAST_UPDATED = 'September 6, 2026'
+const LAST_UPDATED = 'November 2, 2026'
 const CONTACT_EMAIL = 'jettuf26@gmail.com'
 const OPERATOR = 'Jett Nguyen'
 
@@ -60,9 +60,11 @@ export default function Privacy() {
         <p>
           Tempify stores some data locally in your browser or app so it works without an account and
           survives a refresh. This includes your progress on the current day&rsquo;s puzzles, which
-          puzzles you have completed, game timers, a cached subscription flag, and a cache of album
-          artwork lookups. This data stays on your device, is not sent to us, and is cleared when you
-          clear your browser or app storage. We do not use cookies for advertising or analytics.
+          puzzles you have completed, game timers, a cached subscription flag, a cache of album
+          artwork lookups, and the days you played in the last week. This data stays on your device,
+          is not sent to us, and is cleared when you clear your browser or app storage. The only thing
+          drawn from it is the count described under Tracking and Ads. We do not use cookies for
+          advertising or analytics.
         </p>
       </section>
 
@@ -162,6 +164,14 @@ export default function Privacy() {
           Tempify contains no advertising, no analytics SDKs, and no third-party trackers. We do not
           sell your data, we do not share it for advertising, and we do not track you across other
           apps or websites.
+        </p>
+        <p>
+          To know how many people play, Tempify adds to a count in our own database each time a game
+          is finished or shared. Each count holds the game and day, whether it was the web or the app,
+          whether someone was signed in, whether the visit started from a shared link and which website it came from, whether it was
+          that device&rsquo;s first game of the day, and on how many of the seven days before the
+          device played. It holds no account, no device identifier, and no time of day, so it
+          can&rsquo;t be tied back to you.
         </p>
       </section>
 

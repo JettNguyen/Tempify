@@ -7,6 +7,7 @@ import '@fontsource/inter/latin-400.css'
 import '@fontsource/inter/latin-500.css'
 import '@fontsource/inter/latin-600.css'
 import './styles/globals.css'
+import { noteArrival } from './lib/plays'
 
 // Polyfill crypto.randomUUID for environments that lack it
 if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
@@ -18,6 +19,9 @@ if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
     return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`
   }
 }
+
+// Before the router can tidy the address away.
+noteArrival()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
