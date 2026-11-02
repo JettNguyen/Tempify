@@ -66,6 +66,17 @@ function clearPersistedEpoch(persistKey) {
   }
 }
 
+/**
+ * The time already on the clock when a game opens again. A clock saved as
+ * running was never paused: the page went away without unmounting, through a
+ * reload or the app or tab being closed. The time since it started counts,
+ * or a reload would wind the clock back to its last pause.
+ */
+export function restoredElapsedMs(state, now = Date.now()) {
+  if (state.startedAtMs == null) return state.elapsedMs
+  return state.elapsedMs + Math.max(0, now - state.startedAtMs)
+}
+
 // Starts counting up from 0 when the component mounts.
 // Call stop() when the game ends - returns elapsed seconds.
 export function useGameTimer(active = true, delayMs = 0, persistKey = null) {
@@ -84,7 +95,7 @@ export function useGameTimer(active = true, delayMs = 0, persistKey = null) {
 
     const persistedState = readPersistedState(persistKey)
     if (persistedState) {
-      elapsedMsRef.current = persistedState.elapsedMs
+      elapsedMsRef.current = restoredElapsedMs(persistedState)
       startedAtMsRef.current = null
       delayRemainingMsRef.current = persistedState.delayRemainingMs
     } else {
