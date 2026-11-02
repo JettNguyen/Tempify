@@ -139,7 +139,7 @@ function getDisplayArtist(puzzle) {
   // A five-song day reads as its first song and how many follow it.
   const rounds = puzzle.metadata?.rounds
   if (Array.isArray(rounds) && rounds.length) {
-    return `${rounds[0].artist}, plus ${rounds.length - 1} more song${rounds.length === 2 ? '' : 's'}`
+    return `${rounds[0].artist} + ${rounds.length - 1} more`
   }
   if (puzzle.game_slug === 'sampled')
     return puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist || null
