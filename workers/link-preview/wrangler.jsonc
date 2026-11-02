@@ -1,5 +1,7 @@
 {
   "name": "tempify-link-preview",
+  // jettuf26@gmail.com's Account, which holds the tempify.me zone.
+  "account_id": "1541babe7e8e9bfd180699bfcfd01984",
   "main": "index.js",
   "compatibility_date": "2026-06-09",
   // Needs tempify.me's DNS on Cloudflare, with the site's records proxied.
