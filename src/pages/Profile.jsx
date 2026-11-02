@@ -6,6 +6,7 @@ import { AVATAR_ICONS, AVATAR_COLORS, saveAvatar, saveProfileSettings, checkUser
 import { Browser } from '@capacitor/browser'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import { hapticSelection } from '../lib/haptics'
+import { fmtMonthDayYear } from '../lib/date'
 import { soundEffectsOn, setSoundEffects } from '../lib/sounds'
 import { getNativeManageSubscriptionsUrl, usesNativeIap, restorePurchases, requestRefundForActiveEntitlement } from '../lib/billing'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
@@ -392,7 +393,14 @@ export default function Profile() {
 
       {/* Billing */}
       <div className="profile-section">
-        {isSubscribed ? (
+        {isSubscribed && !profile?.paid_subscribed && profile?.comp_until ? (
+          <>
+            <p className="profile-section-label">subscription</p>
+            <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-primary)' }}>
+              Tempify+ is on as a gift through {fmtMonthDayYear(profile.comp_until)}. There's nothing to pay or cancel.
+            </p>
+          </>
+        ) : isSubscribed ? (
           <>
             <p className="profile-section-label">subscription</p>
             <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-primary)', marginBottom: '1rem' }}>

@@ -4,8 +4,22 @@ import { Browser } from '@capacitor/browser'
 import { supabase } from '../lib/supabase'
 import { isNativeApp } from '../lib/oauth'
 import { initRevenueCat, checkPremiumEntitlement } from '../lib/billing'
+import { todayEST } from '../lib/date'
 
 const AuthContext = createContext(null)
+
+// The last day of Premium given by hand (migration 012), or null if there's
+// none or it has run out. Missing until that migration runs, which reads as
+// none.
+async function compUntil(userId) {
+  const { data, error } = await supabase
+    .from('premium_comps')
+    .select('until')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error || !data?.until) return null
+  return data.until >= todayEST() ? data.until : null
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -187,10 +201,14 @@ export function AuthProvider({ children }) {
       // subscription also unlocks premium in the iOS app.
       // Web: DB is authoritative (managed by Stripe webhook).
       if (isNativeApp()) {
-        data.is_subscribed = Boolean(emailBasedPremium || nativePremium || data.stripe_subscribed)
+        data.paid_subscribed = Boolean(emailBasedPremium || nativePremium || data.stripe_subscribed)
       } else {
-        data.is_subscribed = Boolean(data.is_subscribed || emailBasedPremium)
+        data.paid_subscribed = Boolean(data.is_subscribed || emailBasedPremium)
       }
+      // A gift adds to a paid plan here only, never in the database, so it
+      // runs out on its own.
+      data.comp_until = await compUntil(userId)
+      data.is_subscribed = data.paid_subscribed || Boolean(data.comp_until)
     }
     setProfile(data)
     setLoading(false)
@@ -212,7 +230,7 @@ export function AuthProvider({ children }) {
       .from('users')
       .update({ is_subscribed: true, rc_subscribed: true })
       .eq('id', user.id)
-    setProfile(p => p ? { ...p, is_subscribed: true, rc_subscribed: true } : p)
+    setProfile(p => p ? { ...p, is_subscribed: true, rc_subscribed: true, paid_subscribed: true } : p)
   }
 
   async function signOut() {
