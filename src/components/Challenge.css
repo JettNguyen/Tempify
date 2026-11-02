@@ -89,6 +89,9 @@
 .challenge-result__points--total {
   padding-top: 6px;
   border-top: 1px solid var(--border);
+  /* One size across the row, so baseline alignment starts every cell at the
+     same height and the line above them doesn't step. */
+  font-size: var(--fs-sm);
   color: var(--text-primary);
   font-weight: 700;
 }
