@@ -6,6 +6,10 @@
   padding: 1.25rem;
 }
 
+body.big-screen .success-page {
+  min-height: calc(100dvh / var(--big-screen-scale));
+}
+
 .success-card {
   max-width: 400px;
   text-align: center;

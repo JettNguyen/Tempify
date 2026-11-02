@@ -6,6 +6,10 @@
   padding: 1.25rem;
 }
 
+body.big-screen .subscribe-page {
+  min-height: calc(100dvh / var(--big-screen-scale));
+}
+
 .subscribe-card {
   width: 100%;
   max-width: 400px;

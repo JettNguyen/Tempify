@@ -11,6 +11,10 @@ body.ios-ipad-ui .auth-page {
   min-height: calc(100dvh / var(--ios-ipad-ui-scale));
 }
 
+body.big-screen .auth-page {
+  min-height: calc(100dvh / var(--big-screen-scale));
+}
+
 .auth-card {
   width: 100%;
   max-width: 400px;

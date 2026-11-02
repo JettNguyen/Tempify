@@ -647,6 +647,17 @@ body.ios-ipad-ui {
   }
 }
 
+/* A big desktop window zooms the same way, by however much fits
+   (useBigScreenScale). A zoomed 100dvh comes out taller than the window, so
+   every full-height page divides it back down. */
+body.big-screen #root {
+  zoom: var(--big-screen-scale);
+}
+
+body.big-screen .app-scroll-container {
+  min-height: calc(100dvh / var(--big-screen-scale));
+}
+
 body.ios-ipad-ui .page-shell {
   max-width: 660px;
 }

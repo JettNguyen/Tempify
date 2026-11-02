@@ -24,6 +24,7 @@ import Era from './games/Era'
 import CoverOrNot from './games/CoverOrNot'
 import TapTempo from './games/TapTempo'
 import { useIOSIPadUI } from './hooks/useIOSIPadUI'
+import { useBigScreenScale } from './hooks/useBigScreenScale'
 import { useScrolling } from './hooks/useScrolling'
 import { useNativeSplash } from './hooks/useNativeSplash'
 import { initKeyboard } from './lib/keyboard'
@@ -61,6 +62,7 @@ function PageTransition({ children }) {
 
 export default function App() {
   useIOSIPadUI()
+  useBigScreenScale()
   useScrolling()
 
   // Enables the keyboard's Done button; Capacitor hides it by default.

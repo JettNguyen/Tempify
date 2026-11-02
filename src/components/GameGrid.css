@@ -8,6 +8,12 @@
   gap: 0.75rem;
 }
 
+/* The big-screen zoom would count the viewport twice, and the lineup would run
+   off the bottom of a 1080p window. */
+body.big-screen .game-grid {
+  grid-auto-rows: minmax(clamp(116px, calc(18vh / var(--big-screen-scale)), 188px), auto);
+}
+
 .game-grid__item {
   /* Fill the cell so a row of tiles reads as one band, and so the tall hero
      actually stretches across the two rows it spans. */

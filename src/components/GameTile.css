@@ -47,6 +47,17 @@
   opacity: 0.15;
 }
 
+/* Matching the rows under the big-screen zoom (GameGrid.css). */
+body.big-screen .game-tile__glyph {
+  width: clamp(96px, calc(17vh / var(--big-screen-scale)), 172px);
+  height: clamp(96px, calc(17vh / var(--big-screen-scale)), 172px);
+}
+
+body.big-screen .game-tile--featured .game-tile__glyph {
+  width: clamp(150px, calc(30vh / var(--big-screen-scale)), 290px);
+  height: clamp(150px, calc(30vh / var(--big-screen-scale)), 290px);
+}
+
 .game-tile__header {
   display: flex;
   justify-content: space-between;
