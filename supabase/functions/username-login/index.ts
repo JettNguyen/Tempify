@@ -3,7 +3,10 @@
 // gets back either a session or a plain "didn't match". The password check
 // is Supabase Auth's own, so its rate limits still apply.
 
-declare const Deno: { env: { get(key: string): string | undefined } }
+declare const Deno: {
+  env: { get(key: string): string | undefined }
+  serve(handler: (req: Request) => Promise<Response>): unknown
+}
 
 function corsHeaders(base: Record<string, string> = {}) {
   return {
@@ -21,7 +24,7 @@ function reply(status: number, body: unknown) {
   })
 }
 
-export default async function handler(req: Request) {
+export async function handler(req: Request) {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders() })
   }
@@ -63,3 +66,7 @@ export default async function handler(req: Request) {
   const session = await token.json()
   return reply(200, { access_token: session.access_token, refresh_token: session.refresh_token })
 }
+
+// Supabase only answers requests handed to Deno.serve. A default export alone
+// started the function and left every request waiting until it timed out.
+Deno.serve(handler)

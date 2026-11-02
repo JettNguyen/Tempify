@@ -1,6 +1,9 @@
 import { setSubscriptionStatus } from '../_shared/subscription.ts'
 
-declare const Deno: { env: { get(key: string): string | undefined } }
+declare const Deno: {
+  env: { get(key: string): string | undefined }
+  serve(handler: (req: Request) => Promise<Response>): unknown
+}
 
 // These event types mean the entitlement is now active.
 const ACTIVE_EVENTS = new Set([
@@ -22,7 +25,7 @@ const INACTIVE_EVENTS = new Set([
 // BILLING_ISSUE: grace period still active; EXPIRATION fires if unresolved.
 //   Both are intentionally ignored here.
 
-export default async function handler(req: Request): Promise<Response> {
+export async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204 })
   }
@@ -83,3 +86,7 @@ function json(data: unknown, status = 200): Response {
     headers: { 'Content-Type': 'application/json' },
   })
 }
+
+// Supabase only answers requests handed to Deno.serve. A default export alone
+// started the function and left every request waiting until it timed out.
+Deno.serve(handler)

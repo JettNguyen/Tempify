@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import handler from './index.ts'
+
+// The function hands its handler to Deno.serve as it loads, so Deno has to
+// exist before the import below runs.
+vi.hoisted(() => {
+  vi.stubGlobal('Deno', { serve: () => {} })
+})
+
+import { handler } from './index.ts'
 
 const ENV: Record<string, string> = {
   SUPABASE_URL: 'https://example.supabase.co',

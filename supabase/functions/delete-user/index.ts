@@ -1,4 +1,7 @@
-declare const Deno: { env: { get(key: string): string } }
+declare const Deno: {
+  env: { get(key: string): string }
+  serve(handler: (req: Request) => Promise<Response>): unknown
+}
 
 function corsHeaders(base: Record<string, string> = {}) {
   return {
@@ -9,7 +12,7 @@ function corsHeaders(base: Record<string, string> = {}) {
   }
 }
 
-export default async function handler(req: Request) {
+export async function handler(req: Request) {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders() })
   }
@@ -71,3 +74,7 @@ export default async function handler(req: Request) {
     headers: corsHeaders({ 'Content-Type': 'application/json' }),
   })
 }
+
+// Supabase only answers requests handed to Deno.serve. A default export alone
+// started the function and left every request waiting until it timed out.
+Deno.serve(handler)
