@@ -34,6 +34,30 @@ export function fmtDayShort(dateStr) {
   return `${weekday} ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
 }
 
+// Tempify's first day. Each day since has a number, the way Wordle numbers
+// its puzzles, counted from 1 here and shared by all of that day's games.
+const FIRST_DAY = '2026-04-28'
+const DAY_MS = 86400000
+
+function utcDay(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return Date.UTC(y, m - 1, d)
+}
+
+/** The day's number, 1 on Tempify's first day, or null for anything before it. */
+export function dayNumber(dateStr) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || '')) return null
+  // Whole UTC days, so a clock change in between can't make a day 23 hours long.
+  const n = Math.round((utcDay(dateStr) - utcDay(FIRST_DAY)) / DAY_MS) + 1
+  return n >= 1 ? n : null
+}
+
+/** "#189", or nothing for a day before the first. */
+export function fmtDayNumber(dateStr) {
+  const n = dayNumber(dateStr)
+  return n ? `#${n.toLocaleString('en-US')}` : ''
+}
+
 /** "Jun 15, 2026". Carries the year, for dates read long after the fact. */
 export function fmtMonthDayYear(dateStr) {
   const d = parseDay(dateStr)

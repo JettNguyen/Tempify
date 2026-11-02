@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
-import { todayEST, fmtDayShort } from '../lib/date'
+import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
@@ -142,7 +142,7 @@ function OneSong({ puzzle, puzzleDate, dateParam }) {
       <GameHeader
         slug="hit-or-miss"
         name="hit or miss"
-        date={fmtDayShort(puzzleDate)}
+        puzzleDate={puzzleDate}
         title="Did this song ever chart on the Billboard Hot 100?"
         timer={!done && profile?.competitive_mode !== false ? { text: display, running: !chosen } : null}
       />

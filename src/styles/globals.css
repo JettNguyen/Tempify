@@ -729,6 +729,12 @@ body.ios-ipad-ui .page-shell-admin {
   margin: 0 0.4rem;
 }
 
+/* The day's number beside its date: Tempify counts its days the way Wordle
+   counts its puzzles. */
+.puzzle-number {
+  font-variant-numeric: tabular-nums;
+}
+
 .game-header__title {
   font-size: var(--fs-lg);
   font-weight: 500;

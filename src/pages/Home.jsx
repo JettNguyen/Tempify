@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
-import { todayEST } from '../lib/date'
+import { todayEST, fmtDayNumber } from '../lib/date'
 import { prefetchPuzzlesForDate } from '../lib/puzzles'
 import { prefetchClip } from '../lib/audioEngine'
 import { GAMES, GAME_SLUGS } from '../lib/games'
@@ -67,7 +67,7 @@ export default function Home() {
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
 
       <div className="home-header">
-        <p className="home-date">{dateLabel()}</p>
+        <p className="home-date">{dateLabel()}<span className="home-number">{fmtDayNumber(todayEST())}</span></p>
         <h1 className="home-title">Today's games</h1>
       </div>
 

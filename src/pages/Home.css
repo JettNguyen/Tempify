@@ -8,6 +8,17 @@
   margin-bottom: 0.35rem;
 }
 
+/* The day's number, quieter than the date it follows. */
+.home-number {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-number::before {
+  content: '·';
+  margin: 0 0.4rem;
+}
+
 .home-title {
   font-size: var(--fs-xl);
   font-weight: 500;

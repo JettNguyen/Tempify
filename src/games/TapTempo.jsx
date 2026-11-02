@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
-import { todayEST, fmtDayShort } from '../lib/date'
+import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
@@ -170,7 +170,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
       <GameHeader
         slug={SLUG}
         name="tap the tempo"
-        date={fmtDayShort(puzzleDate)}
+        puzzleDate={puzzleDate}
         title={showClip ? 'How close was your beat?' : 'Tap its beat from memory'}
         timer={!done && competitive ? { text: display, running: !locking && !revealed } : null}
       />

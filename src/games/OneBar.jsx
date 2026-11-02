@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
-import { todayEST, fmtDayShort } from '../lib/date'
+import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork, stripVariant } from '../lib/deezer'
@@ -269,7 +269,7 @@ export default function OneBar() {
       <GameHeader
         slug="one-bar"
         name="one bar"
-        date={fmtDayShort(puzzleDate)}
+        puzzleDate={puzzleDate}
         title="Name the song from a short clip. Each wrong guess unlocks a bit more."
       />
 

@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
-import { todayEST, fmtDayShort } from '../lib/date'
+import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork } from '../lib/deezer'
@@ -267,7 +267,7 @@ export default function CoverOrNot() {
       <GameHeader
         slug="cover-or-not"
         name="cover or not"
-        date={fmtDayShort(puzzleDate)}
+        puzzleDate={puzzleDate}
         title="Is this song a cover of an earlier track?"
         timer={!done && profile?.competitive_mode !== false ? { text: display, running: !chosen } : null}
       />

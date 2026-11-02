@@ -3,7 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
-import { fmtDayShort } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { saveScore, updateStreak } from '../lib/scores'
 import { prefetchClip } from '../lib/audioEngine'
@@ -172,7 +171,7 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
       <GameHeader
         slug={SLUG}
         name="era"
-        date={fmtDayShort(puzzleDate)}
+        puzzleDate={puzzleDate}
         title={done ? 'How the line came out' : 'Where does this one go?'}
         timer={timer}
       />

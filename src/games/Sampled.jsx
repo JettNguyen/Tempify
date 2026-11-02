@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
-import { todayEST, fmtDayShort } from '../lib/date'
+import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
@@ -124,7 +124,7 @@ export default function Sampled() {
       <GameHeader
         slug="sampled"
         name="sampled"
-        date={fmtDayShort(puzzleDate)}
+        puzzleDate={puzzleDate}
         title="This song samples a classic. Which one?"
         timer={!done && profile?.competitive_mode !== false ? { text: display, running: true } : null}
       />

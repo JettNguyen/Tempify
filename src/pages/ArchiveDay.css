@@ -15,6 +15,15 @@
   margin-bottom: 0.35rem;
 }
 
+.archive-day-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.archive-day-number::before {
+  content: '·';
+  margin: 0 0.4rem;
+}
+
 .archive-day-title {
   font-size: var(--fs-xl);
   font-weight: 500;

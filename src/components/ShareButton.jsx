@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Icon from './Icon'
 import { Share } from '@capacitor/share'
-import { fmtTime } from '../lib/date'
+import { fmtTime, fmtDayNumber } from '../lib/date'
 import { isNativeApp } from '../lib/oauth'
 import { siteUrl, challengeQuery } from '../lib/challenge'
 import { GAME_BY_SLUG } from '../lib/games'
@@ -108,7 +108,8 @@ export default function ShareButton({ emojiGrid, gameSlug, correct, attempts, ti
       : siteUrl('', where)
 
     const dateLabel = fmtShareDate(puzzleDate)
-    const header = ['Tempify', gameName, dateLabel].filter(Boolean).join(' · ')
+    const header = [['Tempify', fmtDayNumber(puzzleDate)].filter(Boolean).join(' '), gameName, dateLabel]
+      .filter(Boolean).join(' · ')
 
     // A points game writes its own line, since its score isn't a win or a loss.
     const lines = RESULT_LINES[gameSlug]

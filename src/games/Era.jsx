@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
-import { todayEST, fmtDayShort } from '../lib/date'
+import { todayEST } from '../lib/date'
 import { DECADES, centuryOf } from '../lib/decades'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
@@ -151,7 +151,7 @@ function OneSong({ puzzle, puzzleDate, dateParam }) {
       <GameHeader
         slug="era"
         name="era"
-        date={fmtDayShort(puzzleDate)}
+        puzzleDate={puzzleDate}
         title="What decade is this song from?"
         timer={timer}
       />

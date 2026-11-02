@@ -3,7 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
-import { fmtDayShort } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { saveScore, updateStreak } from '../lib/scores'
 import { prefetchClip } from '../lib/audioEngine'
@@ -187,7 +186,7 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
       <GameHeader
         slug={SLUG}
         name="hit or miss"
-        date={fmtDayShort(puzzleDate)}
+        puzzleDate={puzzleDate}
         title="How high did it chart?"
         timer={!done && competitive ? { text: display, running: !locking && !revealed } : null}
       />

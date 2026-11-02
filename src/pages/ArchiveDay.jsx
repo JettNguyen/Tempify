@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
-import { todayEST } from '../lib/date'
+import { todayEST, fmtDayNumber } from '../lib/date'
 import { GAME_BY_SLUG, ALL_GAME_SLUGS } from '../lib/games'
 import { prefetchPuzzlesForDate } from '../lib/puzzles'
 import ArchiveLock from '../components/ArchiveLock'
@@ -46,6 +46,7 @@ export default function ArchiveDay() {
 
   const isSubscribed = profile?.is_subscribed
 
+  const dayNumber = fmtDayNumber(date)
   const formatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
   })
@@ -72,7 +73,10 @@ export default function ArchiveDay() {
       <Link to="/explore" className="archive-day-back">← Explore</Link>
 
       <div className="archive-day-header">
-        <p className="archive-day-eyebrow">{isToday ? 'today' : 'archive'}</p>
+        <p className="archive-day-eyebrow">
+          {isToday ? 'today' : 'archive'}
+          {dayNumber && <span className="archive-day-number">{dayNumber}</span>}
+        </p>
         <h1 className="archive-day-title">{formatted}</h1>
       </div>
 
