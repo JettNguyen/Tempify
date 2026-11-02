@@ -152,6 +152,12 @@
   font-weight: 500;
 }
 
+/* What the number is, when it isn't a win rate. */
+.dashboard-game-stat__unit {
+  color: var(--text-muted);
+  font-size: var(--fs-2xs);
+}
+
 .dashboard-game-stat__bar {
   height: 4px;
   background: var(--border);

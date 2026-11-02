@@ -4,6 +4,17 @@
 
 export const ROUND_MAX = 1000
 
+// Tap the Tempo, Hit or Miss and Era are five songs a day, so every day is out
+// of 5,000, and how well someone plays is how much of that they get. Cover or
+// Not is different: its win is the call itself, and the year only adds points.
+export const ACCURACY_GAMES = new Set(['tempo', 'hit-or-miss', 'era'])
+export const FIVE_SONG_MAX = 5 * ROUND_MAX
+
+/** A five-song day's points as a share of what was on offer, from 0 to 1. */
+export function dayAccuracy(points) {
+  return Math.min(1, Math.max(0, (points || 0) / FIVE_SONG_MAX))
+}
+
 /** A day of rounds rather than one song: the older puzzles of each game have none. */
 export function hasRounds(puzzle) {
   return Array.isArray(puzzle?.metadata?.rounds) && puzzle.metadata.rounds.length > 0

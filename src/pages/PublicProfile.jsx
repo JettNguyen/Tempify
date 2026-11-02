@@ -8,7 +8,7 @@ import {
   getAllScores, getStreaks,
 } from '../lib/scores'
 import { GAME_SLUGS, ALL_GAME_SLUGS, getGameSlugsForDate, getGameName, isTimedGame } from '../lib/games'
-import { fmtPoints } from '../lib/points'
+import { fmtPoints, ACCURACY_GAMES, dayAccuracy } from '../lib/points'
 import { fmtTime, fmtMonthDayYear, todayEST } from '../lib/date'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
@@ -83,6 +83,11 @@ function buildStats(scores, streaks = []) {
     const bestTime = minOf(winTimes)          // fastest winning time
     const avgPoints = avg(allPoints)
     const bestPoints = maxOf(allPoints)
+    // The five-song games are shown by accuracy, once there are days of them:
+    // their single-song days from before have no points to measure.
+    const accuracy = ACCURACY_GAMES.has(slug) && allPoints.length
+      ? { days: allPoints.length, avg: avg(allPoints.map(dayAccuracy)), best: maxOf(allPoints.map(dayAccuracy)) }
+      : null
     const oneTryRate = plays.length ? plays.filter(s => s.completed && s.attempts === 1).length / plays.length : 0
     const sub10sRate = winTimes.length ? winTimes.filter(t => t < 10).length / winTimes.length : 0
 
@@ -90,7 +95,7 @@ function buildStats(scores, streaks = []) {
       slug, name: getGameName(slug),
       plays: plays.length, wins: w.length,
       winRate: plays.length ? w.length / plays.length : 0,
-      avgAttempts, bestAttempts, avgTime, bestTime, avgPoints, bestPoints,
+      avgAttempts, bestAttempts, avgTime, bestTime, avgPoints, bestPoints, accuracy,
       oneTryRate, sub10sRate,
     }
   })
@@ -370,6 +375,24 @@ export default function PublicProfile() {
             <div className="dashboard-game-stats">
               {stats.byGame.filter(g => g.plays > 0).map(game => {
                 const isOneBar = game.slug === 'one-bar'
+                if (game.accuracy) {
+                  const { days, avg: mean, best } = game.accuracy
+                  return (
+                    <div key={game.slug} className={`dashboard-game-stat dashboard-game-stat--${game.slug}`}>
+                      <div className="dashboard-game-stat__top">
+                        <span>{game.name}</span>
+                        <strong>{pct(mean)}<span className="dashboard-game-stat__unit"> accuracy</span></strong>
+                      </div>
+                      <div className="dashboard-game-stat__bar">
+                        <span style={{ width: `${mean * 100}%` }} />
+                      </div>
+                      <div className="dashboard-game-stat__meta">
+                        <span>{days} {days === 1 ? 'day' : 'days'}</span>
+                        <span>best {pct(best)}</span>
+                      </div>
+                    </div>
+                  )
+                }
                 return (
                   <div key={game.slug} className={`dashboard-game-stat dashboard-game-stat--${game.slug}`}>
                     <div className="dashboard-game-stat__top">
