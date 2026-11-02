@@ -8,6 +8,18 @@
   height: clamp(104px, 15vh, 168px);
 }
 
+/* Short screens, like the open iPhone Duo on its side (669 points) or a small
+   iPhone, give the chart up first so the button still lands on screen. */
+@media (max-height: 700px) {
+  .peak .audio-stage__visual {
+    height: 52px;
+  }
+
+  .peak .dial {
+    margin-top: 0.5rem;
+  }
+}
+
 .peak__progress {
   display: flex;
   align-items: center;

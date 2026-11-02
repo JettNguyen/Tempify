@@ -381,3 +381,29 @@
     31%, 100% { opacity: 0.4; }
   }
 }
+
+/* Short screens, like the open iPhone Duo on its side (669 points) or a small
+   iPhone: a smaller pad and a shorter wave keep the button on screen. Last in
+   the file, so it wins over the rules above. */
+@media (max-height: 700px) {
+  .tempo__song {
+    padding: 0.75rem 1rem;
+  }
+
+  .tempo__tapping {
+    margin-top: 0.75rem;
+    gap: 10px;
+  }
+
+  .tempo__pad {
+    width: min(136px, 52vw);
+  }
+
+  .tempo__bpm {
+    font-size: 36px;
+  }
+
+  .game-theme--tempo .audio-stage__visual {
+    height: 96px;
+  }
+}
