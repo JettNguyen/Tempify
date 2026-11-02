@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
-import { useGameTimer } from '../hooks/useGameTimer'
 import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
@@ -76,11 +75,11 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   const [locking, setLocking] = useState(false)
   const [done, setDone] = useState(false)
   const [justFinished, setJustFinished] = useState(false)
-  const [finalTime, setFinalTime] = useState(null)
   const revealRef = useRef(0)
   const playedRef = useRef(false)
 
-  const { stop, display } = useGameTimer(!done, 250, `tempify_game_${SLUG}_${puzzleDate}`)
+  // No clock: the beat is scored on how close it was, and a clock would only
+  // hurry the tapping.
 
   useEffect(() => {
     rounds.forEach((r) => prefetchClip(r.audio_url))
@@ -89,7 +88,6 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   useEffect(() => {
     if (done || playedRef.current) return
     if (isComplete(SLUG, puzzleDate) || results.length >= rounds.length) {
-      stop()
       setDone(true)
     }
   }, [completions])
@@ -110,13 +108,13 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
     setTaps(prev => addTap(prev, performance.now()))
   }
 
-  async function finish(all, elapsed) {
+  async function finish(all) {
     const points = all.reduce((sum, r) => sum + r.points, 0)
     const won = isWin(points, maxPoints)
     markComplete(SLUG, puzzleDate, 1, won, points)
     if (!user) return
     try {
-      await saveScore({ userId: user.id, gameSlug: SLUG, puzzleDate, attempts: 1, completed: won, timeSeconds: competitive ? elapsed : null, points })
+      await saveScore({ userId: user.id, gameSlug: SLUG, puzzleDate, attempts: 1, completed: won, timeSeconds: null, points })
       if (won) await updateStreak(user.id, SLUG, profile?.is_subscribed)
     } catch (err) {
       console.error('[Tempify] TapTempo score save error:', err.message)
@@ -130,11 +128,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
     const points = tempoPoints(bpm, round.bpm)
     const all = [...results, { bpm, points }]
     saveRounds(SLUG, puzzleDate, all)
-    if (all.length === rounds.length) {
-      const elapsed = stop()
-      setFinalTime(elapsed)
-      finish(all, elapsed)
-    }
+    if (all.length === rounds.length) finish(all)
     setLocking(true)
     revealRef.current = setTimeout(() => {
       revealRef.current = 0
@@ -172,7 +166,6 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
         name="tap the tempo"
         puzzleDate={puzzleDate}
         title={showClip ? 'How close was your beat?' : 'Tap its beat from memory'}
-        timer={!done && competitive ? { text: display, running: !locking && !revealed } : null}
       />
 
       <div className="tempo__progress">
@@ -296,7 +289,6 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
           }}
           gameSlug={SLUG}
           puzzleDate={dateParam}
-          timeSeconds={competitive ? finalTime : null}
           nextGame={{ path: '/', label: 'Back to games' }}
           showLeaderboard={competitive}
         />

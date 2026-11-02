@@ -7,7 +7,8 @@ import {
   getFollowerProfiles, getFollowingProfiles,
   getAllScores, getStreaks,
 } from '../lib/scores'
-import { GAME_SLUGS, ALL_GAME_SLUGS, getGameSlugsForDate, getGameName } from '../lib/games'
+import { GAME_SLUGS, ALL_GAME_SLUGS, getGameSlugsForDate, getGameName, isTimedGame } from '../lib/games'
+import { fmtPoints } from '../lib/points'
 import { fmtTime, fmtMonthDayYear, todayEST } from '../lib/date'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
@@ -28,6 +29,7 @@ function formatDate(dateString) {
 
 function avg(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null }
 function minOf(arr) { return arr.length ? Math.min(...arr) : null }
+function maxOf(arr) { return arr.length ? Math.max(...arr) : null }
 
 function buildStats(scores, streaks = []) {
   if (!scores.length) return null
@@ -67,13 +69,20 @@ function buildStats(scores, streaks = []) {
     const w = plays.filter(s => s.completed)
     const allAttempts = plays.map(s => s.attempts).filter(Boolean)
     const winAttempts = w.map(s => s.attempts).filter(Boolean)
-    const winTimes = w.filter(s => s.time_seconds != null).map(s => s.time_seconds)
-    const allTimes = plays.filter(s => s.time_seconds != null).map(s => s.time_seconds)
+    // Only a game played against a clock has times worth showing.
+    const timed = isTimedGame(slug)
+    const winTimes = timed ? w.filter(s => s.time_seconds != null).map(s => s.time_seconds) : []
+    const allTimes = timed ? plays.filter(s => s.time_seconds != null).map(s => s.time_seconds) : []
+    // A points game is measured by how close it got, so its points say how a
+    // player does. Days before a game scored points have none, and are left out.
+    const allPoints = plays.filter(s => s.points != null).map(s => s.points)
 
     const avgAttempts = avg(allAttempts)
     const bestAttempts = minOf(winAttempts)   // fewest guesses on a win
     const avgTime = avg(allTimes)
     const bestTime = minOf(winTimes)          // fastest winning time
+    const avgPoints = avg(allPoints)
+    const bestPoints = maxOf(allPoints)
     const oneTryRate = plays.length ? plays.filter(s => s.completed && s.attempts === 1).length / plays.length : 0
     const sub10sRate = winTimes.length ? winTimes.filter(t => t < 10).length / winTimes.length : 0
 
@@ -81,7 +90,7 @@ function buildStats(scores, streaks = []) {
       slug, name: getGameName(slug),
       plays: plays.length, wins: w.length,
       winRate: plays.length ? w.length / plays.length : 0,
-      avgAttempts, bestAttempts, avgTime, bestTime,
+      avgAttempts, bestAttempts, avgTime, bestTime, avgPoints, bestPoints,
       oneTryRate, sub10sRate,
     }
   })
@@ -91,7 +100,7 @@ function buildStats(scores, streaks = []) {
 
   // Fastest single win across all timed games
   const fastestWin = scores
-    .filter(s => s.completed && s.time_seconds != null)
+    .filter(s => s.completed && s.time_seconds != null && isTimedGame(s.game_slug))
     .reduce((best, s) => (!best || s.time_seconds < best.time) ? { time: s.time_seconds, game: getGameName(s.game_slug), date: s.date_played } : best, null)
 
   // One Bar mastery - % solved in 1-2 guesses
@@ -377,6 +386,10 @@ export default function PublicProfile() {
                           {game.avgAttempts != null ? `${game.avgAttempts.toFixed(1)} avg · ` : ''}
                           {game.bestAttempts != null ? `best ${game.bestAttempts} · ` : ''}
                           {`${Math.round(game.oneTryRate * 100)}% first-try`}
+                        </span>
+                      ) : game.avgPoints != null ? (
+                        <span>
+                          {`avg ${fmtPoints(game.avgPoints)} · best ${fmtPoints(game.bestPoints)} pts`}
                         </span>
                       ) : (
                         <span>

@@ -9,6 +9,7 @@ import PuzzleStats from './PuzzleStats'
 import { ChallengeResult } from './Challenge'
 import { hapticWinCelebration, hapticFailure } from '../lib/haptics'
 import { resultAction } from '../lib/gameExit'
+import { isTimedGame } from '../lib/games'
 import { fmtTime } from '../lib/date'
 import { readChallenge } from '../lib/challenge'
 import './ResultCard.css'
@@ -62,7 +63,7 @@ export default function ResultCard({
   const sendable = rounds && rounds.points.length === rounds.labels.length ? rounds : null
   const panelRef = useRef(null)
 
-  const timeLabel = gameSlug !== 'one-bar' ? fmtTime(timeSeconds) : null
+  const timeLabel = isTimedGame(gameSlug) ? fmtTime(timeSeconds) : null
   // A points game says its score here instead: "Correct" means nothing on a
   // day that was partly right.
   const status = statusText || (correct ? 'Correct' : 'Not quite')
@@ -199,7 +200,7 @@ export default function ResultCard({
               gameSlug={gameSlug}
               correct={correct}
               attempts={attempts}
-              timeSeconds={timeSeconds}
+              timeSeconds={timeLabel ? timeSeconds : null}
               puzzleDate={puzzleDate}
               resultLine={shareLine}
               challenge={sendable}

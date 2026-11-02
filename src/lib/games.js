@@ -41,6 +41,15 @@ export function getGameName(slug) {
   return GAME_BY_SLUG[slug]?.name ?? slug
 }
 
+// The games played against a clock. One Bar counts guesses and Tap the Tempo
+// counts how close the beat was, so neither has one, and neither is ever
+// shown or ranked by time.
+const UNTIMED = new Set(['one-bar', 'tempo'])
+
+export function isTimedGame(slug) {
+  return !UNTIMED.has(slug)
+}
+
 export function isRetiredGame(slug) {
   return Boolean(GAME_BY_SLUG[slug]?.retiredOn)
 }
