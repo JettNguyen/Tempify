@@ -70,6 +70,16 @@ process each one.
 Before an overlay shot on the iPhone, make sure no audio is playing: a Now Playing pill can show in
 the Dynamic Island against the dimmed result.
 
+## Custom product pages
+
+The two custom product pages (the App Store links on jettnguyen.github.io and in the README) carry
+designed screenshots rather than plain captures: a caption and the game's name over a phone, on one
+dark strip with a waveform in the games' colors. The studio that draws them is in Jett's Google
+Drive, `My Drive/Tempify/App Store art/`: captions in `SETS` at the top of
+`tempify-store-screenshots.html`, and `python3 render-screenshots.py` (add `--duo` for the Duo set)
+lays the captures from `captures/` into it. A page's pictures change only through a new version of
+the page, which goes to App Review in a submission of its own, so that waits for Jett.
+
 ## iPhone Duo
 
 The Duo's status bar runs down the side of the screen in both postures, so it reports no top
