@@ -13,6 +13,7 @@ import { lookupBillboardPeak, lookupBillboard200Peak } from '../lib/billboard'
 import { todayEST } from '../lib/date'
 import RoundsFields, { ROUNDS_GAMES, ROUNDS_ONLY, usedSongs, validateRounds, cleanRounds, firstSongFields } from './AdminRounds'
 import { dayLevel } from '../lib/drafts'
+import { PlayCounts, GivePremium } from './AdminPlayers'
 
 const GAMES = [
   { slug: 'one-bar',        short: 'One Bar' },
@@ -1252,6 +1253,9 @@ export default function Admin() {
           + Add puzzle
         </button>
       )}
+
+      <PlayCounts />
+      <GivePremium />
     </div>
   )
 }
