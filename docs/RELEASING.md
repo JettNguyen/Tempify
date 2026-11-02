@@ -88,6 +88,28 @@ to the app's asset library as `CREATIVE_ASSETS` and placed on a page's localizat
 `appAssetLibraryPlacements` (`PRODUCT_PAGE_HEADER_ASSET`, `APP_STORE_SEARCH_RESULTS_ASSET`). Since
 November 1, 2026 they are placed on version 2 of both custom product pages, not yet on the main page.
 
+**The iPad set** is drawn the same way with `--ipad`, from `captures-ipad/` (2064 by 2752, the iPad
+Pro 13-inch (M5) simulator). Two things to know about that simulator. It opens apps in windows,
+with a grip and the app's name in the status bar, until SpringBoard's `SBMedusaMultitaskingEnabled`
+and `SBChamoisWindowingEnabled` are set to false (`xcrun simctl spawn <device> defaults write
+com.apple.springboard ...`) and it is rebooted. And `simctl status_bar --time` takes only a time
+here, not a date, so its status bar shows the real date beside 9:41; the 1.10 iPad captures have
+that date painted out.
+
+**The app preview** (the video that plays first on the page) is in the same folder:
+`tempify-preview.html` holds the scenes, their captions and the overlay drawing, and
+`python3 render-preview.py --sheet` cuts the recordings in `previews/raw/` into
+`previews/tempify-preview.mp4` (886 by 1920, H.264 at 30 frames a second, 15 to 30 seconds, a silent
+stereo track: the songs can't play in an ad). Apple allows only the app's own footage, with captions
+over it, so the footage runs full screen under a band that holds the caption. The recordings come
+from the simulator (`xcrun simctl io <device> recordVideo --codec=h264`), with the app driven over
+the web inspector by a bootstrap script that blocks score saves, so the day's games can be played
+again without touching the account. The simulator tags its recordings Display P3, but the pixels
+are sRGB, so they are only re-tagged, never converted. Upload with `POST /v1/appPreviewSets` and
+`POST /v1/appPreviews` (the same reserve, PUT, mark uploaded steps as a screenshot), then set the
+poster frame (`previewFrameTimeCode`, 00:00:19:27 for the 1.10 cut) once Apple has made its still;
+until then the PATCH is refused. The same file goes in the 6.9 inch and the Duo preview sets.
+
 ## iPhone Duo
 
 The Duo's status bar runs down the side of the screen in both postures, so it reports no top
