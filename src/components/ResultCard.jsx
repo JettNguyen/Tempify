@@ -6,12 +6,12 @@ import TrackArtwork from './TrackArtwork'
 import Icon from './Icon'
 import Leaderboard from './Leaderboard'
 import PuzzleStats from './PuzzleStats'
-import { ChallengeResult } from './Challenge'
+import { ChallengeResult, GuessChallengeResult } from './Challenge'
 import { hapticWinCelebration, hapticFailure } from '../lib/haptics'
 import { resultAction } from '../lib/gameExit'
 import { isTimedGame } from '../lib/games'
 import { fmtTime } from '../lib/date'
-import { readChallenge } from '../lib/challenge'
+import { readChallenge, readGuessChallenge, compareGuesses } from '../lib/challenge'
 import './ResultCard.css'
 import './ResultOverlay.css'
 
@@ -50,17 +50,23 @@ export default function ResultCard({
   correct, answer, artist, detail, emojiGrid,
   gameSlug, nextGame, artwork, children,
   puzzleDate, timeSeconds, attempts, showLeaderboard, justFinished,
-  status: statusText, shareLine, points, maxPoints, rounds,
+  status: statusText, shareLine, points, maxPoints, rounds, maxGuesses,
 }) {
   const [searchParams] = useSearchParams()
   const action = resultAction(nextGame, searchParams)
-  // A points game passes its rounds, { date, points, labels }: its share goes
-  // out as a challenge link, and a challenge link it was opened from is
-  // answered here.
-  const challenge = rounds ? readChallenge(searchParams, rounds.labels.length) : null
+  // A points game passes its rounds, { date, points, labels }, and One Bar
+  // how many guesses it allows: their shares go out as challenge links, and a
+  // challenge link they were opened from is answered here.
+  const challenge = rounds
+    ? readChallenge(searchParams, rounds.labels.length)
+    : maxGuesses ? readGuessChallenge(searchParams, maxGuesses) : null
+  const guesses = maxGuesses ? (correct ? attempts : 0) : null
   // Only a day played here in full can be sent on: points from another device
   // arrive as a total, with nothing song by song.
-  const sendable = rounds && rounds.points.length === rounds.labels.length ? rounds : null
+  const score = rounds
+    ? (rounds.points.length === rounds.labels.length ? { points: rounds.points } : null)
+    : guesses != null ? { guesses } : null
+  const beatThem = challenge && (rounds ? (points ?? 0) > challenge.total : compareGuesses(guesses, challenge.guesses) > 0)
   const panelRef = useRef(null)
 
   const timeLabel = isTimedGame(gameSlug) ? fmtTime(timeSeconds) : null
@@ -88,7 +94,7 @@ export default function ResultCard({
   // that missed the win.
   useEffect(() => {
     if (!justFinished) return
-    if (challenge && (points ?? 0) > challenge.total) hapticWinCelebration('challenge')
+    if (beatThem) hapticWinCelebration('challenge')
     else if (correct) hapticWinCelebration()
     else hapticFailure()
   }, [justFinished, correct])
@@ -186,8 +192,9 @@ export default function ResultCard({
 
           {detail && <div className="result-card__detail">{detail}</div>}
 
-          {challenge && (
-            <ChallengeResult challenge={challenge} mine={rounds.points} total={points ?? 0} labels={rounds.labels} />
+          {challenge && (rounds
+            ? <ChallengeResult challenge={challenge} mine={rounds.points} total={points ?? 0} labels={rounds.labels} />
+            : <GuessChallengeResult challenge={challenge} mine={guesses} />
           )}
 
           {children && <div className="result-card__extra">{children}</div>}
@@ -201,9 +208,11 @@ export default function ResultCard({
               correct={correct}
               attempts={attempts}
               timeSeconds={timeLabel ? timeSeconds : null}
-              puzzleDate={puzzleDate}
+              puzzleDate={rounds?.date || puzzleDate}
               resultLine={shareLine}
-              challenge={sendable}
+              score={score}
+              total={points}
+              answering={challenge}
             />
             {action && (
               <Link to={action.to} replace className="result-card__next btn-press btn-amber">

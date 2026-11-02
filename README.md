@@ -72,8 +72,11 @@ Hit or Miss, Era and Tap the Tempo score each song up to 1,000 points, more the 
 Cover or Not's year question scores the same way. Puzzles get harder through the week, easiest on
 Monday and hardest on Sunday.
 
-When you finish a day, share it as a challenge link. A friend who opens it plays the same songs and
-sees who won, song by song. Nothing is stored: the link carries the whole challenge.
+Sharing a game sends your score and a link to that game on that day. Shared on the day itself, it's
+a challenge: a friend who opens it plays the same puzzle with your score beside theirs and sees who
+won, song by song (on One Bar, by guesses). Their share then goes back to you as an answer. An older
+day goes out as one worth trying, without a score to beat. Nothing is stored: the link carries the
+whole challenge.
 
 ## Accounts and Subscription
 

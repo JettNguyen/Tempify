@@ -1,4 +1,5 @@
 import { fmtPoints } from '../lib/points'
+import { compareGuesses } from '../lib/challenge'
 import './Challenge.css'
 
 // A friend's score from a challenge link (see lib/challenge.js), shown two
@@ -61,6 +62,46 @@ export function ChallengeResult({ challenge, mine, total, labels }) {
         <span className="challenge-result__label challenge-result__label--total">Total</span>
         <span className="challenge-result__points challenge-result__points--total">{fmtPoints(total)}</span>
         <span className="challenge-result__points challenge-result__points--total">{fmtPoints(challenge.total)}</span>
+      </div>
+    </section>
+  )
+}
+
+const guessCount = (n) => `${n} guess${n === 1 ? '' : 'es'}`
+
+/** One Bar's version of the tally: how the friend did, beside your guesses left. */
+export function GuessTally({ challenge }) {
+  if (!challenge) return null
+  return (
+    <span className="challenge-tally">
+      <span className="challenge-tally__name">{theirName(challenge, true)}</span>
+      &nbsp;{challenge.guesses ? `got it in ${challenge.guesses}` : 'missed it'}
+    </span>
+  )
+}
+
+/** One Bar's version of the result: fewer guesses wins, and any beats a miss. */
+export function GuessChallengeResult({ challenge, mine }) {
+  const name = theirName(challenge)
+  const theirs = challenge.guesses
+  const result = compareGuesses(mine, theirs)
+  const verdict = result > 0
+    ? (theirs ? `You beat ${name} by ${guessCount(theirs - mine)}` : `You beat ${name}`)
+    : result < 0
+      ? (mine ? `${theirName(challenge, true)} won by ${guessCount(mine - theirs)}` : `${theirName(challenge, true)} won`)
+      : (mine ? `You tied ${name}` : 'Neither of you got it')
+  const said = (g) => g || 'Missed'
+
+  return (
+    <section className={`challenge-result challenge-result--${result > 0 ? 'won' : result < 0 ? 'lost' : 'tied'}`}>
+      <p className="challenge-result__verdict">{verdict}</p>
+      <div className="challenge-result__grid">
+        <span />
+        <span className="challenge-result__head">You</span>
+        <span className="challenge-result__head challenge-result__head--them">{theirName(challenge, true)}</span>
+        <span className="challenge-result__label">Guesses</span>
+        <span className={`challenge-result__points${result > 0 ? ' challenge-result__points--ahead' : ''}`}>{said(mine)}</span>
+        <span className={`challenge-result__points${result < 0 ? ' challenge-result__points--ahead' : ''}`}>{said(theirs)}</span>
       </div>
     </section>
   )

@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
+import { readGuessChallenge } from '../lib/challenge'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork, stripVariant } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
@@ -14,6 +15,7 @@ import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import GuessInput from '../components/GuessInput'
 import ResultCard from '../components/ResultCard'
+import { GuessTally } from '../components/Challenge'
 import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './OneBar.css'
@@ -42,6 +44,8 @@ export default function OneBar() {
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()
+  // A friend's result, when this was opened from their challenge link.
+  const challenge = readGuessChallenge(searchParams, MAX_ATTEMPTS)
 
   // Seeded from the session cache the home screen warmed, so a tapped tile
   // paints the real screen immediately instead of an empty shell.
@@ -331,6 +335,7 @@ export default function OneBar() {
             <p className="one-bar__left" aria-live="polite">
               <span className="one-bar__left-count">{remainingGuesses}</span>
               {remainingGuesses === 1 ? ' guess left' : ' guesses left'}
+              <GuessTally challenge={challenge} />
             </p>
           </div>
         </div>
@@ -373,6 +378,7 @@ export default function OneBar() {
           }}
           emojiGrid={buildEmojiGrid()}
           attempts={attempts.length}
+          maxGuesses={MAX_ATTEMPTS}
           gameSlug="one-bar"
           puzzleDate={dateParam}
           nextGame={{ path: '/game/hit-or-miss', label: 'Hit or Miss' }}
