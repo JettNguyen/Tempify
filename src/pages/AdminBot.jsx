@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { fmtDayShort, todayEST } from '../lib/date'
 import { getGameName } from '../lib/games'
 import { isNativeApp } from '../lib/oauth'
+import Icon from '../components/Icon'
 import { PlayCounts } from './AdminPlayers'
 
 // The Tempify bot's side of Admin, on one screen for the phone: what it
@@ -38,6 +39,14 @@ const buttonStyle = {
   border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-primary)',
 }
 const primaryStyle = { ...buttonStyle, background: 'var(--text-primary)', color: 'var(--bg)', border: '1px solid var(--text-primary)' }
+
+// Marks a post the bot puts up itself, so it reads differently at a glance
+// from the ones Jett posts by hand.
+const autoBadgeStyle = {
+  display: 'inline-flex', alignItems: 'center', gap: '5px', marginBottom: '6px',
+  padding: '3px 9px', borderRadius: '999px', fontSize: '11px', fontWeight: 500,
+  color: 'var(--amber)', background: 'var(--amber-glow)', border: '1px solid rgba(245, 158, 11, 0.4)',
+}
 
 const KIND_LABEL = { post: 'Post', puzzle: 'Puzzle', note: 'Note' }
 
@@ -102,6 +111,10 @@ function Item({ item, onDecide }) {
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
   const { urls, files } = usePictures(item.images)
+  // Once its day is over the bot won't post it (the caption says
+  // "yesterday's"), so it's handled like any other post.
+  const pastDay = !!item.due_on && item.due_on < todayEST()
+  const autoPost = item.kind === 'post' && item.auto_post && !pastDay
 
   const about = [
     KIND_LABEL[item.kind],
@@ -141,6 +154,9 @@ function Item({ item, onDecide }) {
 
   return (
     <div style={{ padding: '1rem 0', borderTop: '1px solid var(--border)' }}>
+      {autoPost && (
+        <p style={autoBadgeStyle}><Icon name="calendar" size={12} />Auto-posts to Instagram</p>
+      )}
       <p style={tagStyle}>{about}</p>
       <p style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500, margin: '4px 0 6px' }}>{item.title}</p>
       {item.body && (
@@ -160,7 +176,7 @@ function Item({ item, onDecide }) {
           ))}
         </div>
       )}
-      {urls && !item.auto_post && isNativeApp() && (
+      {urls && !autoPost && isNativeApp() && (
         <p style={{ ...noteStyle, marginTop: '6px' }}>
           To post these yourself, open tempify.me/admin/bot in Safari, where you can share the pictures.
         </p>
@@ -199,13 +215,13 @@ function Item({ item, onDecide }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '0.75rem' }}>
         {mode === null && (
           <>
-            {item.kind === 'post' && item.auto_post
+            {autoPost
               ? <button style={primaryStyle} className="btn-press" disabled={saving} onClick={() => decide({ status: 'approved' })}>Post it</button>
               : item.kind === 'post'
                 ? <button style={primaryStyle} className="btn-press" onClick={() => { setText(''); setMode('posted') }}>Posted</button>
                 : <button style={primaryStyle} className="btn-press" disabled={saving} onClick={() => decide({ status: 'approved' })}>Looks good</button>}
             <button style={buttonStyle} className="btn-press" onClick={() => { setText(''); setMode('back') }}>Send back</button>
-            {files && !item.auto_post && (
+            {files && !autoPost && (
               <button style={buttonStyle} className="btn-press" onClick={sharePictures}>Share pictures</button>
             )}
             {item.kind === 'post' && item.body && (
@@ -232,6 +248,16 @@ function Item({ item, onDecide }) {
           </>
         )}
       </div>
+      {mode === null && autoPost && (
+        <p style={{ ...noteStyle, marginTop: '8px' }}>
+          Tap Post it and the bot puts it on Instagram {whenPosted(item)}.
+        </p>
+      )}
+      {mode === null && item.auto_post && pastDay && (
+        <p style={{ ...noteStyle, marginTop: '8px' }}>
+          Its day has passed, so the bot won't post it. Post it yourself or send it back.
+        </p>
+      )}
     </div>
   )
 }

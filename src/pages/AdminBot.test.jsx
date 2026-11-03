@@ -138,6 +138,8 @@ describe('the Tempify bot page', () => {
     const pictures = [...container.querySelectorAll('img')].map(img => img.getAttribute('src'))
     expect(pictures).toEqual([1, 2, 3].map(n => `https://signed.example/posts/2026-11-24/${n}.jpg`))
     expect(button('Posted')).toBeUndefined()
+    expect(container.textContent).toContain('Auto-posts to Instagram')
+    expect(container.textContent).toContain('Tap Post it and the bot puts it on Instagram on Tue Nov 24 at 9 AM.')
     await click('Post it')
     expect(db.updates).toEqual([expect.objectContaining({ id: 'c1', status: 'approved' })])
     expect(container.textContent).toContain('Posting soon')
@@ -150,6 +152,17 @@ describe('the Tempify bot page', () => {
     db.items = [{ id: 'c2', kind: 'post', title: 'Chart fact for Tue 11/3', body: 'x', place: 'Instagram', due_on: '2026-11-03', status: 'approved', auto_post: true }]
     await render()
     expect(container.textContent).toContain('Chart fact for Tue 11/3: the bot posts it within 15 minutes.')
+  })
+
+  it('treats an auto-post whose day has passed like a post by hand', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-04T15:00:00Z'))
+    db.items = [{ id: 'c3', kind: 'post', title: 'Chart fact for Tue 11/3', body: 'x', place: 'Instagram', due_on: '2026-11-03', status: 'waiting', auto_post: true }]
+    await render()
+    expect(container.textContent).not.toContain('Auto-posts to Instagram')
+    expect(button('Post it')).toBeUndefined()
+    expect(button('Posted')).toBeTruthy()
+    expect(container.textContent).toContain("Its day has passed, so the bot won't post it.")
   })
 
   it('says what to do before migration 015 has run', async () => {
