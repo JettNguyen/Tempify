@@ -136,7 +136,7 @@ function observeWidth(el, fn) {
 }
 
 function getDisplayArtist(puzzle) {
-  // A five-song day reads as its first song and how many follow it.
+  // A day of rounds reads as its first song and how many follow it.
   const rounds = puzzle.metadata?.rounds
   if (Array.isArray(rounds) && rounds.length) {
     return `${rounds[0].artist} + ${rounds.length - 1} more`
@@ -501,7 +501,10 @@ export default function Explore() {
                     const genreColors = p.genre ? GENRE_COLORS[p.genre] : null
                     return (
                       <Link key={p.id} to={gameLink} className={`explore-game-card card-hover btn-press${played ? ' explore-game-card--played' : ''}`}>
-                        <div className="explore-game-card__date">{dateStr}</div>
+                        <div className="explore-game-card__top">
+                          <span className="explore-game-card__date">{dateStr}</span>
+                          {played && <span className="explore-game-card__played-label">✓ Played</span>}
+                        </div>
                         {played ? (
                           <>
                             <div className="explore-game-card__answer">{answer}</div>
@@ -516,7 +519,6 @@ export default function Explore() {
                               {p.genre}
                             </span>
                           )}
-                          {played && <span className="explore-game-card__played-label">✓ Played</span>}
                         </div>
                       </Link>
                     )

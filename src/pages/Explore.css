@@ -207,17 +207,32 @@
   text-decoration: none;
 }
 
-.explore-game-card__date {
-  font-size: var(--fs-2xs);
-  color: var(--text-dim);
+/* The date, with "✓ Played" across from it. It used to sit beside the genre,
+   where a long one like Soundtrack left no room and the check and the word
+   broke onto two lines. */
+.explore-game-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 5px;
   margin-bottom: 4px;
 }
 
+.explore-game-card__date {
+  font-size: var(--fs-2xs);
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Not stretched: a row's cards are as tall as its tallest (a played one, or
+   Sampled's Retired card), and stretching this put a blank line above the
+   genre. The spare room goes under the card's contents instead. */
 .explore-game-card__unplayed {
   font-size: var(--fs-xs);
   color: var(--text-dim);
   font-style: italic;
-  flex: 1;
 }
 
 .explore-game-card__answer {
@@ -261,7 +276,8 @@
   font-size: var(--fs-2xs);
   font-weight: 500;
   color: var(--green);
-  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Closes out a retired game's row. Deliberately not a puzzle card: dashed
