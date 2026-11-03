@@ -8,7 +8,7 @@ import {
   getAllScores, getStreaks,
 } from '../lib/scores'
 import { GAME_SLUGS, ALL_GAME_SLUGS, getGameSlugsForDate, getGameName, isTimedGame } from '../lib/games'
-import { fmtPoints, ACCURACY_GAMES, dayAccuracy } from '../lib/points'
+import { fmtPoints, ACCURACY_GAMES, dayAccuracy, dayMax } from '../lib/points'
 import { fmtTime, fmtMonthDayYear, todayEST } from '../lib/date'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
@@ -83,10 +83,12 @@ function buildStats(scores, streaks = []) {
     const bestTime = minOf(winTimes)          // fastest winning time
     const avgPoints = avg(allPoints)
     const bestPoints = maxOf(allPoints)
-    // The five-song games are shown by accuracy, once there are days of them:
-    // their single-song days from before have no points to measure.
-    const accuracy = ACCURACY_GAMES.has(slug) && allPoints.length
-      ? { days: allPoints.length, avg: avg(allPoints.map(dayAccuracy)), best: maxOf(allPoints.map(dayAccuracy)) }
+    // The games played in rounds are shown by accuracy, once there are days of
+    // them: their single-song days from before have no points to measure. Each
+    // day is measured against its own number of songs, three or five.
+    const dayShares = plays.filter(s => s.points != null).map(s => dayAccuracy(s.points, dayMax(slug, s.date_played)))
+    const accuracy = ACCURACY_GAMES.has(slug) && dayShares.length
+      ? { days: dayShares.length, avg: avg(dayShares), best: maxOf(dayShares) }
       : null
     const oneTryRate = plays.length ? plays.filter(s => s.completed && s.attempts === 1).length / plays.length : 0
     const sub10sRate = winTimes.length ? winTimes.filter(t => t < 10).length / winTimes.length : 0

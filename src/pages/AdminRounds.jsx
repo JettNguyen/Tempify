@@ -7,20 +7,22 @@ import {
 import { addTap, bpmFromTaps } from '../lib/tempo'
 import { yearToDecade } from '../lib/decades'
 
-// The games whose day is five songs instead of one, and the puzzle kind each
-// one drafts. Hit or Miss is Peak's dial; Era is the timeline.
+// The games whose day is a handful of songs instead of one, and the puzzle
+// kind each one drafts. Hit or Miss is Peak's dial; Era is the timeline. How
+// many songs a day each takes is roundCount() in lib/games.
 export const ROUNDS_GAMES = { 'hit-or-miss': 'peak', era: 'timeline', tempo: 'tempo' }
 
 // Games that were never one song, so there's no older format to pick.
 export const ROUNDS_ONLY = new Set(['tempo'])
 
-export const ROUND_COUNT = 5
+const COUNT_WORDS = { 3: 'Three', 4: 'Four', 5: 'Five' }
+export const countWord = n => COUNT_WORDS[n] || String(n)
 
 const KINDS = {
   peak: {
     draft: draftPeak,
     redraft: redraftPeakRound,
-    help: 'One song from each stretch of the chart (#1-5, #6-20, #21-50, #51-100) and one that never charted, shuffled. Listen to each: the clip must be the charting recording, not a live take, remix or cover, and a "never charted" song must not have charted under another title.',
+    help: (level, n) => `${countWord(n)} songs, each from a different zone of the dial: the top 10, #11-40, #41-100, and never charted. One zone sits out each day, and it shouldn't be the one that sat out the day before. Listen to each: the clip must be the charting recording, not a live take, remix or cover, and a "never charted" song must not have charted under another title.`,
   },
   timeline: {
     draft: draftTimeline,
@@ -30,7 +32,7 @@ const KINDS = {
   tempo: {
     draft: draftTempo,
     redraft: redraftTempoRound,
-    help: "Five top-ten hits with a tempo from Deezer. Deezer sometimes reads a slow song at double time, so play each clip and tap along: if your tap is about half or double the stored tempo, use yours. Pick songs with a steady beat; players count half or double time as right either way.",
+    help: (level, n) => `${countWord(n)} top-ten hits with a tempo from Deezer. Deezer sometimes reads a slow song at double time, so play each clip and tap along: if your tap is about half or double the stored tempo, use yours. Pick songs with a steady beat; players count half or double time as right either way.`,
   },
 }
 
@@ -53,9 +55,9 @@ function levelNote(date) {
 }
 
 /**
- * The day's first song in the one-song fields. iPhone apps from before
- * five-song days (1.9 and older) carry their own copy of the games and read
- * only these, so they play that one song; the five-song games read `rounds`.
+ * The day's first song in the one-song fields. iPhone apps from before days
+ * of rounds (1.9 and older) carry their own copy of the games and read only
+ * these, so they play that one song; the games played in rounds read `rounds`.
  */
 export function firstSongFields(kind, rounds) {
   const first = rounds[0]
@@ -87,7 +89,7 @@ export function firstSongFields(kind, rounds) {
 
 const BLANK_ROUND = { title: '', artist: '', year: '', audio_url: '', artwork_url: '', itunes_url: '' }
 
-/** Every song a game has already used, single or five-song days, keyed by date. */
+/** Every song a game has already used, single-song days or rounds, keyed by date. */
 export function usedSongs(puzzles, excludeId) {
   const used = new Map()
   for (const p of puzzles) {
@@ -101,9 +103,9 @@ export function usedSongs(puzzles, excludeId) {
   return used
 }
 
-export function validateRounds(kind, rounds, used) {
+export function validateRounds(kind, rounds, used, count) {
   const err = []
-  if (rounds.length !== ROUND_COUNT) err.push(`${ROUND_COUNT} songs (has ${rounds.length})`)
+  if (rounds.length !== count) err.push(`${count} songs (has ${rounds.length})`)
   rounds.forEach((r, i) => {
     const n = i + 1
     if (!r.title || !r.artist) err.push(`Song ${n} title and artist`)
@@ -173,26 +175,26 @@ function Mini({ label, children, grow }) {
   )
 }
 
-export default function RoundsFields({ kind, date, rounds, setRounds, setGenre, used }) {
+export default function RoundsFields({ kind, date, count, rounds, setRounds, setGenre, used }) {
   const [busy, setBusy] = useState(null) // 'all', or the index being swapped
   const [found, setFound] = useState(0)
   const [message, setMessage] = useState(null)
   const spec = KINDS[kind]
   const usedKeys = new Set(used.keys())
   const level = dayLevel(date)
-  const help = typeof spec.help === 'function' ? spec.help(level) : spec.help
+  const help = spec.help(level, count)
 
   async function draftAll() {
     setBusy('all')
     setFound(0)
     setMessage(null)
     try {
-      const next = await spec.draft({ used: usedKeys, level, onProgress: setFound })
+      const next = await spec.draft({ used: usedKeys, level, count, onProgress: setFound })
       setRounds(next)
       const genre = commonGenre(next)
       if (genre) setGenre(genre)
-      if (next.length < ROUND_COUNT) {
-        setMessage(`Found clips for ${next.length} of ${ROUND_COUNT}. Draft again, or add the rest by hand.`)
+      if (next.length < count) {
+        setMessage(`Found clips for ${next.length} of ${count}. Draft again, or add the rest by hand.`)
       }
     } catch (err) {
       setMessage(`The draft stopped: ${err.message}. Try again in a minute; the store's search allows about 20 lookups a minute.`)
@@ -230,9 +232,9 @@ export default function RoundsFields({ kind, date, rounds, setRounds, setGenre, 
           ...smallBtn, background: 'var(--amber)', borderColor: 'var(--amber)', color: '#0f0f0f', fontWeight: 600,
           opacity: busy !== null ? 0.5 : 1,
         }}>
-          {busy === 'all' ? `Finding clips (${found} of ${ROUND_COUNT})` : rounds.length ? 'Draft a new set' : 'Draft five songs'}
+          {busy === 'all' ? `Finding clips (${found} of ${count})` : rounds.length ? 'Draft a new set' : `Draft ${countWord(count).toLowerCase()} songs`}
         </button>
-        {rounds.length < ROUND_COUNT && (
+        {rounds.length < count && (
           <button type="button" onClick={() => setRounds([...rounds, { ...BLANK_ROUND, ...(kind === 'peak' ? { peak: '' } : {}) }])} style={smallBtn}>
             + Add a song by hand
           </button>

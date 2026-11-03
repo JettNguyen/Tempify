@@ -1,4 +1,4 @@
-import { ROUND_MAX } from './points.js'
+import { ROUND_MAX, closeness } from './points.js'
 
 // Tap the Tempo: tap a famous song's beat from memory, then hear how close it
 // was. People are better at this than they expect: in Levitin and Cook's
@@ -11,7 +11,10 @@ export const MIN_TAPS = 4
 // Only the latest taps count, so a shaky start settles out.
 const KEEP = 9
 
-// How far out is worth nothing.
+// Tapping is a matter of the hand as well as the memory: even someone who
+// knows the beat cold wobbles a little, so taps within 3% count as right on
+// it. From there points fall away, and 20% out is worth nothing.
+export const FULL_WITHIN = 0.03
 const ZERO_AT = 0.2
 
 /** The taps worth keeping after a new one at `now`. */
@@ -43,5 +46,5 @@ export function tempoOff(guess, actual) {
 }
 
 export function tempoPoints(guess, actual) {
-  return Math.round(ROUND_MAX * Math.max(0, 1 - tempoOff(guess, actual) / ZERO_AT))
+  return Math.round(ROUND_MAX * closeness(tempoOff(guess, actual), ZERO_AT, FULL_WITHIN))
 }

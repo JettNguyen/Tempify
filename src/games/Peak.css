@@ -1,7 +1,7 @@
-/* Hit or Miss as a dial (Peak). Five songs, each dragged to where it peaked on
+/* Hit or Miss as a dial (Peak). A few songs, each dragged to where it peaked on
    the Hot 100. The dial itself is components/Dial.css. */
 
-/* Five songs and a dial need more room under the stage than two answer cards
+/* Songs and a dial need more room under the stage than two answer cards
    did, so the stage gives some back: the lock-in button has to land on a
    phone's first screen, in reach of the thumb. */
 .peak .audio-stage__visual {

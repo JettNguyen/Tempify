@@ -32,9 +32,18 @@ describe('tempo points', () => {
     expect(tempoPoints(85, 170)).toBe(1000)
   })
 
+  it("counts a tap's small wobble as right on the beat", () => {
+    expect(tempoPoints(103, 100)).toBe(1000)
+    expect(tempoPoints(97, 100)).toBe(1000)
+  })
+
   it('pays less the further off, and nothing from 20% out', () => {
     expect(tempoOff(110, 100)).toBeCloseTo(0.1)
-    expect(tempoPoints(110, 100)).toBe(500)
+    expect(tempoPoints(105, 100)).toBe(960)
+    expect(tempoPoints(108, 100)).toBe(840)
+    expect(tempoPoints(110, 100)).toBe(736)
+    expect(tempoPoints(115, 100)).toBe(407)
+    expect(tempoPoints(120, 100)).toBe(0)
     expect(tempoPoints(125, 100)).toBe(0)
   })
 })

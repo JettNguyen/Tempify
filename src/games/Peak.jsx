@@ -60,7 +60,7 @@ function verdictText(round) {
 }
 
 /**
- * Hit or Miss, five songs at a time, as a dial: drag to where each one peaked
+ * Hit or Miss, a few songs at a time (three from 11/17/2026), as a dial: drag to where each one peaked
  * on the Hot 100, or past #100 to say it never charted. Each lock-in shows how
  * far off it was and pays up to 1,000 for being close.
  */

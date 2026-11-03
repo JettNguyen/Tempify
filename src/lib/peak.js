@@ -1,4 +1,4 @@
-import { ROUND_MAX } from './points.js'
+import { ROUND_MAX, closeness } from './points.js'
 
 // Hit or Miss as a dial: how high did it get on the Hot 100, or did it never
 // make it? The dial runs from #1 at the left to #100, then a "never charted"
@@ -13,8 +13,10 @@ export const NEVER = 0          // a peak of 0 means it never charted
 export const NEVER_FROM = 0.88  // where the never-charted zone starts on the dial
 const NEVER_AT = 1              // where a never-charted song sits for scoring
 
-// How far apart two answers can be before a round is worth nothing.
-const ZERO_AT = 0.5
+// How far apart two answers can be before a round is worth nothing. Near
+// misses cost little (closeness() eases in), so this is set where a guess
+// anywhere on the dial earns about 400 on average, as it did before.
+const ZERO_AT = 0.4
 
 /** Where a peak sits on the dial, 0 to 1. */
 export function dialAt(peak) {
@@ -31,7 +33,7 @@ export function peakAt(position) {
 
 export function peakPoints(guess, actual) {
   const off = Math.abs(dialAt(guess) - dialAt(actual))
-  return Math.round(ROUND_MAX * Math.max(0, 1 - off / ZERO_AT))
+  return Math.round(ROUND_MAX * closeness(off, ZERO_AT))
 }
 
 export function peakLabel(peak) {

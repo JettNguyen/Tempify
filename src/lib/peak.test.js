@@ -31,6 +31,21 @@ describe('peak points', () => {
     expect(peakPoints(65, 60)).toBeGreaterThan(900)
   })
 
+  it('keeps one place off a #1 close', () => {
+    expect(roundTier(peakPoints(2, 1))).toBe('close')
+  })
+
+  it("gives no one spot on the dial half the points, so parking there isn't a way to win", () => {
+    // A day's songs come one from each zone: the top 10, #11-40, #41-100, never charted.
+    const zones = [[1, 10], [11, 40], [41, 100]]
+    const averageAt = g => (zones.reduce((sum, [lo, hi]) => {
+      let s = 0
+      for (let a = lo; a <= hi; a++) s += peakPoints(g, a)
+      return sum + s / (hi - lo + 1)
+    }, 0) + peakPoints(g, NEVER)) / 4
+    for (let g = 0; g <= 100; g++) expect(averageAt(g)).toBeLessThan(450)
+  })
+
   it('treats calling a #100 song never charted as close, not wrong', () => {
     expect(peakPoints(NEVER, 100)).toBeGreaterThan(700)
     expect(peakPoints(NEVER, 1)).toBe(0)

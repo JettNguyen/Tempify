@@ -4,9 +4,10 @@ import { yearPoints, yearRange } from './yearGuess.js'
 describe('yearPoints', () => {
   it('pays in full for the year and less the further off', () => {
     expect(yearPoints(1969, 1969)).toBe(1000)
-    expect(yearPoints(1972, 1969)).toBe(750)
-    expect(yearPoints(1966, 1969)).toBe(750)
-    expect(yearPoints(1981, 1969)).toBe(0)
+    expect(yearPoints(1972, 1969)).toBe(836)
+    expect(yearPoints(1966, 1969)).toBe(836)
+    expect(yearPoints(1974, 1969)).toBe(646)
+    expect(yearPoints(1979, 1969)).toBe(0)
   })
 })
 

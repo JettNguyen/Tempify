@@ -9,9 +9,9 @@ describe('a page per game', () => {
   it("names the game in every part of the preview", () => {
     const page = gamePage(index, GAME_BY_SLUG['hit-or-miss'])
     expect(page).toContain('<meta property="og:title" content="Hit or Miss on Tempify" />')
-    expect(page).toContain('<meta property="og:description" content="How high did five songs chart on the Hot 100?" />')
+    expect(page).toContain('<meta property="og:description" content="How high did each song chart on the Hot 100?" />')
     expect(page).toContain('<meta property="og:url" content="https://tempify.me/game/hit-or-miss" />')
-    expect(page).toContain('<meta name="description" content="Hit or Miss on Tempify: How high did five songs chart on the Hot 100?" />')
+    expect(page).toContain('<meta name="description" content="Hit or Miss on Tempify: How high did each song chart on the Hot 100?" />')
   })
 
   it('keeps the rest of the app as it is', () => {

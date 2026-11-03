@@ -76,7 +76,7 @@ export default function HitOrMiss() {
   if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
   if (!puzzle) return null
 
-  // Five songs on a dial since Peak; one song, hit or miss, before it. Which a
+  // Songs on a dial since Peak; one song, hit or miss, before it. Which a
   // day gets is up to its puzzle, so the archive plays both.
   return hasRounds(puzzle)
     ? <Peak puzzle={puzzle} puzzleDate={puzzleDate} dateParam={dateParam} Shell={GameShell} />

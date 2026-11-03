@@ -176,9 +176,11 @@ export const timelineGap = (level) => ramp('timelineGap', level)
 
 // ─── Hit or Miss (Peak) ──────────────────────────────────────────────────────
 
-// One song from each stretch of the chart, so a day runs from a #1 to a #90
-// and the dial gets used end to end.
-export const PEAK_BANDS = [[1, 5], [6, 20], [21, 50], [51, 100]]
+// The dial's zones, the same as the chart fact's letters: A the top 10, B #11
+// to #40, C #41 to #100, and D never charted (drafted on its own below). A day
+// takes three of the four, one song each, and which is left out changes, so
+// there isn't always a song that never charted.
+export const PEAK_ZONES = [[1, 10], [11, 40], [41, 100]]
 
 function peakRound(song, clip) {
   return {
@@ -195,17 +197,17 @@ function peakRound(song, clip) {
   }
 }
 
-async function draftChartedPeak(songs, band, ctx) {
-  const [lo, hi] = band
+async function draftChartedPeak(songs, zone, ctx) {
+  const [lo, hi] = zone
   const hits = hitsByArtist(songs)
   const weeks = ramp('peakWeeks', ctx.level)
   const actHits = ramp('peakActHits', ctx.level)
-  // Low peaks are only a puzzle from an act people know: a #74 by a
-  // stranger is just a stranger.
+  // A top-20 song is known by how long it charted. Lower peaks are only a
+  // puzzle from an act people know: a #74 by a stranger is just a stranger.
   const pool = songs.filter(s =>
     s.peak >= lo && s.peak <= hi &&
     s.year >= 1965 && s.year < THIS_YEAR &&
-    (hi <= 20 ? within(weeks, s.weeks) : within(actHits, hits.get(artistNames(s.artist)[0]) || 0)),
+    (s.peak <= 20 ? within(weeks, s.weeks) : within(actHits, hits.get(artistNames(s.artist)[0]) || 0)),
   )
   const found = await pickWithClip(pool, ctx)
   return found && peakRound(found.song, found.clip)
@@ -262,25 +264,26 @@ async function draftNeverCharted(songs, { used, artists }) {
 }
 
 /**
- * Five songs: one from each stretch of the chart and one that never charted,
- * shuffled. A higher level reaches for songs fewer people remember.
+ * Three songs, each from a different zone of the dial, in a shuffled order. A
+ * higher level reaches for songs fewer people remember.
  */
-export async function draftPeak({ used = new Set(), level, onProgress } = {}) {
+export async function draftPeak({ used = new Set(), level, onProgress, count = 3 } = {}) {
   const songs = await loadChartSongs()
   const ctx = { used, level, artists: new Set() }
   const rounds = []
-  for (const band of PEAK_BANDS) {
-    const round = await draftChartedPeak(songs, band, ctx)
+  // null is the never-charted zone. Past four songs (an old five-song day
+  // drafted again), the extra ones come from the chart.
+  const zones = shuffle([...PEAK_ZONES, null])
+  while (zones.length < count) zones.push(PEAK_ZONES[Math.floor(Math.random() * PEAK_ZONES.length)])
+  for (const zone of zones.slice(0, count)) {
+    const round = zone ? await draftChartedPeak(songs, zone, ctx) : await draftNeverCharted(songs, ctx)
     if (round) rounds.push(round)
     onProgress?.(rounds.length)
   }
-  const never = await draftNeverCharted(songs, ctx)
-  if (never) rounds.push(never)
-  onProgress?.(rounds.length)
   return shuffle(rounds)
 }
 
-/** A new song for one round of a Peak draft, from the same stretch of the chart. */
+/** A new song for one round of a Peak draft, from the same zone of the dial. */
 export async function redraftPeakRound(rounds, index, { used = new Set(), level } = {}) {
   const songs = await loadChartSongs()
   const others = rounds.filter((_, i) => i !== index)
@@ -291,8 +294,8 @@ export async function redraftPeakRound(rounds, index, { used = new Set(), level 
   }
   const old = rounds[index]
   if (!old?.peak) return draftNeverCharted(songs, ctx)
-  const band = PEAK_BANDS.find(([lo, hi]) => old.peak >= lo && old.peak <= hi) || PEAK_BANDS[0]
-  return draftChartedPeak(songs, band, ctx)
+  const zone = PEAK_ZONES.find(([lo, hi]) => old.peak >= lo && old.peak <= hi) || PEAK_ZONES[0]
+  return draftChartedPeak(songs, zone, ctx)
 }
 
 // ─── Era (Timeline) ──────────────────────────────────────────────────────────
@@ -385,12 +388,12 @@ async function pickTempoSong(pool, { used, artists, tries = 8 }) {
   return null
 }
 
-/** Five big hits that Deezer has a tempo for, and a clip each. */
-export async function draftTempo({ used = new Set(), level, onProgress } = {}) {
+/** Three big hits that Deezer has a tempo for, and a clip each. */
+export async function draftTempo({ used = new Set(), level, onProgress, count = 3 } = {}) {
   const pool = tempoPool(await loadChartSongs(), level)
   const ctx = { used, artists: new Set() }
   const rounds = []
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < count; i++) {
     const round = await pickTempoSong(pool, ctx)
     if (round) rounds.push(round)
     onProgress?.(rounds.length)

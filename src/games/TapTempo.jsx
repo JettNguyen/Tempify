@@ -56,7 +56,7 @@ export default function TapTempo() {
 }
 
 /**
- * Five famous songs, named but not played. Tap each one's beat from memory,
+ * A few famous songs (three a day from 11/17/2026), named but not played. Tap each one's beat from memory,
  * lock it in, and then the clip plays with your beat pulsing beside the
  * song's.
  */
@@ -234,7 +234,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
           </div>
           <p className="tempo__verdict">
             <span className="tempo__points">+{fmtPoints(result.points)}</span>
-            <span>{percentOff(result.bpm, round.bpm) === 0 ? 'Right on the beat' : `${percentOff(result.bpm, round.bpm)}% off`}</span>
+            <span>{result.points === ROUND_MAX ? 'Right on the beat' : `${percentOff(result.bpm, round.bpm)}% off`}</span>
           </p>
           <button type="button" className="tempo__action btn-press" onClick={advance}>
             {isLast ? 'See how you did' : 'Next song'}

@@ -5,13 +5,13 @@ import { supabase } from '../lib/supabase'
 import { DECADES, yearToDecade } from '../lib/decades'
 import { GENRES } from '../lib/genres'
 import { searchSongs, fetchTrackDetails } from '../lib/deezer'
-import { getGameName } from '../lib/games'
+import { getGameName, roundCount } from '../lib/games'
 import Icon from '../components/Icon'
 import './Admin.css'
 import { searchRecordings } from '../lib/musicbrainz'
 import { lookupBillboardPeak, lookupBillboard200Peak } from '../lib/billboard'
 import { todayEST } from '../lib/date'
-import RoundsFields, { ROUNDS_GAMES, ROUNDS_ONLY, usedSongs, validateRounds, cleanRounds, firstSongFields } from './AdminRounds'
+import RoundsFields, { ROUNDS_GAMES, ROUNDS_ONLY, usedSongs, validateRounds, cleanRounds, firstSongFields, countWord } from './AdminRounds'
 import { dayLevel } from '../lib/drafts'
 import { PlayCounts, GivePremium } from './AdminPlayers'
 
@@ -48,7 +48,7 @@ function fmtDate(dateStr) {
 
 const BLANK = {
   date: '', game: 'one-bar', audioUrl: '', answer: '', genre: '',
-  // hit-or-miss and era: five songs a day ('rounds') or the older one ('single')
+  // hit-or-miss and era: a few songs a day ('rounds') or the older one ('single')
   format: 'rounds', rounds: [],
   // shared
   artist: '', year: '',
@@ -130,7 +130,7 @@ function parseRow(p) {
   }
 }
 
-/** A five-song day: Hit or Miss's peaks, or Era's timeline. */
+/** A day of rounds: Hit or Miss's peaks, Era's timeline, or Tap the Tempo. */
 function usesRounds(f) {
   return ROUNDS_ONLY.has(f.game) || (Boolean(ROUNDS_GAMES[f.game]) && f.format === 'rounds')
 }
@@ -883,7 +883,7 @@ export default function Admin() {
   }
 
   function presentedSongKeyFromForm(f) {
-    // Five-song days check each song on its own row instead.
+    // Days of rounds check each song on its own row instead.
     if (usesRounds(f)) return ''
     switch (f.game) {
       case 'one-bar':
@@ -905,7 +905,7 @@ export default function Admin() {
     if (!f.date)  err.push('Date')
     if (!f.genre) err.push('Genre')
     if (usesRounds(f)) {
-      return [...err, ...validateRounds(ROUNDS_GAMES[f.game], f.rounds, usedSongs(gamePuzzles, editingId))]
+      return [...err, ...validateRounds(ROUNDS_GAMES[f.game], f.rounds, usedSongs(gamePuzzles, editingId), roundCount(f.game, f.date))]
     }
     switch (f.game) {
       case 'one-bar':
@@ -1151,7 +1151,7 @@ export default function Admin() {
             {ROUNDS_GAMES[form.game] && !ROUNDS_ONLY.has(form.game) && (
               <Field label="Format">
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {[['rounds', ROUNDS_GAMES[form.game] === 'peak' ? 'Five songs on the peak dial' : 'Five songs on a timeline'], ['single', 'One song (the old way)']].map(([v, label]) => (
+                  {[['rounds', `${countWord(roundCount(form.game, form.date))} songs on ${ROUNDS_GAMES[form.game] === 'peak' ? 'the peak dial' : 'a timeline'}`], ['single', 'One song (the old way)']].map(([v, label]) => (
                     <button key={v} type="button" onClick={() => set('format', v)} style={{
                       flex: 1, padding: '7px', borderRadius: '6px', border: '1px solid',
                       borderColor: form.format === v ? 'var(--amber)' : 'var(--border)',
@@ -1199,6 +1199,7 @@ export default function Admin() {
                   <RoundsFields
                     kind={ROUNDS_GAMES[form.game]}
                     date={form.date}
+                    count={roundCount(form.game, form.date)}
                     rounds={form.rounds}
                     setRounds={rounds => set('rounds', rounds)}
                     setGenre={g => set('genre', g)}

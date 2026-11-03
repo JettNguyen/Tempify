@@ -1,13 +1,13 @@
-import { ROUND_MAX } from './points.js'
+import { ROUND_MAX, closeness } from './points.js'
 
 // Cover or Not's second question: once the call is in, when did the original
-// come out? Close is worth most of it; a dozen years out is worth nothing.
+// come out? A year or two out is worth nearly all of it; a decade out is worth
+// nothing.
 
-const ZERO_AT = 12
+const ZERO_AT = 10
 
 export function yearPoints(guess, actual) {
-  const off = Math.abs(guess - actual)
-  return Math.round(ROUND_MAX * Math.max(0, 1 - off / ZERO_AT))
+  return Math.round(ROUND_MAX * closeness(Math.abs(guess - actual), ZERO_AT))
 }
 
 /**

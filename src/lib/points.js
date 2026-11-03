@@ -2,17 +2,36 @@
 // timeline, Tap the Tempo, and Cover or Not's second question. A day of one of
 // these is a handful of rounds worth up to ROUND_MAX each.
 
+import { roundCount } from './games'
+
 export const ROUND_MAX = 1000
 
-// Tap the Tempo, Hit or Miss and Era are five songs a day, so every day is out
-// of 5,000, and how well someone plays is how much of that they get. Cover or
-// Not is different: its win is the call itself, and the year only adds points.
+// Tap the Tempo, Hit or Miss and Era are played in rounds, so a day is out of
+// 1,000 a song (5,000 for five, 3,000 for three), and how well someone plays is
+// how much of that they get. Cover or Not is different: its win is the call
+// itself, and the year only adds points.
 export const ACCURACY_GAMES = new Set(['tempo', 'hit-or-miss', 'era'])
 export const FIVE_SONG_MAX = 5 * ROUND_MAX
 
-/** A five-song day's points as a share of what was on offer, from 0 to 1. */
-export function dayAccuracy(points) {
-  return Math.min(1, Math.max(0, (points || 0) / FIVE_SONG_MAX))
+/** The most a game's day could score: 1,000 for each of its songs. */
+export function dayMax(slug, date) {
+  return roundCount(slug, date) * ROUND_MAX
+}
+
+/**
+ * How much of a round a guess earns, from 1 down to 0, when it's `off` from
+ * the answer. Full marks within `fullWithin`; past that, the first misses cost
+ * little and the cost climbs, so being close is never punished hard but a
+ * wild guess still earns nothing from `zeroAt` on.
+ */
+export function closeness(off, zeroAt, fullWithin = 0) {
+  const x = Math.max(0, off - fullWithin) / (zeroAt - fullWithin)
+  return x >= 1 ? 0 : 1 - x ** 1.5
+}
+
+/** A day's points as a share of what was on offer, from 0 to 1. */
+export function dayAccuracy(points, max = FIVE_SONG_MAX) {
+  return Math.min(1, Math.max(0, (points || 0) / max))
 }
 
 /** A day of rounds rather than one song: the older puzzles of each game have none. */
