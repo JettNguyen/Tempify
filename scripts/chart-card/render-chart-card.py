@@ -341,13 +341,28 @@ def voice_model():
     return Kokoro(str(VOICE_CACHE / "kokoro-v1.0.onnx"), str(VOICE_CACHE / "voices-v1.0.bin"))
 
 
+# The voice says "thirty", "forty" and "eighty" with an American "d"-ish flap, but "twenty",
+# "seventy" and "ninety" with a hard "t". Jett wants the flap in all of them (11/3/2026).
+FLAPPED = ("twenty", "seventy", "ninety")
+
+
+def sounds_of(kokoro, text):
+    """The line's sounds, with the flap put into FLAPPED (not "nineteen", which starts the same)."""
+    said = kokoro.tokenizer.phonemize(text, "en-us")
+    for word in FLAPPED:
+        hard = kokoro.tokenizer.phonemize(word, "en-us")
+        said = re.sub(re.escape(hard) + "(?!ː)", hard.replace("nt", "nɾ"), said)
+    return said
+
+
 def speak(lines):
     """Says each of the template's lines. Returns each one's sound, and for the page how long it
     takes and, for the lines whose words land one at a time, when each word starts."""
     kokoro = voice_model()
     spoken = {}
     for line in lines:
-        audio, rate = kokoro.create(line["text"], voice=VOICE, speed=SPEED)
+        audio, rate = kokoro.create(sounds_of(kokoro, line["text"]), voice=VOICE, speed=SPEED,
+                                    is_phonemes=True)
         info = {"dur": round(len(audio) / rate, 3)}
         if line.get("words"):
             info["words"] = word_starts(kokoro, line["text"], audio, rate)
