@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
-import { fmtDayShort } from '../lib/date'
+import { fmtDayShort, todayEST } from '../lib/date'
 import { getGameName } from '../lib/games'
 import { isNativeApp } from '../lib/oauth'
 import { PlayCounts } from './AdminPlayers'
@@ -43,6 +43,20 @@ const KIND_LABEL = { post: 'Post', puzzle: 'Puzzle', note: 'Note' }
 
 function fmtWhen(iso) {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+}
+
+// The bot puts an approved post up at 9 AM Eastern on its day, never before:
+// a chart fact gives away the day before's puzzle, which is still being
+// played until its day is over. Approved later than that, it goes up at the
+// bot's next check.
+const POST_HOUR = 9
+
+function whenPosted(item) {
+  const today = todayEST()
+  if (item.due_on && item.due_on > today) return `on ${fmtDayShort(item.due_on)} at 9 AM`
+  const hour = Number(new Date().toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hourCycle: 'h23' }))
+  if (item.due_on === today && hour < POST_HOUR) return 'today at 9 AM'
+  return 'within 15 minutes'
 }
 
 // A post's pictures from the bot's private bucket, and the same pictures as
@@ -303,7 +317,7 @@ export default function AdminBot() {
               <p style={{ ...tagStyle, marginTop: '1.25rem' }}>Posting soon</p>
               {posting.map(item => (
                 <p key={item.id} style={{ ...noteStyle, marginTop: '4px' }}>
-                  {item.title}: the bot posts it within 15 minutes.
+                  {item.title}: the bot posts it {whenPosted(item)}.
                 </p>
               ))}
             </>

@@ -82,6 +82,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   act(() => root.unmount())
   container.remove()
   vi.unstubAllEnvs()
@@ -125,6 +126,9 @@ describe('the Tempify bot page', () => {
   })
 
   it('shows a post\'s pictures and hands it to the bot to post', async () => {
+    // 10 AM Eastern on Mon 11/2, three weeks before the post's day.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-02T15:00:00Z'))
     db.items = [{
       id: 'c1', kind: 'post', title: 'Chart fact for Tue 11/24', body: 'Where did it peak?', place: 'Instagram',
       due_on: '2026-11-24', status: 'waiting', auto_post: true,
@@ -137,10 +141,18 @@ describe('the Tempify bot page', () => {
     await click('Post it')
     expect(db.updates).toEqual([expect.objectContaining({ id: 'c1', status: 'approved' })])
     expect(container.textContent).toContain('Posting soon')
-    expect(container.textContent).toContain('Chart fact for Tue 11/24: the bot posts it within 15 minutes.')
+    expect(container.textContent).toContain('Chart fact for Tue 11/24: the bot posts it on Tue Nov 24 at 9 AM.')
   })
 
-  it('says what to do before migration 014 has run', async () => {
+  it('says a post approved on its own day goes up at the next check', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
+    db.items = [{ id: 'c2', kind: 'post', title: 'Chart fact for Tue 11/3', body: 'x', place: 'Instagram', due_on: '2026-11-03', status: 'approved', auto_post: true }]
+    await render()
+    expect(container.textContent).toContain('Chart fact for Tue 11/3: the bot posts it within 15 minutes.')
+  })
+
+  it('says what to do before migration 015 has run', async () => {
     db.fail = true
     await render()
     expect(container.textContent).toContain('It starts once migration 015 has run')
