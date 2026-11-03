@@ -58,6 +58,9 @@ jobs:
           VITE_STRIPE_PAYMENT_LINK_LIFETIME: ${{ secrets.VITE_STRIPE_PAYMENT_LINK_LIFETIME }}
           VITE_ADMIN_EMAIL: ${{ secrets.VITE_ADMIN_EMAIL }}
           VITE_ITUNES_PROXY_URL: ${{ secrets.VITE_ITUNES_PROXY_URL }}
+          # Not a secret: the address ships inside every page. Deezer answers no
+          # browser, so song search only works through it.
+          VITE_DEEZER_PROXY_URL: https://tempify-deezer-proxy.pokehit.workers.dev
           VITE_PREMIUM_EMAILS: ${{ secrets.VITE_PREMIUM_EMAILS }}
           VITE_RC_APPLE_API_KEY: ${{ secrets.VITE_RC_APPLE_API_KEY }}
           VITE_RC_ENTITLEMENT_ID: ${{ secrets.VITE_RC_ENTITLEMENT_ID }}

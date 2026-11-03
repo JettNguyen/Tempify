@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -25,16 +25,24 @@ function gamePages() {
   }
 }
 
-export default defineConfig(({ command }) => ({
-  plugins: [react(), gamePages()],
-  base: '/',
-  server: {
-    proxy: {
-      '/deezer': {
-        target: 'https://api.deezer.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/deezer/, ''),
+export default defineConfig(({ command, mode }) => {
+  // Deezer answers no browser, so a site built without the proxy has no song
+  // search at all. The web went out that way until 11/2/2026 without anyone
+  // seeing an error, so a build without it stops here instead.
+  if (command === 'build' && !loadEnv(mode, process.cwd(), 'VITE_').VITE_DEEZER_PROXY_URL) {
+    throw new Error('VITE_DEEZER_PROXY_URL is missing, so song search would not work. Add it to .env, or to the deploy for the web.')
+  }
+  return {
+    plugins: [react(), gamePages()],
+    base: '/',
+    server: {
+      proxy: {
+        '/deezer': {
+          target: 'https://api.deezer.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/deezer/, ''),
+        },
       },
     },
-  },
-}))
+  }
+})
