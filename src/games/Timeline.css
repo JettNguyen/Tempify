@@ -86,11 +86,12 @@
   cursor: default;
 }
 
-/* The dot where a song sits on the line. */
+/* The dot where a song sits on the line. Measured from inside the row's 1px
+   border, so -18px puts its middle on the line's, 6px into the list. */
 .timeline__song::before {
   content: '';
   position: absolute;
-  left: -17px;
+  left: -18px;
   top: 50%;
   width: 10px;
   height: 10px;
