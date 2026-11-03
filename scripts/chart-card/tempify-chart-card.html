@@ -1,0 +1,285 @@
+<!doctype html>
+<!--
+  Tempify's daily chart fact for Instagram: a post of three pictures, 1080 by 1350 each (the
+  tallest a feed post can be), about one song from yesterday's Hit or Miss.
+    1. The question: where did it peak? Four letters to comment before swiping.
+    2. The answer, lit on the game's own dial, and the artist's biggest hit beside it.
+    3. Today's game, and someone to send the post to.
+
+  render-chart-card.py fills it in and takes the pictures, so a new day never means editing this
+  file. Open it in Chrome to see the example; add ?slide=2 or ?slide=3 for the others, and
+  ?guides to see the edges Instagram's profile grid crops to (3 by 4).
+
+  Every word is in COPY and every color in :root, so changing wording or a color is one line.
+  Started November 2, 2026, in the look of the link card (public/og-card.png).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tempify chart card</title>
+<style>
+  @font-face { font-family: "Inter Card"; font-weight: 500; src: url("fonts/inter-latin-500-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Inter Card"; font-weight: 700; src: url("fonts/inter-latin-700-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Inter Card"; font-weight: 800; src: url("fonts/inter-latin-800-normal.woff2") format("woff2"); }
+  :root {
+    --bg: #0E0E0E;
+    --text: #F5F5F4;
+    --muted: #B5B5B2;
+    --dim: #6E6E6A;
+    --line: #2A2A28;
+    --bar: #3A3A37;
+    --blue: #3B82F6;      /* Hit or Miss's color in the app */
+    --blue-soft: #93C5FD;
+    --orange: #F59E0B;    /* the Tempify mark */
+  }
+  html, body { margin: 0; padding: 0; background: var(--bg); }
+  #stage {
+    position: relative; width: 1080px; height: 1350px; overflow: hidden; box-sizing: border-box;
+    padding: 72px 88px 76px; display: flex; flex-direction: column; background: var(--bg);
+    font-family: "Inter Card", -apple-system, system-ui, sans-serif; color: var(--text);
+  }
+  .glow { position: absolute; inset: 0; pointer-events: none; }
+  .head { position: relative; display: flex; align-items: center; justify-content: space-between; }
+  .site { display: flex; align-items: center; gap: 14px; font-weight: 700; font-size: 36px; letter-spacing: -0.02em; }
+  .from { font-weight: 500; font-size: 30px; color: var(--muted); }
+  .eyebrow { font-weight: 700; font-size: 31px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--blue-soft); }
+  .main { position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+  /* 1. The question */
+  .ask { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+  .ask .song { font-weight: 800; letter-spacing: -0.04em; line-height: 0.98; margin-top: 30px; }
+  .ask .artist { font-weight: 500; font-size: 54px; color: var(--muted); margin-top: 26px; letter-spacing: -0.01em; }
+  .cta { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 54px; font-weight: 700; font-size: 34px; color: var(--text); }
+  .cta svg { flex: none; }
+
+  /* 2. The answer */
+  .peak { font-weight: 800; letter-spacing: -0.05em; line-height: 0.86; color: var(--blue); margin-top: 22px; }
+  .peak.never { line-height: 0.95; letter-spacing: -0.04em; }
+  .who { margin-top: 30px; font-weight: 700; letter-spacing: -0.025em; white-space: nowrap; }
+  .who span { font-weight: 500; color: var(--muted); }
+  .facts { margin-top: 14px; white-space: nowrap; font-weight: 500; font-size: 34px; color: var(--muted); }
+  .biggest { margin-top: 40px; padding: 26px 30px; border: 2px solid var(--line); border-radius: 22px; font-weight: 500; font-size: 32px; line-height: 1.3; color: var(--muted); }
+  .biggest b { color: var(--text); font-weight: 700; }
+
+  /* The dial, on 1 and 2 */
+  .dial { margin-top: 56px; }
+  /* On the answer the spare height goes above and below the dial, not all in one gap. */
+  .main.reveal .dial, .main.reveal .biggest { margin-top: auto; }
+  .main.reveal .dial:last-child { margin-bottom: auto; }
+  .dial svg { display: block; overflow: visible; }
+  .zones { position: relative; height: 136px; margin-top: 22px; }
+  .zone { position: absolute; top: 0; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%); width: 230px; text-align: center; }
+  .chip { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 34px; border: 3px solid var(--blue); color: var(--text); box-sizing: border-box; }
+  .chip.dim { border-color: var(--line); color: var(--dim); }
+  .chip.on { background: var(--blue); color: var(--bg); }
+  .label { margin-top: 12px; font-weight: 500; font-size: 27px; line-height: 1.15; color: var(--muted); }
+  .label.dim { color: var(--dim); }
+
+  /* 3. Today's game */
+  .play { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+  .play h1 { margin: 0; font-weight: 800; font-size: 92px; line-height: 1.02; letter-spacing: -0.04em; }
+  .play p { margin: 28px 0 0; font-weight: 500; font-size: 40px; line-height: 1.3; color: var(--muted); }
+  .play .wave { margin: 64px -88px 0; }
+  .play .url { margin-top: 56px; font-weight: 800; font-size: 104px; letter-spacing: -0.045em; line-height: 1; }
+  .play .bio { margin-top: 18px; font-size: 36px; color: var(--muted); font-weight: 500; }
+  .dare { align-self: center; margin-top: 48px; padding: 22px 34px; border-radius: 999px; border: 2px solid var(--line); font-weight: 700; font-size: 32px; }
+
+  .guide { position: absolute; left: 34px; top: 0; width: 1012px; height: 1350px; outline: 3px solid #2BE02B; outline-offset: -2px; z-index: 20; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+// What render-chart-card.py passes after the # in the address. This example shows when there is
+// nothing there, so the page can be looked at on its own.
+const EXAMPLE = {
+  song: "Don't Stop Me Now",
+  artist: "Queen",
+  puzzle: 210,          // yesterday's Hit or Miss number
+  peak: 86,             // null when it never charted
+  answer: "C",
+  facts: "4 weeks on the chart. First charted February 1979.",
+  biggest: { artist: "Queen", title: "Crazy Little Thing Called Love", detail: "#1 for 4 weeks" },
+  dare: "A",            // the letter furthest from the answer
+};
+
+const COPY = {
+  from: n => `Hit or Miss #${n}`,
+  ask: "Where did it peak on the Hot 100?",
+  cta: "Comment your letter, then swipe",
+  answerIs: letter => `The answer: ${letter}`,
+  neverBig: "Never charted",
+  biggest: b => `${b.artist}${/s$/i.test(b.artist) ? "’" : "’s"} biggest: <b>${b.title}</b>, ${b.detail}`,
+  playTitle: "That was one of yesterday’s five.",
+  playLine: "Today’s Hit or Miss has five new songs.",
+  url: "tempify.me",
+  bio: "Link in bio",
+  dare: letter => `Send this to someone who’d have said ${letter}`,
+};
+
+// The game's dial (src/lib/peak.js in the app): #1 at the left, #100 toward the right, then a
+// "never charted" stretch. The top of the chart gets more room, on a square-root curve. The
+// never stretch is wider here than in the game so its words fit under it.
+const NEVER_FROM = 0.8;
+const dialAt = peak => Math.sqrt((peak - 1) / 99) * NEVER_FROM;
+const ZONES = [
+  { letter: "A", label: "Top 10", from: 0, to: dialAt(10.5) },
+  { letter: "B", label: "#11 to #40", from: dialAt(10.5), to: dialAt(40.5) },
+  { letter: "C", label: "#41 to #100", from: dialAt(40.5), to: NEVER_FROM },
+  { letter: "D", label: "Never charted", from: NEVER_FROM, to: 1 },
+];
+const DIAL = { width: 904, height: 170, pitch: 15, bar: 9, gap: 18, low: 12 };
+
+const params = new URLSearchParams(location.search);
+const data = location.hash.length > 1 ? JSON.parse(decodeURIComponent(location.hash.slice(1))) : EXAMPLE;
+// Song and artist names come typed with straight apostrophes; set them the way print does.
+for (const key of ["song", "artist"]) data[key] = data[key].replace(/'/g, "’");
+if (data.biggest) for (const key of ["artist", "title"]) data.biggest[key] = data.biggest[key].replace(/'/g, "’");
+const slide = Number(params.get("slide") || 1);
+
+// The Tempify mark: the metronome triangle, its arm and its weight, from the app's logo.
+function mark(size) {
+  const c = "var(--orange)";
+  return `<svg width="${size}" height="${size}" viewBox="0 0 512 512" aria-hidden="true">
+    <polygon points="256,75 432,437 80,437" fill="none" stroke="${c}" stroke-width="35" stroke-linejoin="round"/>
+    <line x1="256" y1="400" x2="400" y2="150" stroke="${c}" stroke-width="15" stroke-linecap="round"/>
+    <circle cx="256" cy="419" r="35" fill="${c}"/>
+    <rect x="370" y="125" width="60" height="35" rx="3" fill="${c}"/></svg>`;
+}
+
+function head() {
+  return `<div class="head"><div class="site">${mark(50)}${COPY.url}</div><div class="from">${COPY.from(data.puzzle)}</div></div>`;
+}
+
+// The dial as bars: tall at #1, falling away toward #100, then low dots where songs that never
+// charted sit. On the answer, the peak's bar lights and the rest of its letter's stretch tints.
+function dial(answer) {
+  const { width: W, height: H, pitch, bar, gap, low } = DIAL;
+  const peakX = answer && data.peak ? dialAt(data.peak) * W : null;
+  let bars = [];
+  for (const z of ZONES) {
+    const x0 = z.from * W + gap / 2, x1 = z.to * W - gap / 2;
+    const n = Math.max(1, Math.floor((x1 - x0 - bar) / pitch) + 1);
+    const step = n > 1 ? (x1 - x0 - bar) / (n - 1) : 0;
+    for (let i = 0; i < n; i++) {
+      const x = x0 + i * step;
+      const pos = (x + bar / 2) / W;
+      let h = bar;
+      if (z.letter !== "D") {
+        const rank = 1 + 99 * Math.pow(Math.min(1, pos / NEVER_FROM), 2);
+        h = low + (H - low) * (1 - (rank - 1) / 99);
+      }
+      bars.push({ x, h, zone: z.letter });
+    }
+  }
+  let lit = -1;
+  if (peakX !== null) {
+    lit = bars.reduce((best, b, i) => (b.zone !== "D" && Math.abs(b.x + bar / 2 - peakX) < Math.abs(bars[best].x + bar / 2 - peakX) ? i : best), 0);
+  }
+  const rects = bars.map((b, i) => {
+    let fill = "var(--bar)", extra = "";
+    if (answer) {
+      if (i === lit || (data.peak === null && b.zone === "D")) { fill = "var(--blue)"; extra = ` filter="url(#lift)"`; }
+      else if (b.zone === data.answer) fill = "#1E3A66";
+      else fill = "#262624";
+    }
+    return `<rect x="${b.x.toFixed(1)}" y="${(H - b.h).toFixed(1)}" width="${bar}" height="${b.h.toFixed(1)}" rx="${bar / 2}" fill="${fill}"${extra}/>`;
+  }).join("");
+  let pin = "";
+  if (answer && lit >= 0) {
+    const b = bars[lit], cx = b.x + bar / 2, top = H - b.h - 18;
+    const left = Math.max(-40, Math.min(W - 84, cx - 62));  // kept inside the picture at #1
+    pin = `<g><rect x="${left}" y="${top - 64}" width="124" height="56" rx="16" fill="var(--blue)"/>
+      <path d="M${cx - 12} ${top - 9} L${cx} ${top + 4} L${cx + 12} ${top - 9} Z" fill="var(--blue)"/>
+      <text x="${left + 62}" y="${top - 25}" text-anchor="middle" font-family="Inter Card" font-weight="800" font-size="32" fill="#0E0E0E">#${data.peak}</text></g>`;
+  }
+  const chips = ZONES.map(z => {
+    const state = !answer ? "" : z.letter === data.answer ? " on" : " dim";
+    const mid = ((z.from + z.to) / 2) * 100;
+    return `<div class="zone" style="left:${mid}%"><div class="chip${state}">${z.letter}</div><div class="label${answer && z.letter !== data.answer ? " dim" : ""}">${z.label}</div></div>`;
+  }).join("");
+  return `<div class="dial"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <defs><filter id="lift" x="-200%" y="-30%" width="500%" height="160%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    ${rects}${pin}</svg><div class="zones">${chips}</div></div>`;
+}
+
+// Tempify's waveform from the link card, in the five games' colors, for the last picture.
+function wave() {
+  const W = 1080, H = 240, cy = 120, max = 110, pitch = 22, bw = 12;
+  const COLORS = ["#F59E0B", "#3B82F6", "#14B8A6", "#F97316", "#EC4899"];
+  const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  let d = "";
+  for (let k = 0; k * pitch < W; k++) {
+    const x = k * pitch + pitch / 2;
+    const ends = Math.min(smooth(0, 220, x), smooth(0, 220, W - x));
+    const loud = Math.abs(0.55 * Math.sin(k * 0.53 + 0.8) + 0.3 * Math.sin(k * 0.19 + 2.1) + 0.15 * Math.sin(k * 1.37));
+    const h = Math.max(bw * 0.9, max * (0.2 + 0.8 * ends) * (0.3 + 0.7 * loud));
+    d += `<rect x="${(x - bw / 2).toFixed(1)}" y="${(cy - h).toFixed(1)}" width="${bw}" height="${(2 * h).toFixed(1)}" rx="${bw / 2}"/>`;
+  }
+  const stops = COLORS.map((c, j) => `<stop offset="${(0.08 + j * 0.21).toFixed(2)}" stop-color="${c}"/>`).join("");
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>
+    <linearGradient id="g-wave" x1="0" y1="0" x2="${W}" y2="0" gradientUnits="userSpaceOnUse">${stops}</linearGradient>
+    <filter id="f-soft" x="-5%" y="-40%" width="110%" height="180%"><feGaussianBlur stdDeviation="16"/></filter></defs>
+    <g fill="url(#g-wave)"><g opacity=".5" filter="url(#f-soft)">${d}</g><g>${d}</g></g></svg>`;
+}
+
+function glow(color, x, y) {
+  return `<svg class="glow" width="1080" height="1350"><defs><radialGradient id="g-glow"><stop offset="0" stop-color="${color}" stop-opacity=".2"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient></defs>
+    <ellipse cx="${x}" cy="${y}" rx="620" ry="520" fill="url(#g-glow)"/></svg>`;
+}
+
+const arrow = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+
+function question() {
+  return glow("#3B82F6", 540, 520) + head() + `<div class="main">
+    <div class="ask"><div class="eyebrow">${COPY.ask}</div><div class="song" id="fit">${data.song}</div><div class="artist">${data.artist}</div></div>
+    ${dial(false)}
+    <div class="cta">${COPY.cta}${arrow}</div></div>`;
+}
+
+function answer() {
+  const big = data.peak ? `#${data.peak}` : COPY.neverBig;
+  const biggest = data.biggest ? `<div class="biggest">${COPY.biggest(data.biggest)}</div>` : "";
+  return glow("#3B82F6", 300, 360) + head() + `<div class="main reveal">
+    <div class="eyebrow" style="margin-top:56px">${COPY.answerIs(data.answer)}</div>
+    <div class="peak${data.peak ? "" : " never"}" id="fit-peak">${big}</div>
+    <div class="who" id="fit-who">${data.song} <span>by ${data.artist}</span></div>
+    ${data.facts ? `<div class="facts">${data.facts}</div>` : ""}
+    ${dial(true)}
+    ${biggest}</div>`;
+}
+
+function play() {
+  return glow("#F59E0B", 540, 700) + head() + `<div class="main"><div class="play">
+    <h1>${COPY.playTitle}</h1><p>${COPY.playLine}</p>
+    <div class="wave">${wave()}</div>
+    <div class="url">${COPY.url}</div><div class="bio">${COPY.bio}</div>
+    </div><div class="dare">${COPY.dare(data.dare)}</div></div>`;
+}
+
+// Shrinks a line of text until it fits its space: the song name on the question, and the number
+// and the "song by artist" line on the answer.
+function fit(el, size, min, fits) {
+  if (!el) return;
+  for (let s = size; s >= min; s -= 2) {
+    el.style.fontSize = s + "px";
+    if (fits(el)) return;
+  }
+}
+
+function render() {
+  const stage = document.getElementById("stage");
+  stage.innerHTML = [question, answer, play][slide - 1]();
+  fit(document.getElementById("fit"), 136, 40, el => el.scrollWidth <= el.clientWidth && el.offsetHeight <= 136 * 3.2 && el.parentElement.scrollHeight <= el.parentElement.clientHeight);
+  fit(document.getElementById("fit-peak"), data.peak ? 300 : 150, 90, el => el.scrollWidth <= el.clientWidth && el.offsetHeight <= 300);
+  fit(document.getElementById("fit-who"), 54, 30, el => el.scrollWidth <= el.clientWidth);
+  fit(document.querySelector(".facts"), 34, 26, el => el.scrollWidth <= el.clientWidth);
+  if (params.has("guides")) stage.insertAdjacentHTML("beforeend", `<div class="guide"></div>`);
+}
+
+// Ask for each weight by name: a font only starts loading once something uses it, and the
+// measuring in render() needs the real letters, not the fallback's.
+Promise.all([500, 700, 800].map(w => document.fonts.load(`${w} 40px "Inter Card"`))).then(render, render);
+</script>
+</body>
+</html>
