@@ -5,7 +5,7 @@ One Instagram post a day about one song from yesterday's Hit or Miss. It goes ou
 1. **The question.** The song's name lands word by word as the voice says it, over the game's dial dancing like an equalizer. Then "Where did it peak on the Hot 100?" lands the same way. Then the four letters pop in as the voice says "A, B, C, or D?": A Top 10, B #11 to #40, C #41 to #100, D Never charted. The same four are the post's poll.
 2. **The countdown, the song's moment.** "Vote in the poll. Answer in 5, 4, 3, 2, 1", a number a second. The voice stops and only a soft tick marks each number, so the song carries it while the dial dances.
 3. **The answer.** A swipe up, then a needle swings across the dial with the number running beside it, and settles on the peak with a hit, a flash and a ring. Then the record's cover, how long it charted, and the artist's biggest hit when that did better.
-4. **Today's game.** Another swipe: "That was one of yesterday's five," tempify.me, and "Send this to someone who'd have said A" (the letter furthest from the answer). The voice says "Play today's at tempify dot me."
+4. **Today's game.** Another swipe: "That was one of yesterday's songs," tempify.me, and "Send this to someone who'd have said A" (the letter furthest from the answer). The voice says "Play today's at tempify dot me."
 
 How it's built to hold people:
 - **The hook:** the song's name is on screen and spoken from the first frame.
@@ -33,7 +33,7 @@ The Tempify bot makes one every day, a week ahead, from its own copy of this rep
 ## Making a day's post
 
 1. **Update the repo copy** with `git pull`. That brings in the latest template and the Hot 100 index (`src/assets/hot-100-songs.json`).
-2. **Pick the song.** Read the Hit or Miss of the day before the post's day (Eastern): the `puzzles` row with `game_slug` `hit-or-miss` and that `scheduled_date`. Its five songs are in `metadata.rounds`, each with `title`, `artist`, `year` and `peak` (0 means it never charted). Pick the one most people would guess wrong:
+2. **Pick the song.** Read the Hit or Miss of the day before the post's day (Eastern): the `puzzles` row with `game_slug` `hit-or-miss` and that `scheduled_date`. Its songs are in `metadata.rounds` (five through 11/16/2026, three from 11/17), each with `title`, `artist`, `year` and `peak` (0 means it never charted). Pick the one most people would guess wrong:
    - a famous song that charted low or never charted, or
    - a song people forget was a big hit.
 

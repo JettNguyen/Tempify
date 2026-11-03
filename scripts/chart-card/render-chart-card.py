@@ -96,7 +96,7 @@ AGENT = "TempifyChartCard/1.0 ( https://tempify.me )"
 # With the poll, Instagram shows the caption as the poll's question, so it leads with it.
 CAPTION_POLL = """Where did “{song}” by {artist} peak on the Hot 100? Vote, then see the answer.
 
-It was one of the five songs in yesterday's Hit or Miss. Today's five are up at tempify.me (link in bio).
+It was one of the songs in yesterday's Hit or Miss. Today's are up at tempify.me (link in bio).
 
 The voice is made with AI.
 
@@ -111,7 +111,7 @@ D. Never charted
 
 Comment your letter, then swipe for the answer.
 
-It was one of the five songs in yesterday's Hit or Miss. Today's five are up at tempify.me (link in bio).
+It was one of the songs in yesterday's Hit or Miss. Today's are up at tempify.me (link in bio).
 
 The voice is made with AI.
 
