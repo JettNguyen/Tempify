@@ -96,6 +96,8 @@ With signed links that last an hour:
   - The API only has songs licensed for apps, which can differ from what the Instagram app offers, and it rarely has a Hot 100 song. So the morning run does the same search for each upcoming chart fact and puts the result on its card in Admin (`bot_note`, migration 018): the song it found, or "No music". Jett sees it before he approves.
 - **If Instagram refuses:** if the poll is refused, post without it and log that. If the Reel can't go up at all, post the three pictures as one picture post instead.
 - **Afterwards:** set the row to `posted` with the post's link, and log it.
+  - Search for the song again at every post, not just when the card is made.
+  - A Reel sent with the song is read back. Its `media_audio_type` is `MUSIC` once a song from Instagram's library is on it, and then the log says Instagram confirms the song. Anything else after two minutes is a failed line with the link. The API can't say which song is on a Reel, only that one is.
 
 The caption doesn't say the voice is made with AI. Jett took that line out on November 3, 2026.
 
