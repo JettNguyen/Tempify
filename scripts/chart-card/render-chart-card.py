@@ -343,15 +343,18 @@ def voice_model():
 
 # The voice says "thirty", "forty" and "eighty" with an American "d"-ish flap, but "twenty",
 # "seventy" and "ninety" with a hard "t". Jett wants the flap in all of them (11/3/2026).
-FLAPPED = ("twenty", "seventy", "ninety")
+# The t softened in these words. "seventy" gets a full d: a flap there came out
+# "sevun-ay" at the end of a line (Jett, November 3, 2026), which speech
+# recognition heard as "7-ry", and with a d it hears 70.
+SOFTENED = {"twenty": "nɾ", "seventy": "nd", "ninety": "nɾ"}
 
 
 def sounds_of(kokoro, text):
-    """The line's sounds, with the flap put into FLAPPED (not "nineteen", which starts the same)."""
+    """The line's sounds, with the t softened in SOFTENED (not "nineteen", which starts the same)."""
     said = kokoro.tokenizer.phonemize(text, "en-us")
-    for word in FLAPPED:
+    for word, soft in SOFTENED.items():
         hard = kokoro.tokenizer.phonemize(word, "en-us")
-        said = re.sub(re.escape(hard) + "(?!ː)", hard.replace("nt", "nɾ"), said)
+        said = re.sub(re.escape(hard) + "(?!ː)", hard.replace("nt", soft), said)
     return said
 
 
