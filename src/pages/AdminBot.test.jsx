@@ -156,6 +156,18 @@ describe('the Tempify bot page', () => {
     expect(container.textContent).toContain('Chart fact for Tue 11/3: the bot posts it within 15 minutes.')
   })
 
+  it('shows the bot\'s line on whether the Reel gets its song, before and after approving', async () => {
+    const line = 'No music: Instagram\'s music library doesn\'t have “No Secret” by DJ Khaled, so the Reel goes up without it.'
+    db.items = [
+      { id: 'm1', kind: 'post', title: 'Chart fact for Wed 11/4', body: 'x', place: 'Instagram', due_on: '2099-11-04', status: 'waiting', auto_post: true, bot_note: line },
+      { id: 'm2', kind: 'post', title: 'Chart fact for Thu 11/5', body: 'x', place: 'Instagram', due_on: '2099-11-05', status: 'approved', auto_post: true, bot_note: 'Music: “Thriller 7"” by Michael Jackson, from Instagram\'s music library.' },
+    ]
+    await render()
+    expect(container.textContent).toContain(line)
+    expect(container.textContent).not.toContain('Your last note')
+    expect(container.textContent).toContain('Chart fact for Thu 11/5: the bot posts it on Thu Nov 5 at 9 AM. Music: “Thriller 7"” by Michael Jackson')
+  })
+
   it('plays a post\'s Reel above its pictures', async () => {
     db.items = [{
       id: 'r1', kind: 'post', title: 'Chart fact for Wed 11/4', body: 'x', place: 'Instagram',

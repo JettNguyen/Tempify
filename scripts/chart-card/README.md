@@ -93,10 +93,11 @@ With signed links that last an hour:
 - **The music:** search Instagram's Audio API for the post's own song. Attach it with `audio_configuration` only when the title and artist match: `video_volume` 100 (the voice and the effects) and `audio_volume` 75 (the song). With no match, post without music; never a different song.
   - The API sets each level once for the whole Reel. It has no ducking like the Edits app's, and no choice of where in the song it starts. So the voice is made to cut through the song instead, and the countdown leaves the song on its own.
   - 75 is Jett's pick, after trying a draft in the Instagram app on November 3, 2026.
+  - The API only has songs licensed for apps, which can differ from what the Instagram app offers, and it rarely has a Hot 100 song. So the morning run does the same search for each upcoming chart fact and puts the result on its card in Admin (`bot_note`, migration 018): the song it found, or "No music". Jett sees it before he approves.
 - **If Instagram refuses:** if the poll is refused, post without it and log that. If the Reel can't go up at all, post the three pictures as one picture post instead.
 - **Afterwards:** set the row to `posted` with the post's link, and log it.
 
-The caption ends by saying the voice is made with AI. Meta asks for that on realistic made-up voices, and it's honest.
+The caption doesn't say the voice is made with AI. Jett took that line out on November 3, 2026.
 
 ## What a post never does
 

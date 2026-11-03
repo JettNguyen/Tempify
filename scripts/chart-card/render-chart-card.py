@@ -98,8 +98,6 @@ CAPTION_POLL = """Where did “{song}” by {artist} peak on the Hot 100? Vote, 
 
 It was one of the songs in yesterday's Hit or Miss. Today's are up at tempify.me (link in bio).
 
-The voice is made with AI.
-
 #hot100 #musictrivia #{tag}"""
 
 CAPTION = """Where did “{song}” by {artist} peak on the Hot 100?
@@ -112,8 +110,6 @@ D. Never charted
 Comment your letter, then swipe for the answer.
 
 It was one of the songs in yesterday's Hit or Miss. Today's are up at tempify.me (link in bio).
-
-The voice is made with AI.
 
 #hot100 #musictrivia #{tag}"""
 

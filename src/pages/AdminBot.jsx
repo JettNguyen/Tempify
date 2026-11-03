@@ -201,6 +201,9 @@ function Item({ item, postAt, onDecide }) {
           ))}
         </div>
       )}
+      {item.bot_note && (
+        <p style={{ ...noteStyle, marginTop: '6px' }}>{item.bot_note}</p>
+      )}
       {media && !autoPost && isNativeApp() && (
         <p style={{ ...noteStyle, marginTop: '6px' }}>
           To post these yourself, open tempify.me/admin/bot in Safari, where you can share the pictures.
@@ -436,7 +439,7 @@ export default function AdminBot() {
               <p style={{ ...tagStyle, marginTop: '1.25rem' }}>Posting soon</p>
               {posting.map(item => (
                 <p key={item.id} style={{ ...noteStyle, marginTop: '4px' }}>
-                  {item.title}: the bot posts it {whenPosted(item, shownTime)}.
+                  {item.title}: the bot posts it {whenPosted(item, shownTime)}.{item.bot_note ? ` ${item.bot_note}` : ''}
                 </p>
               ))}
             </>
