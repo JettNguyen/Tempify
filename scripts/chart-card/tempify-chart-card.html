@@ -346,7 +346,6 @@ const VOICE = {
   hook: d => `${d.saySong || d.song}, by ${d.sayArtist || d.artist}.`,   // say*: how a name is said, when the voice gets it wrong
   ask: COPY.ask,
   options: "A, B, C, or D?",
-  count: ["Three.", "Two.", "One."],
   peak: d => (d.peak === null ? "It never charted!" : `Number ${d.peak}!`),
   facts: d => (d.peak === null ? (d.year ? `Even though it came out in ${sayYear(d.year)}.` : "")
     : d.peak === 1 ? `${weeksSaid(d.weeksAt1)} at the top, in ${sayYear(d.firstYear)}.`
@@ -372,7 +371,6 @@ function voiceLines() {
     { key: "hook", text: VOICE.hook(d), words: true },
     { key: "ask", text: VOICE.ask, words: true },
     { key: "options", text: VOICE.options, words: true },
-    ...VOICE.count.map((text, i) => ({ key: "count" + i, text })),
     { key: "peak", text: VOICE.peak(d) },
     { key: "facts", text: VOICE.facts(d) },
     d.biggest && { key: "biggest", text: VOICE.biggest(d.biggest, d) },
@@ -389,14 +387,15 @@ function schedule() {
   V = {};
   for (const l of voiceLines()) V[l.key] = { text: l.text, ...((data.voice && data.voice[l.key]) || { dur: 0.3 + 0.28 * l.text.split(" ").length }) };
   const d = k => (V[k] ? V[k].dur : 0), say = {};
-  const T = { say, step: 0.7 };      // step: the countdown's beat
+  // The countdown is the song's moment: the voice stops, and Instagram's song carries it, a
+  // number a second.
+  const T = { say, counts: 5, step: 1 };
   let t = 0.05;
   say.hook = t; t += d("hook") + 0.08;
   say.ask = t; t += d("ask") + 0.1;
   say.options = t; t += d("options");
   T.count = t + 0.15;
-  [0, 1, 2].forEach(i => (say["count" + i] = T.count + i * T.step));
-  T.reveal = T.count + 3 * T.step;   // the swipe to the answer
+  T.reveal = T.count + T.counts * T.step;   // the swipe to the answer
   T.land = T.reveal + 1.5;           // the needle settles
   say.peak = T.land + 0.08;          // just after the impact, so it doesn't bury the word
   t = say.peak + d("peak") + 0.12;
@@ -410,6 +409,9 @@ function schedule() {
   T.cover = T.count - 0.15;          // every letter in, before the countdown comes up
   return T;
 }
+
+// When each number of the countdown comes up.
+const ticks = () => Array.from({ length: T.counts }, (_, k) => T.count + k * T.step);
 
 // When word i of a line is said.
 function wordAt(key, i) {
@@ -425,14 +427,13 @@ function plan() {
 }
 
 // The sounds, at the moments they belong to. Most are the app's own (public/sounds); whoosh,
-// riser, boom and glide are made by render-chart-card.py.
+// boom and glide are made by render-chart-card.py.
 function cues() {
   const c = (t, sound, gain, dur) => ({ t: +t.toFixed(3), sound, gain, ...(dur ? { dur } : {}) });
   const list = [c(wordAt("hook", 0), "boom", 0.4)];
   M.songWords.forEach((_, i) => list.push(c(wordAt("hook", i), "tap", 0.35)));
   T.options.forEach(at => list.push(c(at, "tap", 0.8)));
-  list.push(c(T.count, "riser", 0.45, 3 * T.step));
-  [0, 1, 2].forEach(i => list.push(c(T.count + i * T.step, "beat", 0.9)));
+  ticks().forEach(at => list.push(c(at, "tick", 0.5)));   // soft, so the song comes through
   list.push(c(T.reveal - 0.06, "whoosh", 0.8));
   // The needle ticks over each bar it passes, like the game's own dial, over a glide that climbs
   // as it heads for #1 (curve: where it is every 10 ms, 0 at #1 and 1 at the far end).
@@ -551,7 +552,7 @@ function setupReel(stage) {
     ...M.songWords.map((_, i) => [wordAt("hook", i), 0.02]),
     [wordAt("hook", M.songWords.length), 0.012],
     ...T.options.map(at => [at, 0.022]),
-    ...[0, 1, 2].map(i => [T.count + i * T.step, 0.035]),
+    ...ticks().map(at => [at, 0.02]),
     [T.land, 0.08],
     ...(T.biggest !== null ? [[T.biggest, 0.015]] : []),
     ...M.playWords.map((_, i) => [T.play + 0.25 + i * 0.07, 0.012]),
@@ -613,9 +614,9 @@ function seek(t) {
   show(M.artist, t, wordAt("hook", M.songWords.length) - 0.02, "slam");
   M.askWords.forEach((w, i) => show(w, t, wordAt("ask", i) - 0.03, "pop"));
   if (t >= T.count - 0.1) {
-    const k = clamp(Math.floor((t - T.count) / T.step), 0, 2), at = T.count + k * T.step;
+    const k = clamp(Math.floor((t - T.count) / T.step), 0, T.counts - 1), at = T.count + k * T.step;
     const r = 40, C = 2 * Math.PI * r, left = clamp((t - at) / T.step);
-    M.cta.innerHTML = `${COPY.reelCount(data.poll)}<span class="count" style="transform:scale(${(1 + 0.35 * hit(t, at, 0.35)).toFixed(3)})"><svg width="88" height="88"><circle cx="44" cy="44" r="${r}" fill="none" stroke="var(--blue-soft)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * left).toFixed(1)}" transform="rotate(-90 44 44)"/></svg>${3 - k}</span>`;
+    M.cta.innerHTML = `${COPY.reelCount(data.poll)}<span class="count" style="transform:scale(${(1 + 0.35 * hit(t, at, 0.35)).toFixed(3)})"><svg width="88" height="88"><circle cx="44" cy="44" r="${r}" fill="none" stroke="var(--blue-soft)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * left).toFixed(1)}" transform="rotate(-90 44 44)"/></svg>${T.counts - k}</span>`;
   } else M.cta.innerHTML = "";
   show(M.cta, t, T.count - 0.1);
 
@@ -653,7 +654,8 @@ function drawDial(t) {
   const grow = E.out(prog(t, 0, 0.3));
   const morph = E.inOut(prog(t, T.options[0] - 0.15, 0.7));
   const settle = E.inOut(prog(t, T.reveal, 0.4));
-  const tick = Math.max(...[0, 1, 2].map(k => hit(t, T.count + k * T.step, 0.5)));
+  const tick = Math.max(0, ...ticks().map(at => hit(t, at, 0.5)));
+  const song = prog(t, T.count, 0.4) * (1 - prog(t, T.reveal - 0.3, 0.3));   // it dances to the song
   const read = Object.fromEntries(ZONES.map((z, k) => [z.letter, hit(t, T.options[k], 0.9)]));
   const x = needle(t), near = nearestBar(M.bars, x, false);
   const sweeping = t >= M.sweepAt - 0.05 && t < T.land + 0.4;
@@ -663,7 +665,7 @@ function drawDial(t) {
   M.bars.forEach((b, i) => {
     const lv = level(i, n, t);
     let h = low + (Hd * 1.8 - low) * lv * grow;   // the equalizer reaches up into the space above
-    const shaped = b.zone === "D" ? b.h + 12 * lv : b.h * (0.7 + 0.3 * lv) + 10 * tick;
+    const shaped = b.zone === "D" ? b.h + 12 * lv : b.h * (0.7 - 0.3 * song + (0.3 + 0.5 * song) * lv) + 10 * tick;
     h += (shaped - h) * morph;
     h += (b.h - h) * settle;
     h = clamp(h, bar, Hd * 1.8);

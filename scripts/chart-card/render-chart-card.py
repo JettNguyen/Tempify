@@ -380,8 +380,8 @@ def word_starts(kokoro, text, audio, rate):
     return starts
 
 
-# The Reel's sounds that aren't the app's own, made here: air rushing past for the swipes, a rise
-# under the countdown, a glide under the needle, and a low hit when it lands.
+# The Reel's sounds that aren't the app's own, made here: air rushing past for the swipes, a glide
+# under the needle, and a low hit when it lands.
 RATE = 48000
 
 
@@ -403,17 +403,6 @@ def whoosh(dur=0.5):
     air = smooth_noise(n, 300 + 5200 * swell, 3) * swell
     side = t / dur * np.pi / 2  # it moves from left to right
     return np.stack([air * np.cos(side), air * np.sin(side)], 1)
-
-
-def riser(dur):
-    n = int(dur * RATE)
-    t = np.arange(n) / RATE
-    rise = t / dur
-    pitch = 180 * 6 ** rise
-    tone = 0.6 * np.sin(2 * np.pi * np.cumsum(pitch) / RATE) + 0.3 * np.sin(2 * np.pi * np.cumsum(pitch * 1.5) / RATE)
-    out = (0.55 * tone + 0.6 * smooth_noise(n, 500 + 7000 * rise, 5)) * rise ** 2
-    out[-480:] *= np.linspace(1, 0, 480)  # cut off clean, under the swipe's whoosh
-    return np.stack([out, out], 1)
 
 
 def boom(dur=0.9):
@@ -446,8 +435,6 @@ def cue_sound(cue, made={}):
         return glide(cue["curve"], cue["dur"])
     if name == "whoosh":
         return whoosh()
-    if name == "riser":
-        return riser(cue["dur"])
     if name == "boom":
         return boom()
     if name not in made:

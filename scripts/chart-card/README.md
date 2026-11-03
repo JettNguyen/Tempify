@@ -1,15 +1,15 @@
 # Tempify's daily chart fact
 
-One Instagram post a day about one song from yesterday's Hit or Miss. It goes out as a Reel of under 20 seconds with an A to D poll, a voice reading it, and the song itself playing under it.
+One Instagram post a day about one song from yesterday's Hit or Miss. It goes out as a Reel of about 20 seconds with an A to D poll, a voice reading it, and the song itself playing under it.
 
 1. **The question.** The song's name lands word by word as the voice says it, over the game's dial dancing like an equalizer. Then "Where did it peak on the Hot 100?" lands the same way. Then the four letters pop in as the voice says "A, B, C, or D?": A Top 10, B #11 to #40, C #41 to #100, D Never charted. The same four are the post's poll.
-2. **The countdown.** "Vote in the poll. Answer in 3, 2, 1", with a beat on each number and a rise under it.
+2. **The countdown, the song's moment.** "Vote in the poll. Answer in 5, 4, 3, 2, 1", a number a second. The voice stops and only a soft tick marks each number, so the song carries it while the dial dances.
 3. **The answer.** A swipe up, then a needle swings across the dial with the number running beside it, and settles on the peak with a hit, a flash and a ring. Then the record's cover, how long it charted, and the artist's biggest hit when that did better.
 4. **Today's game.** Another swipe: "That was one of yesterday's five," tempify.me, and "Send this to someone who'd have said A" (the letter furthest from the answer). The voice says "Play today's at tempify dot me."
 
 How it's built to hold people:
 - **The hook:** the song's name is on screen and spoken from the first frame.
-- **Never still:** something lands every half second or so, the camera punches in on each one, and there's never a stretch without sound.
+- **Never still:** something lands every half second or so, the camera punches in on each one, and there's always sound: the voice, the effects, or the song on its own during the countdown.
 - **The answer waits:** the poll is one tap, and the Reel holds the answer back until they've had a guess.
 
 It's built to stay clean while doing it: one font, the app's own colors and sounds, and no claims.
@@ -106,7 +106,7 @@ Almost all of it is `tempify-chart-card.html`:
 - every color is in `:root`
 - the dial's four stretches are in `ZONES`
 - when things happen is `schedule()`, which times the Reel around how long each voice line takes
-- how things move is `seek()`, and the sounds are `cues()`. Most are the app's own (`public/sounds`). The whoosh, rise, glide and hit are made in `render-chart-card.py`.
+- how things move is `seek()`, and the sounds are `cues()`. Most are the app's own (`public/sounds`). The whoosh, glide and hit are made in `render-chart-card.py`.
 
 The voice and its speed, the caption, and the frame rate are at the top of `render-chart-card.py`. The four letters' wording appears in both files and has to match.
 
