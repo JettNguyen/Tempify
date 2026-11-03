@@ -33,6 +33,7 @@ import { useAuth } from './hooks/useAuth'
 
 // Admin is a large, single-user screen, so keep it out of everyone else's bundle.
 const Admin = lazy(() => import('./pages/Admin'))
+const AdminBot = lazy(() => import('./pages/AdminBot'))
 
 // Lives inside AuthProvider so it can wait for the session check to settle.
 // Otherwise the splash hands off to a signed-out navbar that then pops.
@@ -101,6 +102,7 @@ export default function App() {
                   <Route path="/subscribe" element={<Subscribe />} />
                   <Route path="/success" element={<Success />} />
                   <Route path="/admin" element={<Admin />} />
+                  <Route path="/admin/bot" element={<AdminBot />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </PageTransition>

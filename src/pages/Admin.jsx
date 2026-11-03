@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { DECADES, yearToDecade } from '../lib/decades'
@@ -802,6 +802,14 @@ export default function Admin() {
 
   useEffect(() => { fetchSchedule() }, [fetchSchedule])
 
+  // How many of the Tempify bot's drafts are waiting, for the link up top.
+  const [botWaiting, setBotWaiting] = useState(null)
+  useEffect(() => {
+    if (!isAdmin) return
+    supabase.from('agent_items').select('id', { count: 'exact', head: true }).eq('status', 'waiting')
+      .then(({ count, error }) => { if (!error) setBotWaiting(count ?? 0) })
+  }, [isAdmin])
+
   useEffect(() => {
     if (!showForm || !isAdmin) return
     supabase
@@ -990,6 +998,12 @@ export default function Admin() {
         <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
           Puzzle schedule
         </h1>
+        <Link to="/admin/bot" className="btn-press" style={{
+          display: 'inline-block', marginTop: '0.85rem', padding: '9px 16px', borderRadius: '999px',
+          border: '1px solid var(--border)', fontSize: '13px', color: 'var(--text-primary)',
+        }}>
+          Tempify bot{botWaiting ? ` · ${botWaiting} to look at` : ''}
+        </Link>
       </div>
 
       {/* Week navigation */}
