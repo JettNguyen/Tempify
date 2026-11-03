@@ -12,3 +12,5 @@ Thumbs.db
 # The chart card writes its pictures beside each post.json; only the example post.json is kept.
 scripts/chart-card/posts/*/*
 !scripts/chart-card/posts/*/post.json
+
+__pycache__/

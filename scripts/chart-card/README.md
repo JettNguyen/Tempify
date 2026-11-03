@@ -79,11 +79,21 @@ The Tempify bot makes one every day, a week ahead, from its own copy of this rep
    - `title` "Chart fact for Tue 11/24"
    - `body`: exactly what's in `caption.txt`
    - `images`: `posts/<date>/reel.mp4`, then the three pictures, in order. Admin plays the Reel and shows the pictures.
-   - `auto_post`: `true` when the bot can post to Instagram itself
+   - `auto_post`: `true`, so Admin shows "Approve to post". It's `false` once a post comes back for Jett to put up himself.
 
 ## Posting it
 
 Jett's "Approve to post" sets the row to `approved`. The bot puts it up on its day at the posting time, never before its day, since it gives away the day before's puzzle. It never posts a row twice.
+
+Since November 3, 2026 that happens from the Instagram app on Jett's second iPhone, because the API can't add the songs and the app on that phone has no way to schedule a Reel. The job is in the bot's workspace on his Mac (`jobs/phone.py`, every minute), not in this repo:
+
+- **The draft:** as soon as a row is approved and the Mac is free, the phone makes the Reel an Instagram draft: the song ducked under the voice (35 while it talks, 100 in the countdown and at the end, ramped through 55 and 80), the caption checked word for word, the poll. It's named for its day in Reels drafts.
+- **The share:** on its day at the posting time, the phone opens that draft, checks the puzzle, the song, the caption and the poll, and shares it. The job then finds the post through the API and sets the row to `posted` with its link.
+- **`bot_note`** says where each row has got to (making it, made, waiting for the Mac, sharing).
+- **A song Instagram's music hasn't got:** the card is made again with another of the day before's songs and goes back to `waiting` for Jett to approve.
+- **Back to Jett:** a draft that fails three times, a share Instagram doesn't show, or a day that passes first sets the row to `waiting` with `auto_post` `false`, and `bot_note` says why.
+
+The rest of this section is how the API poster works. It's switched off (`BY_PHONE` in the bot's `jobs/instagram.py`) and kept for if the API ever gets the songs.
 
 The posting time is Jett's to set in Admin, for every post: the one row of `agent_settings`, `post_at`, a time of day in Eastern (migration 017). Read it at every check; if the table isn't there yet, use 9:00. A post approved after its time goes up at the next check.
 
