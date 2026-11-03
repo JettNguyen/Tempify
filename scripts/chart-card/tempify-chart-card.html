@@ -433,7 +433,7 @@ function cues() {
   const list = [c(wordAt("hook", 0), "boom", 0.4)];
   M.songWords.forEach((_, i) => list.push(c(wordAt("hook", i), "tap", 0.35)));
   T.options.forEach(at => list.push(c(at, "tap", 0.8)));
-  ticks().forEach(at => list.push(c(at, "tick", 0.5)));   // soft, so the song comes through
+  ticks().forEach(at => list.push(c(at, "tick", 3.2)));   // loud enough to cut through the song at full
   list.push(c(T.reveal - 0.06, "whoosh", 0.8));
   // The needle ticks over each bar it passes, like the game's own dial, over a glide that climbs
   // as it heads for #1 (curve: where it is every 10 ms, 0 at #1 and 1 at the far end).

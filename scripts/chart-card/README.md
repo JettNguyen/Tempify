@@ -3,7 +3,7 @@
 One Instagram post a day about one song from yesterday's Hit or Miss. It goes out as a Reel of about 20 seconds with an A to D poll, a voice reading it, and the song itself playing under it.
 
 1. **The question.** The song's name lands word by word as the voice says it, over the game's dial dancing like an equalizer. Then "Where did it peak on the Hot 100?" lands the same way. Then the four letters pop in as the voice says "A, B, C, or D?": A Top 10, B #11 to #40, C #41 to #100, D Never charted. The same four are the post's poll.
-2. **The countdown, the song's moment.** "Vote in the poll. Answer in 5, 4, 3, 2, 1", a number a second. The voice stops and only a soft tick marks each number, so the song carries it while the dial dances.
+2. **The countdown, the song's moment.** "Vote in the poll. Answer in 5, 4, 3, 2, 1", a number a second. The voice stops and a tick marks each number, loud enough to cut through the song, which carries it at full volume while the dial dances.
 3. **The answer.** A swipe up, then a needle swings across the dial with the number running beside it, and settles on the peak with a hit, a flash and a ring. Then the record's cover, how long it charted, and the artist's biggest hit when that did better.
 4. **Today's game.** Another swipe: "That was one of yesterday's songs," tempify.me, and "Send this to someone who'd have said A" (the letter furthest from the answer). The voice says "Play today's at tempify dot me."
 
