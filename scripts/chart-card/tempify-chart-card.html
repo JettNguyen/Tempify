@@ -1,14 +1,19 @@
 <!doctype html>
 <!--
-  Tempify's daily chart fact for Instagram: a post of three pictures, 1080 by 1350 each (the
-  tallest a feed post can be), about one song from yesterday's Hit or Miss.
-    1. The question: where did it peak? Four letters to comment before swiping.
-    2. The answer, lit on the game's own dial, and the artist's biggest hit beside it.
+  Tempify's daily chart fact for Instagram, about one song from yesterday's Hit or Miss, in three
+  parts:
+    1. The question: where did it peak? Four letters, the same as the post's poll.
+    2. The answer, lit on the game's own dial, with the record's cover and the artist's biggest hit.
     3. Today's game, and someone to send the post to.
 
+  Two shapes. A post is three pictures, 1080 by 1350 each (the tallest a feed post can be). A
+  Reel is 1080 by 1920: the same three, with the question counting down ("Answer in 3") before
+  the answer shows. render-chart-card.py turns those stills into the Reel's video.
+
   render-chart-card.py fills it in and takes the pictures, so a new day never means editing this
-  file. Open it in Chrome to see the example; add ?slide=2 or ?slide=3 for the others, and
-  ?guides to see the edges Instagram's profile grid crops to (3 by 4).
+  file. Open it in Chrome to see the example. Add ?slide=2 or ?slide=3 for the others,
+  ?format=reel (and &count=3) for the Reel's frames, and ?guides to see what Instagram keeps
+  clear: the profile grid's 3 by 4 crop on a post, and the room its buttons take on a Reel.
 
   Every word is in COPY and every color in :root, so changing wording or a color is one line.
   Started November 2, 2026, in the look of the link card (public/og-card.png).
@@ -38,6 +43,11 @@
     padding: 72px 88px 76px; display: flex; flex-direction: column; background: var(--bg);
     font-family: "Inter Card", -apple-system, system-ui, sans-serif; color: var(--text);
   }
+  /* A Reel keeps clear of what Instagram lays over it: the top bar, and the caption, poll and
+     buttons along the bottom. */
+  #stage.reel { height: 1920px; padding: 240px 88px 460px; }
+  /* As tall with the countdown's circle as without it, so nothing jumps when the count starts. */
+  #stage.reel .cta { min-height: 64px; }
   .glow { position: absolute; inset: 0; pointer-events: none; }
   .head { position: relative; display: flex; align-items: center; justify-content: space-between; }
   .site { display: flex; align-items: center; gap: 14px; font-weight: 700; font-size: 36px; letter-spacing: -0.02em; }
@@ -51,11 +61,15 @@
   .ask .artist { font-weight: 500; font-size: 54px; color: var(--muted); margin-top: 26px; letter-spacing: -0.01em; }
   .cta { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 54px; font-weight: 700; font-size: 34px; color: var(--text); }
   .cta svg { flex: none; }
+  .count { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: var(--blue); color: var(--bg); font-weight: 800; font-size: 38px; }
 
   /* 2. The answer */
   .peak { font-weight: 800; letter-spacing: -0.05em; line-height: 0.86; color: var(--blue); margin-top: 22px; }
   .peak.never { line-height: 0.95; letter-spacing: -0.04em; }
-  .who { margin-top: 30px; font-weight: 700; letter-spacing: -0.025em; white-space: nowrap; }
+  .who-row { display: flex; align-items: center; gap: 28px; margin-top: 30px; }
+  .who-text { flex: 1; min-width: 0; }
+  .art { flex: none; width: 150px; height: 150px; border-radius: 14px; object-fit: cover; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+  .who { font-weight: 700; letter-spacing: -0.025em; white-space: nowrap; }
   .who span { font-weight: 500; color: var(--muted); }
   .facts { margin-top: 14px; white-space: nowrap; font-weight: 500; font-size: 34px; color: var(--muted); }
   .biggest { margin-top: 40px; padding: 26px 30px; border: 2px solid var(--line); border-radius: 22px; font-weight: 500; font-size: 32px; line-height: 1.3; color: var(--muted); }
@@ -85,6 +99,7 @@
   .dare { align-self: center; margin-top: 48px; padding: 22px 34px; border-radius: 999px; border: 2px solid var(--line); font-weight: 700; font-size: 32px; }
 
   .guide { position: absolute; left: 34px; top: 0; width: 1012px; height: 1350px; outline: 3px solid #2BE02B; outline-offset: -2px; z-index: 20; pointer-events: none; }
+  .reel .guide { left: 0; top: 220px; width: 1080px; height: 1240px; }
 </style>
 </head>
 <body>
@@ -101,12 +116,17 @@ const EXAMPLE = {
   facts: "4 weeks on the chart. First charted February 1979.",
   biggest: { artist: "Queen", title: "Crazy Little Thing Called Love", detail: "#1 for 4 weeks" },
   dare: "A",            // the letter furthest from the answer
+  poll: true,           // the post carries the A to D poll
+  art: null,            // the record's cover, as a file address, when there is one
 };
 
 const COPY = {
   from: n => `Hit or Miss #${n}`,
   ask: "Where did it peak on the Hot 100?",
   cta: "Comment your letter, then swipe",
+  ctaPoll: "Vote in the poll, then swipe",
+  reelWait: poll => `${poll ? "Vote in the poll" : "Pick a letter"} before the answer shows`,
+  reelCount: poll => `${poll ? "Vote in the poll" : "Pick a letter"}. Answer in`,
   answerIs: letter => `The answer: ${letter}`,
   neverBig: "Never charted",
   biggest: b => `${b.artist}${/s$/i.test(b.artist) ? "’" : "’s"} biggest: <b>${b.title}</b>, ${b.detail}`,
@@ -136,6 +156,9 @@ const data = location.hash.length > 1 ? JSON.parse(decodeURIComponent(location.h
 for (const key of ["song", "artist"]) data[key] = data[key].replace(/'/g, "’");
 if (data.biggest) for (const key of ["artist", "title"]) data.biggest[key] = data.biggest[key].replace(/'/g, "’");
 const slide = Number(params.get("slide") || 1);
+const reel = params.get("format") === "reel";
+const count = Number(params.get("count") || 0);   // the Reel's countdown on the question, 3 to 1
+const H = reel ? 1920 : 1350;
 
 // The Tempify mark: the metronome triangle, its arm and its weight, from the app's logo.
 function mark(size) {
@@ -224,17 +247,23 @@ function wave() {
 }
 
 function glow(color, x, y) {
-  return `<svg class="glow" width="1080" height="1350"><defs><radialGradient id="g-glow"><stop offset="0" stop-color="${color}" stop-opacity=".2"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient></defs>
+  if (reel) y += 240;
+  return `<svg class="glow" width="1080" height="${H}"><defs><radialGradient id="g-glow"><stop offset="0" stop-color="${color}" stop-opacity=".2"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient></defs>
     <ellipse cx="${x}" cy="${y}" rx="620" ry="520" fill="url(#g-glow)"/></svg>`;
 }
 
 const arrow = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
 
+function cta() {
+  if (reel) return count ? `${COPY.reelCount(data.poll)}<span class="count">${count}</span>` : COPY.reelWait(data.poll);
+  return `${data.poll ? COPY.ctaPoll : COPY.cta}${arrow}`;
+}
+
 function question() {
   return glow("#3B82F6", 540, 520) + head() + `<div class="main">
     <div class="ask"><div class="eyebrow">${COPY.ask}</div><div class="song" id="fit">${data.song}</div><div class="artist">${data.artist}</div></div>
     ${dial(false)}
-    <div class="cta">${COPY.cta}${arrow}</div></div>`;
+    <div class="cta">${cta()}</div></div>`;
 }
 
 function answer() {
@@ -243,8 +272,9 @@ function answer() {
   return glow("#3B82F6", 300, 360) + head() + `<div class="main reveal">
     <div class="eyebrow" style="margin-top:56px">${COPY.answerIs(data.answer)}</div>
     <div class="peak${data.peak ? "" : " never"}" id="fit-peak">${big}</div>
-    <div class="who" id="fit-who">${data.song} <span>by ${data.artist}</span></div>
-    ${data.facts ? `<div class="facts">${data.facts}</div>` : ""}
+    <div class="who-row">${data.art ? `<img class="art" src="${data.art}" alt="">` : ""}<div class="who-text">
+      <div class="who" id="fit-who">${data.song} <span>by ${data.artist}</span></div>
+      ${data.facts ? `<div class="facts">${data.facts}</div>` : ""}</div></div>
     ${dial(true)}
     ${biggest}</div>`;
 }
@@ -267,9 +297,13 @@ function fit(el, size, min, fits) {
   }
 }
 
-function render() {
+async function render() {
   const stage = document.getElementById("stage");
+  stage.classList.toggle("reel", reel);
   stage.innerHTML = [question, answer, play][slide - 1]();
+  // The cover has to be drawn before the picture is taken.
+  const art = stage.querySelector(".art");
+  if (art) await art.decode().catch(() => art.remove());
   fit(document.getElementById("fit"), 136, 40, el => el.scrollWidth <= el.clientWidth && el.offsetHeight <= 136 * 3.2 && el.parentElement.scrollHeight <= el.parentElement.clientHeight);
   fit(document.getElementById("fit-peak"), data.peak ? 300 : 150, 90, el => el.scrollWidth <= el.clientWidth && el.offsetHeight <= 300);
   fit(document.getElementById("fit-who"), 54, 30, el => el.scrollWidth <= el.clientWidth);
