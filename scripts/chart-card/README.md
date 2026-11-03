@@ -86,7 +86,9 @@ The Tempify bot makes one every day, a week ahead, from its own copy of this rep
 Jett's "Post it" sets the row to `approved`. The bot puts it up at 9 AM Eastern on its day, never before, since it gives away the day before's puzzle. It never posts a row twice. With signed links that last an hour:
 
 - **The Reel:** `media_type` `REELS`, `video_url` the Reel, `cover_url` `reel-cover.jpg`, `share_to_feed` `true`, the caption, and `poll_attachment` from `poll.json`.
-- **The music:** search Instagram's Audio API for the post's own song. Attach it with `audio_configuration` only when the title and artist match, with the song well under the voice: the Reel's own sound (the voice and the effects) at full, the song at about a third. With no match, post without music; never a different song.
+- **The music:** search Instagram's Audio API for the post's own song. Attach it with `audio_configuration` only when the title and artist match: `video_volume` 100 (the voice and the effects) and `audio_volume` 40 (the song). With no match, post without music; never a different song.
+  - The API sets each level once for the whole Reel. It has no ducking like the Edits app's, and no choice of where in the song it starts. So the voice is made to cut through the song instead, and the countdown leaves the song on its own.
+  - Jett may set a different `audio_volume` after trying a draft in the Instagram app; use his number.
 - **If Instagram refuses:** if the poll is refused, post without it and log that. If the Reel can't go up at all, post the three pictures as one picture post instead.
 - **Afterwards:** set the row to `posted` with the post's link, and log it.
 

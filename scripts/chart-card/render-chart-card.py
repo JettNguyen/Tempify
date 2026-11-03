@@ -474,7 +474,11 @@ def make_reel(page, plan, audio, out):
     graph = (
         # Chrome's JPEGs are full-range BT.601; video is limited-range BT.709.
         "[0:v]scale=in_color_matrix=bt601:in_range=full:out_color_matrix=bt709:out_range=tv,format=yuv420p,setsar=1[v];"
-        "[1:a]aresample=48000,pan=stereo|c0=c0|c1=c0,asplit[voice][key];"
+        # Instagram plays its song at one level the whole way (the API has no ducking), so the
+        # voice is made to cut through it instead: low rumble off, less mud, more of the range
+        # speech is understood by, and its quiet syllables brought up.
+        "[1:a]aresample=48000,highpass=f=90,equalizer=f=300:t=q:w=1:g=-2,equalizer=f=3200:t=q:w=1:g=3,"
+        "acompressor=threshold=0.1:ratio=3:attack=5:release=80:makeup=2,pan=stereo|c0=c0|c1=c0,asplit[voice][key];"
         "[2:a][key]sidechaincompress=threshold=0.05:ratio=3:attack=5:release=250[sounds];"
         "[voice][sounds]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]"
     )
