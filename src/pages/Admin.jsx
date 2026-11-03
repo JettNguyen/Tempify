@@ -802,11 +802,12 @@ export default function Admin() {
 
   useEffect(() => { fetchSchedule() }, [fetchSchedule])
 
-  // How many of the Tempify bot's drafts are waiting, for the link up top.
+  // How many of the Tempify bot's drafts are waiting on Jett, for the link up
+  // top. Not games: the bot approves those itself (asksJett in lib/botStage).
   const [botWaiting, setBotWaiting] = useState(null)
   useEffect(() => {
     if (!isAdmin) return
-    supabase.from('agent_items').select('id', { count: 'exact', head: true }).eq('status', 'waiting')
+    supabase.from('agent_items').select('id', { count: 'exact', head: true }).eq('status', 'waiting').neq('kind', 'puzzle')
       .then(({ count, error }) => { if (!error) setBotWaiting(count ?? 0) })
   }, [isAdmin])
 

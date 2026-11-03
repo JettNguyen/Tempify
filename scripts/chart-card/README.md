@@ -89,9 +89,15 @@ Since November 3, 2026 that happens from the Instagram app on Jett's second iPho
 
 - **The draft:** as soon as a row is approved and the Mac is free, the phone makes the Reel an Instagram draft: the song ducked under the voice (35 while it talks, 100 in the countdown and at the end, ramped through 55 and 80), the caption checked word for word, the poll. It's named for its day in Reels drafts.
 - **The share:** on its day at the posting time, the phone opens that draft, checks the puzzle, the song, the caption and the poll, and shares it. The job then finds the post through the API and sets the row to `posted` with its link.
-- **`bot_note`** says where each row has got to (making it, made, waiting for the Mac, sharing).
+- **`bot_note`** says where each row has got to (making it, made, waiting for the Mac, sharing). Admin reads the start of these lines (`src/lib/botStage.js`) to place each card and decide whether it can be sent back, so reword one there too. A line it doesn't know shows as it is, with Send back off.
 - **A song Instagram's music hasn't got:** the card is made again with another of the day before's songs and goes back to `waiting` for Jett to approve.
-- **Back to Jett:** a draft that fails three times, a share Instagram doesn't show, or a day that passes first sets the row to `waiting` with `auto_post` `false`, and `bot_note` says why.
+- **Back to Jett:** a draft that fails three times, a share Instagram doesn't show, or a day that passes first sets the row to `waiting` with `auto_post` `false`, and `bot_note` says why (`note`, for puzzles that changed under a card). Admin shows these under Needs you, with a to-do for each line.
+- **Sent back on its day:** only the 7 AM run makes a card again, and it leaves a card alone once its day has passed. So a card sent back after that run on its own day never comes back. Admin warns before it's sent, and then shows it under Needs you.
+- **Skipped:** Jett can drop a card that can't make its day. That sets the row to `approved` with `auto_post` `false`, which the job ignores, and any draft stays in Reels drafts. If the card's song leaves the day before's puzzle, the 7 AM run makes it again and it comes back to Jett.
+- **Posted:** Admin sets `auto_post` `false` with it, so the dashboard logs the post as Jett's.
+- **`decided_at`:** Admin writes it on every answer. A card answered again gets a new draft, and the job checks it again right before Share.
+
+Jett approves every post. Games are the bot's own: they're live either way, so Admin doesn't ask about them.
 
 The rest of this section is how the API poster works. It's switched off (`BY_PHONE` in the bot's `jobs/instagram.py`) and kept for if the API ever gets the songs.
 
