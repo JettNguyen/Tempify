@@ -154,6 +154,18 @@ describe('the Tempify bot page', () => {
     expect(container.textContent).toContain('Chart fact for Tue 11/3: the bot posts it within 15 minutes.')
   })
 
+  it('plays a post\'s Reel above its pictures', async () => {
+    db.items = [{
+      id: 'r1', kind: 'post', title: 'Chart fact for Wed 11/4', body: 'x', place: 'Instagram',
+      due_on: '2099-11-04', status: 'waiting', auto_post: true,
+      images: ['posts/2099-11-04/reel.mp4', 'posts/2099-11-04/reel-cover.jpg'],
+    }]
+    await render()
+    expect(container.querySelector('video').getAttribute('src')).toBe('https://signed.example/posts/2099-11-04/reel.mp4')
+    expect([...container.querySelectorAll('img')].map(img => img.getAttribute('src')))
+      .toEqual(['https://signed.example/posts/2099-11-04/reel-cover.jpg'])
+  })
+
   it('treats an auto-post whose day has passed like a post by hand', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-11-04T15:00:00Z'))

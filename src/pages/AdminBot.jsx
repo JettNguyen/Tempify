@@ -68,12 +68,15 @@ function whenPosted(item) {
   return 'within 15 minutes'
 }
 
-// A post's pictures from the bot's private bucket, and the same pictures as
-// files for the share sheet where the browser can share files. The files are
-// fetched as soon as the links arrive, because Safari only opens the share
-// sheet straight from a tap, with nothing to wait on in between.
+const isVideo = path => /\.mp4$/i.test(path)
+
+// A post's pictures and Reel from the bot's private bucket, and the same as
+// files for the share sheet where the browser can share files: the Reel when
+// there is one, since that's what gets posted, or else the pictures. The
+// files are fetched as soon as the links arrive, because Safari only opens the
+// share sheet straight from a tap, with nothing to wait on in between.
 function usePictures(paths) {
-  const [urls, setUrls] = useState(null)
+  const [media, setMedia] = useState(null)
   const [files, setFiles] = useState(null)
   const key = (paths || []).join('|')
 
@@ -83,15 +86,16 @@ function usePictures(paths) {
     const list = key.split('|')
     supabase.storage.from('agent').createSignedUrls(list, PICTURE_LINK_SECONDS).then(async ({ data, error }) => {
       if (!live || error || !data) return
-      const signed = data.map(d => d.signedUrl).filter(Boolean)
-      setUrls(signed)
+      const signed = data.filter(d => d.signedUrl).map(d => ({ path: d.path, url: d.signedUrl, video: isVideo(d.path) }))
+      setMedia(signed)
       if (isNativeApp() || !navigator.canShare) return
+      const toShare = signed.some(m => m.video) ? signed.filter(m => m.video) : signed
       try {
-        const made = await Promise.all(signed.map(async (url, i) => {
-          const res = await fetch(url)
-          if (!res.ok) throw new Error(`picture ${i + 1}: ${res.status}`)
+        const made = await Promise.all(toShare.map(async (m, i) => {
+          const res = await fetch(m.url)
+          if (!res.ok) throw new Error(`file ${i + 1}: ${res.status}`)
           const blob = await res.blob()
-          return new File([blob], list[i].split('/').slice(-2).join('-'), { type: blob.type || 'image/jpeg' })
+          return new File([blob], m.path.split('/').slice(-2).join('-'), { type: blob.type || (m.video ? 'video/mp4' : 'image/jpeg') })
         }))
         if (live && navigator.canShare({ files: made })) setFiles(made)
       } catch {
@@ -101,7 +105,7 @@ function usePictures(paths) {
     return () => { live = false }
   }, [key])
 
-  return { urls, files }
+  return { media, files }
 }
 
 function Item({ item, onDecide }) {
@@ -110,7 +114,9 @@ function Item({ item, onDecide }) {
   const [text, setText] = useState('')
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
-  const { urls, files } = usePictures(item.images)
+  const { media, files } = usePictures(item.images)
+  const videos = (media || []).filter(m => m.video)
+  const pictures = (media || []).filter(m => !m.video)
   // Once its day is over the bot won't post it (the caption says
   // "yesterday's"), so it's handled like any other post.
   const pastDay = !!item.due_on && item.due_on < todayEST()
@@ -164,19 +170,30 @@ function Item({ item, onDecide }) {
           {item.body}
         </p>
       )}
-      {urls && (
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${urls.length}, 1fr)`, gap: '6px', marginTop: '10px', maxWidth: '420px' }}>
-          {urls.map((url, i) => (
+      {videos.map(m => (
+        <video
+          key={m.url}
+          src={m.url}
+          controls
+          playsInline
+          preload="metadata"
+          aria-label="The Reel"
+          style={{ display: 'block', width: '100%', maxWidth: '240px', aspectRatio: '9 / 16', marginTop: '10px', borderRadius: '8px', background: '#111' }}
+        />
+      ))}
+      {pictures.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${pictures.length}, 1fr)`, gap: '6px', marginTop: '10px', maxWidth: '420px' }}>
+          {pictures.map((m, i) => (
             <img
-              key={url}
-              src={url}
-              alt={`Picture ${i + 1} of ${urls.length}`}
+              key={m.url}
+              src={m.url}
+              alt={`Picture ${i + 1} of ${pictures.length}`}
               style={{ display: 'block', width: '100%', aspectRatio: '4 / 5', objectFit: 'cover', borderRadius: '8px', background: '#111' }}
             />
           ))}
         </div>
       )}
-      {urls && !autoPost && isNativeApp() && (
+      {media && !autoPost && isNativeApp() && (
         <p style={{ ...noteStyle, marginTop: '6px' }}>
           To post these yourself, open tempify.me/admin/bot in Safari, where you can share the pictures.
         </p>
@@ -222,7 +239,7 @@ function Item({ item, onDecide }) {
                 : <button style={primaryStyle} className="btn-press" disabled={saving} onClick={() => decide({ status: 'approved' })}>Looks good</button>}
             <button style={buttonStyle} className="btn-press" onClick={() => { setText(''); setMode('back') }}>Send back</button>
             {files && !autoPost && (
-              <button style={buttonStyle} className="btn-press" onClick={sharePictures}>Share pictures</button>
+              <button style={buttonStyle} className="btn-press" onClick={sharePictures}>{videos.length ? 'Share the Reel' : 'Share pictures'}</button>
             )}
             {item.kind === 'post' && item.body && (
               <button style={buttonStyle} className="btn-press" onClick={copy}>{copied ? 'Copied' : 'Copy text'}</button>
