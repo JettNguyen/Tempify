@@ -7,15 +7,21 @@
     3. Today's game, and someone to send the post to.
 
   Two shapes. A post is three pictures, 1080 by 1350 each (the tallest a feed post can be). A
-  Reel is 1080 by 1920: the same three, with the question counting down ("Answer in 3") before
-  the answer shows. render-chart-card.py turns those stills into the Reel's video.
+  Reel is 1080 by 1920 and moves: the dial dances like an equalizer while the voice asks, each
+  letter pops in as it's read, a countdown runs, and a needle swings across the dial and settles
+  on the peak. seek(t) lays out the frame at t seconds, so the same moment always looks the same,
+  and render-chart-card.py takes the video one frame at a time. The voice's words are in VOICE:
+  the script speaks them and passes back how long each line takes (data.voice), schedule() times
+  everything around them, and plan() tells the script where the voice and its sounds go.
 
   render-chart-card.py fills it in and takes the pictures, so a new day never means editing this
   file. Open it in Chrome to see the example. Add ?slide=2 or ?slide=3 for the others,
-  ?format=reel (and &count=3) for the Reel's frames, and ?guides to see what Instagram keeps
-  clear: the profile grid's 3 by 4 crop on a post, and the room its buttons take on a Reel.
+  ?format=reel for the Reel (&t=9.5 for one moment of it, &play to watch it run, without sound),
+  and ?guides to see what Instagram keeps clear: the profile grid's 3 by 4 crop on a post, and the
+  room its buttons take on a Reel.
 
-  Every word is in COPY and every color in :root, so changing wording or a color is one line.
+  Every word is in COPY and every color in :root, so changing wording or a color is one line. The
+  Reel's motion is in seek(), and its sounds, the app's own (public/sounds), in cues().
   Started November 2, 2026, in the look of the link card (public/og-card.png).
 -->
 <html lang="en">
@@ -36,6 +42,8 @@
     --blue: #3B82F6;      /* Hit or Miss's color in the app */
     --blue-soft: #93C5FD;
     --orange: #F59E0B;    /* the Tempify mark */
+    --zone: #1E3A66;      /* the answer's stretch of the dial */
+    --bar-off: #262624;   /* the rest of the dial, once answered */
   }
   html, body { margin: 0; padding: 0; background: var(--bg); }
   #stage {
@@ -48,6 +56,21 @@
   #stage.reel { height: 1920px; padding: 240px 88px 460px; }
   /* As tall with the countdown's circle as without it, so nothing jumps when the count starts. */
   #stage.reel .cta { min-height: 64px; }
+  #cam { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  #flash { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--blue) 50%, transparent), transparent 62%); }
+  #fit-peak { transform-origin: left center; }
+  #stage.reel .eyebrow { font-size: 34px; }
+  #stage.reel .ask .artist { font-size: 64px; }
+  /* The Reel's three scenes sit on top of each other, each laid out like its picture. Their own
+     dials only hold the space: the one that shows is drawn every frame, and moves between them. */
+  .layer { position: absolute; inset: 0; box-sizing: border-box; padding: 240px 88px 460px; display: flex; flex-direction: column; }
+  .layer .head, .layer .dial { visibility: hidden; }
+  .layer.top .head { visibility: visible; }
+  .live { position: absolute; left: 88px; width: 904px; }
+  .live svg { display: block; overflow: visible; }
+  .w { display: inline-block; }
+  .count { position: relative; }
+  .count svg { position: absolute; left: -12px; top: -12px; }
   .glow { position: absolute; inset: 0; pointer-events: none; }
   .head { position: relative; display: flex; align-items: center; justify-content: space-between; }
   .site { display: flex; align-items: center; gap: 14px; font-weight: 700; font-size: 36px; letter-spacing: -0.02em; }
@@ -114,10 +137,16 @@ const EXAMPLE = {
   peak: 86,             // null when it never charted
   answer: "C",
   facts: "4 weeks on the chart. First charted February 1979.",
-  biggest: { artist: "Queen", title: "Crazy Little Thing Called Love", detail: "#1 for 4 weeks" },
+  biggest: { artist: "Queen", title: "Crazy Little Thing Called Love", detail: "#1 for 4 weeks", peak: 1, weeksAt1: 4 },
   dare: "A",            // the letter furthest from the answer
   poll: true,           // the post carries the A to D poll
   art: null,            // the record's cover, as a file address, when there is one
+  // What the voice reads: the weeks, the year it first charted (or came out, when it never did),
+  // and the biggest hit's own numbers. render-chart-card.py fills these from the index.
+  weeks: 4, weeksAt1: 0, firstYear: 1979, year: null,
+  // How long each voice line takes and when its words start, from render-chart-card.py. Without
+  // it the page guesses, which is close enough to watch the example.
+  voice: null,
 };
 
 const COPY = {
@@ -125,7 +154,6 @@ const COPY = {
   ask: "Where did it peak on the Hot 100?",
   cta: "Comment your letter, then swipe",
   ctaPoll: "Vote in the poll, then swipe",
-  reelWait: poll => `${poll ? "Vote in the poll" : "Pick a letter"} before the answer shows`,
   reelCount: poll => `${poll ? "Vote in the poll" : "Pick a letter"}. Answer in`,
   answerIs: letter => `The answer: ${letter}`,
   neverBig: "Never charted",
@@ -157,7 +185,6 @@ for (const key of ["song", "artist"]) data[key] = data[key].replace(/'/g, "’")
 if (data.biggest) for (const key of ["artist", "title"]) data.biggest[key] = data.biggest[key].replace(/'/g, "’");
 const slide = Number(params.get("slide") || 1);
 const reel = params.get("format") === "reel";
-const count = Number(params.get("count") || 0);   // the Reel's countdown on the question, 3 to 1
 const H = reel ? 1920 : 1350;
 
 // The Tempify mark: the metronome triangle, its arm and its weight, from the app's logo.
@@ -176,10 +203,9 @@ function head() {
 
 // The dial as bars: tall at #1, falling away toward #100, then low dots where songs that never
 // charted sit. On the answer, the peak's bar lights and the rest of its letter's stretch tints.
-function dial(answer) {
+function dialBars() {
   const { width: W, height: H, pitch, bar, gap, low } = DIAL;
-  const peakX = answer && data.peak ? dialAt(data.peak) * W : null;
-  let bars = [];
+  const bars = [];
   for (const z of ZONES) {
     const x0 = z.from * W + gap / 2, x1 = z.to * W - gap / 2;
     const n = Math.max(1, Math.floor((x1 - x0 - bar) / pitch) + 1);
@@ -195,16 +221,26 @@ function dial(answer) {
       bars.push({ x, h, zone: z.letter });
     }
   }
-  let lit = -1;
-  if (peakX !== null) {
-    lit = bars.reduce((best, b, i) => (b.zone !== "D" && Math.abs(b.x + bar / 2 - peakX) < Math.abs(bars[best].x + bar / 2 - peakX) ? i : best), 0);
-  }
+  return bars;
+}
+
+// The charted bar nearest a point on the dial: the peak's, or the one under the Reel's needle.
+function nearestBar(bars, x, charted = true) {
+  const mid = b => b.x + DIAL.bar / 2;
+  return bars.reduce((best, b, i) => ((!charted || b.zone !== "D") && Math.abs(mid(b) - x) < Math.abs(mid(bars[best]) - x) ? i : best), 0);
+}
+
+function dial(answer) {
+  const { width: W, height: H, bar } = DIAL;
+  const peakX = answer && data.peak ? dialAt(data.peak) * W : null;
+  const bars = dialBars();
+  const lit = peakX !== null ? nearestBar(bars, peakX) : -1;
   const rects = bars.map((b, i) => {
     let fill = "var(--bar)", extra = "";
     if (answer) {
       if (i === lit || (data.peak === null && b.zone === "D")) { fill = "var(--blue)"; extra = ` filter="url(#lift)"`; }
-      else if (b.zone === data.answer) fill = "#1E3A66";
-      else fill = "#262624";
+      else if (b.zone === data.answer) fill = "var(--zone)";
+      else fill = "var(--bar-off)";
     }
     return `<rect x="${b.x.toFixed(1)}" y="${(H - b.h).toFixed(1)}" width="${bar}" height="${b.h.toFixed(1)}" rx="${bar / 2}" fill="${fill}"${extra}/>`;
   }).join("");
@@ -227,41 +263,53 @@ function dial(answer) {
 }
 
 // Tempify's waveform from the link card, in the five games' colors, for the last picture.
-function wave() {
-  const W = 1080, H = 240, cy = 120, max = 110, pitch = 22, bw = 12;
-  const COLORS = ["#F59E0B", "#3B82F6", "#14B8A6", "#F97316", "#EC4899"];
+// In the Reel it moves (t in seconds): each bar rides its own level, with a push on every beat.
+function waveBars(t = null) {
+  const W = 1080, cy = 120, max = 110, pitch = 22, bw = 12;
   const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   let d = "";
   for (let k = 0; k * pitch < W; k++) {
     const x = k * pitch + pitch / 2;
     const ends = Math.min(smooth(0, 220, x), smooth(0, 220, W - x));
-    const loud = Math.abs(0.55 * Math.sin(k * 0.53 + 0.8) + 0.3 * Math.sin(k * 0.19 + 2.1) + 0.15 * Math.sin(k * 1.37));
+    let loud = Math.abs(0.55 * Math.sin(k * 0.53 + 0.8) + 0.3 * Math.sin(k * 0.19 + 2.1) + 0.15 * Math.sin(k * 1.37));
+    if (t !== null) loud = Math.min(1, loud * 0.45 + 0.4 * noise(k + 70, t, 5) + 0.3 * beat(t) * noise(k + 20, t, 1.5));
     const h = Math.max(bw * 0.9, max * (0.2 + 0.8 * ends) * (0.3 + 0.7 * loud));
     d += `<rect x="${(x - bw / 2).toFixed(1)}" y="${(cy - h).toFixed(1)}" width="${bw}" height="${(2 * h).toFixed(1)}" rx="${bw / 2}"/>`;
   }
+  return d;
+}
+
+function wave() {
+  const W = 1080, H = 240;
+  const COLORS = ["#F59E0B", "#3B82F6", "#14B8A6", "#F97316", "#EC4899"];
+  const d = waveBars();
   const stops = COLORS.map((c, j) => `<stop offset="${(0.08 + j * 0.21).toFixed(2)}" stop-color="${c}"/>`).join("");
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>
     <linearGradient id="g-wave" x1="0" y1="0" x2="${W}" y2="0" gradientUnits="userSpaceOnUse">${stops}</linearGradient>
     <filter id="f-soft" x="-5%" y="-40%" width="110%" height="180%"><feGaussianBlur stdDeviation="16"/></filter></defs>
-    <g fill="url(#g-wave)"><g opacity=".5" filter="url(#f-soft)">${d}</g><g>${d}</g></g></svg>`;
+    <g fill="url(#g-wave)"><g class="wave-bars" opacity=".5" filter="url(#f-soft)">${d}</g><g class="wave-bars">${d}</g></g></svg>`;
 }
 
 function glow(color, x, y) {
   if (reel) y += 240;
-  return `<svg class="glow" width="1080" height="${H}"><defs><radialGradient id="g-glow"><stop offset="0" stop-color="${color}" stop-opacity=".2"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient></defs>
-    <ellipse cx="${x}" cy="${y}" rx="620" ry="520" fill="url(#g-glow)"/></svg>`;
+  const id = "g-glow-" + color.slice(1);
+  return `<svg class="glow" width="1080" height="${H}"><defs><radialGradient id="${id}"><stop offset="0" stop-color="${color}" stop-opacity=".2"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient></defs>
+    <ellipse cx="${x}" cy="${y}" rx="620" ry="520" fill="url(#${id})"/></svg>`;
 }
+
+// Words in their own boxes, so the Reel can bring them in one at a time.
+const words = text => reel ? text.split(" ").map(w => `<span class="w">${w}</span>`).join(" ") : text;
 
 const arrow = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
 
+// In the Reel, seek() writes the countdown in.
 function cta() {
-  if (reel) return count ? `${COPY.reelCount(data.poll)}<span class="count">${count}</span>` : COPY.reelWait(data.poll);
-  return `${data.poll ? COPY.ctaPoll : COPY.cta}${arrow}`;
+  return reel ? "" : `${data.poll ? COPY.ctaPoll : COPY.cta}${arrow}`;
 }
 
 function question() {
   return glow("#3B82F6", 540, 520) + head() + `<div class="main">
-    <div class="ask"><div class="eyebrow">${COPY.ask}</div><div class="song" id="fit">${data.song}</div><div class="artist">${data.artist}</div></div>
+    <div class="ask"><div class="eyebrow">${words(COPY.ask)}</div><div class="song" id="fit">${words(data.song)}</div><div class="artist">${data.artist}</div></div>
     ${dial(false)}
     <div class="cta">${cta()}</div></div>`;
 }
@@ -281,10 +329,402 @@ function answer() {
 
 function play() {
   return glow("#F59E0B", 540, 700) + head() + `<div class="main"><div class="play">
-    <h1>${COPY.playTitle}</h1><p>${COPY.playLine}</p>
+    <h1>${words(COPY.playTitle)}</h1><p>${COPY.playLine}</p>
     <div class="wave">${wave()}</div>
     <div class="url">${COPY.url}</div><div class="bio">${COPY.bio}</div>
     </div><div class="dare">${COPY.dare(data.dare)}</div></div>`;
+}
+
+// ---------------------------------------------------------------------------------------------
+// The Reel. Everything below draws one moment of it: seek(t) lays out the frame at t seconds.
+
+// What the voice says. render-chart-card.py speaks each line and times the Reel around them. Years
+// are written out, since the voice reads 1979 as "nineteen hundred seventy nine", and no line has
+// a "#", which it reads as "hash". The song and the question are the words on screen, so each
+// word lands as it's said, and each letter pops in as it's said. Short lines keep it moving.
+const VOICE = {
+  hook: d => `${d.saySong || d.song}, by ${d.sayArtist || d.artist}.`,   // say*: how a name is said, when the voice gets it wrong
+  ask: COPY.ask,
+  options: "A, B, C, or D?",
+  count: ["Three.", "Two.", "One."],
+  peak: d => (d.peak === null ? "It never charted!" : `Number ${d.peak}!`),
+  facts: d => (d.peak === null ? (d.year ? `Even though it came out in ${sayYear(d.year)}.` : "")
+    : d.peak === 1 ? `${weeksSaid(d.weeksAt1)} at the top, in ${sayYear(d.firstYear)}.`
+    : `${weeksSaid(d.weeks)} on the chart, in ${sayYear(d.firstYear)}.`),
+  biggest: (b, d) => { const who = d.sayArtist || b.artist; return `${who}${/s$/i.test(who) ? "'" : "'s"} biggest? ${b.title}.`; },
+  url: "Play today's at tempify dot me.",
+};
+const weeksSaid = n => `${n} week${n === 1 ? "" : "s"}`;
+const ONES = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split(" ");
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+const spell = n => (n < 20 ? ONES[n] : TENS[Math.floor(n / 10)] + (n % 10 ? "-" + ONES[n % 10] : ""));
+// The way people say a year: "seventy-nine" for 1979, "twenty fifteen", "two thousand five".
+function sayYear(y) {
+  const hi = Math.floor(y / 100), lo = y % 100;
+  if (hi === 19 && lo >= 10) return spell(lo);
+  if (y >= 2000 && y < 2010) return "two thousand" + (lo ? " " + ONES[lo] : "");
+  return spell(hi) + " " + (!lo ? "hundred" : lo < 10 ? "oh " + ONES[lo] : spell(lo));
+}
+
+// Every line, in order. "words" marks the ones whose words land one at a time on screen.
+function voiceLines() {
+  const d = data, lines = [
+    { key: "hook", text: VOICE.hook(d), words: true },
+    { key: "ask", text: VOICE.ask, words: true },
+    { key: "options", text: VOICE.options, words: true },
+    ...VOICE.count.map((text, i) => ({ key: "count" + i, text })),
+    { key: "peak", text: VOICE.peak(d) },
+    { key: "facts", text: VOICE.facts(d) },
+    d.biggest && { key: "biggest", text: VOICE.biggest(d.biggest, d) },
+    { key: "url", text: VOICE.url, words: true },
+  ];
+  return lines.filter(l => l && l.text).map(l => ({ ...l, text: l.text.replace(/[’‘]/g, "'") }));
+}
+
+let T, V, M;   // when things happen, the voice's lines, and the Reel's parts
+
+// When everything happens, in seconds, worked out from how long each line takes. No gaps: the
+// next thing starts as the last one ends.
+function schedule() {
+  V = {};
+  for (const l of voiceLines()) V[l.key] = { text: l.text, ...((data.voice && data.voice[l.key]) || { dur: 0.3 + 0.28 * l.text.split(" ").length }) };
+  const d = k => (V[k] ? V[k].dur : 0), say = {};
+  const T = { say, step: 0.7 };      // step: the countdown's beat
+  let t = 0.05;
+  say.hook = t; t += d("hook") + 0.08;
+  say.ask = t; t += d("ask") + 0.1;
+  say.options = t; t += d("options");
+  T.count = t + 0.15;
+  [0, 1, 2].forEach(i => (say["count" + i] = T.count + i * T.step));
+  T.reveal = T.count + 3 * T.step;   // the swipe to the answer
+  T.land = T.reveal + 1.5;           // the needle settles
+  say.peak = T.land + 0.08;          // just after the impact, so it doesn't bury the word
+  t = say.peak + d("peak") + 0.12;
+  T.facts = t;
+  if (V.facts) { say.facts = t; t += d("facts") + 0.2; }
+  T.biggest = null;
+  if (V.biggest) { T.biggest = t; say.biggest = t + 0.1; t += 0.1 + d("biggest") + 0.25; }
+  T.play = t;                        // the swipe to today's game
+  say.url = T.play + 0.75;           // after its title has landed
+  T.end = say.url + d("url") + 1.0;
+  T.cover = T.count - 0.15;          // every letter in, before the countdown comes up
+  return T;
+}
+
+// When word i of a line is said.
+function wordAt(key, i) {
+  const v = V[key], at = T.say[key];
+  if (!v) return at;
+  if (v.words) return at + v.words[Math.min(i, v.words.length - 1)];
+  return at + (v.dur * i) / v.text.split(" ").length;
+}
+
+// For the script: how long the Reel is, where each line of the voice goes, and its sounds.
+function plan() {
+  return { end: T.end, cover: T.cover, voice: Object.keys(V).map(key => ({ key, at: T.say[key] })), cues: cues() };
+}
+
+// The sounds, at the moments they belong to. Most are the app's own (public/sounds); whoosh,
+// riser, boom and glide are made by render-chart-card.py.
+function cues() {
+  const c = (t, sound, gain, dur) => ({ t: +t.toFixed(3), sound, gain, ...(dur ? { dur } : {}) });
+  const list = [c(wordAt("hook", 0), "boom", 0.4)];
+  M.songWords.forEach((_, i) => list.push(c(wordAt("hook", i), "tap", 0.35)));
+  T.options.forEach(at => list.push(c(at, "tap", 0.8)));
+  list.push(c(T.count, "riser", 0.45, 3 * T.step));
+  [0, 1, 2].forEach(i => list.push(c(T.count + i * T.step, "beat", 0.9)));
+  list.push(c(T.reveal - 0.06, "whoosh", 0.8));
+  // The needle ticks over each bar it passes, like the game's own dial, over a glide that climbs
+  // as it heads for #1 (curve: where it is every 10 ms, 0 at #1 and 1 at the far end).
+  let last = nearestBar(M.bars, needle(M.sweepAt), false), lastAt = -1;
+  for (let t = M.sweepAt; t < T.land; t += 0.002) {
+    const i = nearestBar(M.bars, needle(t), false);
+    if (i !== last) { last = i; if (t - lastAt >= 0.028) { list.push(c(t, "tick", 0.8)); lastAt = t; } }
+  }
+  const curve = [];
+  for (let t = M.sweepAt; t <= T.land; t += 0.01) curve.push(+(needle(t) / DIAL.width).toFixed(4));
+  list.push({ ...c(M.sweepAt, "glide", 0.3, T.land - M.sweepAt), curve });
+  list.push(c(T.land, "boom", 0.9), c(T.land, "right", 0.7));
+  if (T.biggest !== null) list.push(c(T.biggest, "tap", 0.6));
+  list.push(c(T.play - 0.06, "whoosh", 0.8), c(T.url, "win", 0.55));
+  return list.sort((a, b) => a.t - b.t);
+}
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, at, len) => clamp((t - at) / len);
+const E = {
+  out: p => 1 - Math.pow(1 - p, 3),
+  in: p => p * p * p,
+  inOut: p => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+};
+// A hit: up to full in 30 ms, then dying away over len.
+const hit = (t, at, len = 0.35) => (t < at ? 0 : Math.min(1, (t - at) / 0.03) * Math.exp(-(t - at) / (len / 4)));
+
+// Smooth random motion that's the same every time: each row is one bar's levels, eased between.
+const KEYS = (() => {
+  let s = 7;
+  const r = () => { s = (s + 0x6D2B79F5) | 0; let x = Math.imul(s ^ (s >>> 15), 1 | s); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+  return Array.from({ length: 128 }, () => Array.from({ length: 512 }, r));
+})();
+function noise(i, t, rate) {
+  const x = t * rate, k = Math.floor(x), f = x - k, e = f * f * (3 - 2 * f), row = KEYS[i % 128];
+  return row[k % 512] * (1 - e) + row[(k + 1) % 512] * e;
+}
+const BPM = 118;
+const beat = t => Math.exp(-((t * BPM) / 60 % 1) * 6);
+
+// How loud bar i of n is at t, like a spectrum: the low end on the left moves most on the beat.
+function level(i, n, t) {
+  const pos = i / (n - 1), low = 1 - pos;
+  const v = 0.5 * noise(i, t, 4 + 6 * pos) + 0.25 * noise(i + 50, t, 1.7) + 0.4 * beat(t) * (0.35 + 0.65 * low) - 0.1;
+  return clamp(Math.pow(clamp(v), 0.8) * (0.95 + 0.4 * low));
+}
+
+// The needle swings from the far end and settles on the peak at T.land, like a meter's. For a
+// song that never charted it runs the whole chart, #1 to #100, and drops off the end as it lands.
+function needle(t) {
+  const u = t - M.sweepAt;
+  if (data.peak === null) {
+    const run = E.inOut(prog(t, M.sweepAt, T.land - M.sweepAt - 0.15)) * NEVER_FROM * DIAL.width;
+    return run + (M.toX - run) * E.out(prog(t, T.land - 0.15, 0.15));
+  }
+  if (u <= 0) return M.fromX;
+  const w = 2 * Math.PI * 1.05, z = 0.5, wd = w * Math.sqrt(1 - z * z);
+  const k = Math.exp(-z * w * u) * (Math.cos(wd * u) + ((z * w) / wd) * Math.sin(wd * u));
+  let x = M.toX + (M.fromX - M.toX) * k;
+  x = x < 0 ? -x : x > DIAL.width ? 2 * DIAL.width - x : x;   // it bounces off the ends
+  return clamp(x + (M.toX - x) * E.inOut(prog(t, T.land - 0.3, 0.3)), 0, DIAL.width);
+}
+const rankAt = x => (x / DIAL.width < NEVER_FROM ? Math.round(1 + 99 * Math.pow(x / DIAL.width / NEVER_FROM, 2)) : null);
+
+const RGB = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+const mixRGB = (a, b, p) => a.map((v, i) => v + (b[i] - v) * p);
+const rgb = c => `rgb(${c.map(Math.round).join(",")})`;
+
+function reelScenes() {
+  const blurs = [0, 1, 2, 3].map(i => `<filter id="vb${i}" x="-5%" y="-12%" width="110%" height="124%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="0 0"/></filter>`).join("");
+  return `<div id="cam">${[question, answer, play].map((f, i) => `<div class="layer scene" id="scene-${i + 1}">${f()}</div>`).join("")}
+    ${liveDial()}<div class="layer top">${head()}</div></div><div id="flash"></div>
+    <svg id="blurs" width="0" height="0" style="position:absolute">${blurs}</svg>`;
+}
+
+// The dial that shows in the Reel: its bars, the needle's pin, and the four letters, all set by
+// seek() every frame.
+function liveDial() {
+  const { width: W, height: Hd, bar } = DIAL;
+  const rects = dialBars().map(b => `<rect x="${b.x.toFixed(1)}" width="${bar}" rx="${bar / 2}"/>`).join("");
+  const chips = ZONES.map(z => `<div class="zone" style="left:${((z.from + z.to) / 2) * 100}%"><div class="chip">${z.letter}</div><div class="label">${z.label}</div></div>`).join("");
+  return `<div class="live" id="live"><svg width="${W}" height="${Hd}" viewBox="0 0 ${W} ${Hd}">
+    <defs><filter id="lift-live" x="-200%" y="-30%" width="500%" height="160%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    <g id="live-bars">${rects}</g>
+    <circle id="live-ring" fill="none" stroke="var(--blue)" opacity="0"/>
+    <g id="live-pin"><rect width="124" height="56" rx="16" fill="var(--blue)"/><path fill="var(--blue)"/><text text-anchor="middle" font-family="Inter Card" font-weight="800" font-size="32" fill="var(--bg)"></text></g>
+  </svg><div class="zones">${chips}</div></div>`;
+}
+
+function setupReel(stage) {
+  T = schedule();
+  // Each letter pops in on the word that says it.
+  T.options = V.options.text.split(" ").map((w, i) => [w.replace(/\W/g, ""), i]).filter(([w]) => /^[ABCD]$/.test(w)).map(([, i]) => wordAt("options", i));
+  const $ = q => stage.querySelector(q), $$ = q => [...stage.querySelectorAll(q)];
+  const top = el => el.getBoundingClientRect().top - stage.getBoundingClientRect().top;
+  const css = name => RGB(getComputedStyle(document.documentElement).getPropertyValue(name).trim());
+  M = {
+    cam: $("#cam"), flash: $("#flash"), layers: $$(".scene"), glows: $$(".scene > .glow"), blurs: $$("#blurs feGaussianBlur"),
+    songWords: $$("#scene-1 .song .w"), askWords: $$("#scene-1 .eyebrow .w"), artist: $("#scene-1 .artist"), cta: $("#scene-1 .cta"),
+    answerIs: $("#scene-2 .eyebrow"), peak: $("#fit-peak"), who: $("#scene-2 .who-row"), art: $("#scene-2 .art"), biggest: $("#scene-2 .biggest"),
+    playWords: $$("#scene-3 h1 .w"), line: $("#scene-3 .play p"), wave: $("#scene-3 .wave"), waveBars: $$("#scene-3 .wave-bars"),
+    url: $("#scene-3 .url"), bio: $("#scene-3 .bio"), dare: $("#scene-3 .dare"),
+    live: $("#live"), rects: $$("#live-bars rect"), pin: $("#live-pin"), ring: $("#live-ring"), chips: $$("#live .chip"), labels: $$("#live .label"),
+    qTop: top($("#scene-1 .dial")), aTop: top($("#scene-2 .dial")),
+    bars: dialBars(),
+    col: { bar: css("--bar"), blue: css("--blue"), soft: css("--blue-soft"), zone: css("--zone"), off: css("--bar-off"),
+           bg: css("--bg"), text: css("--text"), muted: css("--muted"), dim: css("--dim"), line: css("--line") },
+  };
+  M.lit = data.peak ? nearestBar(M.bars, dialAt(data.peak) * DIAL.width) : -1;
+  M.toX = data.peak ? M.bars[M.lit].x + DIAL.bar / 2 : ((NEVER_FROM + 1) / 2) * DIAL.width;
+  M.fromX = M.toX > DIAL.width / 2 ? 0 : DIAL.width;
+  M.sweepAt = T.land - 1.15;
+  T.url = wordAt("url", Math.max(0, V.url.text.split(" ").findIndex(w => /tempify/i.test(w))));
+  // The camera punches in on every beat of the edit, hardest when the needle lands.
+  M.punches = [
+    ...M.songWords.map((_, i) => [wordAt("hook", i), 0.02]),
+    [wordAt("hook", M.songWords.length), 0.012],
+    ...T.options.map(at => [at, 0.022]),
+    ...[0, 1, 2].map(i => [T.count + i * T.step, 0.035]),
+    [T.land, 0.08],
+    ...(T.biggest !== null ? [[T.biggest, 0.015]] : []),
+    ...M.playWords.map((_, i) => [T.play + 0.25 + i * 0.07, 0.012]),
+    [T.url, 0.045],
+  ];
+}
+
+// Brings an element in at t = at. "slam" drops it in from big, "pop" from a little big, and
+// "rise" slides it up out of a blur.
+function show(el, t, at, kind = "rise") {
+  if (!el) return;
+  let y = 0, s = 1, b = 0, a = 1;
+  if (kind === "rise") {
+    const p = E.out(prog(t, at, 0.5));
+    y = 70 * (1 - p); a = p; b = 14 * (1 - p);
+  } else {
+    const p = prog(t, at, 0.22), from = kind === "slam" ? 0.7 : 0.3;
+    s = 1 + from * (1 - E.out(p)); a = clamp((t - at) / 0.06); b = 8 * (1 - p);
+  }
+  el.style.opacity = a.toFixed(3);
+  el.style.transform = `translateY(${y.toFixed(1)}px) scale(${s.toFixed(4)})`;
+  el.style.filter = b > 0.1 ? `blur(${b.toFixed(1)}px)` : "none";
+}
+
+// One scene's place in the swipe, smeared up and down the way it's moving.
+function place(i, y, smear) {
+  const el = M.layers[i];
+  el.style.visibility = Math.abs(y) >= H ? "hidden" : "visible";
+  el.style.transform = `translateY(${y.toFixed(1)}px)`;
+  M.blurs[i].setAttribute("stdDeviation", `0 ${smear.toFixed(1)}`);
+  el.style.filter = smear > 0.3 ? `url(#vb${i})` : "none";
+}
+
+function seek(t) {
+  const { col } = M;
+  // The camera: a slow breath, the punches, and a shake when the needle lands.
+  let zoom = 1 + 0.012 * (0.5 - 0.5 * Math.cos((t * Math.PI * 2) / 7));
+  for (const [at, k] of M.punches) zoom += k * hit(t, at, 0.3);
+  const u = t - T.land, shake = u > 0 ? 18 * Math.exp(-u * 7) : 0;
+  M.cam.style.transform = `translate(${(shake * Math.sin(u * 53)).toFixed(2)}px, ${(shake * 0.7 * Math.sin(u * 41 + 1.3)).toFixed(2)}px) scale(${zoom.toFixed(4)})`;
+  M.flash.style.opacity = (0.35 * hit(t, T.land, 0.4)).toFixed(3);
+
+  // The swipes: up to the answer, then up to today's game, like the next video in a feed.
+  const SWIPE = 0.38, p1 = prog(t, T.reveal, SWIPE), p2 = prog(t, T.play, SWIPE);
+  const s1 = H * E.inOut(p1), s2 = H * E.inOut(p2);
+  const v1 = 60 * Math.sin(Math.PI * p1), v2 = 60 * Math.sin(Math.PI * p2);
+  place(0, -s1, v1);
+  place(1, H - s1 - s2, Math.max(v1, v2));
+  place(2, H - s2, v2);
+  M.glows.forEach(g => (g.style.opacity = (0.8 + 0.2 * beat(t)).toFixed(3)));
+  // The dial stays on screen through the first swipe, moving to its place on the answer.
+  M.live.style.top = (M.qTop + (M.aTop - M.qTop) * E.inOut(p1) - s2).toFixed(1) + "px";
+  const smear = (v1 * Math.abs(M.aTop - M.qTop)) / H + v2;
+  M.blurs[3].setAttribute("stdDeviation", `0 ${smear.toFixed(1)}`);
+  M.live.style.filter = smear > 0.3 ? "url(#vb3)" : "none";
+
+  // 1. The question: the song's words land as they're said, then the question's.
+  M.songWords.forEach((w, i) => show(w, t, wordAt("hook", i) - 0.03, "slam"));
+  show(M.artist, t, wordAt("hook", M.songWords.length) - 0.02, "slam");
+  M.askWords.forEach((w, i) => show(w, t, wordAt("ask", i) - 0.03, "pop"));
+  if (t >= T.count - 0.1) {
+    const k = clamp(Math.floor((t - T.count) / T.step), 0, 2), at = T.count + k * T.step;
+    const r = 40, C = 2 * Math.PI * r, left = clamp((t - at) / T.step);
+    M.cta.innerHTML = `${COPY.reelCount(data.poll)}<span class="count" style="transform:scale(${(1 + 0.35 * hit(t, at, 0.35)).toFixed(3)})"><svg width="88" height="88"><circle cx="44" cy="44" r="${r}" fill="none" stroke="var(--blue-soft)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * left).toFixed(1)}" transform="rotate(-90 44 44)"/></svg>${3 - k}</span>`;
+  } else M.cta.innerHTML = "";
+  show(M.cta, t, T.count - 0.1);
+
+  // 2. The answer: the number runs with the needle and lands with it. A song that never charted
+  // runs past #100, and "Never charted" slams in.
+  if (t < T.land || data.peak !== null) {
+    M.peak.textContent = `#${t >= T.land ? data.peak : rankAt(needle(t)) ?? 100}`;
+    show(M.peak, t, M.sweepAt - 0.1);
+  } else {
+    M.peak.textContent = COPY.neverBig;
+    show(M.peak, t, T.land, "slam");
+  }
+  M.peak.style.transform += ` scale(${(1 + 0.22 * hit(t, T.land, 0.5)).toFixed(4)})`;
+  show(M.answerIs, t, T.land + 0.05, "pop");
+  show(M.who, t, T.facts);
+  show(M.art, t, T.facts + 0.08, "pop");
+  show(M.biggest, t, T.biggest ?? Infinity);
+
+  // 3. Today's game.
+  M.playWords.forEach((w, i) => show(w, t, T.play + 0.25 + i * 0.07, "slam"));
+  show(M.line, t, T.play + 0.35 + M.playWords.length * 0.07);
+  show(M.wave, t, T.play + 0.15);
+  if (t >= T.play - 0.1) { const d = waveBars(t); M.waveBars.forEach(g => (g.innerHTML = d)); }
+  show(M.url, t, T.url - 0.03, "slam");
+  show(M.bio, t, T.url + 0.25);
+  show(M.dare, t, T.url + 0.5);
+
+  drawDial(t);
+}
+
+// The dial: an equalizer while the song is named, the chart's own shape once the letters come
+// in, still for the answer while the needle runs, then lit the way the answer picture is.
+function drawDial(t) {
+  const { col } = M, { height: Hd, bar, low } = DIAL, n = M.bars.length;
+  const grow = E.out(prog(t, 0, 0.3));
+  const morph = E.inOut(prog(t, T.options[0] - 0.15, 0.7));
+  const settle = E.inOut(prog(t, T.reveal, 0.4));
+  const tick = Math.max(...[0, 1, 2].map(k => hit(t, T.count + k * T.step, 0.5)));
+  const read = Object.fromEntries(ZONES.map((z, k) => [z.letter, hit(t, T.options[k], 0.9)]));
+  const x = needle(t), near = nearestBar(M.bars, x, false);
+  const sweeping = t >= M.sweepAt - 0.05 && t < T.land + 0.4;
+  const done = E.out(prog(t, T.land, 0.35));
+  const isLit = (b, i) => i === M.lit || (data.peak === null && b.zone === "D");
+  let nearH = bar;
+  M.bars.forEach((b, i) => {
+    const lv = level(i, n, t);
+    let h = low + (Hd * 1.8 - low) * lv * grow;   // the equalizer reaches up into the space above
+    const shaped = b.zone === "D" ? b.h + 12 * lv : b.h * (0.7 + 0.3 * lv) + 10 * tick;
+    h += (shaped - h) * morph;
+    h += (b.h - h) * settle;
+    h = clamp(h, bar, Hd * 1.8);
+    let c = mixRGB(col.bar, col.blue, (0.35 + 0.65 * lv) * (1 - morph));
+    c = mixRGB(c, col.soft, Math.max(0, lv - 0.7) * 2 * (1 - morph));    // the loudest flare
+    c = mixRGB(c, col.blue, 0.8 * read[b.zone] * (1 - settle));
+    c = mixRGB(c, col.soft, 0.35 * tick * (1 - settle));
+    if (sweeping) c = mixRGB(c, col.blue, Math.exp(-Math.pow((b.x + bar / 2 - x) / 24, 2)) * (1 - done));
+    c = mixRGB(c, isLit(b, i) ? col.blue : b.zone === data.answer ? col.zone : col.off, done);
+    const r = M.rects[i];
+    r.setAttribute("y", (Hd - h).toFixed(1));
+    r.setAttribute("height", h.toFixed(1));
+    r.setAttribute("fill", rgb(c));
+    if ((sweeping && t < T.land && i === near) || (t >= T.land && isLit(b, i))) r.setAttribute("filter", "url(#lift-live)");
+    else r.removeAttribute("filter");
+    if (i === near) nearH = h;
+  });
+
+  // The pin rides the bar under the needle, saying its rank, and fades over the never stretch.
+  const shown = t >= M.sweepAt - 0.02 && (data.peak !== null || t < T.land);
+  const fade = clamp((x - NEVER_FROM * DIAL.width + 6) / 20);
+  const top = Hd - nearH - 18 - 14 * hit(t, T.land, 0.4);
+  const left = Math.max(-40, Math.min(DIAL.width - 84, x - 62));
+  const [box, tip, label] = M.pin.children;
+  box.setAttribute("x", left.toFixed(1)); box.setAttribute("y", (top - 64).toFixed(1));
+  tip.setAttribute("d", `M${(x - 12).toFixed(1)} ${(top - 9).toFixed(1)} L${x.toFixed(1)} ${(top + 4).toFixed(1)} L${(x + 12).toFixed(1)} ${(top - 9).toFixed(1)} Z`);
+  label.setAttribute("x", (left + 62).toFixed(1)); label.setAttribute("y", (top - 25).toFixed(1));
+  const rank = t >= T.land && data.peak ? data.peak : rankAt(x);
+  label.textContent = rank ? `#${rank}` : "";
+  M.pin.setAttribute("opacity", shown ? (1 - fade).toFixed(3) : "0");
+  const burst = prog(t, T.land, 0.6);
+  M.ring.setAttribute("cx", M.toX.toFixed(1));
+  M.ring.setAttribute("cy", (data.peak !== null ? Hd - M.bars[M.lit].h : Hd).toFixed(1));
+  M.ring.setAttribute("r", (20 + 280 * E.out(burst)).toFixed(1));
+  M.ring.setAttribute("stroke-width", (10 * (1 - burst) + 1).toFixed(1));
+  M.ring.setAttribute("opacity", burst > 0 && burst < 1 ? (0.9 * (1 - burst)).toFixed(3) : "0");
+
+  // The letters pop in as they're read, then the answer's fills and the rest go dim.
+  ZONES.forEach((z, k) => {
+    const chip = M.chips[k], p = prog(t, T.options[k] - 0.04, 0.3);
+    const on = z.letter === data.answer, glowing = hit(t, T.options[k], 0.8);
+    const s = p <= 0 ? 0.4 : 0.4 + 0.6 * (1 + 2.70158 * Math.pow(p - 1, 3) + 1.70158 * Math.pow(p - 1, 2));
+    chip.style.opacity = clamp(p * 4).toFixed(3);
+    chip.style.transform = `scale(${(s + (on ? 0.25 * hit(t, T.land, 0.5) : 0)).toFixed(4)})`;
+    chip.style.background = on ? rgb(mixRGB(col.bg, col.blue, done)) : "transparent";
+    chip.style.borderColor = rgb(on ? col.blue : mixRGB(col.blue, col.line, done));
+    chip.style.color = rgb(on ? mixRGB(col.text, col.bg, done) : mixRGB(col.text, col.dim, done));
+    chip.style.boxShadow = `0 0 ${(36 * Math.max(glowing, on ? hit(t, T.land, 0.8) : 0)).toFixed(1)}px rgba(${col.blue.join(",")}, ${(0.9 * Math.max(glowing, on ? hit(t, T.land, 0.8) : 0)).toFixed(3)})`;
+    const label = M.labels[k];
+    label.style.opacity = clamp(p * 3 - 0.3).toFixed(3);
+    label.style.color = rgb(on ? col.muted : mixRGB(col.muted, col.dim, done));
+  });
+}
+
+// ?t=9.5 shows one moment, ?play runs it (without sound), and otherwise it shows the cover.
+function startReel() {
+  if (params.has("play")) {
+    const t0 = performance.now();
+    const run = now => { seek(((now - t0) / 1000) % T.end); requestAnimationFrame(run); };
+    requestAnimationFrame(run);
+  } else seek(params.has("t") ? Number(params.get("t")) : T.cover);
 }
 
 // Shrinks a line of text until it fits its space: the song name on the question, and the number
@@ -300,15 +740,18 @@ function fit(el, size, min, fits) {
 async function render() {
   const stage = document.getElementById("stage");
   stage.classList.toggle("reel", reel);
-  stage.innerHTML = [question, answer, play][slide - 1]();
+  stage.innerHTML = reel ? reelScenes() : [question, answer, play][slide - 1]();
   // The cover has to be drawn before the picture is taken.
   const art = stage.querySelector(".art");
   if (art) await art.decode().catch(() => art.remove());
-  fit(document.getElementById("fit"), 136, 40, el => el.scrollWidth <= el.clientWidth && el.offsetHeight <= 136 * 3.2 && el.parentElement.scrollHeight <= el.parentElement.clientHeight);
+  const songSize = reel ? 172 : 136;  // the Reel has the room
+  fit(document.getElementById("fit"), songSize, 40, el => el.scrollWidth <= el.clientWidth && el.offsetHeight <= songSize * 3.2 && el.parentElement.scrollHeight <= el.parentElement.clientHeight);
   fit(document.getElementById("fit-peak"), data.peak ? 300 : 150, 90, el => el.scrollWidth <= el.clientWidth && el.offsetHeight <= 300);
   fit(document.getElementById("fit-who"), 54, 30, el => el.scrollWidth <= el.clientWidth);
   fit(document.querySelector(".facts"), 34, 26, el => el.scrollWidth <= el.clientWidth);
+  if (reel) { setupReel(stage); startReel(); }
   if (params.has("guides")) stage.insertAdjacentHTML("beforeend", `<div class="guide"></div>`);
+  window.cardReady = true;
 }
 
 // Ask for each weight by name: a font only starts loading once something uses it, and the

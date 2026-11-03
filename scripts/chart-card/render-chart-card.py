@@ -8,25 +8,34 @@ anywhere. This finds the song in Tempify's Hot 100 index (src/assets/hot-100-son
 repo), so no chart number ever comes from memory, works out the answer letter and the artist's
 biggest hit, looks up the record's cover, and writes into the same folder:
 
-    reel.mp4               the Reel: 1080 by 1920, about 13 seconds, silent. Instagram adds the
-                           song from its own music library when the bot posts it.
-    reel-cover.jpg         the Reel's cover, its first frame
+    reel.mp4               the Reel: 1080 by 1920, under 20 seconds, with a voice reading it and
+                           the app's sounds under it. Instagram adds the song itself from its own
+                           music library when the bot posts it.
+    reel-cover.jpg         the Reel's cover, the question with every letter in
     1.jpg  2.jpg  3.jpg    the same three as pictures for a post, 1080 by 1350. JPEG, since
                            that's the only kind Instagram's API takes.
     art.jpg                the record's cover from the Cover Art Archive, when there is one
     caption.txt            the caption, with no answer in it
     poll.json              the poll's four choices, the way Instagram's poll_attachment takes them
-    facts.json             what the pictures say, answer letter included, to look back on
+    facts.json             what the post says and the voice reads, answer letter included
 
 It stops with a plain message when the song isn't in the index, rather than guess. --index <path>
 reads another copy of the index.
 
-Chrome draws tempify-chart-card.html at twice the size and Pillow brings it down, which keeps the
-words sharp, the way the link card and App Store art are made. ffmpeg joins the Reel's stills
-into the video. Needs Google Chrome, Pillow and ffmpeg. Written November 2, 2026.
+How the Reel is made: tempify-chart-card.html is the whole template, with the words the voice
+says, when everything happens, the motion and the sounds. This speaks the template's lines with
+Kokoro, a voice that runs on this Mac, tells the page how long each one took, then has Chrome lay
+out each frame (seek) and ffmpeg join them with the voice and the sounds. The pictures are drawn at
+twice the size and brought down, which keeps the words sharp.
+
+Needs Google Chrome, ffmpeg (brew install ffmpeg) and its own Python packages, set up once (the
+README has the line). The voice itself, about 350 MB, comes down by itself on the first run.
+Written November 2, 2026; the Reel moved and talked from November 3.
 """
+import base64
 import io
 import json
+import os
 import re
 import shutil
 import ssl
@@ -35,17 +44,44 @@ import sys
 import tempfile
 import time
 from datetime import date, timedelta
+from hashlib import sha256
 from pathlib import Path
 from urllib.parse import quote
+from urllib.error import HTTPError
 from urllib.request import Request, pathname2url, urlopen
 
-from PIL import Image, ImageCms
+HERE = Path(__file__).resolve().parent
+VENV = Path.home() / ".venvs" / "tempify-chart-card"
+SETUP = f"python3 -m venv {VENV} && {VENV}/bin/pip install -r {HERE / 'requirements.txt'}"
+
+# The packages live in their own environment, so a plain "python3 render-chart-card.py" moves
+# itself into it.
+try:
+    import numpy as np
+    import soundfile
+    from kokoro_onnx import Kokoro
+    from PIL import Image, ImageCms
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    if (VENV / "bin" / "python").exists() and Path(sys.prefix).resolve() != VENV.resolve():
+        os.execv(VENV / "bin" / "python", [str(VENV / "bin" / "python"), "-I", str(Path(__file__).resolve()), *sys.argv[1:]])
+    raise SystemExit(f"\nThe chart card needs its Python packages. Set them up once with:\n  {SETUP}\n")
 
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-HERE = Path(__file__).resolve().parent
 CARD = HERE / "tempify-chart-card.html"
-POST, REEL, SCALE = (1080, 1350), (1080, 1920), 2
+SOUNDS = HERE.parent.parent / "public" / "sounds"
+POST, REEL, SCALE, FPS = (1080, 1350), (1080, 1920), 2, 30
 SRGB = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
+
+# The voice: Kokoro's af_heart, a little quicker than it talks on its own. Its other voices, such
+# as am_michael or af_bella, are one word away here.
+VOICE, SPEED = "af_heart", 1.2
+VOICE_FILES = {  # Kokoro's model and voices, checked against these once they're down
+    "kokoro-v1.0.onnx": "7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5",
+    "voices-v1.0.bin": "bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d",
+}
+VOICE_FROM = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/"
+VOICE_CACHE = Path.home() / ".cache" / "tempify-chart-card"
 
 FIRST_DAY = date(2026, 4, 28)  # Tempify's day #1, as in src/lib/date.js
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August",
@@ -54,11 +90,6 @@ MONTHS = ["January", "February", "March", "April", "May", "June", "July", "Augus
 # The four letters, as on the dial in the HTML and in the poll.
 ZONES = [("A", "Top 10"), ("B", "#11 to #40"), ("C", "#41 to #100"), ("D", "Never charted")]
 
-# The Reel, in seconds: the question, a countdown of 3, 2, 1, then the answer and today's game,
-# with short fades between.
-QUESTION, TICK, ANSWER, PLAY = 3.0, 1.0, 4.6, 3.4
-FADE_TO_ANSWER, FADE_TO_PLAY = 0.3, 0.4
-
 # MusicBrainz asks every caller to name itself.
 AGENT = "TempifyChartCard/1.0 ( https://tempify.me )"
 
@@ -66,6 +97,8 @@ AGENT = "TempifyChartCard/1.0 ( https://tempify.me )"
 CAPTION_POLL = """Where did “{song}” by {artist} peak on the Hot 100? Vote, then see the answer.
 
 It was one of the five songs in yesterday's Hit or Miss. Today's five are up at tempify.me (link in bio).
+
+The voice is made with AI.
 
 #hot100 #musictrivia #{tag}"""
 
@@ -79,6 +112,8 @@ D. Never charted
 Comment your letter, then swipe for the answer.
 
 It was one of the five songs in yesterday's Hit or Miss. Today's five are up at tempify.me (link in bio).
+
+The voice is made with AI.
 
 #hot100 #musictrivia #{tag}"""
 
@@ -154,7 +189,7 @@ def biggest_for(rows, row, post):
     if row is not None and best[2] >= row[2]:
         return None
     detail = f"#1 for {best[4]} week{'' if best[4] == 1 else 's'}" if best[2] == 1 else f"#{best[2]}"
-    return {"artist": post["artist"], "title": best[0], "detail": detail}
+    return {"artist": post["artist"], "title": best[0], "detail": detail, "peak": best[2], "weeksAt1": best[4]}
 
 
 def answer_letter(peak):
@@ -183,7 +218,14 @@ def fetch(url, timeout=20):
 
 
 def search(kind, query):
-    return json.loads(fetch(f"https://musicbrainz.org/ws/2/{kind}?fmt=json&limit=100&query=" + quote(query)))
+    # MusicBrainz turns away a second request within the same second, so wait and ask again.
+    for attempt in range(4):
+        try:
+            return json.loads(fetch(f"https://musicbrainz.org/ws/2/{kind}?fmt=json&limit=100&query=" + quote(query)))
+        except HTTPError as e:
+            if e.code != 503 or attempt == 3:
+                raise
+            time.sleep(1.5 * (attempt + 1))
 
 
 def credited(credits, who):
@@ -202,9 +244,11 @@ def release_groups(post):
     song, artist = post["song"], post["artist"]
     want, who = norm(song), norm(artist)
 
+    # A two-sided single is named for both: "Hey Jude / Revolution".
+    sides = lambda title: [norm(side) for side in title.split(" / ")]
     found = search("release-group", f'releasegroup:"{song}" AND artist:"{artist}" AND primarytype:single')
     singles = [g for g in found.get("release-groups", [])
-               if g.get("score", 0) >= 90 and norm(g.get("title", "")) == want
+               if g.get("score", 0) >= 90 and want in sides(g.get("title", ""))
                and not g.get("secondary-types") and credited(g.get("artist-credit"), who)]
     singles.sort(key=lambda g: g.get("first-release-date") or "9999")
 
@@ -248,37 +292,28 @@ def find_art(post, folder):
     return None
 
 
-def chrome(url, out, scratch, size):
-    args = [
-        CHROME, "--headless", "--disable-gpu", "--hide-scrollbars", "--force-color-profile=srgb",
-        f"--force-device-scale-factor={SCALE}", "--allow-file-access-from-files",
-        "--virtual-time-budget=3000", f"--user-data-dir={scratch / 'profile'}",
-        f"--window-size={size[0]},{size[1]}", f"--screenshot={out}", url,
-    ]
-    log = scratch / "chrome.log"
-    with open(log, "w") as f:
-        proc = subprocess.Popen(args, stdout=f, stderr=subprocess.STDOUT)
+def card_url(data, query):
+    return CARD.as_uri() + query + "#" + quote(json.dumps(data))
+
+
+def open_card(browser, data, query, size, scale=1):
+    """The template in a page of its own, filled in and ready to be taken."""
+    page = browser.new_context(viewport={"width": size[0], "height": size[1]}, device_scale_factor=scale).new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(card_url(data, query))
     try:
-        # Chrome writes the file and then does not quit, so wait for its line saying so.
-        deadline = time.time() + 90
-        while time.time() < deadline:
-            if "bytes written to file" in log.read_text(errors="ignore"):
-                return
-            if proc.poll() is not None:
-                break
-            time.sleep(0.2)
-        fail(f"Chrome wrote nothing. Its log:\n{log.read_text(errors='ignore')[-2000:]}")
-    finally:
-        proc.kill()
-        proc.wait()
+        page.wait_for_function("window.cardReady === true", timeout=30000)
+    except Exception:
+        fail("The template didn't finish drawing." + (f" It said:\n{errors[0]}" if errors else ""))
+    return page
 
 
-def shoot(data, scratch, slide, size, reel=False, count=0):
-    """One picture of the card, drawn at twice the size and brought down."""
-    query = f"?slide={slide}" + ("&format=reel" if reel else "") + (f"&count={count}" if count else "")
-    raw = scratch / "raw.png"
-    chrome("file://" + pathname2url(str(CARD)) + query + "#" + quote(json.dumps(data)), raw, scratch, size)
-    big = Image.open(raw)
+def picture(browser, data, query, size):
+    """One picture, drawn at twice the size and brought down."""
+    page = open_card(browser, data, query, size, SCALE)
+    big = Image.open(io.BytesIO(page.screenshot(type="png")))
+    page.context.close()
     if big.size != (size[0] * SCALE, size[1] * SCALE):
         fail(f"Chrome drew {big.size}")
     return big.convert("RGB").resize(size, Image.LANCZOS)
@@ -289,39 +324,193 @@ def save_jpeg(image, path):
     image.save(path, "JPEG", quality=92, subsampling=0, icc_profile=SRGB, optimize=True)
 
 
-def make_reel(stills, out):
-    """Joins the Reel's six stills into the video Instagram wants: H.264 at 30 frames a second,
-    with a silent AAC track for the song to replace."""
+def voice_model():
+    """Kokoro's files, fetched once into ~/.cache and checked against the hashes above."""
+    VOICE_CACHE.mkdir(parents=True, exist_ok=True)
+    for name, want in VOICE_FILES.items():
+        path = VOICE_CACHE / name
+        if path.exists():
+            continue
+        print(f"Getting the voice's {name} once, into {VOICE_CACHE} (it's big; this takes a minute).")
+        part = path.with_suffix(".part")
+        digest = sha256()
+        with urlopen(Request(VOICE_FROM + name, headers={"User-Agent": AGENT}), timeout=60, context=tls()) as res, open(part, "wb") as f:
+            while chunk := res.read(1 << 20):
+                digest.update(chunk)
+                f.write(chunk)
+        if digest.hexdigest() != want:
+            part.unlink()
+            fail(f"The voice's {name} didn't match what was expected, so it wasn't kept. Try again later.")
+        part.rename(path)
+    return Kokoro(str(VOICE_CACHE / "kokoro-v1.0.onnx"), str(VOICE_CACHE / "voices-v1.0.bin"))
+
+
+def speak(lines):
+    """Says each of the template's lines. Returns each one's sound, and for the page how long it
+    takes and, for the lines whose words land one at a time, when each word starts."""
+    kokoro = voice_model()
+    spoken = {}
+    for line in lines:
+        audio, rate = kokoro.create(line["text"], voice=VOICE, speed=SPEED)
+        info = {"dur": round(len(audio) / rate, 3)}
+        if line.get("words"):
+            info["words"] = word_starts(kokoro, line["text"], audio, rate)
+        spoken[line["key"]] = (audio, info)
+    return spoken
+
+
+def word_starts(kokoro, text, audio, rate):
+    """When each word of a line starts. Kokoro doesn't say, so the line's time is shared out by how
+    many sounds each word has, and each break moves to the quietest moment near it, which is where
+    one word gives way to the next."""
+    words = text.split()
+    sounds = [max(1, len(re.sub(r"[ˈˌː]|[^\w]", "", kokoro.tokenizer.phonemize(w, "en-us")))) for w in words]
+    hop = rate // 100  # 10 ms
+    frames = len(audio) // hop
+    loud = np.sqrt(np.mean(np.asarray(audio[:frames * hop], dtype=float).reshape(frames, hop) ** 2, axis=1))
+    loud = np.convolve(loud, np.ones(3) / 3, mode="same")
+    starts, said = [0.0], 0
+    for n in sounds[:-1]:
+        said += n
+        guess = round(frames * said / sum(sounds))
+        lo = max(guess - 9, round(starts[-1] * 100) + 6)
+        hi = min(guess + 9, frames - 1)
+        at = lo + int(np.argmin(loud[lo:hi])) if hi > lo else guess
+        starts.append(round(at / 100, 3))
+    return starts
+
+
+# The Reel's sounds that aren't the app's own, made here: air rushing past for the swipes, a rise
+# under the countdown, a glide under the needle, and a low hit when it lands.
+RATE = 48000
+
+
+def smooth_noise(n, cutoff, seed):
+    """White noise through a low-pass whose cutoff (Hz, one per sample) can move."""
+    noise = np.random.default_rng(seed).standard_normal(n)
+    pull = 1 - np.exp(-2 * np.pi * np.asarray(cutoff, dtype=float) / RATE) * np.ones(n)
+    out, y = np.empty(n), 0.0
+    for i in range(n):
+        y += pull[i] * (noise[i] - y)
+        out[i] = y
+    return out / (np.abs(out).max() + 1e-9)
+
+
+def whoosh(dur=0.5):
+    n = int(dur * RATE)
+    t = np.arange(n) / RATE
+    swell = np.sin(np.pi * t / dur) ** 2
+    air = smooth_noise(n, 300 + 5200 * swell, 3) * swell
+    side = t / dur * np.pi / 2  # it moves from left to right
+    return np.stack([air * np.cos(side), air * np.sin(side)], 1)
+
+
+def riser(dur):
+    n = int(dur * RATE)
+    t = np.arange(n) / RATE
+    rise = t / dur
+    pitch = 180 * 6 ** rise
+    tone = 0.6 * np.sin(2 * np.pi * np.cumsum(pitch) / RATE) + 0.3 * np.sin(2 * np.pi * np.cumsum(pitch * 1.5) / RATE)
+    out = (0.55 * tone + 0.6 * smooth_noise(n, 500 + 7000 * rise, 5)) * rise ** 2
+    out[-480:] *= np.linspace(1, 0, 480)  # cut off clean, under the swipe's whoosh
+    return np.stack([out, out], 1)
+
+
+def boom(dur=0.9):
+    n = int(dur * RATE)
+    t = np.arange(n) / RATE
+    pitch = 38 + 70 * np.exp(-t * 14)
+    body = np.sin(2 * np.pi * np.cumsum(pitch) / RATE) * np.exp(-t * 5.5)
+    click = smooth_noise(n, 2500, 9) * np.exp(-t * 90) * 0.6
+    out = np.tanh(1.6 * (body + click)) * 0.9
+    return np.stack([out, out], 1)
+
+
+def glide(curve, dur):
+    """A tone that follows the needle, higher toward #1, louder the faster it moves."""
+    n = int(dur * RATE)
+    t = np.arange(n) / RATE
+    where = np.interp(t, np.arange(len(curve)) * 0.01, curve)
+    pitch = 220 * 2 ** (2 * (1 - where))
+    speed = np.convolve(np.abs(np.gradient(where)) * RATE, np.ones(960) / 960, mode="same")
+    phase = 2 * np.pi * np.cumsum(pitch) / RATE
+    tone = np.sin(phase) + 0.35 * np.sin(2 * phase) + 0.15 * np.sin(3 * phase)
+    out = (0.7 * tone / 1.5 + 0.3 * smooth_noise(n, pitch * 4, 11)) * (0.25 + 0.75 * np.clip(speed / 2.5, 0, 1))
+    out *= np.clip(t / 0.04, 0, 1) * np.clip((dur - t) / 0.15, 0, 1)
+    return np.stack([out, out], 1)
+
+
+def cue_sound(cue, made={}):
+    name = cue["sound"]
+    if name == "glide":
+        return glide(cue["curve"], cue["dur"])
+    if name == "whoosh":
+        return whoosh()
+    if name == "riser":
+        return riser(cue["dur"])
+    if name == "boom":
+        return boom()
+    if name not in made:
+        sound, rate = soundfile.read(SOUNDS / f"{name}.wav", dtype="float64", always_2d=True)
+        if rate != RATE:
+            fail(f"public/sounds/{name}.wav isn't 48 kHz")
+        made[name] = sound if sound.shape[1] == 2 else np.repeat(sound, 2, 1)
+    return made[name]
+
+
+def write_audio(plan, spoken, scratch):
+    """The voice on one track and the sounds on another, each put where the page said."""
+    voice_rate = 24000
+    voice = np.zeros(int((plan["end"] + 1) * voice_rate), dtype=np.float32)
+    for line in plan["voice"]:
+        audio = spoken[line["key"]][0]
+        at = int(line["at"] * voice_rate)
+        voice[at:at + len(audio)] += audio[:len(voice) - at]
+    sounds = np.zeros((int((plan["end"] + 1) * RATE), 2))
+    for cue in plan["cues"]:
+        sound = cue_sound(cue) * cue["gain"]
+        at = int(cue["t"] * RATE)
+        if at < len(sounds):
+            sounds[at:at + len(sound)] += sound[:len(sounds) - at]
+    soundfile.write(scratch / "voice.wav", voice, voice_rate, subtype="FLOAT")
+    soundfile.write(scratch / "sounds.wav", sounds.astype(np.float32), RATE, subtype="FLOAT")
+    return scratch / "voice.wav", scratch / "sounds.wav"
+
+
+def make_reel(page, plan, audio, out):
+    """Chrome lays out each frame and ffmpeg makes the video Instagram wants: H.264 at 30 frames a
+    second, with AAC sound. The sounds step back while the voice talks, and the whole is brought to
+    the loudness Instagram plays at."""
     ffmpeg = shutil.which("ffmpeg") or "/opt/homebrew/bin/ffmpeg"
     if not Path(ffmpeg).exists():
         fail("The Reel needs ffmpeg. Install it with: brew install ffmpeg")
-    question = QUESTION + 3 * TICK
-    to_answer = question - FADE_TO_ANSWER
-    to_play = to_answer + ANSWER - FADE_TO_PLAY
-    total = to_play + PLAY
-    inputs = []
-    for path, seconds in zip(stills, (QUESTION, TICK, TICK, TICK, ANSWER, PLAY)):
-        inputs += ["-loop", "1", "-framerate", "30", "-t", f"{seconds}", "-i", str(path)]
-    inputs += ["-f", "lavfi", "-t", f"{total:.2f}", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000"]
-    video = "fps=30,settb=AVTB,scale=out_color_matrix=bt709:out_range=tv,format=yuv420p,setsar=1"
-    # The answer lands with a small push in, 6% larger and settling over its first 0.6 seconds.
-    push = "zoompan=z='if(lte(on,18),1.06-0.06*on/18,1)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1080x1920:fps=30"
     graph = (
-        f"[0:v][1:v][2:v][3:v]concat=n=4:v=1:a=0,{video}[q];"
-        f"[4:v]{push},{video}[a];"
-        f"[5:v]{video}[p];"
-        f"[q][a]xfade=transition=fade:duration={FADE_TO_ANSWER}:offset={to_answer:.2f}[qa];"
-        f"[qa][p]xfade=transition=fade:duration={FADE_TO_PLAY}:offset={to_play:.2f}[v]"
+        # Chrome's JPEGs are full-range BT.601; video is limited-range BT.709.
+        "[0:v]scale=in_color_matrix=bt601:in_range=full:out_color_matrix=bt709:out_range=tv,format=yuv420p,setsar=1[v];"
+        "[1:a]aresample=48000,pan=stereo|c0=c0|c1=c0,asplit[voice][key];"
+        "[2:a][key]sidechaincompress=threshold=0.05:ratio=3:attack=5:release=250[sounds];"
+        "[voice][sounds]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]"
     )
-    result = subprocess.run([
-        ffmpeg, "-y", "-loglevel", "error", *inputs, "-filter_complex", graph,
-        "-map", "[v]", "-map", "6:a", "-c:v", "libx264", "-profile:v", "high", "-preset", "slow",
-        "-crf", "18", "-r", "30", "-pix_fmt", "yuv420p", "-colorspace", "bt709",
-        "-color_primaries", "bt709", "-color_trc", "bt709", "-c:a", "aac", "-b:a", "128k",
-        "-t", f"{total:.2f}", "-movflags", "+faststart", str(out),
-    ], capture_output=True, text=True)
-    if result.returncode != 0:
-        fail(f"ffmpeg couldn't make the Reel:\n{result.stderr[-2000:]}")
+    frames = round(plan["end"] * FPS)
+    proc = subprocess.Popen([
+        ffmpeg, "-y", "-loglevel", "error", "-f", "image2pipe", "-framerate", str(FPS), "-c:v", "mjpeg", "-i", "-",
+        "-i", str(audio[0]), "-i", str(audio[1]), "-filter_complex", graph, "-map", "[v]", "-map", "[a]",
+        "-c:v", "libx264", "-profile:v", "high", "-preset", "slow", "-tune", "animation", "-crf", "17",
+        "-maxrate", "20M", "-bufsize", "40M", "-r", str(FPS), "-colorspace", "bt709", "-color_primaries", "bt709",
+        "-color_trc", "bt709", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-t", f"{frames / FPS:.3f}",
+        "-movflags", "+faststart", str(out),
+    ], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    cdp = page.context.new_cdp_session(page)
+    try:
+        for f in range(frames):
+            page.evaluate(f"seek({f / FPS})")
+            shot = cdp.send("Page.captureScreenshot", {"format": "jpeg", "quality": 95, "optimizeForSpeed": True})
+            proc.stdin.write(base64.b64decode(shot["data"]))
+        proc.stdin.close()
+    except BrokenPipeError:
+        pass
+    if proc.wait() != 0:
+        fail(f"ffmpeg couldn't make the Reel:\n{proc.stderr.read().decode(errors='ignore')[-2000:]}")
 
 
 def main():
@@ -365,23 +554,40 @@ def main():
         "dare": "A" if letter in "CD" else "D",
         "poll": poll,
         "art": "file://" + pathname2url(str(folder / "art.jpg")) if art else None,
+        "weeks": row[3] if row else None,
+        "weeksAt1": row[4] if row else None,
+        "firstYear": int(row[5][:4]) if row else None,
+        "year": post.get("year"),
+        "saySong": post.get("say_song"),
+        "sayArtist": post.get("say_artist"),
     }
 
+    started = time.time()
     scratch = Path(tempfile.mkdtemp(prefix="tempify-chart-"))
     try:
-        for n in (1, 2, 3):
-            save_jpeg(shoot(data, scratch, n, POST), folder / f"{n}.jpg")
-        stills = []
-        for slide, count in ((1, 0), (1, 3), (1, 2), (1, 1), (2, 0), (3, 0)):
-            still = scratch / f"reel-{slide}-{count}.png"
-            shoot(data, scratch, slide, REEL, reel=True, count=count).save(still)
-            stills.append(still)
-        save_jpeg(Image.open(stills[0]), folder / "reel-cover.jpg")
-        make_reel(stills, folder / "reel.mp4")
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(executable_path=CHROME, args=[
+                "--force-color-profile=srgb", "--allow-file-access-from-files", "--hide-scrollbars"])
+            for n in (1, 2, 3):
+                save_jpeg(picture(browser, data, f"?slide={n}", POST), folder / f"{n}.jpg")
+            # The page says what the voice reads; the voice says how long it takes; the page
+            # times the Reel around that.
+            page = open_card(browser, data, "?format=reel", REEL)
+            lines = page.evaluate("voiceLines()")
+            page.context.close()
+            spoken = speak(lines)
+            data["voice"] = {key: info for key, (_, info) in spoken.items()}
+            page = open_card(browser, data, "?format=reel", REEL)
+            plan = page.evaluate("plan()")
+            make_reel(page, plan, write_audio(plan, spoken, scratch), folder / "reel.mp4")
+            page.context.close()
+            save_jpeg(picture(browser, data, f"?format=reel&t={plan['cover']}", REEL), folder / "reel-cover.jpg")
+            browser.close()
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
 
-    facts = {**data, "art": art}
+    facts = {**data, "art": art, "said": [line["text"] for line in lines]}
+    del facts["voice"]
     (folder / "facts.json").write_text(json.dumps(facts, indent=2, ensure_ascii=False) + "\n")
     choices = {f"option_{z.lower()}": f"{z}. {label}" for z, label in ZONES}
     (folder / "poll.json").write_text(json.dumps(choices, ensure_ascii=False) + "\n")
@@ -396,6 +602,7 @@ def main():
         b = data["biggest"]
         print(f"Their biggest: {b['title']}, {b['detail']}")
     print(f"Cover: Cover Art Archive release group {art}" if art else "Cover: none")
+    print(f"The Reel is {plan['end']:.1f} seconds. Made in {time.time() - started:.0f} seconds.")
     print(f"Wrote reel.mp4, reel-cover.jpg, 1.jpg to 3.jpg, caption.txt, poll.json and facts.json in {folder}")
 
 
