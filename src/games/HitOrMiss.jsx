@@ -17,6 +17,7 @@ import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Peak from './Peak'
 import { hasRounds } from '../lib/points'
+import { nextGameAfter } from '../lib/games'
 import './choices.css'
 import './HitOrMiss.css'
 
@@ -202,7 +203,7 @@ function OneSong({ puzzle, puzzleDate, dateParam }) {
           gameSlug="hit-or-miss"
           puzzleDate={dateParam}
           timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
-          nextGame={{ path: '/game/era', label: 'Era' }}
+          nextGame={nextGameAfter('hit-or-miss', puzzleDate)}
           showLeaderboard={profile?.competitive_mode !== false}
         />
       )}

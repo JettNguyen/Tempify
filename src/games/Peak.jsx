@@ -12,6 +12,7 @@ import { lockInDelay } from '../lib/lockIn'
 import { NEVER_FROM, dialAt, peakAt, peakPoints, peakLabel } from '../lib/peak'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
 import { readChallenge } from '../lib/challenge'
+import { nextGameAfter } from '../lib/games'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import StageSong from '../components/StageSong'
@@ -303,7 +304,7 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell }) {
           gameSlug={SLUG}
           puzzleDate={dateParam}
           timeSeconds={competitive ? finalTime : null}
-          nextGame={{ path: '/game/era', label: 'Era' }}
+          nextGame={nextGameAfter('hit-or-miss', puzzleDate)}
           showLeaderboard={competitive}
         />
       )}

@@ -21,6 +21,7 @@ import DelayedSpinner from '../components/DelayedSpinner'
 import Dial from '../components/Dial'
 import { ROUND_MAX, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
 import { yearPoints, yearRange } from '../lib/yearGuess'
+import { nextGameAfter } from '../lib/games'
 import './choices.css'
 import './CoverOrNot.css'
 
@@ -396,7 +397,7 @@ export default function CoverOrNot() {
           gameSlug="cover-or-not"
           puzzleDate={dateParam}
           timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
-          nextGame={{ path: '/', label: 'Back to games' }}
+          nextGame={nextGameAfter('cover-or-not', puzzleDate)}
           showLeaderboard={profile?.competitive_mode !== false}
         >
           {isCover && (

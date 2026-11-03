@@ -13,6 +13,7 @@ import { lockInDelay } from '../lib/lockIn'
 import { addTap, bpmFromTaps, tempoOff, tempoPoints, MIN_TAPS } from '../lib/tempo'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
 import { readChallenge } from '../lib/challenge'
+import { nextGameAfter } from '../lib/games'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import StageSong from '../components/StageSong'
@@ -289,7 +290,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
           }}
           gameSlug={SLUG}
           puzzleDate={dateParam}
-          nextGame={{ path: '/', label: 'Back to games' }}
+          nextGame={nextGameAfter('tempo', puzzleDate)}
           showLeaderboard={competitive}
         />
       )}

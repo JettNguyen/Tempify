@@ -65,3 +65,16 @@ export function getGameSlugsForDate(date) {
     .filter(g => !date || launchedBy(g, date))
     .map(g => g.slug)
 }
+
+/**
+ * Where the button under a finished game goes: the next game in that day's
+ * lineup, or back to the list after the last one. Taken from the lineup so a
+ * new game joins the chain the day it launches; Cover or Not kept ending at
+ * "Back to games" after Tap the Tempo came after it.
+ */
+export function nextGameAfter(slug, date) {
+  const lineup = ACTIVE_GAMES.filter(g => launchedBy(g, date))
+  const at = lineup.findIndex(g => g.slug === slug)
+  const next = at >= 0 ? lineup[at + 1] : null
+  return next ? { path: next.path, label: next.name } : { path: '/', label: 'Back to games' }
+}

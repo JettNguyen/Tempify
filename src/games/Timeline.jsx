@@ -12,6 +12,7 @@ import { lockInDelay } from '../lib/lockIn'
 import { rightGaps, gapPoints, gapLabel } from '../lib/timeline'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
 import { readChallenge } from '../lib/challenge'
+import { nextGameAfter } from '../lib/games'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import StageSong from '../components/StageSong'
@@ -268,7 +269,7 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
           gameSlug={SLUG}
           puzzleDate={dateParam}
           timeSeconds={competitive ? finalTime : null}
-          nextGame={{ path: '/game/cover-or-not', label: 'Cover or Not' }}
+          nextGame={nextGameAfter('era', puzzleDate)}
           showLeaderboard={competitive}
         />
       )}

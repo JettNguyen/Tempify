@@ -19,6 +19,7 @@ import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Timeline from './Timeline'
 import { hasRounds } from '../lib/points'
+import { nextGameAfter } from '../lib/games'
 import './choices.css'
 import './Era.css'
 
@@ -212,7 +213,7 @@ function OneSong({ puzzle, puzzleDate, dateParam }) {
           gameSlug="era"
           puzzleDate={dateParam}
           timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
-          nextGame={{ path: '/game/cover-or-not', label: 'Cover or Not' }}
+          nextGame={nextGameAfter('era', puzzleDate)}
           showLeaderboard={profile?.competitive_mode !== false}
         />
       )}

@@ -11,6 +11,7 @@ import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
 import { sharesArtist } from '../lib/matching'
 import { hapticImportantTap, hapticWrong, hapticRejected, hapticThreshold } from '../lib/haptics'
+import { nextGameAfter } from '../lib/games'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import GuessInput from '../components/GuessInput'
@@ -381,7 +382,7 @@ export default function OneBar() {
           maxGuesses={MAX_ATTEMPTS}
           gameSlug="one-bar"
           puzzleDate={dateParam}
-          nextGame={{ path: '/game/hit-or-miss', label: 'Hit or Miss' }}
+          nextGame={nextGameAfter('one-bar', puzzleDate)}
           showLeaderboard={profile?.competitive_mode !== false}
         />
       )}
