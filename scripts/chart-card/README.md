@@ -16,7 +16,7 @@ It's built to stay clean while doing it: one font, the app's own colors and soun
 
 Three pictures for a picture post are made too, for when a Reel can't go up.
 
-The Tempify bot makes one every day, a week ahead, from its own copy of this repo. Jett taps "Post it" on Admin's Tempify bot page, and the bot puts it up at 9 AM Eastern on its day.
+The Tempify bot makes one every day, a week ahead, from its own copy of this repo. Jett taps "Approve to post" on Admin's Tempify bot page, and the bot puts it up on its day at the posting time he sets there.
 
 ## Setting up a Mac for it, once
 
@@ -83,7 +83,11 @@ The Tempify bot makes one every day, a week ahead, from its own copy of this rep
 
 ## Posting it
 
-Jett's "Post it" sets the row to `approved`. The bot puts it up at 9 AM Eastern on its day, never before, since it gives away the day before's puzzle. It never posts a row twice. With signed links that last an hour:
+Jett's "Approve to post" sets the row to `approved`. The bot puts it up on its day at the posting time, never before its day, since it gives away the day before's puzzle. It never posts a row twice.
+
+The posting time is Jett's to set in Admin, for every post: the one row of `agent_settings`, `post_at`, a time of day in Eastern (migration 017). Read it at every check; if the table isn't there yet, use 9:00. A post approved after its time goes up at the next check.
+
+With signed links that last an hour:
 
 - **The Reel:** `media_type` `REELS`, `video_url` the Reel, `cover_url` `reel-cover.jpg`, `share_to_feed` `true`, the caption, and `poll_attachment` from `poll.json`.
 - **The music:** search Instagram's Audio API for the post's own song. Attach it with `audio_configuration` only when the title and artist match: `video_volume` 100 (the voice and the effects) and `audio_volume` 75 (the song). With no match, post without music; never a different song.

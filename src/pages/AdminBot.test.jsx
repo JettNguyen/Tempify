@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 
 // The database as the page sees it: rows to read, and every update it sends.
-const db = vi.hoisted(() => ({ items: [], log: [], fail: false, updates: [] }))
+const db = vi.hoisted(() => ({ items: [], log: [], settings: [], fail: false, noSettings: false, updates: [] }))
 
 vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({ user: { email: 'admin@example.com' }, loading: false }),
@@ -23,8 +23,8 @@ vi.mock('../lib/supabase', () => {
       update: p => { patch = p; return q },
       eq: (col, val) => { if (patch) db.updates.push({ table, id: val, ...patch }); return q },
       then: (resolve, reject) => {
-        const error = db.fail ? { message: 'relation does not exist' } : null
-        const data = table === 'agent_log' ? db.log : db.items
+        const error = db.fail || (table === 'agent_settings' && db.noSettings) ? { message: 'relation does not exist' } : null
+        const data = { agent_log: db.log, agent_settings: db.settings }[table] || db.items
         return Promise.resolve(patch ? { error } : { data: error ? null : data, error }).then(resolve, reject)
       },
     }
@@ -72,6 +72,8 @@ async function type(selector, value) {
 beforeEach(() => {
   vi.stubEnv('VITE_ADMIN_EMAIL', 'admin@example.com')
   db.fail = false
+  db.noSettings = false
+  db.settings = [{ post_at: '09:00:00' }]
   db.updates = []
   db.log = [{ id: 1, at: '2026-11-24T14:00:00Z', summary: 'Wrote Hit or Miss for Tue 11/24', failed: false }]
   db.items = [
@@ -139,8 +141,8 @@ describe('the Tempify bot page', () => {
     expect(pictures).toEqual([1, 2, 3].map(n => `https://signed.example/posts/2026-11-24/${n}.jpg`))
     expect(button('Posted')).toBeUndefined()
     expect(container.textContent).toContain('Auto-posts to Instagram')
-    expect(container.textContent).toContain('Tap Post it and the bot puts it on Instagram on Tue Nov 24 at 9 AM.')
-    await click('Post it')
+    expect(container.textContent).toContain('Approve it and the bot puts it on Instagram on Tue Nov 24 at 9 AM.')
+    await click('Approve to post')
     expect(db.updates).toEqual([expect.objectContaining({ id: 'c1', status: 'approved' })])
     expect(container.textContent).toContain('Posting soon')
     expect(container.textContent).toContain('Chart fact for Tue 11/24: the bot posts it on Tue Nov 24 at 9 AM.')
@@ -172,9 +174,41 @@ describe('the Tempify bot page', () => {
     db.items = [{ id: 'c3', kind: 'post', title: 'Chart fact for Tue 11/3', body: 'x', place: 'Instagram', due_on: '2026-11-03', status: 'waiting', auto_post: true }]
     await render()
     expect(container.textContent).not.toContain('Auto-posts to Instagram')
-    expect(button('Post it')).toBeUndefined()
+    expect(button('Approve to post')).toBeUndefined()
     expect(button('Posted')).toBeTruthy()
     expect(container.textContent).toContain("Its day has passed, so the bot won't post it.")
+  })
+
+  it('posts at the time set in Admin, and saves a new one', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-02T15:00:00Z'))
+    db.settings = [{ post_at: '07:30:00' }]
+    db.items = [{ id: 'c4', kind: 'post', title: 'Chart fact for Tue 11/24', body: 'x', place: 'Instagram', due_on: '2026-11-24', status: 'approved', auto_post: true }]
+    await render()
+    expect(container.textContent).toContain('Chart fact for Tue 11/24: the bot posts it on Tue Nov 24 at 7:30 AM.')
+    expect(container.querySelector('input[type="time"]').value).toBe('07:30')
+    await type('input[type="time"]', '12:15')
+    await click('Save time')
+    expect(db.updates).toEqual([expect.objectContaining({ table: 'agent_settings', id: true, post_at: '12:15' })])
+    expect(container.textContent).toContain('Chart fact for Tue 11/24: the bot posts it on Tue Nov 24 at 12:15 PM.')
+  })
+
+  it('says a post approved before the time on its day goes up today at that time', async () => {
+    // 7 AM Eastern on Tue 11/3.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-03T12:00:00Z'))
+    db.settings = [{ post_at: '08:00:00' }]
+    db.items = [{ id: 'c5', kind: 'post', title: 'Chart fact for Tue 11/3', body: 'x', place: 'Instagram', due_on: '2026-11-03', status: 'approved', auto_post: true }]
+    await render()
+    expect(container.textContent).toContain('Chart fact for Tue 11/3: the bot posts it today at 8 AM.')
+  })
+
+  it('keeps 9 AM and says why before migration 017 has run', async () => {
+    db.noSettings = true
+    await render()
+    expect(container.querySelector('input[type="time"]')).toBeNull()
+    expect(container.textContent).toContain('The bot posts at 9 AM Eastern for now.')
+    expect(container.textContent).toContain('To look at (2)')
   })
 
   it('says what to do before migration 015 has run', async () => {

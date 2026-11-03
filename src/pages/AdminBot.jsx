@@ -10,11 +10,11 @@ import { PlayCounts } from './AdminPlayers'
 
 // The Tempify bot's side of Admin, on one screen for the phone: what it
 // drafted for Jett to look at, what it did, and the play counts. The tables
-// are migrations 014 and 015; the bot's prompt (in Drive) says how it fills
-// them. A post the bot can put up itself (auto_post, Instagram) gets "Post
-// it", which approves it for the bot. Any other post Jett puts up himself,
-// so its answer is "Posted". Puzzles are already live, so "Send back" asks
-// for a fix before their day.
+// are migrations 014, 015 and 017; the bot's prompt (in Drive) says how it
+// fills them. A post the bot can put up itself (auto_post, Instagram) gets
+// "Approve to post", and the bot puts it up at the posting time Jett sets
+// here. Any other post Jett puts up himself, so its answer is "Posted".
+// Puzzles are already live, so "Send back" asks for a fix before their day.
 
 const LOG_ROWS = 40
 const PICTURE_LINK_SECONDS = 3600
@@ -54,17 +54,25 @@ function fmtWhen(iso) {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
-// The bot puts an approved post up at 9 AM Eastern on its day, never before:
-// a chart fact gives away the day before's puzzle, which is still being
-// played until its day is over. Approved later than that, it goes up at the
-// bot's next check.
-const POST_HOUR = 9
+// The bot puts an approved post up at the posting time (Eastern, set below,
+// 9 AM until it's changed) on its day, never before: a chart fact gives away
+// the day before's puzzle, which is still being played until its day is over.
+// Approved later than that, it goes up at the bot's next check.
+const DEFAULT_POST_AT = '09:00'
 
-function whenPosted(item) {
+const minutes = hhmm => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m }
+
+// '09:00' reads as 9 AM, '13:30' as 1:30 PM.
+function fmtTime(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number)
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'AM' : 'PM'}`
+}
+
+function whenPosted(item, postAt) {
   const today = todayEST()
-  if (item.due_on && item.due_on > today) return `on ${fmtDayShort(item.due_on)} at 9 AM`
-  const hour = Number(new Date().toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hourCycle: 'h23' }))
-  if (item.due_on === today && hour < POST_HOUR) return 'today at 9 AM'
+  if (item.due_on && item.due_on > today) return `on ${fmtDayShort(item.due_on)} at ${fmtTime(postAt)}`
+  const now = new Date().toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', hourCycle: 'h23' })
+  if (item.due_on === today && minutes(now) < minutes(postAt)) return `today at ${fmtTime(postAt)}`
   return 'within 15 minutes'
 }
 
@@ -108,7 +116,7 @@ function usePictures(paths) {
   return { media, files }
 }
 
-function Item({ item, onDecide }) {
+function Item({ item, postAt, onDecide }) {
   // null, 'back' (writing what to change) or 'posted' (adding the link)
   const [mode, setMode] = useState(null)
   const [text, setText] = useState('')
@@ -233,7 +241,7 @@ function Item({ item, onDecide }) {
         {mode === null && (
           <>
             {autoPost
-              ? <button style={primaryStyle} className="btn-press" disabled={saving} onClick={() => decide({ status: 'approved' })}>Post it</button>
+              ? <button style={primaryStyle} className="btn-press" disabled={saving} onClick={() => decide({ status: 'approved' })}>Approve to post</button>
               : item.kind === 'post'
                 ? <button style={primaryStyle} className="btn-press" onClick={() => { setText(''); setMode('posted') }}>Posted</button>
                 : <button style={primaryStyle} className="btn-press" disabled={saving} onClick={() => decide({ status: 'approved' })}>Looks good</button>}
@@ -267,7 +275,7 @@ function Item({ item, onDecide }) {
       </div>
       {mode === null && autoPost && (
         <p style={{ ...noteStyle, marginTop: '8px' }}>
-          Tap Post it and the bot puts it on Instagram {whenPosted(item)}.
+          Approve it and the bot puts it on Instagram {whenPosted(item, postAt)}.
         </p>
       )}
       {mode === null && item.auto_post && pastDay && (
@@ -276,6 +284,56 @@ function Item({ item, onDecide }) {
         </p>
       )}
     </div>
+  )
+}
+
+// When the bot puts approved Instagram posts up, for all of them.
+function PostingTime({ postAt, onSave }) {
+  const [draft, setDraft] = useState(postAt || DEFAULT_POST_AT)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  if (postAt === false) {
+    return (
+      <section style={panelStyle}>
+        <p style={titleStyle}>Posting time</p>
+        <p style={noteStyle}>
+          The bot posts at 9 AM Eastern for now. You can change the time here once migration 017 has run, which happens when the site is next pushed.
+        </p>
+      </section>
+    )
+  }
+
+  async function save() {
+    setSaving(true)
+    const ok = await onSave(draft)
+    setSaving(false)
+    if (ok) {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    }
+  }
+
+  return (
+    <section style={panelStyle}>
+      <p style={titleStyle}>Posting time</p>
+      <p style={noteStyle}>
+        The bot puts each approved Instagram post up at this time on its day, Eastern. It's never earlier than the post's day, since a post gives away the day before's puzzle.
+      </p>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '0.75rem' }}>
+        <input
+          type="time"
+          step="300"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          aria-label="Posting time, Eastern"
+          style={{ ...inputStyle, width: 'auto' }}
+        />
+        <button style={primaryStyle} className="btn-press" disabled={saving || !draft || draft === postAt} onClick={save}>
+          {saved ? 'Saved' : 'Save time'}
+        </button>
+      </div>
+    </section>
   )
 }
 
@@ -291,6 +349,8 @@ export default function AdminBot() {
   const [log, setLog] = useState(null)
   const [missing, setMissing] = useState(false)
   const [error, setError] = useState(null)
+  // null until it loads; false when the table isn't there yet (migration 017)
+  const [postAt, setPostAt] = useState(null)
 
   const load = useCallback(async () => {
     const [open, done] = await Promise.all([
@@ -307,6 +367,8 @@ export default function AdminBot() {
     }
     setItems(open.data)
     setLog(done.data)
+    const settings = await supabase.from('agent_settings').select('post_at').limit(1)
+    setPostAt(settings.error ? false : (settings.data?.[0]?.post_at || DEFAULT_POST_AT).slice(0, 5))
   }, [])
 
   useEffect(() => {
@@ -329,6 +391,20 @@ export default function AdminBot() {
   if (loading) return null
   if (!isAdmin) return <Navigate to="/" replace />
 
+  async function saveTime(time) {
+    setError(null)
+    const { error: err } = await supabase.from('agent_settings')
+      .update({ post_at: time, updated_at: new Date().toISOString() })
+      .eq('id', true)
+    if (err) {
+      setError("The posting time didn't save. Check your connection and try again.")
+      return false
+    }
+    setPostAt(time)
+    return true
+  }
+
+  const shownTime = postAt || DEFAULT_POST_AT
   const waiting = (items || []).filter(i => i.status === 'waiting')
   const sentBack = (items || []).filter(i => i.status === 'sent_back')
   const posting = (items || []).filter(i => i.status === 'approved' && i.auto_post)
@@ -353,14 +429,14 @@ export default function AdminBot() {
           <p style={titleStyle}>To look at{waiting.length ? ` (${waiting.length})` : ''}</p>
           {waiting.length === 0
             ? <p style={noteStyle}>Nothing right now. The bot's drafts and new puzzles show up here.</p>
-            : waiting.map(item => <Item key={`${item.id}-${item.updated_at}`} item={item} onDecide={decide} />)}
+            : waiting.map(item => <Item key={`${item.id}-${item.updated_at}`} item={item} postAt={shownTime} onDecide={decide} />)}
 
           {posting.length > 0 && (
             <>
               <p style={{ ...tagStyle, marginTop: '1.25rem' }}>Posting soon</p>
               {posting.map(item => (
                 <p key={item.id} style={{ ...noteStyle, marginTop: '4px' }}>
-                  {item.title}: the bot posts it {whenPosted(item)}.
+                  {item.title}: the bot posts it {whenPosted(item, shownTime)}.
                 </p>
               ))}
             </>
@@ -378,6 +454,8 @@ export default function AdminBot() {
           )}
         </section>
       )}
+
+      {items && postAt !== null && <PostingTime postAt={postAt} onSave={saveTime} />}
 
       {log && (
         <section style={panelStyle}>
