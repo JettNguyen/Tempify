@@ -413,12 +413,15 @@ const AudioPlayer = forwardRef(function AudioPlayer({
     return () => cancelAnimationFrame(frame)
   }, [playing])
 
-  // The rail's width, for placing the thumb in pixels.
+  // The rail's width, for placing the thumb in pixels. Its own pixels, the ones
+  // the thumb's translateX moves in: on a zoomed page (the iPad app, a big
+  // desktop window) the bounding box is wider by the zoom, and the thumb ran
+  // ahead of the bar and off its end.
   useLayoutEffect(() => {
     const rail = railRef.current
     if (!rail) return
     const measure = () => {
-      railWidthRef.current = rail.getBoundingClientRect().width
+      railWidthRef.current = rail.offsetWidth
       if (!retreatRef.current && !scrubRef.current) paint(posRef.current)
     }
     measure()
@@ -457,8 +460,11 @@ const AudioPlayer = forwardRef(function AudioPlayer({
   function timeAtPointer(clientX) {
     const rail = railRef.current
     if (!rail) return 0
+    // The pointer is in screen pixels, so it's brought back to the rail's own
+    // before the gaps between segments are counted.
     const box = rail.getBoundingClientRect()
-    const x = pixelToBar(segmentsRef.current, clientX - box.left, box.width, SEGMENT_GAP)
+    const zoom = box.width / (rail.offsetWidth || box.width)
+    const x = pixelToBar(segmentsRef.current, (clientX - box.left) / zoom, box.width / zoom, SEGMENT_GAP)
     // Only the stretch that can be heard: past it there is nothing to play, and
     // the playhead stops at the edge of it rather than following into the lock.
     const end = limit()
