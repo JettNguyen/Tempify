@@ -13,11 +13,13 @@ vi.mock('../hooks/useAuth', () => ({
 
 vi.mock('./AdminPlayers', () => ({ PlayCounts: () => null }))
 
+vi.mock('../lib/oauth', () => ({ isNativeApp: () => false }))
+
 vi.mock('../lib/supabase', () => {
   function query(table) {
     let patch = null
     const q = {
-      select: () => q, in: () => q, order: () => q, limit: () => q,
+      select: () => q, or: () => q, order: () => q, limit: () => q,
       update: p => { patch = p; return q },
       eq: (col, val) => { if (patch) db.updates.push({ table, id: val, ...patch }); return q },
       then: (resolve, reject) => {
@@ -28,7 +30,12 @@ vi.mock('../lib/supabase', () => {
     }
     return q
   }
-  return { supabase: { from: query } }
+  const storage = {
+    from: () => ({
+      createSignedUrls: async paths => ({ data: paths.map(path => ({ path, signedUrl: `https://signed.example/${path}` })), error: null }),
+    }),
+  }
+  return { supabase: { from: query, storage } }
 })
 
 import AdminBot from './AdminBot'
@@ -117,9 +124,25 @@ describe('the Tempify bot page', () => {
     expect(container.textContent).toContain('Chart fact for 11/24: Use a song from the 90s')
   })
 
+  it('shows a post\'s pictures and hands it to the bot to post', async () => {
+    db.items = [{
+      id: 'c1', kind: 'post', title: 'Chart fact for Tue 11/24', body: 'Where did it peak?', place: 'Instagram',
+      due_on: '2026-11-24', status: 'waiting', auto_post: true,
+      images: ['posts/2026-11-24/1.jpg', 'posts/2026-11-24/2.jpg', 'posts/2026-11-24/3.jpg'],
+    }]
+    await render()
+    const pictures = [...container.querySelectorAll('img')].map(img => img.getAttribute('src'))
+    expect(pictures).toEqual([1, 2, 3].map(n => `https://signed.example/posts/2026-11-24/${n}.jpg`))
+    expect(button('Posted')).toBeUndefined()
+    await click('Post it')
+    expect(db.updates).toEqual([expect.objectContaining({ id: 'c1', status: 'approved' })])
+    expect(container.textContent).toContain('Posting soon')
+    expect(container.textContent).toContain('Chart fact for Tue 11/24: the bot posts it within 15 minutes.')
+  })
+
   it('says what to do before migration 014 has run', async () => {
     db.fail = true
     await render()
-    expect(container.textContent).toContain('It starts once migration 014 has run')
+    expect(container.textContent).toContain('It starts once migration 015 has run')
   })
 })

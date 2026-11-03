@@ -4,16 +4,19 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { fmtDayShort } from '../lib/date'
 import { getGameName } from '../lib/games'
+import { isNativeApp } from '../lib/oauth'
 import { PlayCounts } from './AdminPlayers'
 
 // The Tempify bot's side of Admin, on one screen for the phone: what it
 // drafted for Jett to look at, what it did, and the play counts. The tables
-// are migration 014; the bot's prompt (in Drive) says how it fills them.
-// Jett posts every post himself, so a post's answer is "Posted", not
-// "Approved". Puzzles are already live, so "Send back" asks for a fix
-// before their day.
+// are migrations 014 and 015; the bot's prompt (in Drive) says how it fills
+// them. A post the bot can put up itself (auto_post, Instagram) gets "Post
+// it", which approves it for the bot. Any other post Jett puts up himself,
+// so its answer is "Posted". Puzzles are already live, so "Send back" asks
+// for a fix before their day.
 
 const LOG_ROWS = 40
+const PICTURE_LINK_SECONDS = 3600
 
 const inputStyle = {
   width: '100%', background: '#111', border: '1px solid var(--border)',
@@ -42,12 +45,49 @@ function fmtWhen(iso) {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
+// A post's pictures from the bot's private bucket, and the same pictures as
+// files for the share sheet where the browser can share files. The files are
+// fetched as soon as the links arrive, because Safari only opens the share
+// sheet straight from a tap, with nothing to wait on in between.
+function usePictures(paths) {
+  const [urls, setUrls] = useState(null)
+  const [files, setFiles] = useState(null)
+  const key = (paths || []).join('|')
+
+  useEffect(() => {
+    if (!key) return
+    let live = true
+    const list = key.split('|')
+    supabase.storage.from('agent').createSignedUrls(list, PICTURE_LINK_SECONDS).then(async ({ data, error }) => {
+      if (!live || error || !data) return
+      const signed = data.map(d => d.signedUrl).filter(Boolean)
+      setUrls(signed)
+      if (isNativeApp() || !navigator.canShare) return
+      try {
+        const made = await Promise.all(signed.map(async (url, i) => {
+          const res = await fetch(url)
+          if (!res.ok) throw new Error(`picture ${i + 1}: ${res.status}`)
+          const blob = await res.blob()
+          return new File([blob], list[i].split('/').slice(-2).join('-'), { type: blob.type || 'image/jpeg' })
+        }))
+        if (live && navigator.canShare({ files: made })) setFiles(made)
+      } catch {
+        // No share button then. The pictures still show.
+      }
+    })
+    return () => { live = false }
+  }, [key])
+
+  return { urls, files }
+}
+
 function Item({ item, onDecide }) {
   // null, 'back' (writing what to change) or 'posted' (adding the link)
   const [mode, setMode] = useState(null)
   const [text, setText] = useState('')
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
+  const { urls, files } = usePictures(item.images)
 
   const about = [
     KIND_LABEL[item.kind],
@@ -73,6 +113,18 @@ function Item({ item, onDecide }) {
     }
   }
 
+  async function sharePictures() {
+    // Instagram takes the pictures but not the words, so the caption goes on
+    // the clipboard too, ready to paste. Not awaited, so the share sheet still
+    // opens straight from the tap.
+    navigator.clipboard?.writeText(item.body).catch(() => {})
+    try {
+      await navigator.share({ files })
+    } catch {
+      // Closing the sheet lands here too. Nothing to show.
+    }
+  }
+
   return (
     <div style={{ padding: '1rem 0', borderTop: '1px solid var(--border)' }}>
       <p style={tagStyle}>{about}</p>
@@ -80,6 +132,23 @@ function Item({ item, onDecide }) {
       {item.body && (
         <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.55, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
           {item.body}
+        </p>
+      )}
+      {urls && (
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${urls.length}, 1fr)`, gap: '6px', marginTop: '10px', maxWidth: '420px' }}>
+          {urls.map((url, i) => (
+            <img
+              key={url}
+              src={url}
+              alt={`Picture ${i + 1} of ${urls.length}`}
+              style={{ display: 'block', width: '100%', aspectRatio: '4 / 5', objectFit: 'cover', borderRadius: '8px', background: '#111' }}
+            />
+          ))}
+        </div>
+      )}
+      {urls && !item.auto_post && isNativeApp() && (
+        <p style={{ ...noteStyle, marginTop: '6px' }}>
+          To post these yourself, open tempify.me/admin/bot in Safari, where you can share the pictures.
         </p>
       )}
       {item.note && (
@@ -116,10 +185,15 @@ function Item({ item, onDecide }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '0.75rem' }}>
         {mode === null && (
           <>
-            {item.kind === 'post'
-              ? <button style={primaryStyle} className="btn-press" onClick={() => { setText(''); setMode('posted') }}>Posted</button>
-              : <button style={primaryStyle} className="btn-press" disabled={saving} onClick={() => decide({ status: 'approved' })}>Looks good</button>}
+            {item.kind === 'post' && item.auto_post
+              ? <button style={primaryStyle} className="btn-press" disabled={saving} onClick={() => decide({ status: 'approved' })}>Post it</button>
+              : item.kind === 'post'
+                ? <button style={primaryStyle} className="btn-press" onClick={() => { setText(''); setMode('posted') }}>Posted</button>
+                : <button style={primaryStyle} className="btn-press" disabled={saving} onClick={() => decide({ status: 'approved' })}>Looks good</button>}
             <button style={buttonStyle} className="btn-press" onClick={() => { setText(''); setMode('back') }}>Send back</button>
+            {files && !item.auto_post && (
+              <button style={buttonStyle} className="btn-press" onClick={sharePictures}>Share pictures</button>
+            )}
             {item.kind === 'post' && item.body && (
               <button style={buttonStyle} className="btn-press" onClick={copy}>{copied ? 'Copied' : 'Copy text'}</button>
             )}
@@ -163,8 +237,9 @@ export default function AdminBot() {
 
   const load = useCallback(async () => {
     const [open, done] = await Promise.all([
+      // Open items, and posts Jett told the bot to put up that it hasn't yet.
       supabase.from('agent_items').select('*')
-        .in('status', ['waiting', 'sent_back'])
+        .or('status.in.(waiting,sent_back),and(status.eq.approved,auto_post.is.true)')
         .order('due_on', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true }),
       supabase.from('agent_log').select('*').order('at', { ascending: false }).limit(LOG_ROWS),
@@ -199,6 +274,7 @@ export default function AdminBot() {
 
   const waiting = (items || []).filter(i => i.status === 'waiting')
   const sentBack = (items || []).filter(i => i.status === 'sent_back')
+  const posting = (items || []).filter(i => i.status === 'approved' && i.auto_post)
 
   return (
     <div className="page-shell-admin">
@@ -210,7 +286,7 @@ export default function AdminBot() {
 
       {missing && (
         <p style={{ ...noteStyle, marginTop: '1rem' }}>
-          The bot's list isn't there yet. It starts once migration 014 has run on the database.
+          The bot's list isn't there yet. It starts once migration 015 has run on the database.
         </p>
       )}
       {error && <p style={{ ...noteStyle, color: 'var(--red)', marginTop: '1rem' }}>{error}</p>}
@@ -221,6 +297,17 @@ export default function AdminBot() {
           {waiting.length === 0
             ? <p style={noteStyle}>Nothing right now. The bot's drafts and new puzzles show up here.</p>
             : waiting.map(item => <Item key={`${item.id}-${item.updated_at}`} item={item} onDecide={decide} />)}
+
+          {posting.length > 0 && (
+            <>
+              <p style={{ ...tagStyle, marginTop: '1.25rem' }}>Posting soon</p>
+              {posting.map(item => (
+                <p key={item.id} style={{ ...noteStyle, marginTop: '4px' }}>
+                  {item.title}: the bot posts it within 15 minutes.
+                </p>
+              ))}
+            </>
+          )}
 
           {sentBack.length > 0 && (
             <>
