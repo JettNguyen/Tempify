@@ -28,7 +28,7 @@ The Tempify bot makes one every day, a week ahead, from its own copy of this rep
   python3 -m venv ~/.venvs/tempify-chart-card && ~/.venvs/tempify-chart-card/bin/pip install -r scripts/chart-card/requirements.txt
   ```
 
-- **The voice** is Kokoro, which runs on the Mac itself: free, no account, no key. The first run fetches its two files (about 350 MB) from the kokoro-onnx GitHub releases into `~/.cache/tempify-chart-card/`. It checks them against fixed fingerprints and keeps them for every run after.
+- **The voice** is Kokoro, which runs on the Mac itself: free, no account, no key. The first run fetches its two files (about 350 MB) from the kokoro-onnx GitHub releases into `~/.cache/tempify-chart-card/`. It checks them against fixed fingerprints and keeps them for every run after. One line isn't read fresh: "A, B, C, or D?" is the recording `letters.wav`, so changing how the letters sound means a new recording and new start times in the script.
 
 ## Making a day's post
 

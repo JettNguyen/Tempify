@@ -348,6 +348,15 @@ def voice_model():
 # recognition heard as "7-ry", and with a d it hears 70.
 SOFTENED = {"twenty": "nɾ", "seventy": "nd", "ninety": "nɾ"}
 
+# "A, B, C, or D?" is a recording, not a fresh read. Kokoro ran the letters together in one breath,
+# and said one at a time they came out on one flat note with rough endings. letters.wav is her
+# own takes, each letter finished, its pitch reshaped and its level matched to her talking, until
+# Jett picked it (November 4, 2026). Don't shift its formants: with the "ee"s widened, the letters
+# sounded processed next to the other lines. The times are when each word of the line starts in it.
+LETTERS_SAID = "A, B, C, or D?"
+LETTERS_FILE = HERE / "letters.wav"
+LETTERS_START = [0.0, 0.453, 0.932, 1.406, 1.585]
+
 
 def sounds_of(kokoro, text):
     """The line's sounds, with the t softened in SOFTENED (not "nineteen", which starts the same)."""
@@ -364,6 +373,10 @@ def speak(lines):
     kokoro = voice_model()
     spoken = {}
     for line in lines:
+        if line["text"] == LETTERS_SAID:
+            audio, rate = soundfile.read(LETTERS_FILE, dtype="float32")
+            spoken[line["key"]] = (audio, {"dur": round(len(audio) / rate, 3), "words": LETTERS_START})
+            continue
         audio, rate = kokoro.create(sounds_of(kokoro, line["text"]), voice=VOICE, speed=SPEED,
                                     is_phonemes=True)
         info = {"dur": round(len(audio) / rate, 3)}
