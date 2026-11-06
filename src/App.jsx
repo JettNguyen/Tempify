@@ -6,6 +6,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import DelayedSpinner from './components/DelayedSpinner'
 import UsernameSetupModal from './components/UsernameSetupModal'
 import IOSAppPrompt from './components/IOSAppPrompt'
+import { labelNowPlaying } from './lib/nowPlaying'
 import Home from './pages/Home'
 import ArchiveDay from './pages/ArchiveDay'
 import Explore from './pages/Explore'
@@ -49,6 +50,8 @@ function SplashGate() {
 function PageTransition({ children }) {
   const { pathname } = useLocation()
   const navigationType = useNavigationType()
+
+  useEffect(() => { labelNowPlaying(pathname) }, [pathname])
 
   useEffect(() => {
     // Opening a new screen should start at the top. Going back shouldn't, so
