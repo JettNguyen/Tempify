@@ -24,9 +24,9 @@ import './Peak.css'
 
 const SLUG = 'hit-or-miss'
 
-// The thumb starts in the middle of the charted stretch, so no first guess is
-// pulled toward either end.
-const START_AT = NEVER_FROM / 2
+// The thumb starts on the #25 mark: about the middle of the charted stretch, so
+// no first guess is pulled toward either end, and a number that looks chosen.
+const START_AT = dialAt(25)
 
 // The top ten take up as much of the dial as #40 to #100, so the marks
 // crowd the top. #100 goes unmarked: it sits right against "Never".
