@@ -259,6 +259,13 @@
   font-size: var(--fs-sm);
 }
 
+.tempo__speed-note {
+  margin: -6px 0 12px;
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
 .tempo__points {
   font-size: var(--fs-lg);
   font-weight: 750;

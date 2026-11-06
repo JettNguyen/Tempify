@@ -10,7 +10,7 @@ import { prefetchClip } from '../lib/audioEngine'
 import { hapticImportantTap, hapticSelection } from '../lib/haptics'
 import { playVerdict } from '../lib/sounds'
 import { lockInDelay } from '../lib/lockIn'
-import { addTap, bpmFromTaps, tempoOff, tempoPoints, MIN_TAPS } from '../lib/tempo'
+import { addTap, bpmFromTaps, readTap, tempoPoints, MIN_TAPS } from '../lib/tempo'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
 import { readChallenge } from '../lib/challenge'
 import { nextGameAfter } from '../lib/games'
@@ -26,8 +26,20 @@ import './TapTempo.css'
 
 const SLUG = 'tempo'
 
-function percentOff(bpm, actual) {
-  return Math.round(tempoOff(bpm, actual) * 100)
+const SPEED_WORD = { 0.5: 'half', 2: 'double' }
+
+// The song's number in the day's list, or what the tap was really up against.
+function targetLabel(speed, actual) {
+  if (speed === 0.5) return `Half of ${actual}`
+  if (speed === 2) return `Double ${actual}`
+  return `Song ${actual}`
+}
+
+// Why a tap so far from the song's number still scored.
+function speedNote(speed, actual) {
+  return speed === 0.5
+    ? `Half of ${actual} is ${actual / 2}, and half speed still counts`
+    : `Double ${actual} is ${actual * 2}, and double speed still counts`
 }
 
 export default function TapTempo() {
@@ -151,11 +163,13 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   }
 
   const tier = revealed ? roundTier(result.points) : null
+  const read = revealed ? readTap(result.bpm, round.bpm, result.points) : null
   const isLast = index === rounds.length - 1
   const squares = results.length === rounds.length ? shareSquares(results.map(r => r.points)) : null
   const best = results.length === rounds.length
     ? results.reduce((b, r, i) => (r.points > results[b].points ? i : b), 0)
     : null
+  const bestSpeed = best != null ? readTap(results[best].bpm, rounds[best].bpm, results[best].points).speed : 1
   const showClip = revealed || done
 
   return (
@@ -200,6 +214,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
         <ol className="tempo__summary">
           {rounds.map((r, i) => {
             const mine = results[i]
+            const speed = mine ? readTap(mine.bpm, r.bpm, mine.points).speed : 1
             return (
               <li key={i}>
                 <button
@@ -214,7 +229,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
                   </span>
                   <span className="tempo__summary-call">
                     {mine && <span>You {mine.bpm}</span>}
-                    <span className="tempo__summary-real">Song {r.bpm}</span>
+                    <span className="tempo__summary-real">{targetLabel(speed, r.bpm)}</span>
                   </span>
                   {mine && (
                     <span className={`tempo__summary-points tempo__summary-points--${roundTier(mine.points)}`}>
@@ -234,8 +249,9 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
           </div>
           <p className="tempo__verdict">
             <span className="tempo__points">+{fmtPoints(result.points)}</span>
-            <span>{result.points === ROUND_MAX ? 'Right on the beat' : `${percentOff(result.bpm, round.bpm)}% off`}</span>
+            <span>{result.points === ROUND_MAX ? 'Right on the beat' : `${read.percentOff}% off`}</span>
           </p>
+          {read.speed !== 1 && <p className="tempo__speed-note">{speedNote(read.speed, round.bpm)}</p>}
           <button type="button" className="tempo__action btn-press" onClick={advance}>
             {isLast ? 'See how you did' : 'Next song'}
             <Icon name="chevronRight" size={15} strokeWidth={2.5} />
@@ -278,7 +294,9 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
           correct={isWin(finalPoints, maxPoints)}
           status={`${fmtPoints(finalPoints)} points`}
           answer={best != null ? `Closest beat: ${rounds[best].title}` : `Out of ${fmtPoints(maxPoints)}`}
-          artist={best != null ? `You tapped ${results[best].bpm}, the song runs at ${rounds[best].bpm}` : undefined}
+          artist={best != null
+            ? `You tapped ${results[best].bpm}${bestSpeed !== 1 ? ` at ${SPEED_WORD[bestSpeed]} speed` : ''}, the song runs at ${rounds[best].bpm}`
+            : undefined}
           emojiGrid={squares}
           shareLine={`${fmtPoints(finalPoints)} / ${fmtPoints(maxPoints)} points`}
           points={finalPoints}

@@ -37,14 +37,33 @@ export function bpmFromTaps(taps) {
   return gap > 0 ? Math.round(60000 / gap) : null
 }
 
-/**
- * How far off a tapped tempo is, as a share of the real one. Half and double
- * time count as the same beat: tapping every other kick drum isn't wrong.
- */
+const offFrom = (guess, target) => Math.abs(guess - target) / target
+
+// Half and double time count as the same beat: tapping every other kick drum
+// isn't wrong.
+const SPEEDS = [1, 0.5, 2]
+
+/** Which speed of the song a tap landed nearest: 1, or 0.5 or 2 for half or double. */
+function closestSpeed(guess, actual) {
+  return SPEEDS.reduce((best, s) => (offFrom(guess, actual * s) < offFrom(guess, actual * best) ? s : best))
+}
+
+/** How far off a tapped tempo is, as a share of the speed it landed nearest. */
 export function tempoOff(guess, actual) {
-  return Math.min(...[1, 0.5, 2].map(f => Math.abs(guess - actual * f) / (actual * f)))
+  return offFrom(guess, actual * closestSpeed(guess, actual))
 }
 
 export function tempoPoints(guess, actual) {
   return Math.round(ROUND_MAX * closeness(tempoOff(guess, actual), ZERO_AT, FULL_WITHIN))
+}
+
+/**
+ * How a finished round reads on screen. A tap that scored off half or double
+ * the song's speed has to say so, since 80 against 170 looks like a wild miss.
+ * One that earned nothing is measured against the song itself: half being the
+ * nearer miss doesn't make it a half speed tap.
+ */
+export function readTap(guess, actual, points) {
+  const speed = points > 0 ? closestSpeed(guess, actual) : 1
+  return { speed, percentOff: Math.round(offFrom(guess, actual * speed) * 100) }
 }

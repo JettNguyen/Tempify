@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { addTap, bpmFromTaps, tempoOff, tempoPoints, RESTART_AFTER_MS } from './tempo.js'
+import { addTap, bpmFromTaps, readTap, tempoOff, tempoPoints, RESTART_AFTER_MS } from './tempo.js'
 
 const steady = (bpm, n, from = 0) => Array.from({ length: n }, (_, i) => from + i * (60000 / bpm))
 
@@ -37,6 +37,15 @@ describe('tempo points', () => {
     expect(tempoPoints(97, 100)).toBe(1000)
   })
 
+  it('never takes points for being one off', () => {
+    expect(tempoPoints(86, 87)).toBe(1000)
+    expect(tempoPoints(61, 60)).toBe(1000)
+  })
+
+  it('scores a tap near half speed against half the song', () => {
+    expect(tempoPoints(80, 170)).toBe(930)
+  })
+
   it('pays less the further off, and nothing from 20% out', () => {
     expect(tempoOff(110, 100)).toBeCloseTo(0.1)
     expect(tempoPoints(105, 100)).toBe(960)
@@ -45,5 +54,21 @@ describe('tempo points', () => {
     expect(tempoPoints(115, 100)).toBe(407)
     expect(tempoPoints(120, 100)).toBe(0)
     expect(tempoPoints(125, 100)).toBe(0)
+  })
+})
+
+describe('how a round reads', () => {
+  it('says when a tap scored off half or double the speed', () => {
+    expect(readTap(80, 170, tempoPoints(80, 170))).toEqual({ speed: 0.5, percentOff: 6 })
+    expect(readTap(230, 115, tempoPoints(230, 115))).toEqual({ speed: 2, percentOff: 0 })
+  })
+
+  it('leaves a plain tap on the song itself', () => {
+    expect(readTap(110, 100, tempoPoints(110, 100))).toEqual({ speed: 1, percentOff: 10 })
+  })
+
+  it("doesn't call a tap half speed when it earned nothing", () => {
+    expect(tempoPoints(110, 170)).toBe(0)
+    expect(readTap(110, 170, 0)).toEqual({ speed: 1, percentOff: 35 })
   })
 })
