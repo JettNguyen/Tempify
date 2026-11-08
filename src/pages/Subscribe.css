@@ -26,57 +26,113 @@ body.big-screen .subscribe-page {
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.02em;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1.1rem;
 }
 
-.subscribe-body {
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
-  margin-bottom: 2rem;
-  line-height: 1.7;
-}
+/* ─── What Tempify+ adds ──────────────────────────────────────────────────── */
 
-.subscribe-price-box {
-  padding: 1.5rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  margin-bottom: 1rem;
-}
-
-.subscribe-price-box--disabled {
-  opacity: 0.6;
-}
-
-.subscribe-plan-list {
+.subscribe-perks {
+  list-style: none;
+  margin: 0 0 1.75rem;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.55rem;
 }
 
-.subscribe-plan-header {
+.subscribe-perk {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.6rem;
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  line-height: 1.45;
 }
 
-.subscribe-plan-label-row {
+.subscribe-perk__check {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 0.1rem;
+  color: var(--amber);
+}
+
+/* ─── Picking a plan ──────────────────────────────────────────────────────── */
+
+.subscribe-plans {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.subscribe-plan {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 0.8rem;
+  width: 100%;
+  min-height: 68px;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+  animation: subscribe-in 0.35s ease both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+  transition: scale var(--press-up), border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.subscribe-plan--on {
+  border-color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+/* Dims the contents, not the row: the row's entrance animation ends on full
+   opacity and would win over an opacity set here. */
+.subscribe-plan:disabled {
+  cursor: default;
+}
+
+.subscribe-plan:disabled > * {
+  opacity: 0.45;
+}
+
+/* The radio: an empty ring, filled amber with a dark center when chosen. */
+.subscribe-plan__dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-dim);
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.subscribe-plan--on .subscribe-plan__dot {
+  border-color: var(--amber);
+  background: var(--amber);
+  box-shadow: inset 0 0 0 4px var(--bg);
+  animation: subscribe-dot var(--press-up);
+}
+
+.subscribe-plan__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.subscribe-plan__name {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.subscribe-plan-label {
-  font-size: var(--fs-sm);
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-size: var(--fs-md);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-muted);
 }
 
-.subscribe-plan-badge {
+.subscribe-plan__badge {
   font-size: var(--fs-2xs);
   font-weight: 600;
   color: var(--amber);
@@ -87,42 +143,89 @@ body.big-screen .subscribe-page {
   letter-spacing: 0.03em;
 }
 
-.subscribe-price-row {
+.subscribe-plan__detail {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.subscribe-plan__price {
   display: flex;
-  align-items: baseline;
-  gap: 4px;
-  margin-bottom: 0.25rem;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.subscribe-price {
-  font-size: var(--fs-2xl);
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.subscribe-price-unit {
-  font-size: var(--fs-sm);
+.subscribe-plan__unit {
+  font-size: var(--fs-xs);
+  font-weight: 400;
   color: var(--text-muted);
 }
 
-.subscribe-fine-print {
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-  margin-bottom: 0.5rem;
+/* Placeholders while RevenueCat answers: the rows' own size, so nothing
+   jumps when the prices land. */
+.subscribe-plan--loading {
+  cursor: default;
+  animation: subscribe-wait 1.4s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 150ms);
 }
 
-.subscribe-cta {
+@keyframes subscribe-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes subscribe-dot {
+  from { scale: 0.6; }
+  to { scale: 1; }
+}
+
+@keyframes subscribe-wait {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subscribe-plan,
+  .subscribe-plan--loading,
+  .subscribe-plan--on .subscribe-plan__dot {
+    animation: none;
+  }
+}
+
+/* ─── Buying ──────────────────────────────────────────────────────────────── */
+
+.subscribe-buy {
   width: 100%;
-  padding: 12px;
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 10px;
   background: var(--amber);
-  border-radius: 8px;
   color: #0f0f0f;
   font-size: var(--fs-md);
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.subscribe-restore {
+.subscribe-buy:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.subscribe-renews {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.subscribe-secondary {
   width: 100%;
   margin-top: 0.65rem;
   padding: 10px;
@@ -132,6 +235,38 @@ body.big-screen .subscribe-page {
   font-size: var(--fs-sm);
 }
 
+.subscribe-plans-missing .subscribe-hint {
+  margin-top: 0;
+  color: var(--text-muted);
+}
+
+/* Restore and Refresh: needed, but not what most people came for. */
+.subscribe-more {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin-top: 1rem;
+}
+
+.subscribe-more:empty {
+  display: none;
+}
+
+.subscribe-text-btn {
+  padding: 0.6rem 0.25rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.subscribe-text-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .subscribe-hint {
   font-size: var(--fs-xs);
   color: var(--text-dim);
@@ -139,10 +274,16 @@ body.big-screen .subscribe-page {
   text-align: center;
 }
 
+/* A message about a purchase or a restore is something to act on, so it
+   reads at the muted gray, not the dim one the small print uses. */
+.subscribe-hint--message {
+  color: var(--text-muted);
+}
+
 .subscribe-legal {
   font-size: var(--fs-2xs);
   color: var(--text-dim);
-  margin-top: 1.25rem;
+  margin-top: 1rem;
   text-align: center;
 }
 
@@ -159,41 +300,4 @@ body.big-screen .subscribe-page {
   font-size: inherit;
   font-family: inherit;
   cursor: pointer;
-}
-
-/* App Store plans while RevenueCat answers: the cards' own size, so nothing
-   jumps when the prices land. */
-.subscribe-price-box--loading {
-  height: 168px;
-  animation: subscribePlanWait 1.4s ease-in-out infinite;
-}
-
-.subscribe-price-box--loading:nth-child(2) { animation-delay: 0.15s; }
-.subscribe-price-box--loading:nth-child(3) { animation-delay: 0.3s; }
-
-@keyframes subscribePlanWait {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .subscribe-price-box--loading { animation: none; }
-}
-
-.subscribe-plans-missing .subscribe-hint {
-  margin-top: 0;
-  color: var(--text-muted);
-}
-
-/* A message about a purchase or a restore is something to act on, so it
-   reads at the muted gray, not the dim one the small print uses. */
-.subscribe-hint--message {
-  color: var(--text-muted);
-}
-
-.subscribe-renews {
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-  line-height: 1.6;
-  margin-top: 0.25rem;
 }

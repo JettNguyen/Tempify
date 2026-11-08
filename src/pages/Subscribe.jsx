@@ -3,38 +3,47 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import { usesNativeIap, getPlans, buyPlan, restorePurchases } from '../lib/billing'
-import { planCards, anyRenews } from '../lib/plans'
+import { planCards, startingPlan } from '../lib/plans'
 import './Subscribe.css'
 
+const PERKS = [
+  'Every past day of every game',
+  'Browse by genre',
+  'Make games for friends from songs you pick',
+  'Recommendations based on what you play',
+  'Streaks that carry across every game',
+]
+
+// The web's plans, paid through Stripe links. Same shape as planCards().
 const WEB_PLANS = [
-  {
-    key: 'monthly',
-    label: 'Monthly',
-    price: '$3',
-    unit: '/ month',
-    cta: 'Subscribe monthly',
-    linkEnv: 'VITE_STRIPE_PAYMENT_LINK_MONTHLY',
-    fallbackEnv: 'VITE_STRIPE_PAYMENT_LINK',
-    note: 'Cancel any time.',
-  },
   {
     key: 'yearly',
     label: 'Yearly',
     price: '$25',
     unit: '/ year',
-    cta: 'Subscribe yearly',
-    linkEnv: 'VITE_STRIPE_PAYMENT_LINK_YEARLY',
     badge: 'Save 31%',
-    note: 'Buy yearly and save $11.',
+    detail: '$2.08 a month, billed once a year',
+    cta: 'Subscribe for $25 a year',
+    linkEnv: 'VITE_STRIPE_PAYMENT_LINK_YEARLY',
+  },
+  {
+    key: 'monthly',
+    label: 'Monthly',
+    price: '$3',
+    unit: '/ month',
+    detail: 'Billed every month. Cancel any time.',
+    cta: 'Subscribe for $3 a month',
+    linkEnv: 'VITE_STRIPE_PAYMENT_LINK_MONTHLY',
+    fallbackEnv: 'VITE_STRIPE_PAYMENT_LINK',
   },
   {
     key: 'lifetime',
     label: 'Lifetime',
     price: '$100',
-    unit: ' once',
-    cta: 'Buy lifetime',
+    unit: 'once',
+    detail: 'Pay once and keep it',
+    cta: 'Buy lifetime for $100',
     linkEnv: 'VITE_STRIPE_PAYMENT_LINK_LIFETIME',
-    note: 'One payment. Permanent access.',
   },
 ]
 
@@ -45,24 +54,32 @@ function getWebPlanLink(plan) {
   return ''
 }
 
+const webPlans = () => WEB_PLANS.map((plan) => ({ ...plan, unavailable: !getWebPlanLink(plan) }))
+
 export default function Subscribe() {
   const { user, refreshProfile, markSubscribed } = useAuth()
   const navigate = useNavigate()
-  const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState('')
-
   const nativeIap = usesNativeIap()
 
-  // The App Store's plans, read from RevenueCat: null while loading.
-  const [plans, setPlans] = useState(null)
+  // What's in flight: 'buy', 'restore' or 'refresh'.
+  const [doing, setDoing] = useState(null)
+  const busy = doing !== null
+  const [message, setMessage] = useState('')
+
+  // The plans: the web's own, or the App Store's from RevenueCat (null while
+  // they load).
+  const [plans, setPlans] = useState(() => (nativeIap ? null : webPlans()))
   const [plansFailed, setPlansFailed] = useState(false)
-  const [buying, setBuying] = useState(null)
+  const [chosen, setChosen] = useState(() => (nativeIap ? null : startingPlan(webPlans().filter((p) => !p.unavailable))))
+  const chosenPlan = plans?.find((plan) => plan.key === chosen) || null
 
   async function loadPlans() {
     setPlans(null)
     setPlansFailed(false)
     try {
-      setPlans(planCards(await getPlans()))
+      const cards = planCards(await getPlans())
+      setPlans(cards)
+      setChosen((current) => (cards.some((card) => card.key === current) ? current : startingPlan(cards)))
     } catch (err) {
       console.warn('[Subscribe] Plans failed to load', err)
       setPlans([])
@@ -74,13 +91,27 @@ export default function Subscribe() {
     if (nativeIap) loadPlans()
   }, [nativeIap])
 
-  async function handleBuy(plan) {
+  function choose(key) {
     if (busy) return
-    setBusy(true)
-    setBuying(plan.key)
+    setChosen(key)
     setMessage('')
+  }
+
+  async function handleBuy() {
+    if (busy || !chosenPlan || chosenPlan.unavailable) return
+    setMessage('')
+
+    if (!nativeIap) {
+      // Web: off to the Stripe payment link for the chosen plan.
+      const url = new URL(getWebPlanLink(chosenPlan))
+      if (user?.email) url.searchParams.set('prefilled_email', user.email)
+      await openExternalUrlInApp(url.toString())
+      return
+    }
+
+    setDoing('buy')
     try {
-      const outcome = await buyPlan(plan.pkg)
+      const outcome = await buyPlan(chosenPlan.pkg)
       if (outcome === 'active') {
         await markSubscribed()
         navigate('/archive')
@@ -92,23 +123,8 @@ export default function Subscribe() {
       console.warn('[Subscribe] Purchase failed', err)
       setMessage("The purchase didn't go through, and you weren't charged. Try again, or check the payment method on your Apple account.")
     } finally {
-      setBusy(false)
-      setBuying(null)
+      setDoing(null)
     }
-  }
-
-  async function handleSubscribe(plan) {
-    if (busy) return
-    // Web: redirect to the Stripe payment link for the selected plan.
-    const link = getWebPlanLink(plan)
-    if (!link) {
-      console.warn(`${plan.linkEnv} is not set.`)
-      setMessage(`The ${plan.label.toLowerCase()} plan is not configured yet.`)
-      return
-    }
-    const url = new URL(link)
-    if (user?.email) url.searchParams.set('prefilled_email', user.email)
-    await openExternalUrlInApp(url.toString())
   }
 
   // Re-runs the whole profile read: the RevenueCat entitlement check, the
@@ -116,7 +132,7 @@ export default function Subscribe() {
   // or a comp landed after this session started and the app has not noticed.
   async function handleRefresh() {
     if (busy || !user) return
-    setBusy(true)
+    setDoing('refresh')
     setMessage('')
     try {
       const fresh = await refreshProfile()
@@ -126,13 +142,13 @@ export default function Subscribe() {
     } catch (err) {
       setMessage(err?.message || 'Unable to check your status right now.')
     } finally {
-      setBusy(false)
+      setDoing(null)
     }
   }
 
   async function handleRestore() {
     if (busy || !nativeIap) return
-    setBusy(true)
+    setDoing('restore')
     setMessage('')
     try {
       const restored = await restorePurchases()
@@ -141,7 +157,7 @@ export default function Subscribe() {
     } catch (err) {
       setMessage(err?.message || 'Unable to restore purchases right now.')
     } finally {
-      setBusy(false)
+      setDoing(null)
     }
   }
 
@@ -165,51 +181,54 @@ export default function Subscribe() {
         </button>
         <p className="subscribe-eyebrow">tempify+</p>
         <h1 className="subscribe-title">Every day, going back forever.</h1>
-        <p className="subscribe-body">
-          Unlock the full archive, browse by genre, make games for your friends from songs
-          you pick, and get recommendations based on what you actually play. Streaks carry
-          across every game.
-        </p>
 
-        {nativeIap ? (
-          <NativePlans
-            plans={plans}
-            failed={plansFailed}
-            busy={busy}
-            buying={buying}
-            onBuy={handleBuy}
-            onRetry={loadPlans}
-          />
-        ) : (
-          <div className="subscribe-plan-list">
-            {WEB_PLANS.map((plan) => {
-              const configured = Boolean(getWebPlanLink(plan))
-              return (
-                <PlanBox
-                  key={plan.key}
-                  plan={plan}
-                  disabled={busy || !configured}
-                  dim={!configured}
-                  cta={busy ? 'Please wait…' : configured ? plan.cta : 'Coming soon'}
-                  onClick={() => handleSubscribe(plan)}
-                />
-              )
-            })}
+        <ul className="subscribe-perks">
+          {PERKS.map((perk) => (
+            <li key={perk} className="subscribe-perk">
+              <svg className="subscribe-perk__check" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {perk}
+            </li>
+          ))}
+        </ul>
+
+        {plans === null ? (
+          <div className="subscribe-plans" aria-busy="true" aria-label="Loading plans">
+            {[0, 1, 2].map((i) => <div key={i} className="subscribe-plan subscribe-plan--loading" style={{ '--i': i }} />)}
           </div>
+        ) : plans.length === 0 ? (
+          <div className="subscribe-plans-missing">
+            <p className="subscribe-hint">
+              {plansFailed
+                ? "Couldn't load the plans. Check your connection, then try again."
+                : 'No plans are showing right now. Try again in a minute.'}
+            </p>
+            <button onClick={loadPlans} className="subscribe-secondary btn-press">Try again</button>
+          </div>
+        ) : (
+          <PlanPicker plans={plans} chosen={chosen} onChoose={choose} />
         )}
 
-        {nativeIap && (
-          <button onClick={handleRestore} className="subscribe-restore btn-press btn-hover" disabled={busy}>
-            Restore purchases
+        {plans?.length !== 0 && (
+          <button
+            onClick={handleBuy}
+            className="subscribe-buy btn-press"
+            disabled={busy || !chosenPlan || chosenPlan.unavailable}
+          >
+            {doing === 'buy'
+              ? 'Please wait…'
+              : chosenPlan?.unavailable
+                ? 'Coming soon'
+                : chosenPlan?.cta || 'Subscribe'}
           </button>
         )}
 
-        {/* Not gated on nativeIap: a web subscription or a comped account can
-            go stale here too, and restore only ever speaks to the App Store. */}
-        {user && (
-          <button onClick={handleRefresh} className="subscribe-restore btn-press btn-hover" disabled={busy}>
-            {busy ? 'Checking…' : 'Refresh status'}
-          </button>
+        {nativeIap && chosenPlan?.renews && (
+          <p className="subscribe-renews">
+            {chosenPlan.renews} You can cancel any time in your iPhone's Settings, under your name,
+            then Subscriptions.
+          </p>
         )}
 
         {message && <p className="subscribe-hint subscribe-hint--message">{message}</p>}
@@ -217,6 +236,21 @@ export default function Subscribe() {
         {!user && (
           <p className="subscribe-hint">You'll be asked to log in or create an account.</p>
         )}
+
+        <div className="subscribe-more">
+          {nativeIap && (
+            <button onClick={handleRestore} className="subscribe-text-btn" disabled={busy}>
+              {doing === 'restore' ? 'Restoring…' : 'Restore purchases'}
+            </button>
+          )}
+          {/* Not gated on nativeIap: a web subscription or a comped account can
+              go stale here too, and restore only ever speaks to the App Store. */}
+          {user && (
+            <button onClick={handleRefresh} className="subscribe-text-btn" disabled={busy}>
+              {doing === 'refresh' ? 'Checking…' : 'Refresh status'}
+            </button>
+          )}
+        </div>
 
         <p className="subscribe-legal">
           {nativeIap ? (
@@ -237,69 +271,38 @@ export default function Subscribe() {
   )
 }
 
-function PlanBox({ plan, cta, disabled, dim = false, onClick }) {
+// One plan is chosen at a time, and the button under the list buys it.
+function PlanPicker({ plans, chosen, onChoose }) {
   return (
-    <div className={`subscribe-price-box${dim ? ' subscribe-price-box--disabled' : ''}`}>
-      <div className="subscribe-plan-header">
-        <div className="subscribe-plan-label-row">
-          <p className="subscribe-plan-label">{plan.label}</p>
-          {plan.badge && <span className="subscribe-plan-badge">{plan.badge}</span>}
-        </div>
-        <div className="subscribe-price-row">
-          <span className="subscribe-price">{plan.price}</span>
-          <span className="subscribe-price-unit">{plan.unit}</span>
-        </div>
-      </div>
-      <p className="subscribe-fine-print">{plan.note}</p>
-      <button onClick={onClick} className="subscribe-cta btn-press" disabled={disabled}>
-        {cta}
-      </button>
-    </div>
-  )
-}
-
-// The App Store's plans, in the same cards the web shows.
-function NativePlans({ plans, failed, busy, buying, onBuy, onRetry }) {
-  if (plans === null) {
-    return (
-      <div className="subscribe-plan-list" aria-busy="true" aria-label="Loading plans">
-        {[0, 1, 2].map((i) => <div key={i} className="subscribe-price-box subscribe-price-box--loading" />)}
-      </div>
-    )
-  }
-
-  if (plans.length === 0) {
-    return (
-      <div className="subscribe-plans-missing">
-        <p className="subscribe-hint">
-          {failed
-            ? "Couldn't load the plans. Check your connection, then try again."
-            : 'No plans are showing right now. Try again in a minute.'}
-        </p>
-        <button onClick={onRetry} className="subscribe-restore btn-press btn-hover">Try again</button>
-      </div>
-    )
-  }
-
-  return (
-    <>
-      <div className="subscribe-plan-list">
-        {plans.map((plan) => (
-          <PlanBox
+    <div className="subscribe-plans" role="radiogroup" aria-label="Plans">
+      {plans.map((plan, i) => {
+        const on = plan.key === chosen
+        return (
+          <button
             key={plan.key}
-            plan={plan}
-            disabled={busy}
-            cta={buying === plan.key ? 'Please wait…' : plan.cta}
-            onClick={() => onBuy(plan)}
-          />
-        ))}
-      </div>
-      {anyRenews(plans) && (
-        <p className="subscribe-renews">
-          Monthly and yearly plans renew on their own until you cancel. You can cancel any time in
-          your iPhone's Settings, under your name, then Subscriptions.
-        </p>
-      )}
-    </>
+            type="button"
+            role="radio"
+            aria-checked={on}
+            className={`subscribe-plan${on ? ' subscribe-plan--on' : ''}`}
+            style={{ '--i': i }}
+            disabled={plan.unavailable}
+            onClick={() => onChoose(plan.key)}
+          >
+            <span className="subscribe-plan__dot" aria-hidden="true" />
+            <span className="subscribe-plan__text">
+              <span className="subscribe-plan__name">
+                {plan.label}
+                {plan.badge && <span className="subscribe-plan__badge">{plan.badge}</span>}
+              </span>
+              <span className="subscribe-plan__detail">{plan.unavailable ? 'Coming soon' : plan.detail}</span>
+            </span>
+            <span className="subscribe-plan__price">
+              {plan.price}
+              <span className="subscribe-plan__unit">{plan.unit}</span>
+            </span>
+          </button>
+        )
+      })}
+    </div>
   )
 }
