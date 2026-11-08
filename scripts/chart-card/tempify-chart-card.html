@@ -347,11 +347,24 @@ const VOICE = {
   ask: COPY.ask,
   options: "A, B, C, or D?",
   peak: d => (d.peak === null ? "It never charted!" : `Number ${d.peak}!`),
-  facts: d => (d.peak === null ? (d.year ? `Even though it came out in ${sayYear(d.year)}.` : "")
+  facts: d => (d.peak === null ? (d.missed ? MISSED[d.missed.kind](d.missed) : "")
     : d.peak === 1 ? `${weeksSaid(d.weeksAt1)} at the top, in ${sayYear(d.firstYear)}.`
     : `${weeksSaid(d.weeks)} on the chart, in ${sayYear(d.firstYear)}.`),
-  biggest: (b, d) => { const who = d.sayArtist || b.artist; return `${who}${/s$/i.test(who) ? "'" : "'s"} biggest? ${b.title}.`; },
+  biggest: (b, d) => {
+    const who = d.sayArtist || b.artist, theirs = `${who}${/s$/i.test(who) ? "'" : "'s"}`;
+    return d.missed && d.missed.biggest ? `${theirs} biggest ever.` : `${theirs} biggest? ${b.title}.`;
+  },
   url: "Play today's at tempify dot me.",
+};
+// After "It never charted!", the payoff: what the index says about the artist, picked by
+// render-chart-card.py's missed_for. Not the year alone, which is no payoff, and never "even
+// though it came out in", which says the song should have been a hit that year.
+const MISSED = {
+  same: m => `But ${m.title} did, that same year.`,
+  gap: m => `Their last Hot 100 song was ${m.years} years earlier.`,
+  first: m => `Their first Hot 100 song came ${m.years === 1 ? "a year" : `${m.years} years`} later.`,
+  count: m => `They put ${m.songs} songs on the Hot 100. Not this one.`,
+  none: () => "They never had a Hot 100 song at all.",
 };
 const weeksSaid = n => `${n} week${n === 1 ? "" : "s"}`;
 const ONES = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split(" ");

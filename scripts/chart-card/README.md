@@ -56,7 +56,7 @@ The Tempify bot makes one every day, a week ahead, from its own copy of this rep
    | `date` | Always. The day it's posted. The puzzle number comes from it. |
    | `song`, `artist` | Always. As people know them; this is what the post shows. |
    | `never_charted` | `true` when the round's `peak` is 0. The script checks the index agrees. |
-   | `year` | With `never_charted`: the round's `year`, shown as "Released in 1971" and said as "it came out in seventy-one". |
+   | `year` | With `never_charted`: the round's `year`, shown as "Released in 1971". The voice doesn't say the year: it says what the index has on the artist that year, like "But A Night To Remember did, that same year." |
    | `index_title` | Only when the index spells the title differently (the script tells you). |
    | `say_song`, `say_artist` | Only when the voice says a name wrong: the name spelled the way it's said ("Pink" for P!nk). Keep the same number of words, so the words still land as they're said. |
    | `poll` | `false` only if Instagram turns the poll down. The question then says "Pick a letter" and "Comment your letter". |

@@ -188,6 +188,35 @@ def biggest_for(rows, row, post):
     return {"artist": post["artist"], "title": best[0], "detail": detail, "peak": best[2], "weeksAt1": best[4]}
 
 
+def missed_for(rows, post, biggest):
+    """For a song that never charted, the most surprising thing the index says about its artist,
+    for the voice to say after "It never charted!" (the page words it). On 11/8/2026 Jett said
+    "it came out in ninety-four" was no payoff, and "even though it came out in" before it said the
+    song should have been a hit that year. In order: another of theirs that charted the same year,
+    a long wait since their last one, their first one coming later, or how many they had. Credits
+    shared with someone else don't count, as with the biggest hit."""
+    artist = norm(post["artist"])
+    theirs = [r for r in rows if norm(r[1]) == artist]
+    if not theirs:
+        return {"kind": "none"}
+    year = int(post["year"]) if post.get("year") else None
+    charted = lambda r: int(r[5][:4])
+    if year:
+        same = [r for r in theirs if charted(r) == year]
+        if same:
+            best = min(same, key=lambda r: (r[2], -r[4], -r[3]))
+            # Said aloud, so a trailing "(Part 1)" or a cut-off subtitle is left out.
+            title = re.sub(r"\s*\([^)]*\)?\s*$", "", best[0]) or best[0]
+            return {"kind": "same", "title": title,
+                    "biggest": bool(biggest) and biggest["title"] == best[0]}
+        before = [charted(r) for r in theirs if charted(r) < year]
+        if before and year - max(before) >= 5:
+            return {"kind": "gap", "years": year - max(before)}
+        if not before:
+            return {"kind": "first", "years": min(charted(r) for r in theirs) - year}
+    return {"kind": "count", "songs": len(theirs)}
+
+
 def answer_letter(peak):
     if peak is None:
         return "D"
@@ -561,6 +590,7 @@ def main():
     poll = post.get("poll", True)
     (folder / "art.jpg").unlink(missing_ok=True)
     art = find_art(post, folder)
+    biggest = biggest_for(rows, row, post)
     data = {
         "song": post["song"],
         "artist": post["artist"],
@@ -568,7 +598,8 @@ def main():
         "peak": peak,
         "answer": letter,
         "facts": facts_for(row, post),
-        "biggest": biggest_for(rows, row, post),
+        "biggest": biggest,
+        "missed": missed_for(rows, post, biggest) if row is None else None,
         "dare": "A" if letter in "CD" else "D",
         "poll": poll,
         "art": "file://" + pathname2url(str(folder / "art.jpg")) if art else None,
