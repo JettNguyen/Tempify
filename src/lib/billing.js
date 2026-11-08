@@ -47,11 +47,6 @@ async function getPurchasesSdk() {
   return { Purchases, LOG_LEVEL }
 }
 
-async function getPurchasesUiSdk() {
-  const { RevenueCatUI } = await import('@revenuecat/purchases-capacitor-ui')
-  return RevenueCatUI
-}
-
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export function usesNativeIap() {
@@ -125,57 +120,39 @@ export async function checkPremiumEntitlement() {
 }
 
 /**
- * Present the RC native paywall for the current offering.
- * Returns { purchased: boolean, result: PAYWALL_RESULT }.
- *
- * Use this when you always want to show the paywall (e.g. a "View Plans" button).
+ * The packages in RevenueCat's current offering, for Subscribe's own plan
+ * cards (`planCards` in ./plans). Prices come from the App Store.
  */
-export async function presentPaywall() {
-  if (!usesNativeIap()) throw new Error('Paywall is only available in the mobile app.')
+export async function getPlans() {
+  if (!usesNativeIap()) return []
   await initRevenueCat()
-
-  const { PAYWALL_RESULT } = await import('@revenuecat/purchases-capacitor-ui')
-  const RevenueCatUI = await getPurchasesUiSdk()
-
-  console.info('[RevenueCat] Presenting paywall')
-  const { result } = await RevenueCatUI.presentPaywall()
-  console.info('[RevenueCat] Paywall result', { result })
-
-  return {
-    purchased: result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED,
-    result,
-  }
+  const offerings = await getOfferings()
+  return offerings?.current?.availablePackages ?? []
 }
 
+// PURCHASES_ERROR_CODE values from the SDK, kept here so the check needs no
+// extra import.
+const PURCHASE_CANCELLED = '1'
+const PAYMENT_PENDING = '20'
+
 /**
- * Present the paywall only if the user doesn't already hold the entitlement.
- * Returns { purchased: boolean, result: PAYWALL_RESULT }.
- *
- * Use this to gate premium features: it silently skips the paywall for
- * subscribers while showing it to free users.
+ * Buy one package. Returns 'active' once the entitlement is on, 'pending'
+ * when Apple is still waiting on something (Ask to Buy, a card check), or
+ * 'cancelled' when the player backed out. Throws on a real failure.
  */
-export async function presentPaywallIfNeeded() {
-  if (!usesNativeIap()) throw new Error('Paywall is only available in the mobile app.')
+export async function buyPlan(aPackage) {
+  if (!usesNativeIap()) throw new Error('Purchases are only available in the mobile app.')
   const { entitlementId } = validateRevenueCatConfig()
-
-  const { PAYWALL_RESULT } = await import('@revenuecat/purchases-capacitor-ui')
-  const RevenueCatUI = await getPurchasesUiSdk()
-
-  console.info('[RevenueCat] Presenting paywall if needed', { entitlementId })
-  const { result } = await RevenueCatUI.presentPaywallIfNeeded({
-    requiredEntitlementIdentifier: entitlementId,
-  })
-  console.info('[RevenueCat] Paywall-if-needed result', {
-    result,
-    PURCHASED: PAYWALL_RESULT.PURCHASED,
-    RESTORED: PAYWALL_RESULT.RESTORED,
-    isPurchased: result === PAYWALL_RESULT.PURCHASED,
-    isRestored: result === PAYWALL_RESULT.RESTORED,
-  })
-
-  return {
-    purchased: result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED,
-    result,
+  await initRevenueCat()
+  const { Purchases } = await getPurchasesSdk()
+  try {
+    const { customerInfo } = await Purchases.purchasePackage({ aPackage })
+    return customerInfo?.entitlements?.active?.[entitlementId] ? 'active' : 'pending'
+  } catch (err) {
+    const code = String(err?.code ?? '')
+    if (code === PURCHASE_CANCELLED || err?.userCancelled) return 'cancelled'
+    if (code === PAYMENT_PENDING) return 'pending'
+    throw err
   }
 }
 

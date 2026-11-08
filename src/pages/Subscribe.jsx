@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
-import { usesNativeIap, presentPaywall, restorePurchases } from '../lib/billing'
+import { usesNativeIap, getPlans, buyPlan, restorePurchases } from '../lib/billing'
+import { planCards, anyRenews } from '../lib/plans'
 import './Subscribe.css'
 
 const WEB_PLANS = [
@@ -52,28 +53,52 @@ export default function Subscribe() {
 
   const nativeIap = usesNativeIap()
 
-  async function handleSubscribe(plan = WEB_PLANS[0]) {
-    if (busy) return
+  // The App Store's plans, read from RevenueCat: null while loading.
+  const [plans, setPlans] = useState(null)
+  const [plansFailed, setPlansFailed] = useState(false)
+  const [buying, setBuying] = useState(null)
 
-    if (nativeIap) {
-      setBusy(true)
-      setMessage('')
-      try {
-        // Always shows the RC native paywall so users can see plans and manage their subscription.
-        const { purchased } = await presentPaywall()
-        if (purchased) {
-          await markSubscribed()
-          navigate('/archive')
-        }
-        // If dismissed/cancelled, no message, just close.
-      } catch (err) {
-        setMessage(err?.message || 'Unable to complete purchase right now.')
-      } finally {
-        setBusy(false)
-      }
-      return
+  async function loadPlans() {
+    setPlans(null)
+    setPlansFailed(false)
+    try {
+      setPlans(planCards(await getPlans()))
+    } catch (err) {
+      console.warn('[Subscribe] Plans failed to load', err)
+      setPlans([])
+      setPlansFailed(true)
     }
+  }
 
+  useEffect(() => {
+    if (nativeIap) loadPlans()
+  }, [nativeIap])
+
+  async function handleBuy(plan) {
+    if (busy) return
+    setBusy(true)
+    setBuying(plan.key)
+    setMessage('')
+    try {
+      const outcome = await buyPlan(plan.pkg)
+      if (outcome === 'active') {
+        await markSubscribed()
+        navigate('/archive')
+      } else if (outcome === 'pending') {
+        setMessage("Apple is still confirming this purchase. Tempify+ turns on as soon as it goes through, and Refresh status checks again.")
+      }
+      // Cancelled: the player backed out, so say nothing.
+    } catch (err) {
+      console.warn('[Subscribe] Purchase failed', err)
+      setMessage("The purchase didn't go through, and you weren't charged. Try again, or check the payment method on your Apple account.")
+    } finally {
+      setBusy(false)
+      setBuying(null)
+    }
+  }
+
+  async function handleSubscribe(plan) {
+    if (busy) return
     // Web: redirect to the Stripe payment link for the selected plan.
     const link = getWebPlanLink(plan)
     if (!link) {
@@ -147,34 +172,27 @@ export default function Subscribe() {
         </p>
 
         {nativeIap ? (
-          <button onClick={() => handleSubscribe()} className="subscribe-cta btn-press" disabled={busy}>
-            {busy ? 'Please wait…' : 'See Plans'}
-          </button>
+          <NativePlans
+            plans={plans}
+            failed={plansFailed}
+            busy={busy}
+            buying={buying}
+            onBuy={handleBuy}
+            onRetry={loadPlans}
+          />
         ) : (
           <div className="subscribe-plan-list">
             {WEB_PLANS.map((plan) => {
               const configured = Boolean(getWebPlanLink(plan))
               return (
-                <div key={plan.key} className={`subscribe-price-box${configured ? '' : ' subscribe-price-box--disabled'}`}>
-                  <div className="subscribe-plan-header">
-                    <div className="subscribe-plan-label-row">
-                      <p className="subscribe-plan-label">{plan.label}</p>
-                      {plan.badge && <span className="subscribe-plan-badge">{plan.badge}</span>}
-                    </div>
-                    <div className="subscribe-price-row">
-                      <span className="subscribe-price">{plan.price}</span>
-                      <span className="subscribe-price-unit">{plan.unit}</span>
-                    </div>
-                  </div>
-                  <p className="subscribe-fine-print">{plan.note}</p>
-                  <button
-                    onClick={() => handleSubscribe(plan)}
-                    className="subscribe-cta btn-press"
-                    disabled={busy || !configured}
-                  >
-                    {busy ? 'Please wait…' : configured ? plan.cta : 'Coming soon'}
-                  </button>
-                </div>
+                <PlanBox
+                  key={plan.key}
+                  plan={plan}
+                  disabled={busy || !configured}
+                  dim={!configured}
+                  cta={busy ? 'Please wait…' : configured ? plan.cta : 'Coming soon'}
+                  onClick={() => handleSubscribe(plan)}
+                />
               )
             })}
           </div>
@@ -194,7 +212,7 @@ export default function Subscribe() {
           </button>
         )}
 
-        {message && <p className="subscribe-hint">{message}</p>}
+        {message && <p className="subscribe-hint subscribe-hint--message">{message}</p>}
 
         {!user && (
           <p className="subscribe-hint">You'll be asked to log in or create an account.</p>
@@ -216,5 +234,72 @@ export default function Subscribe() {
         </p>
       </div>
     </div>
+  )
+}
+
+function PlanBox({ plan, cta, disabled, dim = false, onClick }) {
+  return (
+    <div className={`subscribe-price-box${dim ? ' subscribe-price-box--disabled' : ''}`}>
+      <div className="subscribe-plan-header">
+        <div className="subscribe-plan-label-row">
+          <p className="subscribe-plan-label">{plan.label}</p>
+          {plan.badge && <span className="subscribe-plan-badge">{plan.badge}</span>}
+        </div>
+        <div className="subscribe-price-row">
+          <span className="subscribe-price">{plan.price}</span>
+          <span className="subscribe-price-unit">{plan.unit}</span>
+        </div>
+      </div>
+      <p className="subscribe-fine-print">{plan.note}</p>
+      <button onClick={onClick} className="subscribe-cta btn-press" disabled={disabled}>
+        {cta}
+      </button>
+    </div>
+  )
+}
+
+// The App Store's plans, in the same cards the web shows.
+function NativePlans({ plans, failed, busy, buying, onBuy, onRetry }) {
+  if (plans === null) {
+    return (
+      <div className="subscribe-plan-list" aria-busy="true" aria-label="Loading plans">
+        {[0, 1, 2].map((i) => <div key={i} className="subscribe-price-box subscribe-price-box--loading" />)}
+      </div>
+    )
+  }
+
+  if (plans.length === 0) {
+    return (
+      <div className="subscribe-plans-missing">
+        <p className="subscribe-hint">
+          {failed
+            ? "Couldn't load the plans. Check your connection, then try again."
+            : 'No plans are showing right now. Try again in a minute.'}
+        </p>
+        <button onClick={onRetry} className="subscribe-restore btn-press btn-hover">Try again</button>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="subscribe-plan-list">
+        {plans.map((plan) => (
+          <PlanBox
+            key={plan.key}
+            plan={plan}
+            disabled={busy}
+            cta={buying === plan.key ? 'Please wait…' : plan.cta}
+            onClick={() => onBuy(plan)}
+          />
+        ))}
+      </div>
+      {anyRenews(plans) && (
+        <p className="subscribe-renews">
+          Monthly and yearly plans renew on their own until you cancel. You can cancel any time in
+          your iPhone's Settings, under your name, then Subscriptions.
+        </p>
+      )}
+    </>
   )
 }

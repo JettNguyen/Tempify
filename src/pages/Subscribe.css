@@ -160,3 +160,40 @@ body.big-screen .subscribe-page {
   font-family: inherit;
   cursor: pointer;
 }
+
+/* App Store plans while RevenueCat answers: the cards' own size, so nothing
+   jumps when the prices land. */
+.subscribe-price-box--loading {
+  height: 168px;
+  animation: subscribePlanWait 1.4s ease-in-out infinite;
+}
+
+.subscribe-price-box--loading:nth-child(2) { animation-delay: 0.15s; }
+.subscribe-price-box--loading:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes subscribePlanWait {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subscribe-price-box--loading { animation: none; }
+}
+
+.subscribe-plans-missing .subscribe-hint {
+  margin-top: 0;
+  color: var(--text-muted);
+}
+
+/* A message about a purchase or a restore is something to act on, so it
+   reads at the muted gray, not the dim one the small print uses. */
+.subscribe-hint--message {
+  color: var(--text-muted);
+}
+
+.subscribe-renews {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-top: 0.25rem;
+}
