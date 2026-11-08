@@ -149,10 +149,14 @@ function deduplicate(tracks) {
     if (!existing) {
       seen.set(key, t)
     } else {
-      // Prefer: has preview > shorter title (fewer variant words) > original order
+      // Prefer: has preview > shorter title (fewer variant words) > original order.
+      // The shorter title has to win between two that both have a preview too,
+      // or "Blinding Lights (Live)" listed first hides the studio recording
+      // from findClip, which wants the plain title.
       const betterPreview = !existing.previewUrl && t.previewUrl
+      const samePreview = Boolean(existing.previewUrl) === Boolean(t.previewUrl)
       const shorter = t.title.length < existing.title.length
-      if (betterPreview || (!existing.previewUrl && shorter)) {
+      if (betterPreview || (samePreview && shorter)) {
         seen.set(key, t)
       }
     }
