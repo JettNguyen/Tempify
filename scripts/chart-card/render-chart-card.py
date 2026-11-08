@@ -377,6 +377,11 @@ def voice_model():
 # recognition heard as "7-ry", and with a d it hears 70.
 SOFTENED = {"twenty": "nɾ", "seventy": "nd", "ninety": "nɾ"}
 
+# The -teens are the other way round: they take a hard t. The voice puts the stress on the front,
+# "THIR-teen", and the t after it went soft, so "13 years earlier" came out "thirdeen", close to
+# "thirty" (Jett, November 8, 2026). With the stress on "teen", as when counting, the t is hard.
+TEENS = "thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
+
 # "A, B, C, or D?" is a recording, not a fresh read. Kokoro ran the letters together in one breath,
 # and said one at a time they came out on one flat note with rough endings. letters.wav is her
 # own takes, each letter finished, its pitch reshaped and its level matched to her talking, until
@@ -388,11 +393,16 @@ LETTERS_START = [0.0, 0.453, 0.932, 1.406, 1.585]
 
 
 def sounds_of(kokoro, text):
-    """The line's sounds, with the t softened in SOFTENED (not "nineteen", which starts the same)."""
+    """The line's sounds, with the t softened in SOFTENED (not "nineteen", which starts the same)
+    and the stress moved onto "teen" in TEENS."""
     said = kokoro.tokenizer.phonemize(text, "en-us")
     for word, soft in SOFTENED.items():
         hard = kokoro.tokenizer.phonemize(word, "en-us")
         said = re.sub(re.escape(hard) + "(?!ː)", hard.replace("nt", soft), said)
+    for word in TEENS:
+        front = kokoro.tokenizer.phonemize(word, "en-us")           # θˈɜːtiːn
+        teen = re.sub(r"t[ˈˌ]?iːn$", "tˈiːn", front.replace("ˈ", "ˌ"))  # θˌɜːtˈiːn
+        said = said.replace(front, teen)
     return said
 
 
