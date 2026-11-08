@@ -141,8 +141,9 @@ export default function Subscribe() {
         <p className="subscribe-eyebrow">tempify+</p>
         <h1 className="subscribe-title">Every day, going back forever.</h1>
         <p className="subscribe-body">
-          Unlock the full archive, browse by genre, and get recommendations based on
-          what you actually play. Streaks carry across every game.
+          Unlock the full archive, browse by genre, make games for your friends from songs
+          you pick, and get recommendations based on what you actually play. Streaks carry
+          across every game.
         </p>
 
         {nativeIap ? (

@@ -2,7 +2,7 @@ import BackButton from '../components/BackButton'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import './Privacy.css'
 
-const LAST_UPDATED = 'November 2, 2026'
+const LAST_UPDATED = 'November 7, 2026'
 const CONTACT_EMAIL = 'jettuf26@gmail.com'
 const OPERATOR = 'Jett Nguyen'
 
@@ -46,6 +46,7 @@ export default function Privacy() {
           <li>Account information: your email address, and a username if you choose one. If you sign in with Apple or Google, we receive your email address from that provider.</li>
           <li>Profile preferences, such as avatar icon, avatar color, leaderboard visibility, autoplay, and competitive mode.</li>
           <li>Gameplay data, such as scores, attempts, completion status, times, and streaks.</li>
+          <li>Games you make for friends: the songs you picked and their answers, and the scores of signed-in players who play them.</li>
           <li>Social data, such as who you follow and the profile details you choose to make visible.</li>
           <li>Subscription state, used to unlock premium access and route you to the right billing portal.</li>
           <li>Technical data logged automatically by our hosting and backend providers, such as your IP address, device or browser type, and request timestamps. This is used to keep the service running, diagnose faults, and prevent abuse.</li>
@@ -114,7 +115,9 @@ export default function Privacy() {
         <p>
           If you set a username, your profile (username, avatar, and premium badge) can be found by
           other signed-in users through in-app search. Your scores appear on leaderboards according to
-          the leaderboard visibility setting on your profile, which you can change at any time.
+          the leaderboard visibility setting on your profile, which you can change at any time. The
+          same setting decides whether your score shows on the scoreboard of a game a friend made.
+          Anyone with the link to a game you made can play it and see your username as its maker.
           Your email address is never shown to other users.
         </p>
       </section>

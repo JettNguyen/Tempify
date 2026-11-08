@@ -26,6 +26,40 @@
   letter-spacing: -0.02em;
 }
 
+.home-make {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+}
+
+.home-make__icon,
+.home-make__go {
+  flex-shrink: 0;
+  color: var(--amber);
+}
+
+.home-make__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-make__title {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.home-make__body {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
 .home-no-account {
   margin-top: 2.5rem;
   font-size: var(--fs-sm);

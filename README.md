@@ -66,6 +66,19 @@ still count.
 
 Daily results reset at midnight EST.
 
+### Games you make
+
+Tempify+ players can make their own Era, Hit or Miss or One Bar game for friends at `/make`. They
+pick three to five songs (one for One Bar), and the app fills in the answers: the year each song
+first charted and how high it got, from the Hot 100 list it ships. Each song plays an Apple clip,
+like the daily games.
+
+A made game plays on the daily game's own page, `/game/<slug>?c=<id>`, for anyone with the link,
+account or not. Its plays stay out of streaks, the daily leaderboards and the daily stats. A
+signed-in player's first score goes on that game's own scoreboard, and challenge links work as
+they do for a daily game. The tables and the functions that check Premium are in
+`supabase/migrations/019_custom_games.sql`.
+
 ### Points and challenges
 
 Hit or Miss, Era and Tap the Tempo score each song up to 1,000 points, more the closer you get, and
@@ -89,6 +102,7 @@ Tempify Plus unlocks:
 - The full archive, going back to day one
 - Browsing by genre
 - Recommendations based on what you play
+- Making games for friends from songs you pick
 
 It costs $3 a month, $25 a year, or $100 once for lifetime access.
 

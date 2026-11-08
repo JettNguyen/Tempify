@@ -1,0 +1,569 @@
+/* Making a game for friends. Inside a game-theme--<slug> wrapper, the game's
+   own colour (--game-color) tints what belongs to it. */
+
+.make-eyebrow {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.make-eyebrow--game {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  color: var(--game-color);
+}
+
+.make-eyebrow__glyph {
+  width: 14px;
+  height: 14px;
+}
+
+.make-title {
+  font-size: var(--fs-xl);
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.make-body {
+  margin-top: 0.5rem;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.make-note {
+  margin-top: 1.5rem;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.make-section-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.75rem;
+}
+
+.make-hint {
+  margin-top: 0.6rem;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.make-hint--link {
+  overflow-wrap: anywhere;
+}
+
+.make-link {
+  color: var(--text-primary);
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+.make-error {
+  margin-top: 0.6rem;
+  font-size: var(--fs-xs);
+  color: var(--red);
+  line-height: 1.5;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+
+.make-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--amber);
+  color: #0f0f0f;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: scale var(--press-up), background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.make-primary:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.make-primary.make-copied,
+.make-chip.make-copied {
+  background: var(--green);
+  border-color: var(--green);
+  color: #0f0f0f;
+}
+
+.make-secondary {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.make-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  padding: 0.4rem 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.make-text-btn--danger {
+  color: var(--red);
+}
+
+.make-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: scale var(--press-up), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.make-chip--quiet {
+  color: var(--text-muted);
+}
+
+.make-chip--danger {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* ─── Before Tempify+ ─────────────────────────────────────────────────────── */
+
+.make-pitch-list {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.make-pitch-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.make-pitch-item__glyph {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  color: var(--game-color);
+}
+
+.make-pitch-item__name {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.make-pitch-item__line {
+  display: block;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* ─── Picking a game ──────────────────────────────────────────────────────── */
+
+.make-games {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.make-game {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 0.85rem;
+  align-items: center;
+  width: 100%;
+  padding: 1rem 1rem 1rem 0.95rem;
+  border: 1.5px solid var(--game-color);
+  border-radius: 10px;
+  overflow: hidden;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  animation: make-in 0.35s ease both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+.make-game__glyph {
+  grid-row: 1 / 3;
+  width: 30px;
+  height: 30px;
+  color: var(--game-color);
+}
+
+.make-game__name {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.make-game__line {
+  grid-column: 2;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.make-game__go {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  color: var(--game-color);
+}
+
+/* ─── Building one ────────────────────────────────────────────────────────── */
+
+.make-build-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.make-count {
+  font-size: var(--fs-sm);
+  color: var(--game-color);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.make-search {
+  margin-top: 1.25rem;
+}
+
+.make-status,
+.make-notice {
+  margin-top: 0.6rem;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.make-status {
+  color: var(--text-muted);
+}
+
+.make-notice {
+  color: var(--amber-light);
+}
+
+.make-songs {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.make-song {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  animation: make-in 0.3s cubic-bezier(0.3, 1.3, 0.5, 1) both;
+  transition: border-color 0.2s ease;
+}
+
+.make-song--open {
+  border-color: var(--game-color);
+}
+
+.make-song__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.make-song__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.make-song__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.make-song__start {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(var(--game-color-rgb), 0.15);
+  color: var(--game-color);
+  font-size: var(--fs-2xs);
+  font-weight: 500;
+}
+
+.make-song__artist {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.make-song__answer {
+  margin-top: 0.2rem;
+  font-size: var(--fs-xs);
+  color: var(--game-color);
+  line-height: 1.4;
+}
+
+.make-song__answer--warn {
+  color: var(--amber-light);
+}
+
+.make-song__change {
+  flex-shrink: 0;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.make-song__panel {
+  padding: 0.25rem 0.75rem 0.75rem;
+  border-top: 1px solid var(--border);
+  animation: make-in 0.25s ease both;
+}
+
+.make-song__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.25rem;
+}
+
+.make-field {
+  display: block;
+  margin-top: 0.75rem;
+}
+
+.make-field__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.make-field__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.make-field__hash {
+  color: var(--text-dim);
+}
+
+.make-field__input {
+  width: 6.5rem;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #111;
+  color: var(--text-primary);
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.make-field__input:focus {
+  border-color: var(--game-color);
+}
+
+.make-field__input:disabled {
+  opacity: 0.5;
+}
+
+.make-toggle {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.make-toggle--on {
+  border-color: var(--game-color);
+  background: rgba(var(--game-color-rgb), 0.15);
+  color: var(--text-primary);
+}
+
+/* Low on the page, where a thumb already is once the songs are picked. */
+.make-save-wrap {
+  margin-top: 1.5rem;
+}
+
+/* ─── Saved ───────────────────────────────────────────────────────────────── */
+
+.make-ready {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.make-ready__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 1rem;
+  border-radius: 50%;
+  background: rgba(var(--game-color-rgb), 0.15);
+  color: var(--game-color);
+  animation: make-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+
+/* ─── Made so far ─────────────────────────────────────────────────────────── */
+
+.make-mine {
+  margin-top: 2.25rem;
+}
+
+.make-mine__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.make-mine__item {
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.make-mine__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.make-mine__glyph {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: var(--game-color);
+}
+
+.make-mine__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.make-mine__name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.make-mine__meta {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.make-mine__songs {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.make-mine__scores {
+  flex-shrink: 0;
+  font-size: var(--fs-2xs);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.make-mine__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.make-mine__confirm .make-hint {
+  margin-top: 0.75rem;
+}
+
+/* ─── Motion ──────────────────────────────────────────────────────────────── */
+
+@keyframes make-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes make-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .make-game,
+  .make-song,
+  .make-song__panel,
+  .make-ready__badge {
+    animation: none;
+  }
+}

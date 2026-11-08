@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
+import { useCustomRecord } from '../hooks/useCustomRecord'
 import { useGameTimer } from '../hooks/useGameTimer'
 import { exitTarget } from '../lib/gameExit'
 import { saveScore, updateStreak } from '../lib/scores'
@@ -13,6 +14,7 @@ import { rightGaps, gapPoints, gapLabel } from '../lib/timeline'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
 import { readChallenge } from '../lib/challenge'
 import { nextGameAfter } from '../lib/games'
+import { customNext } from '../lib/customGames'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import StageSong from '../components/StageSong'
@@ -33,10 +35,14 @@ function reducedMotion() {
  * Era, five songs at a time: the first starts on the line with its year
  * showing, and each one after is heard without its name and dropped into a
  * gap on the line. The name comes with the answer.
+ *
+ * `custom` is set for a game a player made: `puzzleDate` is then its key
+ * on this device, and the finish goes to its own board, not the day's.
  */
-export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
+export default function Timeline({ puzzle, puzzleDate, dateParam, Shell, custom }) {
   const { user, profile } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
+  const record = useCustomRecord(custom)
   const [searchParams] = useSearchParams()
   const rounds = puzzle.metadata.rounds
   const toPlace = rounds.length - 1
@@ -67,7 +73,7 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
 
   useEffect(() => {
     if (done || playedRef.current) return
-    if (isComplete(SLUG, puzzleDate) || results.length >= toPlace) {
+    if ((record ? record.finished : isComplete(SLUG, puzzleDate)) || results.length >= toPlace) {
       stop()
       setDone(true)
     }
@@ -90,7 +96,7 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
   const result = results[index - 1]
   const revealed = Boolean(result)
   const total = results.reduce((sum, r) => sum + (r.points || 0), 0)
-  const savedPoints = completions[`${SLUG}|${puzzleDate}`]?.points
+  const savedPoints = record ? record.saved?.points : completions[`${SLUG}|${puzzleDate}`]?.points
   const finalPoints = results.length === toPlace ? total : (savedPoints ?? total)
 
   // What's on the line: every song before this one, and this one too once
@@ -103,6 +109,10 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
   async function finish(all, elapsed) {
     const points = all.reduce((sum, r) => sum + r.points, 0)
     const won = isWin(points, maxPoints)
+    if (record) {
+      record.finish({ attempts: 1, completed: won, points })
+      return
+    }
     markComplete(SLUG, puzzleDate, 1, won, points)
     if (!user) return
     try {
@@ -167,7 +177,7 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
 
   return (
     <Shell className="timeline">
-      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
+      <Link to={custom ? custom.back : exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
       <GameHeader
         slug={SLUG}
@@ -175,6 +185,7 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
         puzzleDate={puzzleDate}
         title={done ? 'How the line came out' : 'Where does this one go?'}
         timer={timer}
+        tag={custom?.tag}
       />
 
       <div className="timeline__progress">
@@ -269,8 +280,9 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell }) {
           gameSlug={SLUG}
           puzzleDate={dateParam}
           timeSeconds={competitive ? finalTime : null}
-          nextGame={nextGameAfter('era', puzzleDate)}
+          nextGame={custom ? customNext(custom) : nextGameAfter('era', puzzleDate)}
           showLeaderboard={competitive}
+          custom={custom && { ...custom, posted: record.posted }}
         />
       )}
     </Shell>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
+import { useCustomRecord } from '../hooks/useCustomRecord'
 import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { readGuessChallenge } from '../lib/challenge'
@@ -12,6 +13,7 @@ import { saveScore, updateStreak } from '../lib/scores'
 import { sharesArtist } from '../lib/matching'
 import { hapticImportantTap, hapticWrong, hapticRejected, hapticThreshold } from '../lib/haptics'
 import { nextGameAfter } from '../lib/games'
+import { customNext } from '../lib/customGames'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import GuessInput from '../components/GuessInput'
@@ -19,6 +21,7 @@ import ResultCard from '../components/ResultCard'
 import { GuessTally } from '../components/Challenge'
 import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
+import CustomGame from './CustomGame'
 import './OneBar.css'
 
 const MAX_ATTEMPTS = 6
@@ -39,14 +42,24 @@ const HINTS = {
 
 const progressKey = (date) => `tempify_progress_one-bar_${date}`
 
+// A link with c= opens a game a player made; anything else, the day's.
 export default function OneBar() {
-  const { user, profile } = useAuth()
-  const { markComplete, isComplete, completions } = useCompletion(user?.id)
+  const [searchParams] = useSearchParams()
+  const code = searchParams.get('c')
+  if (code) {
+    return (
+      <CustomGame code={code} slug="one-bar" Shell={GameShell}>
+        {(puzzle, custom) => <OneBarRound puzzle={puzzle} puzzleDate={custom.key} custom={custom} />}
+      </CustomGame>
+    )
+  }
+  return <DailyOneBar />
+}
+
+function DailyOneBar() {
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()
-  // A friend's result, when this was opened from their challenge link.
-  const challenge = readGuessChallenge(searchParams, MAX_ATTEMPTS)
 
   // Seeded from the session cache the home screen warmed, so a tapped tile
   // paints the real screen immediately instead of an empty shell.
@@ -54,6 +67,37 @@ export default function OneBar() {
   const [puzzle, setPuzzle] = useState(cachedPuzzle)
   const [loading, setLoading] = useState(!cachedPuzzle)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    // Already seeded from cache, since refetching would only re-run derived
+    // state (option order) and make the screen jump.
+    if (cachedPuzzle) return
+    getPuzzle('one-bar', dateParam)
+      .then(setPuzzle)
+      .catch(() => setError('No puzzle found for today.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
+  if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
+  if (!puzzle) return null
+
+  return <OneBarRound puzzle={puzzle} puzzleDate={puzzleDate} dateParam={dateParam} />
+}
+
+/**
+ * One song: a clip that grows with each wrong guess. `custom` is set for a
+ * game a player made: `puzzleDate` is then its key on this device, and the
+ * finish goes to its own board, not the day's.
+ */
+function OneBarRound({ puzzle, puzzleDate, dateParam, custom }) {
+  const { user, profile } = useAuth()
+  const { markComplete, isComplete, completions } = useCompletion(user?.id)
+  const record = useCustomRecord(custom)
+  const [searchParams] = useSearchParams()
+  // A friend's result, when this was opened from their challenge link.
+  const challenge = readGuessChallenge(searchParams, MAX_ATTEMPTS)
+  const finishedBefore = record ? record.finished : isComplete('one-bar', puzzleDate)
 
   const guessInputRef = useRef(null)
   const audioRef = useRef(null)
@@ -73,20 +117,10 @@ export default function OneBar() {
   const [freshSegment, setFreshSegment] = useState(null)
 
   useEffect(() => {
-    // Already seeded from cache, since refetching would only re-run derived
-    // state (option order) and make the screen jump.
-    if (cachedPuzzle) return
-    getPuzzle('one-bar', dateParam)
-      .then(setPuzzle)
-      .catch(() => setError('No puzzle found for today.'))
-      .finally(() => setLoading(false))
-  }, [])
-
-  useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('one-bar', puzzleDate)) {
+    if (finishedBefore) {
       localStorage.removeItem(progressKey(puzzleDate))
-      const stored = completions[`one-bar|${puzzleDate}`]
+      const stored = record ? record.saved : completions[`one-bar|${puzzleDate}`]
       const count = stored?.attempts || 1
       const wasCorrect = stored?.completed ?? false
       const fake = Array.from({ length: count }, (_, i) => ({
@@ -134,7 +168,7 @@ export default function OneBar() {
   // the player restart with a clean slate.
   useEffect(() => {
     if (!puzzle || done) return
-    if (isComplete('one-bar', puzzleDate)) return
+    if (finishedBefore) return
     try {
       const saved = JSON.parse(localStorage.getItem(progressKey(puzzleDate)) || 'null')
       if (saved?.attempts?.length > 0) {
@@ -181,6 +215,10 @@ export default function OneBar() {
       setDone(true)
       setJustFinished(true)
       localStorage.removeItem(progressKey(puzzleDate))
+      if (record) {
+        record.finish({ attempts: newAttempts.length, completed: attempt.correct, guesses: attempt.correct ? newAttempts.length : 0 })
+        return
+      }
       markComplete('one-bar', puzzleDate, newAttempts.length, attempt.correct)
       if (user) {
         try {
@@ -250,10 +288,6 @@ export default function OneBar() {
     await registerAttempt({ title: 'Skipped', artist: '', correct: false, skipped: true })
   }
 
-  if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
-  if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
-  if (!puzzle) return null
-
   const remainingGuesses = MAX_ATTEMPTS - attempts.length
   const nextReveal = REVEAL_TIMINGS[Math.min(attempts.length + 1, REVEAL_TIMINGS.length - 1)]
 
@@ -269,13 +303,14 @@ export default function OneBar() {
 
   return (
     <GameShell>
-      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
+      <Link to={custom ? custom.back : exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
       <GameHeader
         slug="one-bar"
         name="one bar"
         puzzleDate={puzzleDate}
         title="Name the song from a short clip. Each wrong guess unlocks a bit more."
+        tag={custom?.tag}
       />
 
       <AudioPlayer
@@ -382,8 +417,9 @@ export default function OneBar() {
           maxGuesses={MAX_ATTEMPTS}
           gameSlug="one-bar"
           puzzleDate={dateParam}
-          nextGame={nextGameAfter('one-bar', puzzleDate)}
+          nextGame={custom ? customNext(custom) : nextGameAfter('one-bar', puzzleDate)}
           showLeaderboard={profile?.competitive_mode !== false}
+          custom={custom && { ...custom, posted: record.posted }}
         />
       )}
     </GameShell>

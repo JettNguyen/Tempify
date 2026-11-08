@@ -1,0 +1,32 @@
+/* A made game that couldn't be opened: what happened, and the way on. */
+.custom-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding-block: 2rem;
+}
+
+.custom-missing__title {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.custom-missing__body {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.custom-missing__action {
+  margin-top: 0.75rem;
+  padding: 0.7rem 1.1rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--amber);
+  color: #111;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+}

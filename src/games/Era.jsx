@@ -18,13 +18,28 @@ import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Timeline from './Timeline'
+import CustomGame from './CustomGame'
 import { hasRounds } from '../lib/points'
 import { nextGameAfter } from '../lib/games'
 import './choices.css'
 import './Era.css'
 
 
+// A link with c= opens a game a player made; anything else, the day's.
 export default function Era() {
+  const [searchParams] = useSearchParams()
+  const code = searchParams.get('c')
+  if (code) {
+    return (
+      <CustomGame code={code} slug="era" Shell={GameShell}>
+        {(puzzle, custom) => <Timeline puzzle={puzzle} puzzleDate={custom.key} Shell={GameShell} custom={custom} />}
+      </CustomGame>
+    )
+  }
+  return <DailyEra />
+}
+
+function DailyEra() {
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()

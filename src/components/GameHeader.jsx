@@ -7,16 +7,18 @@ import { fmtDayShort, fmtDayNumber } from '../lib/date'
  *
  * @param timer null for no clock, or { text, running }. A clock that hasn't
  *              started says how it will.
+ * @param tag   Said in place of the date, for a game a player made, which
+ *              has no day: who made it.
  */
-export default function GameHeader({ slug, name, puzzleDate, title, timer }) {
-  const number = fmtDayNumber(puzzleDate)
+export default function GameHeader({ slug, name, puzzleDate, title, timer, tag }) {
+  const number = tag ? null : fmtDayNumber(puzzleDate)
   return (
     <div className="game-header">
       <div className="game-header__top">
         <p className="game-header__eyebrow">
           <GameGlyph slug={slug} className="game-header__glyph" />
           <span className="game-header__name">{name}</span>
-          <span className="puzzle-date">{fmtDayShort(puzzleDate)}</span>
+          <span className="puzzle-date">{tag || fmtDayShort(puzzleDate)}</span>
           {number && <span className="puzzle-date puzzle-number">{number}</span>}
         </p>
         {timer && (

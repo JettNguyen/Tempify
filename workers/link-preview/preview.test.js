@@ -40,6 +40,32 @@ describe('challenge link previews', () => {
     })
   })
 
+  it("names a made game's maker, with no day", () => {
+    expect(at('/game/era?c=3f9a01b2ce&m=dana')).toEqual({
+      title: "dana's Era on Tempify",
+      description: 'Put the songs in order, oldest to newest.',
+      replace: true,
+      url: 'https://tempify.me/game/era?c=3f9a01b2ce&m=dana',
+    })
+    expect(at('/game/hit-or-miss?c=3f9a01b2ce').title).toBe("A friend's Hit or Miss on Tempify")
+  })
+
+  it('counts a challenge on a made game against its own songs', () => {
+    expect(at('/game/era?c=3f9a01b2ce&m=dana&vs=1000.500.0.1000&by=sam')).toEqual({
+      title: "sam scored 2,500 of 4,000 on dana's Era",
+      description: 'Can you beat it? Put the songs in order, oldest to newest.',
+      replace: true,
+      url: 'https://tempify.me/game/era?c=3f9a01b2ce&m=dana&vs=1000.500.0.1000&by=sam',
+    })
+    expect(at('/game/one-bar?c=3f9a01b2ce&m=dana&vs=2&by=sam').title).toBe("sam got dana's One Bar in 2 guesses")
+    expect(at('/game/one-bar?c=3f9a01b2ce&m=dana&vs=0&by=sam').title).toBe("sam couldn't name dana's One Bar")
+  })
+
+  it('treats a made-game code on a game that has none as a daily link', () => {
+    expect(at('/game/tempo?c=3f9a01b2ce&date=2026-10-30&s=share').title).toBe('Tap the Tempo #186 on Tempify')
+    expect(at('/game/era?c=nope&date=2026-10-30&s=share').title).toBe('Era #186 on Tempify')
+  })
+
   it('leaves the page alone when the link makes no sense', () => {
     expect(at('/game/hit-or-miss')).toBe(null)
     expect(at('/game/not-a-game?date=2026-11-02&vs=1')).toBe(null)

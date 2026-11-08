@@ -6,6 +6,7 @@ import TrackArtwork from './TrackArtwork'
 import Icon from './Icon'
 import Leaderboard from './Leaderboard'
 import PuzzleStats from './PuzzleStats'
+import CustomScoreboard from './CustomScoreboard'
 import { ChallengeResult, GuessChallengeResult } from './Challenge'
 import { hapticWinCelebration, hapticFailure } from '../lib/haptics'
 import { resultAction } from '../lib/gameExit'
@@ -50,7 +51,7 @@ export default function ResultCard({
   correct, answer, artist, detail, emojiGrid,
   gameSlug, nextGame, artwork, children,
   puzzleDate, timeSeconds, attempts, showLeaderboard, justFinished,
-  status: statusText, shareLine, points, maxPoints, rounds, maxGuesses,
+  status: statusText, shareLine, points, maxPoints, rounds, maxGuesses, custom,
 }) {
   const [searchParams] = useSearchParams()
   const action = resultAction(nextGame, searchParams)
@@ -213,6 +214,7 @@ export default function ResultCard({
               score={score}
               total={points}
               answering={challenge}
+              custom={custom}
             />
             {action && (
               <Link to={action.to} replace className="result-card__next btn-press btn-amber">
@@ -221,7 +223,9 @@ export default function ResultCard({
             )}
           </div>
 
-          {gameSlug && (
+          {/* A game a player made has its own board in place of the day's
+              stats and leaderboard, which its plays never reach. */}
+          {gameSlug && !custom && (
             <PuzzleStats
               gameSlug={gameSlug}
               puzzleDate={puzzleDate}
@@ -233,7 +237,9 @@ export default function ResultCard({
             />
           )}
 
-          {gameSlug && showLeaderboard !== false && <Leaderboard gameSlug={gameSlug} puzzleDate={puzzleDate} />}
+          {gameSlug && !custom && showLeaderboard !== false && <Leaderboard gameSlug={gameSlug} puzzleDate={puzzleDate} />}
+
+          {custom && showLeaderboard !== false && <CustomScoreboard custom={custom} />}
         </div>
       </div>
     </div>

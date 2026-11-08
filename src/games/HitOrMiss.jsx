@@ -16,6 +16,7 @@ import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Peak from './Peak'
+import CustomGame from './CustomGame'
 import { hasRounds } from '../lib/points'
 import { nextGameAfter } from '../lib/games'
 import './choices.css'
@@ -50,7 +51,21 @@ const CHOICES = [
   { value: 'miss', label: 'Miss', sub: 'Never charted', Art: MissArt },
 ]
 
+// A link with c= opens a game a player made; anything else, the day's.
 export default function HitOrMiss() {
+  const [searchParams] = useSearchParams()
+  const code = searchParams.get('c')
+  if (code) {
+    return (
+      <CustomGame code={code} slug="hit-or-miss" Shell={GameShell}>
+        {(puzzle, custom) => <Peak puzzle={puzzle} puzzleDate={custom.key} Shell={GameShell} custom={custom} />}
+      </CustomGame>
+    )
+  }
+  return <DailyHitOrMiss />
+}
+
+function DailyHitOrMiss() {
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()

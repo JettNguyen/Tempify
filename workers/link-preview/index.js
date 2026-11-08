@@ -26,10 +26,11 @@ export default {
       .on('meta[property="og:url"]', setContent(preview.url))
     if (preview.description) {
       // Ahead of the game's own line, which stays: "Can you beat it? How high
-      // did five songs chart on the Hot 100?"
+      // did five songs chart on the Hot 100?" A made game's replaces it.
       rewriter = rewriter.on('meta[property="og:description"]', {
         element(el) {
-          el.setAttribute('content', `${preview.description} ${el.getAttribute('content') || ''}`.trim())
+          const own = preview.replace ? '' : el.getAttribute('content') || ''
+          el.setAttribute('content', `${preview.description} ${own}`.trim())
         },
       })
     }

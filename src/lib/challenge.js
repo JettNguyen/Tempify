@@ -31,7 +31,7 @@ export function siteUrl(path = '', { native = false, origin = PUBLIC_ORIGIN, bas
  */
 export function shareQuery({ date, points, guesses, name }) {
   const params = new URLSearchParams({ date })
-  const vs = points ? points.map(p => Math.round(p)).join('.') : guesses != null ? String(guesses) : null
+  const vs = challengeValue({ points, guesses })
   if (vs == null) {
     params.set('s', 'share')
     return params.toString()
@@ -39,6 +39,12 @@ export function shareQuery({ date, points, guesses, name }) {
   params.set('vs', vs)
   if (name) params.set('by', name)
   return params.toString()
+}
+
+/** A result as a link's vs=: points song by song, or One Bar's guesses. Null for neither. */
+export function challengeValue({ points, guesses } = {}) {
+  if (points) return points.map(p => Math.round(p)).join('.')
+  return guesses != null ? String(guesses) : null
 }
 
 function readName(params) {

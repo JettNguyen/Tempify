@@ -448,6 +448,19 @@ export default function Profile() {
         </button>
       </div>
 
+      {/* Games made for friends, a Tempify+ perk */}
+      {isSubscribed && (
+        <div className="profile-section">
+          <p className="profile-section-label">your games</p>
+          <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+            Make a game for friends, or send one you made again.
+          </p>
+          <Link to="/make" className="profile-billing-btn btn-hover" style={{ display: 'inline-block' }}>
+            Your games →
+          </Link>
+        </div>
+      )}
+
       {/* Billing */}
       <div className="profile-section">
         {isSubscribed && !profile?.paid_subscribed && profile?.comp_until ? (

@@ -10,6 +10,7 @@ import { GAMES, GAME_SLUGS } from '../lib/games'
 import GameGrid from '../components/GameGrid'
 import DailyCompleteCta from '../components/DailyCompleteCta'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
+import Icon from '../components/Icon'
 import './Home.css'
 
 const dateLabel = () =>
@@ -76,6 +77,18 @@ export default function Home() {
       )}
 
       <GameGrid games={tiles} />
+
+      {/* Under the day's games, where someone who liked them looks next. */}
+      <Link to="/make" className="home-make card-hover btn-press">
+        <Icon name="plus" size={16} strokeWidth={2.25} className="home-make__icon" />
+        <span className="home-make__text">
+          <span className="home-make__title">Make a game for friends</span>
+          <span className="home-make__body">
+            Pick the songs and send the link.{!profile?.is_subscribed && ' Comes with Tempify+.'}
+          </span>
+        </span>
+        <Icon name="chevronRight" size={15} className="home-make__go" />
+      </Link>
 
       {!user && !allComplete && (
         <p className="home-no-account">
