@@ -204,7 +204,7 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell, custom }) {
       />
 
       <div className="peak__progress">
-        <span className="peak__pips" aria-label={`Song ${index + 1} of ${rounds.length}`}>
+        <span className="peak__pips" role="img" aria-label={`Song ${index + 1} of ${rounds.length}`}>
           {rounds.map((_, i) => {
             const r = results[i]
             const state = r ? roundTier(r.points) : i === index && !done ? 'now' : 'todo'

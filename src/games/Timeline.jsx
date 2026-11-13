@@ -189,7 +189,7 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell, custom 
       />
 
       <div className="timeline__progress">
-        <span className="timeline__pips" aria-label={`Song ${index} of ${toPlace}`}>
+        <span className="timeline__pips" role="img" aria-label={`Song ${index} of ${toPlace}`}>
           {rounds.slice(1).map((_, i) => {
             const r = results[i]
             const state = r ? roundTier(r.points) : i + 1 === index && !done ? 'now' : 'todo'

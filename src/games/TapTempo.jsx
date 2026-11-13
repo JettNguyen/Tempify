@@ -184,7 +184,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
       />
 
       <div className="tempo__progress">
-        <span className="tempo__pips" aria-label={`Song ${index + 1} of ${rounds.length}`}>
+        <span className="tempo__pips" role="img" aria-label={`Song ${index + 1} of ${rounds.length}`}>
           {rounds.map((_, i) => {
             const r = results[i]
             const state = r ? roundTier(r.points) : i === index && !done ? 'now' : 'todo'
