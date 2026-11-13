@@ -13,6 +13,7 @@ import { resultAction } from '../lib/gameExit'
 import { isTimedGame } from '../lib/games'
 import { fmtTime } from '../lib/date'
 import { readChallenge, readGuessChallenge, compareGuesses } from '../lib/challenge'
+import { askForRating } from '../lib/review'
 import './ResultCard.css'
 import './ResultOverlay.css'
 
@@ -24,6 +25,10 @@ const LOSS_SPARKS = 10
 // never seen, and the panel is 440px across at its widest.
 const WIN_SPREAD = 430
 const LOSS_SPREAD = 330
+// How long a fresh finish is on screen before the rating prompt may come up:
+// the burst is over by then (its longest part ends near 1.7s), and the score
+// has been seen.
+const RATING_DELAY_MS = 2000
 
 /** Stable per-spark jitter, so a re-render mid-flight can't redirect any of them. */
 function scatter(i, salt) {
@@ -98,6 +103,14 @@ export default function ResultCard({
     if (beatThem) hapticWinCelebration('challenge')
     else if (correct) hapticWinCelebration()
     else hapticFailure()
+  }, [justFinished, correct])
+
+  // A won day is the moment to ask for an App Store rating; lib/review decides
+  // whether this one is. Leaving first, for the next game say, skips it.
+  useEffect(() => {
+    if (!justFinished) return
+    const wait = setTimeout(() => askForRating({ won: correct, custom: Boolean(custom) }), RATING_DELAY_MS)
+    return () => clearTimeout(wait)
   }, [justFinished, correct])
 
   useEffect(() => {

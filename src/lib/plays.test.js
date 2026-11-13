@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { arrivalFrom, recentDays } from './plays.js'
+import { arrivalFrom, recentDays, firstDay } from './plays.js'
 
 describe('how a visit started', () => {
   it('reads a challenge link', () => {
@@ -44,5 +44,23 @@ describe('days played lately', () => {
 
   it('crosses a month and a clock change', () => {
     expect(recentDays(['2026-10-31', '2026-11-01'], '2026-11-03')).toBe(2)
+  })
+})
+
+describe('the first day a device played', () => {
+  it('keeps the day it has', () => {
+    expect(firstDay('2026-10-01', ['2026-11-10'], '2026-11-13')).toBe('2026-10-01')
+  })
+
+  it('starts a device that played before from the oldest day in its week', () => {
+    expect(firstDay(null, ['2026-11-12', '2026-11-08'], '2026-11-13')).toBe('2026-11-08')
+  })
+
+  it('starts a new device today', () => {
+    expect(firstDay(null, [], '2026-11-13')).toBe('2026-11-13')
+  })
+
+  it('ignores a kept value that is not a day', () => {
+    expect(firstDay('soon', [], '2026-11-13')).toBe('2026-11-13')
   })
 })

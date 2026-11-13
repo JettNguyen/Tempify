@@ -10,6 +10,10 @@ import { isNativeApp } from './oauth'
 
 const ARRIVAL_KEY = 'tempify_arrival'
 const DAYS_KEY = 'tempify_play_days'
+// Kept for good, unlike the week of days: the rating prompt waits for a day
+// after it (lib/review). It never leaves the device.
+const FIRST_KEY = 'tempify_first_play_day'
+const DAY = /^\d{4}-\d{2}-\d{2}$/
 
 /**
  * How a visit started, from its first address and the page before it: a
@@ -105,15 +109,41 @@ export function playedOn(day) {
   }
 }
 
+/**
+ * The first day a device played: the one it kept, or, for a device that
+ * played before the first day was kept, the oldest day in its week.
+ */
+export function firstDay(kept, days, today) {
+  if (DAY.test(kept ?? '')) return kept
+  return [...days, today].sort()[0]
+}
+
+/** The first day (YYYY-MM-DD, Eastern) this device finished a game, or null. */
+export function firstPlayDay() {
+  try {
+    const day = localStorage.getItem(FIRST_KEY)
+    return DAY.test(day ?? '') ? day : null
+  } catch {
+    return null
+  }
+}
+
 /** A game finished on this device. Call once per game and puzzle day. */
 export function countPlay(gameSlug, puzzleDate) {
   const today = todayEST()
   let days = []
   try {
     const saved = readJson(localStorage, DAYS_KEY, [])
-    if (Array.isArray(saved)) days = saved.filter(d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d))
+    if (Array.isArray(saved)) days = saved.filter(d => typeof d === 'string' && DAY.test(d))
   } catch {
     // Storage blocked: counts as a first visit.
+  }
+  try {
+    const kept = localStorage.getItem(FIRST_KEY)
+    const first = firstDay(kept, days, today)
+    if (first !== kept) localStorage.setItem(FIRST_KEY, first)
+  } catch {
+    // Storage blocked or full.
   }
   const firstToday = !days.includes(today)
   const recent = recentDays(days, today)
