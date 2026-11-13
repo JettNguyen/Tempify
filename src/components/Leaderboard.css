@@ -116,6 +116,8 @@
 
 .leaderboard__empty a {
   color: var(--amber);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .leaderboard__upsell {

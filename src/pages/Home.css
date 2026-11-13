@@ -69,6 +69,8 @@
 
 .home-no-account a {
   color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .home-legal-links {

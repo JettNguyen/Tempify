@@ -36,6 +36,8 @@ body.big-screen .auth-page {
 
 .auth-link {
   color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .auth-apple-btn,
