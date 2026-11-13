@@ -62,7 +62,7 @@ function DailyEra() {
   }, [])
 
   if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
-  if (error) return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
+  if (error) return <GameShell><Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link><p style={{ color: 'var(--text-muted)' }}>{error}</p></GameShell>
   if (!puzzle) return null
 
   // Five songs on a timeline since Timeline; one song and its decade before

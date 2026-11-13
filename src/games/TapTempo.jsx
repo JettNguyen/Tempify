@@ -62,7 +62,7 @@ export default function TapTempo() {
 
   if (loading) return <GameShell><DelayedSpinner active={loading} label="Loading puzzle..." /></GameShell>
   if (error || !puzzle?.metadata?.rounds?.length) {
-    return <GameShell><p style={{ color: 'var(--text-muted)' }}>{error || 'No puzzle found for today.'}</p></GameShell>
+    return <GameShell><Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link><p style={{ color: 'var(--text-muted)' }}>{error || 'No puzzle found for today.'}</p></GameShell>
   }
   return <TempoRounds puzzle={puzzle} puzzleDate={puzzleDate} dateParam={dateParam} />
 }
