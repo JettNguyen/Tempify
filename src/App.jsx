@@ -82,7 +82,7 @@ export default function App() {
         <Navbar />
         <UsernameSetupModal />
         <IOSAppPrompt />
-        <div className="app-scroll-container">
+        <main className="app-scroll-container">
           <ErrorBoundary>
             <Suspense fallback={<div className="page-shell"><DelayedSpinner active label="Loading..." /></div>}>
               <PageTransition>
@@ -114,7 +114,7 @@ export default function App() {
               </PageTransition>
             </Suspense>
           </ErrorBoundary>
-        </div>
+        </main>
       </AuthProvider>
     </BrowserRouter>
   )
