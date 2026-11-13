@@ -24,17 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          # A set version, not "latest": finding the latest asks GitHub's API,
-          # which rate-limits these runners and failed two deploys on 11/2/2026.
-          # 2.122.0 is what "latest" was when they last worked. Move it up by hand.
-          version: 2.122.0
-
-      - name: Run database migrations
-        run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL }}"
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -43,6 +32,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # The tests and the build come before the migrations, so a change that
+      # fails either one stops here, before the live database is touched.
+      - name: Test
+        run: npm test
 
       - name: Build
         run: npm run build
@@ -65,6 +59,17 @@ jobs:
           VITE_RC_APPLE_API_KEY: ${{ secrets.VITE_RC_APPLE_API_KEY }}
           VITE_RC_ENTITLEMENT_ID: ${{ secrets.VITE_RC_ENTITLEMENT_ID }}
           VITE_APPLE_CLIENT_ID: ${{ secrets.VITE_APPLE_CLIENT_ID }}
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          # A set version, not "latest": finding the latest asks GitHub's API,
+          # which rate-limits these runners and failed two deploys on 11/2/2026.
+          # 2.122.0 is what "latest" was when they last worked. Move it up by hand.
+          version: 2.122.0
+
+      - name: Run database migrations
+        run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL }}"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
