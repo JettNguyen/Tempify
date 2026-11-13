@@ -266,8 +266,10 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
             onPointerDown={tap}
             onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); tap() } }}
             disabled={locking}
-            aria-label="Tap the beat"
           >
+            {/* No aria-label: the pad's own words ("Tap the beat here", then the
+                taps left, then the BPM) are its name, so what a screen reader
+                says matches what's on it. */}
             {/* Restarted on every tap, so each one lands as a ripple. */}
             {taps.length > 0 && <span key={taps[taps.length - 1]} className="tempo__ripple" aria-hidden="true" />}
             <span className="tempo__bpm" aria-live="polite">
