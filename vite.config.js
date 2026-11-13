@@ -4,10 +4,12 @@ import react from '@vitejs/plugin-react'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { GAME_BY_SLUG } from './src/lib/games.js'
-import { gamePage } from './scripts/game-pages.js'
+import { gamePage, appPage, APP_PAGES } from './scripts/game-pages.js'
 
 // Writes game/<slug>.html beside index.html once the build is out, so each
-// game's link answers with its own preview instead of GitHub Pages' 404.
+// game's link answers with its own preview instead of GitHub Pages' 404. The
+// app's other fixed pages (privacy.html, terms.html and the rest) get the
+// same, so they answer with a 200 too.
 function gamePages() {
   let outDir
   return {
@@ -21,6 +23,9 @@ function gamePages() {
       mkdirSync(resolve(outDir, 'game'), { recursive: true })
       for (const game of Object.values(GAME_BY_SLUG)) {
         writeFileSync(resolve(outDir, `${game.path.slice(1)}.html`), gamePage(index, game))
+      }
+      for (const name of APP_PAGES) {
+        writeFileSync(resolve(outDir, `${name}.html`), appPage(index, name))
       }
     },
   }

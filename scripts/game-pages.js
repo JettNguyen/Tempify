@@ -27,3 +27,17 @@ export function gamePage(html, game) {
     return page.replace(tag, `$1${attr(value)}$2`)
   }, html)
 }
+
+// The app's other fixed addresses. GitHub Pages answered each with 404.html
+// and a 404 status, which bounced the visit through /?spa= and told search
+// engines (and anyone checking the privacy policy link) that the page was
+// missing. A copy of index.html under each name answers with a 200 instead.
+// Keep in step with the routes in src/App.jsx.
+export const APP_PAGES = ['privacy', 'terms', 'login', 'signup', 'explore', 'profile', 'subscribe', 'success', 'make']
+
+/** index.html with its link preview pointed at one of the app's own pages. */
+export function appPage(html, name) {
+  const tag = /(<meta property="og:url" content=")[^"]*(")/
+  if (!tag.test(html)) throw new Error('game-pages: index.html has no og:url tag')
+  return html.replace(tag, `$1${SITE}/${attr(name)}$2`)
+}
