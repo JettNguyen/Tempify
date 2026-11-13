@@ -45,7 +45,7 @@ describe("a page for each of the app's fixed addresses", () => {
   })
 
   it('covers the pages people link to directly', () => {
-    expect(APP_PAGES).toEqual(expect.arrayContaining(['privacy', 'terms', 'login', 'signup']))
+    expect(APP_PAGES).toEqual(expect.arrayContaining(['privacy', 'terms', 'support', 'login', 'signup']))
   })
 
   it('stops the build when index.html loses its og:url tag', () => {

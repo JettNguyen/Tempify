@@ -33,7 +33,7 @@ export function gamePage(html, game) {
 // engines (and anyone checking the privacy policy link) that the page was
 // missing. A copy of index.html under each name answers with a 200 instead.
 // Keep in step with the routes in src/App.jsx.
-export const APP_PAGES = ['privacy', 'terms', 'login', 'signup', 'explore', 'profile', 'subscribe', 'success', 'make']
+export const APP_PAGES = ['privacy', 'terms', 'support', 'login', 'signup', 'explore', 'profile', 'subscribe', 'success', 'make']
 
 /** index.html with its link preview pointed at one of the app's own pages. */
 export function appPage(html, name) {
