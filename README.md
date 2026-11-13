@@ -108,26 +108,32 @@ It costs $3 a month, $25 a year, or $100 once for lifetime access.
 
 ## Tech Stack
 
-Tempify is built with React, Vite, and Tailwind CSS.
+Tempify is built with React and Vite. Each component has its own CSS file; Tailwind supplies only the
+base reset.
 
 - Backend and data: Supabase
 - Payments: Stripe on the web, RevenueCat for in-app purchases on iOS
 - iOS app packaging: Capacitor
+- Tests: Vitest
 
 ## Development
 
-Install dependencies and start the app locally:
+Install dependencies, copy the environment file and fill in its values, then start the app locally:
 
 ```bash
 npm install
+cp .env.example .env
 npm run dev
 ```
 
-Build for production:
+Run the tests, and build for production:
 
 ```bash
+npm test
 npm run build
 ```
+
+The build stops if `VITE_DEEZER_PROXY_URL` is missing, since song search can't work without it.
 
 ### Supabase functions
 
