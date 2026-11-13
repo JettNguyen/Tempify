@@ -8,7 +8,6 @@ import { searchSongs, fetchTrackDetails } from '../lib/deezer'
 import { getGameName, roundCount } from '../lib/games'
 import Icon from '../components/Icon'
 import './Admin.css'
-import { searchRecordings } from '../lib/musicbrainz'
 import { lookupBillboardPeak, lookupBillboard200Peak } from '../lib/billboard'
 import { todayEST } from '../lib/date'
 import RoundsFields, { ROUNDS_GAMES, ROUNDS_ONLY, usedSongs, validateRounds, cleanRounds, firstSongFields, countWord } from './AdminRounds'
@@ -516,89 +515,6 @@ function EraFields({ f, set }) {
         </div>
       </Field>
     </>
-  )
-}
-
-function MBSearch({ label, onPick }) {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState([])
-  const [open, setOpen] = useState(false)
-  const [searching, setSearching] = useState(false)
-  const debounce = useRef(null)
-  const wrap = useRef(null)
-
-  useEffect(() => {
-    function close(e) { if (wrap.current && !wrap.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [])
-
-  function handleChange(e) {
-    const val = e.target.value
-    setQuery(val)
-    clearTimeout(debounce.current)
-    if (val.trim().length < 3) { setResults([]); setOpen(false); return }
-    debounce.current = setTimeout(async () => {
-      setSearching(true)
-      try {
-        const hits = await searchRecordings(val)
-        setResults(hits)
-        setOpen(hits.length > 0)
-      } catch {
-        setResults([])
-      } finally {
-        setSearching(false)
-      }
-    }, 400)
-  }
-
-  function pick(r) {
-    onPick(r)
-    setQuery('')
-    setResults([])
-    setOpen(false)
-  }
-
-  return (
-    <div ref={wrap} style={{ position: 'relative', marginBottom: '0.5rem' }}>
-      <p style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>{label}</p>
-      <div style={{ position: 'relative' }}>
-        <input
-          value={query}
-          onChange={handleChange}
-          placeholder="Search MusicBrainz for release year…"
-          style={{ ...inputStyle, paddingRight: searching ? '32px' : undefined }}
-        />
-        {searching && (
-          <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: 'var(--text-dim)' }}>…</span>
-        )}
-      </div>
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-          background: '#111', border: '1px solid var(--border)',
-          borderRadius: '8px', overflow: 'hidden', zIndex: 50,
-        }}>
-          {results.map((r) => (
-            <button
-              key={r.mbid}
-              type="button"
-              onClick={() => pick(r)}
-              style={{
-                width: '100%', textAlign: 'left', padding: '9px 12px',
-                background: 'transparent', border: 'none',
-                borderBottom: '1px solid var(--border)', cursor: 'pointer',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>{r.title}</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '8px' }}>{r.artist}{r.year ? ` · ${r.year}` : ''}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   )
 }
 

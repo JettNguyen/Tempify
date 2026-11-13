@@ -46,7 +46,7 @@ export default function Signup() {
     }
 
     setLoading(true)
-    const { data, error: err } = await supabase.auth.signUp({
+    const { error: err } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo: window.location.origin + import.meta.env.BASE_URL },

@@ -13,7 +13,6 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false)
 
   const initial = (profile?.email || user?.email || '').split('@')[0][0]?.toUpperCase() ?? '?'
-  const isSubscribed = profile?.is_subscribed
   const adminEmails = (import.meta.env.VITE_ADMIN_EMAIL || '')
     .split(',')
     .map(e => e.trim().toLowerCase())
