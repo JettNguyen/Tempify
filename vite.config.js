@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite'
+import { configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -35,6 +36,11 @@ export default defineConfig(({ command, mode }) => {
   return {
     plugins: [react(), gamePages()],
     base: '/',
+    // Claude Code keeps worktrees under .claude/, each a full copy of the
+    // repo. Without this, the tests run once more for every copy, old ones too.
+    test: {
+      exclude: [...configDefaults.exclude, '.claude/**'],
+    },
     server: {
       proxy: {
         '/deezer': {
