@@ -2,8 +2,8 @@ import BackButton from '../components/BackButton'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import './Privacy.css'
 
-const LAST_UPDATED = 'September 6, 2026'
-const CONTACT_EMAIL = 'jettuf26@gmail.com'
+const LAST_UPDATED = 'November 13, 2026'
+const CONTACT_EMAIL = 'support@tempify.me'
 const OPERATOR = 'Jett Nguyen'
 const EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'
 
