@@ -10,8 +10,9 @@ import { isNativeApp } from './oauth'
 
 const ARRIVAL_KEY = 'tempify_arrival'
 const DAYS_KEY = 'tempify_play_days'
-// Kept for good, unlike the week of days: the rating prompt waits for a day
-// after it (lib/review). It never leaves the device.
+// Kept for good in the iPhone app, unlike the week of days: the rating prompt
+// waits for a day after it (lib/review). Only the app asks for a rating, so the
+// web never keeps it, and it never leaves the device.
 const FIRST_KEY = 'tempify_first_play_day'
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 
@@ -138,12 +139,14 @@ export function countPlay(gameSlug, puzzleDate) {
   } catch {
     // Storage blocked: counts as a first visit.
   }
-  try {
-    const kept = localStorage.getItem(FIRST_KEY)
-    const first = firstDay(kept, days, today)
-    if (first !== kept) localStorage.setItem(FIRST_KEY, first)
-  } catch {
-    // Storage blocked or full.
+  if (isNativeApp()) {
+    try {
+      const kept = localStorage.getItem(FIRST_KEY)
+      const first = firstDay(kept, days, today)
+      if (first !== kept) localStorage.setItem(FIRST_KEY, first)
+    } catch {
+      // Storage blocked or full.
+    }
   }
   const firstToday = !days.includes(today)
   const recent = recentDays(days, today)

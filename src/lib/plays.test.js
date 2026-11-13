@@ -1,5 +1,12 @@
-import { describe, it, expect } from 'vitest'
-import { arrivalFrom, recentDays, firstDay } from './plays.js'
+// @vitest-environment jsdom
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+// Where the game is played, and the day: the first day is kept by the app only.
+const device = vi.hoisted(() => ({ native: false, today: '2026-11-13' }))
+vi.mock('./oauth', () => ({ isNativeApp: () => device.native }))
+vi.mock('./date', () => ({ todayEST: () => device.today }))
+
+const { arrivalFrom, recentDays, firstDay, firstPlayDay, countPlay } = await import('./plays.js')
 
 describe('how a visit started', () => {
   it('reads a challenge link', () => {
@@ -62,5 +69,26 @@ describe('the first day a device played', () => {
 
   it('ignores a kept value that is not a day', () => {
     expect(firstDay('soon', [], '2026-11-13')).toBe('2026-11-13')
+  })
+})
+
+describe('keeping the first day played', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    device.today = '2026-11-13'
+  })
+
+  it('keeps it in the app, where the rating prompt waits for a day after it', () => {
+    device.native = true
+    countPlay('era', '2026-11-13')
+    device.today = '2026-11-14'
+    countPlay('era', '2026-11-14')
+    expect(firstPlayDay()).toBe('2026-11-13')
+  })
+
+  it('never keeps it on the web, which never asks for a rating', () => {
+    device.native = false
+    countPlay('era', '2026-11-13')
+    expect(firstPlayDay()).toBe(null)
   })
 })
