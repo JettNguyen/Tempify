@@ -78,3 +78,10 @@
 .ios-prompt__close:hover {
   color: var(--text-muted);
 }
+
+/* While the banner shows, the page gets room below its last line so the banner
+   doesn't sit on top of it, as it did on the home page's Privacy and Terms
+   links. Games never show the banner, and the iPhone app never does. */
+body:has(.ios-prompt) .app-scroll-container {
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
