@@ -94,7 +94,7 @@ function mapGenre(raw) {
   return GENRE_MAP[raw.toLowerCase()] ?? null
 }
 
-const VARIANT_RE = /\s*[\(\[]\s*(feat\.|ft\.|featuring|remix|remixed|remaster|remastered|live|edit|version|radio\s*edit|acoustic|instrumental|deluxe|extended|mix|reprise|cover|tribute|explicit|clean|mono|stereo|single\s*version|original\s*mix|bonus).*[\)\]]\s*$/gi
+const VARIANT_RE = /\s*[([]\s*(feat\.|ft\.|featuring|remix|remixed|remaster|remastered|live|edit|version|radio\s*edit|acoustic|instrumental|deluxe|extended|mix|reprise|cover|tribute|explicit|clean|mono|stereo|single\s*version|original\s*mix|bonus).*[)\]]\s*$/gi
 
 export function stripVariant(title) {
   return title.replace(VARIANT_RE, '').trim()
