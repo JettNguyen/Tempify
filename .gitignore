@@ -14,3 +14,6 @@ scripts/chart-card/posts/*/*
 !scripts/chart-card/posts/*/post.json
 
 __pycache__/
+
+# supabase cli cache
+supabase/.temp/
