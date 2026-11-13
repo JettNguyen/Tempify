@@ -820,6 +820,14 @@ export default function Admin() {
       .then(({ data }) => setGamePuzzles(data || []))
   }, [form.game, showForm, isAdmin])
 
+  // Above the early returns: a hook after them runs on some renders and not
+  // others, and React throws when the count changes.
+  useEffect(() => {
+    if (!armedDeleteId) return
+    const t = setTimeout(() => setArmedDeleteId(null), 4000)
+    return () => clearTimeout(t)
+  }, [armedDeleteId])
+
   if (loading) return null
   if (!isAdmin) return <Navigate to="/" replace />
 
@@ -828,12 +836,6 @@ export default function Admin() {
   puzzles.forEach(p => { scheduled[`${p.scheduled_date}|${p.game_slug}`] = p })
 
   function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
-
-  useEffect(() => {
-    if (!armedDeleteId) return
-    const t = setTimeout(() => setArmedDeleteId(null), 4000)
-    return () => clearTimeout(t)
-  }, [armedDeleteId])
 
   function openForm(date, gameSlug) {
     setEditingId(null)
