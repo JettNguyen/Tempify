@@ -96,10 +96,12 @@ export default function Home() {
         </p>
       )}
 
-      <p className="home-legal-links" aria-label="Legal links">
+      <p className="home-legal-links" aria-label="Help and legal links">
         <Link to="/privacy">Privacy Policy</Link>
         <span aria-hidden="true">•</span>
         <Link to="/terms">Terms of Service</Link>
+        <span aria-hidden="true">•</span>
+        <Link to="/support">Support</Link>
       </p>
     </div>
   )

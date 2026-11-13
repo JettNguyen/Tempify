@@ -539,42 +539,33 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Legal */}
+      {/* Help and legal */}
       <div className="profile-section">
-        <p className="profile-section-label">legal</p>
+        <p className="profile-section-label">help and legal</p>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <Link
-            to="/privacy"
-            className="btn-hover"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '8px 10px',
-              borderRadius: '8px',
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)',
-              fontSize: 'var(--fs-xs)',
-            }}
-          >
-            Privacy Policy →
-          </Link>
-          <Link
-            to="/terms"
-            className="btn-hover"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '8px 10px',
-              borderRadius: '8px',
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)',
-              fontSize: 'var(--fs-xs)',
-            }}
-          >
-            Terms of Service →
-          </Link>
+          {[
+            ['/privacy', 'Privacy Policy'],
+            ['/terms', 'Terms of Service'],
+            ['/support', 'Support'],
+          ].map(([to, label]) => (
+            <Link
+              key={to}
+              to={to}
+              className="btn-hover"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '8px 10px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                color: 'var(--text-muted)',
+                fontSize: 'var(--fs-xs)',
+              }}
+            >
+              {label} →
+            </Link>
+          ))}
         </div>
       </div>
 
