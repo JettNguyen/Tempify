@@ -1,3 +1,4 @@
+import { lockZoomInApp } from './lib/viewport'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
@@ -10,6 +11,9 @@ import './styles/globals.css'
 import { noteArrival } from './lib/plays'
 import { reminderAvailable, refreshReminder } from './lib/reminder'
 import { App as CapApp } from '@capacitor/app'
+
+// First, before anything renders: the iPhone app never shows a page that zooms.
+lockZoomInApp()
 
 // Polyfill crypto.randomUUID for environments that lack it
 if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
