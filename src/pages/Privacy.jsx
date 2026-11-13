@@ -2,7 +2,7 @@ import BackButton from '../components/BackButton'
 import { openExternalUrlInApp } from '../lib/inAppBrowser'
 import './Privacy.css'
 
-const LAST_UPDATED = 'November 7, 2026'
+const LAST_UPDATED = 'November 13, 2026'
 const CONTACT_EMAIL = 'jettuf26@gmail.com'
 const OPERATOR = 'Jett Nguyen'
 
@@ -64,8 +64,10 @@ export default function Privacy() {
           puzzles you have completed, game timers, a cached subscription flag, a cache of album
           artwork lookups, and the days you played in the last week. This data stays on your device,
           is not sent to us, and is cleared when you clear your browser or app storage. The only thing
-          drawn from it is the count described under Tracking and Ads. We do not use cookies for
-          advertising or analytics.
+          drawn from it is the count described under Tracking and Ads. The iPhone app also keeps the
+          first day it was played and the version of the app that last asked you for a rating, on
+          your device only, to decide when to ask for one. We do not use cookies for advertising or
+          analytics.
         </p>
       </section>
 
