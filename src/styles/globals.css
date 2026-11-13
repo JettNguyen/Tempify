@@ -567,6 +567,25 @@ body.is-scrolling button:not(:disabled):active {
   }
 }
 
+/* The website can zoom now, and iPhone Safari zooms the page into any text
+   field under 16px when it's tapped. The fields' own classes set 15px over the
+   rule above, so in a phone-width browser they're 16px here. Each keeps the line
+   height it had, so no field grows and nothing around it moves. The app keeps
+   zoom locked (lib/viewport.js), so it keeps its sizes. */
+@media (max-width: 640px) {
+  body:not(.ios-native-app) :is(input:not([type="range"], [type="checkbox"], [type="radio"]), textarea, select) {
+    /* !important for the fields on Profile and Admin that set their size inline. */
+    font-size: 16px !important;
+    /* Most were 15px. */
+    line-height: calc(var(--fs-md) * 1.5);
+  }
+
+  /* These were 13px. */
+  body:not(.ios-native-app) :is(.profile-username-input, .page-shell-admin :is(input, textarea, select)) {
+    line-height: calc(var(--fs-sm) * 1.5);
+  }
+}
+
 /* Page shells - safe-area aware, consistent across all views */
 .page-shell {
   max-width: 560px;

@@ -333,6 +333,7 @@ export default function Profile() {
         <div style={{ marginBottom: '0.75rem' }}>
           <p className="profile-picker-label">username</p>
           <input
+            className="profile-username-input"
             value={username}
             onChange={e => { setUsername(e.target.value); setUsernameError('') }}
             placeholder="yourname"
