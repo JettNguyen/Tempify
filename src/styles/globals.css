@@ -648,28 +648,7 @@ body.is-scrolling button:not(:disabled):active {
   }
 }
 
-/* Native iPad UI sizing: slightly larger text/controls and wider shells */
-body.ios-ipad-ui {
-  --ios-ipad-ui-scale: 1.12;
-}
-
-@supports (zoom: 1) {
-  body.ios-ipad-ui #root {
-    zoom: var(--ios-ipad-ui-scale);
-  }
-}
-
-@supports not (zoom: 1) {
-  body.ios-ipad-ui #root {
-    transform: scale(var(--ios-ipad-ui-scale));
-    transform-origin: top center;
-    width: calc(100% / var(--ios-ipad-ui-scale));
-    margin-left: auto;
-    margin-right: auto;
-  }
-}
-
-/* A big desktop window zooms the same way, by however much fits
+/* A big desktop window or a tablet zooms the whole app, by however much fits
    (useBigScreenScale). A zoomed 100dvh comes out taller than the window, so
    every full-height page divides it back down. */
 body.big-screen #root {
@@ -680,20 +659,11 @@ body.big-screen .app-scroll-container {
   min-height: calc(100dvh / var(--big-screen-scale));
 }
 
-body.ios-ipad-ui .page-shell {
-  max-width: 660px;
-}
-
-body.ios-ipad-ui .page-shell-wide {
-  max-width: 760px;
-}
-
-body.ios-ipad-ui .page-shell-narrow {
-  max-width: 580px;
-}
-
-body.ios-ipad-ui .page-shell-admin {
-  max-width: 860px;
+/* The iPad app scrolls inside .app-scroll-container, one screen tall. Zoomed,
+   that's taller than the screen, and the end of every page would sit below it
+   where no scrolling reaches. */
+body.ios-native-app.big-screen .app-scroll-container {
+  height: calc(100dvh / var(--big-screen-scale));
 }
 
 /* Shared back link used in all game pages */

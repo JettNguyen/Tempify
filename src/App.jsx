@@ -25,7 +25,7 @@ import Sampled from './games/Sampled'
 import Era from './games/Era'
 import CoverOrNot from './games/CoverOrNot'
 import TapTempo from './games/TapTempo'
-import { useIOSIPadUI } from './hooks/useIOSIPadUI'
+import { useIOSAppClass } from './hooks/useIOSAppClass'
 import { useBigScreenScale } from './hooks/useBigScreenScale'
 import { useScrolling } from './hooks/useScrolling'
 import { useNativeSplash } from './hooks/useNativeSplash'
@@ -68,7 +68,7 @@ function PageTransition({ children }) {
 }
 
 export default function App() {
-  useIOSIPadUI()
+  useIOSAppClass()
   useBigScreenScale()
   useScrolling()
 

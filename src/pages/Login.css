@@ -6,11 +6,7 @@
   padding: 1.25rem;
 }
 
-/* Compensate for iPad root scaling so auth stays visually centered */
-body.ios-ipad-ui .auth-page {
-  min-height: calc(100dvh / var(--ios-ipad-ui-scale));
-}
-
+/* Under the big screen zoom, so the card stays centered in the window. */
 body.big-screen .auth-page {
   min-height: calc(100dvh / var(--big-screen-scale));
 }

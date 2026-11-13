@@ -68,9 +68,13 @@ const GuessInput = forwardRef(function GuessInput({ onGuess, disabled, placehold
       const vv = window.visualViewport
       const viewTop = vv ? vv.offsetTop : 0
       const viewBottom = vv ? vv.offsetTop + vv.height : window.innerHeight
+      // The room is measured in screen pixels, and the list's height is set in
+      // the page's own. On a zoomed page (an iPad, a big desktop window) those
+      // differ by the zoom, and the list ran under the keyboard by that much.
+      const zoom = rect.width / (el.offsetWidth || rect.width) || 1
 
-      const below = viewBottom - rect.bottom - 16
-      const above = rect.top - viewTop - 16
+      const below = (viewBottom - rect.bottom) / zoom - 16
+      const above = (rect.top - viewTop) / zoom - 16
       const flip = below < 168 && above > below
 
       setDropUp(flip)
