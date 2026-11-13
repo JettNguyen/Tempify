@@ -103,10 +103,17 @@ body.big-screen .auth-page {
   padding-right: 42px;
 }
 
+/* A 40px box with the eye centered where it was (20px in from the edge), so
+   the tap lands without hunting for a 16px icon. */
 .auth-password-toggle {
   position: absolute;
   top: 50%;
-  right: 12px;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transform: translateY(-50%);
   color: var(--text-muted);
   font-size: var(--fs-sm);
