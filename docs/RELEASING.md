@@ -92,8 +92,16 @@ the page, which goes to App Review in a submission of its own, so that waits for
 `search-*.png` (3840 by 2560), dark and light. The header has to be a PNG; a JPEG fails. Each page
 takes one of each, with no dark or light choice, so the dark pair is what goes up. They are uploaded
 to the app's asset library as `CREATIVE_ASSETS` and placed on a page's localization with
-`appAssetLibraryPlacements` (`PRODUCT_PAGE_HEADER_ASSET`, `APP_STORE_SEARCH_RESULTS_ASSET`). Since
-November 1, 2026 they are placed on 1.10's main page and on version 2 of both custom product pages.
+`appAssetLibraryPlacements` (`PRODUCT_PAGE_HEADER_ASSET`, `APP_STORE_SEARCH_RESULTS_ASSET`).
+
+**Don't place the search art.** In search results it takes the place of the row of screenshots, and
+on phones it didn't show at all, so Tempify came up as only its icon and name. It was taken off
+every page on November 15, 2026 (the main page, both custom product pages, and Archie Mobile's and
+Nightlink's pages, which had the same problem). The header art stays. A new version copies its
+placements from the last one, so check a new version has no `APP_STORE_SEARCH_RESULTS_ASSET`
+placement (`GET /v1/appStoreVersionLocalizations/<id>/placements`), and remove one with
+`DELETE /v1/appAssetLibraryPlacements/<id>`. That works on a live page but is refused while a
+version waits for review.
 
 **The main page uses the same designed sets.** Custom product pages are only reached by their links,
 so what people find in the App Store is the main page. From 1.10 on, its 6.9 inch, Duo and iPad sets
