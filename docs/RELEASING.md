@@ -70,6 +70,13 @@ process each one.
 Before an overlay shot on the iPhone, make sure no audio is playing: a Now Playing pill can show in
 the Dynamic Island against the dimmed result.
 
+**1.13 (November 15, 2026)** was shot signed out on all three devices, since no simulator had an
+account signed in, with the app's date moved to 11/17 and the art blurred by a script that runs
+before the page. iOS moves the clock while a song plays (the Now Playing pill on the iPhone, lower
+down the Duo's side bar), so each capture's status bar was redrawn from one that plays nothing. The
+scripts, with a README, are in Jett's Google Drive at `My Drive/Tempify/App Store art/shoot-tools/`,
+beside the captures and the finished sets.
+
 ## Custom product pages
 
 The two custom product pages (the App Store links on jettnguyen.github.io and in the README) carry
