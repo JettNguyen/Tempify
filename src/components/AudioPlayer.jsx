@@ -53,11 +53,14 @@ function reducedMotion() {
  * @param freshSegment   a segment that has just been unlocked, to light up
  * @param variant        'stage' for a game's main player; small otherwise
  * @param visual         what the stage draws: bars | chart | record | rings
+ * @param onPlayingChange called with true when the clip starts sounding and
+ *                       false when it stops, however it stopped
+ * @param onBeat         called on each beat the stage hears in the clip
  * @param children       drawn at the top of the stage, over the light
  */
 const AudioPlayer = forwardRef(function AudioPlayer({
   src, maxDuration, trackSpan, segmentStops, segmentLabels, freshSegment,
-  label, onPlay, autoplay, variant, visual = 'bars', children,
+  label, onPlay, onPlayingChange, onBeat, autoplay, variant, visual = 'bars', children,
 }, ref) {
   const stage = variant === 'stage'
   const voiceRef = useRef(null)
@@ -88,6 +91,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({
   const durationRef = useRef(0)
   const autoplayRef = useRef(autoplay)
   const onPlayRef = useRef(onPlay)
+  const onPlayingChangeRef = useRef(onPlayingChange)
   const posRef = useRef(0)
   const railWidthRef = useRef(0)
   const scrubRef = useRef(null)
@@ -100,6 +104,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({
   useEffect(() => {
     autoplayRef.current = autoplay
     onPlayRef.current = onPlay
+    onPlayingChangeRef.current = onPlayingChange
   })
 
   // What can actually be heard right now.
@@ -219,6 +224,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({
   // ================================
 
   function setPlayingState(next) {
+    if (playingRef.current !== next) onPlayingChangeRef.current?.(next)
     playingRef.current = next
     setPlaying(next)
   }
@@ -692,7 +698,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({
         <div className="audio-stage__card">
           {children && <div className="audio-stage__head">{children}</div>}
           <div className="audio-stage__visual">
-            <AudioVisual kind={visual} playing={playing} voiceRef={voiceRef} stageRef={stageRef} className="audio-stage__canvas" />
+            <AudioVisual kind={visual} playing={playing} voiceRef={voiceRef} stageRef={stageRef} onBeat={onBeat} className="audio-stage__canvas" />
             {playButton}
           </div>
           {timeline}

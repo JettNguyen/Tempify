@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
+import { useYourBeat } from '../hooks/useYourBeat'
 import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
@@ -21,6 +22,7 @@ import TrackArtwork from '../components/TrackArtwork'
 import ResultCard from '../components/ResultCard'
 import { ChallengeTally } from '../components/Challenge'
 import Icon from '../components/Icon'
+import GameScreen from '../components/GameScreen'
 import DelayedSpinner from '../components/DelayedSpinner'
 import './TapTempo.css'
 
@@ -69,8 +71,8 @@ export default function TapTempo() {
 
 /**
  * A few famous songs (three a day from 11/17/2026), named but not played. Tap each one's beat from memory,
- * lock it in, and then the clip plays with your beat pulsing beside the
- * song's.
+ * lock it in, and then the clip plays with your beat clicking over it and
+ * pulsing beside the song's.
  */
 function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   const { user, profile } = useAuth()
@@ -88,6 +90,9 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   const [locking, setLocking] = useState(false)
   const [done, setDone] = useState(false)
   const [justFinished, setJustFinished] = useState(false)
+  // Your tapped tempo clicking over the song once it's revealed. On unless
+  // it's switched off, and then off for the rest of this game.
+  const [hearBeat, setHearBeat] = useState(true)
   const revealRef = useRef(0)
   const playedRef = useRef(false)
 
@@ -110,6 +115,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   const round = rounds[index]
   const result = results[index]
   const revealed = Boolean(result)
+  const yourBeat = useYourBeat({ bpm: result?.bpm, on: revealed && !done && hearBeat })
   const bpm = bpmFromTaps(taps)
   const total = results.reduce((sum, r) => sum + (r.points || 0), 0)
   const savedPoints = completions[`${SLUG}|${puzzleDate}`]?.points
@@ -174,146 +180,167 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
 
   return (
     <GameShell>
-      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
+      <div className="game-screen__listen">
+        <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <GameHeader
-        slug={SLUG}
-        name="tap the tempo"
-        puzzleDate={puzzleDate}
-        title={showClip ? 'How close was your beat?' : 'Tap its beat from memory'}
-      />
+        <GameHeader
+          slug={SLUG}
+          name="tap the tempo"
+          puzzleDate={puzzleDate}
+          title={showClip ? 'How close was your beat?' : 'Tap its beat from memory'}
+        />
 
-      <div className="tempo__progress">
-        <span className="tempo__pips" role="img" aria-label={`Song ${index + 1} of ${rounds.length}`}>
-          {rounds.map((_, i) => {
-            const r = results[i]
-            const state = r ? roundTier(r.points) : i === index && !done ? 'now' : 'todo'
-            return <span key={i} className={`tempo__pip tempo__pip--${state}`} />
-          })}
-        </span>
-        <span className="tempo__total">
-          {fmtPoints(done ? finalPoints : total)} pts
-          <ChallengeTally challenge={challenge} played={results.length} />
-        </span>
+        <div className="tempo__progress">
+          <span className="tempo__pips" role="img" aria-label={`Song ${index + 1} of ${rounds.length}`}>
+            {rounds.map((_, i) => {
+              const r = results[i]
+              const state = r ? roundTier(r.points) : i === index && !done ? 'now' : 'todo'
+              return <span key={i} className={`tempo__pip tempo__pip--${state}`} />
+            })}
+          </span>
+          <span className="tempo__total">
+            {fmtPoints(done ? finalPoints : total)} pts
+            <ChallengeTally challenge={challenge} played={results.length} />
+          </span>
+        </div>
+
+        {showClip ? (
+          <AudioPlayer
+            key={index}
+            variant="stage"
+            visual="bars"
+            src={round.audio_url}
+            autoplay={!done && profile?.autoplay_audio !== false}
+            onPlayingChange={yourBeat.onPlayingChange}
+            onBeat={yourBeat.onBeat}
+          >
+            <StageSong title={round.title} artist={round.artist} meta={round.year} src={round.artwork_url} />
+          </AudioPlayer>
+        ) : (
+          // No player until the beat is in: hearing it first would be the answer.
+          <div key={index} className="tempo__song">
+            <TrackArtwork title={round.title} artist={round.artist} src={round.artwork_url} size="medium" />
+            <p className="tempo__title">{round.title}</p>
+            <p className="tempo__artist">{round.artist}{round.year ? ` · ${round.year}` : ''}</p>
+          </div>
+        )}
       </div>
 
-      {showClip ? (
-        <AudioPlayer key={index} variant="stage" visual="bars" src={round.audio_url} autoplay={!done && profile?.autoplay_audio !== false}>
-          <StageSong title={round.title} artist={round.artist} meta={round.year} src={round.artwork_url} />
-        </AudioPlayer>
-      ) : (
-        // No player until the beat is in: hearing it first would be the answer.
-        <div key={index} className="tempo__song">
-          <TrackArtwork title={round.title} artist={round.artist} src={round.artwork_url} size="medium" />
-          <p className="tempo__title">{round.title}</p>
-          <p className="tempo__artist">{round.artist}{round.year ? ` · ${round.year}` : ''}</p>
-        </div>
-      )}
-
-      {done ? (
-        <ol className="tempo__summary">
-          {rounds.map((r, i) => {
-            const mine = results[i]
-            const speed = mine ? readTap(mine.bpm, r.bpm, mine.points).speed : 1
-            return (
-              <li key={i}>
-                <button
-                  type="button"
-                  className={`tempo__summary-row btn-press${i === index ? ' tempo__summary-row--on' : ''}`}
-                  onClick={() => { hapticSelection(); setIndex(i) }}
-                  aria-label={`Play ${r.title}`}
-                >
-                  <span className="tempo__summary-song">
-                    <span className="tempo__summary-title">{r.title}</span>
-                    <span className="tempo__summary-artist">{r.artist}</span>
-                  </span>
-                  <span className="tempo__summary-call">
-                    {mine && <span>You {mine.bpm}</span>}
-                    <span className="tempo__summary-real">{targetLabel(speed, r.bpm)}</span>
-                  </span>
-                  {mine && (
-                    <span className={`tempo__summary-points tempo__summary-points--${roundTier(mine.points)}`}>
-                      {fmtPoints(mine.points)}
+      <div className="game-screen__answer">
+        {done ? (
+          <ol className="tempo__summary">
+            {rounds.map((r, i) => {
+              const mine = results[i]
+              const speed = mine ? readTap(mine.bpm, r.bpm, mine.points).speed : 1
+              return (
+                <li key={i}>
+                  <button
+                    type="button"
+                    className={`tempo__summary-row btn-press${i === index ? ' tempo__summary-row--on' : ''}`}
+                    onClick={() => { hapticSelection(); setIndex(i) }}
+                    aria-label={`Play ${r.title}`}
+                  >
+                    <span className="tempo__summary-song">
+                      <span className="tempo__summary-title">{r.title}</span>
+                      <span className="tempo__summary-artist">{r.artist}</span>
                     </span>
-                  )}
-                </button>
-              </li>
-            )
-          })}
-        </ol>
-      ) : revealed ? (
-        <div className={`tempo__outcome tempo__outcome--${tier}`}>
-          <div className="tempo__beats">
-            <Beat label="You" bpm={result.bpm} mine />
-            <Beat label="The song" bpm={round.bpm} />
-          </div>
-          <p className="tempo__verdict">
-            <span className="tempo__points">+{fmtPoints(result.points)}</span>
-            <span>{result.points === ROUND_MAX ? 'Right on the beat' : `${read.percentOff}% off`}</span>
-          </p>
-          {read.speed !== 1 && <p className="tempo__speed-note">{speedNote(read.speed, round.bpm)}</p>}
-          <button type="button" className="tempo__action btn-press" onClick={advance}>
-            {isLast ? 'See how you did' : 'Next song'}
-            <Icon name="chevronRight" size={15} strokeWidth={2.5} />
-          </button>
-        </div>
-      ) : (
-        <div className="tempo__tapping">
-          <button
-            type="button"
-            className={`tempo__pad${bpm ? ' tempo__pad--steady' : ''}`}
-            style={bpm ? { '--bpm': bpm } : undefined}
-            onPointerDown={tap}
-            onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); tap() } }}
-            disabled={locking}
-          >
-            {/* No aria-label: the pad's own words ("Tap the beat here", then the
-                taps left, then the BPM) are its name, so what a screen reader
-                says matches what's on it. */}
-            {/* Restarted on every tap, so each one lands as a ripple. */}
-            {taps.length > 0 && <span key={taps[taps.length - 1]} className="tempo__ripple" aria-hidden="true" />}
-            <span className="tempo__bpm" aria-live="polite">
-              {bpm ?? (taps.length ? MIN_TAPS - taps.length : 'Tap')}
-            </span>
-            <span className="tempo__bpm-unit">
-              {bpm ? 'BPM' : taps.length ? `more tap${MIN_TAPS - taps.length === 1 ? '' : 's'}` : 'the beat here'}
-            </span>
-          </button>
-          <div className="tempo__controls">
-            <button type="button" className="tempo__reset btn-press" onClick={() => setTaps([])} disabled={!taps.length || locking}>
-              Start over
+                    <span className="tempo__summary-call">
+                      {mine && <span>You {mine.bpm}</span>}
+                      <span className="tempo__summary-real">{targetLabel(speed, r.bpm)}</span>
+                    </span>
+                    {mine && (
+                      <span className={`tempo__summary-points tempo__summary-points--${roundTier(mine.points)}`}>
+                        {fmtPoints(mine.points)}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+        ) : revealed ? (
+          <div className={`tempo__outcome tempo__outcome--${tier}`}>
+            <div className="tempo__beats">
+              <Beat label="You" bpm={result.bpm} mine />
+              <Beat label="The song" bpm={round.bpm} />
+            </div>
+            <button
+              type="button"
+              className={`tempo__hear btn-press${hearBeat ? ' tempo__hear--on' : ''}`}
+              aria-pressed={hearBeat}
+              onClick={() => setHearBeat(h => !h)}
+            >
+              <span className="tempo__hear-switch" aria-hidden="true"><span /></span>
+              Your beat over the song
             </button>
-            <button type="button" className="tempo__action btn-press" onClick={lockIn} disabled={!bpm || locking}>
-              {bpm ? `Lock in ${bpm} BPM` : `Tap at least ${MIN_TAPS} times`}
+            <p className="tempo__verdict">
+              <span className="tempo__points">+{fmtPoints(result.points)}</span>
+              <span>{result.points === ROUND_MAX ? 'Right on the beat' : `${read.percentOff}% off`}</span>
+            </p>
+            {read.speed !== 1 && <p className="tempo__speed-note">{speedNote(read.speed, round.bpm)}</p>}
+            <button type="button" className="tempo__action btn-press" onClick={advance}>
+              {isLast ? 'See how you did' : 'Next song'}
+              <Icon name="chevronRight" size={15} strokeWidth={2.5} />
             </button>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="tempo__tapping">
+            <button
+              type="button"
+              className={`tempo__pad${bpm ? ' tempo__pad--steady' : ''}`}
+              style={bpm ? { '--bpm': bpm } : undefined}
+              onPointerDown={tap}
+              onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); tap() } }}
+              disabled={locking}
+            >
+              {/* No aria-label: the pad's own words ("Tap the beat here", then the
+                  taps left, then the BPM) are its name, so what a screen reader
+                  says matches what's on it. */}
+              {/* Restarted on every tap, so each one lands as a ripple. */}
+              {taps.length > 0 && <span key={taps[taps.length - 1]} className="tempo__ripple" aria-hidden="true" />}
+              <span className="tempo__bpm" aria-live="polite">
+                {bpm ?? (taps.length ? MIN_TAPS - taps.length : 'Tap')}
+              </span>
+              <span className="tempo__bpm-unit">
+                {bpm ? 'BPM' : taps.length ? `more tap${MIN_TAPS - taps.length === 1 ? '' : 's'}` : 'the beat here'}
+              </span>
+            </button>
+            <div className="tempo__controls">
+              <button type="button" className="tempo__reset btn-press" onClick={() => setTaps([])} disabled={!taps.length || locking}>
+                Start over
+              </button>
+              <button type="button" className="tempo__action btn-press" onClick={lockIn} disabled={!bpm || locking}>
+                {bpm ? `Lock in ${bpm} BPM` : `Tap at least ${MIN_TAPS} times`}
+              </button>
+            </div>
+          </div>
+        )}
 
-      {done && (
-        <ResultCard
-          justFinished={justFinished}
-          correct={isWin(finalPoints, maxPoints)}
-          status={`${fmtPoints(finalPoints)} points`}
-          answer={best != null ? `Closest beat: ${rounds[best].title}` : `Out of ${fmtPoints(maxPoints)}`}
-          artist={best != null
-            ? `You tapped ${results[best].bpm}${bestSpeed !== 1 ? ` at ${SPEED_WORD[bestSpeed]} speed` : ''}, the song runs at ${rounds[best].bpm}`
-            : undefined}
-          emojiGrid={squares}
-          shareLine={`${fmtPoints(finalPoints)} / ${fmtPoints(maxPoints)} points`}
-          points={finalPoints}
-          maxPoints={maxPoints}
-          rounds={{
-            date: puzzleDate,
-            points: results.length === rounds.length ? results.map(r => r.points) : [],
-            labels: rounds.map(r => r.title),
-          }}
-          gameSlug={SLUG}
-          puzzleDate={dateParam}
-          nextGame={nextGameAfter('tempo', puzzleDate)}
-          showLeaderboard={competitive}
-        />
-      )}
+        {done && (
+          <ResultCard
+            justFinished={justFinished}
+            correct={isWin(finalPoints, maxPoints)}
+            status={`${fmtPoints(finalPoints)} points`}
+            answer={best != null ? `Closest beat: ${rounds[best].title}` : `Out of ${fmtPoints(maxPoints)}`}
+            artist={best != null
+              ? `You tapped ${results[best].bpm}${bestSpeed !== 1 ? ` at ${SPEED_WORD[bestSpeed]} speed` : ''}, the song runs at ${rounds[best].bpm}`
+              : undefined}
+            emojiGrid={squares}
+            shareLine={`${fmtPoints(finalPoints)} / ${fmtPoints(maxPoints)} points`}
+            points={finalPoints}
+            maxPoints={maxPoints}
+            rounds={{
+              date: puzzleDate,
+              points: results.length === rounds.length ? results.map(r => r.points) : [],
+              labels: rounds.map(r => r.title),
+            }}
+            gameSlug={SLUG}
+            puzzleDate={dateParam}
+            nextGame={nextGameAfter('tempo', puzzleDate)}
+            showLeaderboard={competitive}
+          />
+        )}
+      </div>
     </GameShell>
   )
 }
@@ -332,5 +359,5 @@ function Beat({ label, bpm, mine }) {
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell page-shell--fill page-shell--game game-theme--tempo">{children}</div>
+  return <GameScreen slug="tempo">{children}</GameScreen>
 }

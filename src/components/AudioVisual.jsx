@@ -354,9 +354,12 @@ function reducedMotion() {
  * @param voiceRef the player's voice, read each frame for its analyser
  * @param stageRef an element to carry --glow and --beat, the clip's loudness and
  *                 its last beat, for the light and the play button around it
+ * @param onBeat   called on each beat heard in the clip
  */
-export default function AudioVisual({ kind = 'bars', playing, voiceRef, stageRef, className }) {
+export default function AudioVisual({ kind = 'bars', playing, voiceRef, stageRef, onBeat, className }) {
   const canvasRef = useRef(null)
+  const onBeatRef = useRef(onBeat)
+  useEffect(() => { onBeatRef.current = onBeat })
   const stateRef = useRef(null)
   const playingRef = useRef(playing)
   const renderRef = useRef(() => {})
@@ -498,6 +501,7 @@ export default function AudioVisual({ kind = 'bars', playing, voiceRef, stageRef
 
       if (live && s.detect(low / lowCount, now)) {
         s.beat = 1
+        onBeatRef.current?.()
         if (kind === 'rings') {
           s.ripples.push({ side: s.side, age: 0, life: 0.95 })
           s.side = 1 - s.side

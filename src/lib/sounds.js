@@ -88,6 +88,30 @@ export function playSound(name) {
   if (SOUNDS[name]?.duck) duckMusic(buffer.duration)
 }
 
+/**
+ * Plays a sound at a moment on the audio clock, for a sound that keeps time
+ * with a clip: Tap the Tempo's click at your tempo over the song. It doesn't
+ * dip the music, and the sound effects setting doesn't silence it, since the
+ * click has its own switch on screen. Returns the source, to stop it early.
+ */
+export function playSoundAt(name, when, volume = 1) {
+  const c = runningContext()
+  const buffer = buffers.get(name)
+  if (!c || !buffer) return null
+  const source = c.createBufferSource()
+  const gain = c.createGain()
+  source.buffer = buffer
+  gain.gain.value = volume
+  source.connect(gain)
+  gain.connect(c.destination)
+  source.onended = () => {
+    source.disconnect()
+    gain.disconnect()
+  }
+  source.start(Math.max(when, c.currentTime))
+  return source
+}
+
 /** Right for an answer that scored well, wrong for one that was far off. */
 export function playVerdict(tier) {
   playSound(tier === 'far' ? 'wrong' : 'right')

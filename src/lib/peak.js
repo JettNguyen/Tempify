@@ -1,12 +1,13 @@
 import { ROUND_MAX, closeness } from './points.js'
 
-// Hit or Miss as a dial: how high did it get on the Hot 100, or did it never
-// make it? The dial runs from #1 at the left to #100, then a "never charted"
-// zone at the far end.
+// Hit or Miss: how high did it get on the Hot 100, or did it never make it?
+// A position runs from 0 at #1 to #100, then a "never charted" zone to 1. The
+// chart bar (components/ChartBar.jsx) draws it top to bottom; the names here
+// still say dial, which is what it was first.
 //
 // The top of the chart gets more room than the bottom, on a square-root curve:
-// #1 against #5 is a real difference, #60 against #65 hardly is, and the dial
-// spends its width the same way. Scoring reads distance off the same curve,
+// #1 against #5 is a real difference, #60 against #65 hardly is, and the bar
+// spends its height the same way. Scoring reads distance off the same curve,
 // so being four places out near the top costs more than near the bottom.
 
 export const NEVER = 0          // a peak of 0 means it never charted
@@ -38,4 +39,14 @@ export function peakPoints(guess, actual) {
 
 export function peakLabel(peak) {
   return peak ? `#${peak}` : 'Never charted'
+}
+
+/**
+ * A peak moved some places along the chart: negative is higher, toward #1.
+ * Below #100 is never charted, and moving up from never starts at #100.
+ */
+export function stepPeak(peak, places) {
+  const rank = peak ? peak : 101
+  const next = Math.min(101, Math.max(1, rank + places))
+  return next === 101 ? NEVER : next
 }

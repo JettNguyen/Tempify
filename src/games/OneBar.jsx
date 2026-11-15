@@ -20,6 +20,7 @@ import GuessInput from '../components/GuessInput'
 import ResultCard from '../components/ResultCard'
 import { GuessTally } from '../components/Challenge'
 import Icon from '../components/Icon'
+import GameScreen from '../components/GameScreen'
 import DelayedSpinner from '../components/DelayedSpinner'
 import CustomGame from './CustomGame'
 import './OneBar.css'
@@ -303,129 +304,133 @@ function OneBarRound({ puzzle, puzzleDate, dateParam, custom }) {
 
   return (
     <GameShell>
-      <Link to={custom ? custom.back : exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
+      <div className="game-screen__listen">
+        <Link to={custom ? custom.back : exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <GameHeader
-        slug="one-bar"
-        name="one bar"
-        puzzleDate={puzzleDate}
-        title="Name the song from a short clip. Each wrong guess unlocks a bit more."
-        tag={custom?.tag}
-      />
-
-      <AudioPlayer
-        ref={audioRef}
-        key={done ? 'done' : 'playing'}
-        variant="stage"
-        visual="bars"
-        src={puzzle.audio_url}
-        maxDuration={done ? undefined : revealSeconds}
-        trackSpan={done ? undefined : MAX_REVEAL}
-        segmentStops={done ? undefined : REVEAL_TIMINGS}
-        segmentLabels={done ? undefined : ladder}
-        freshSegment={done ? null : freshSegment}
-        autoplay={done ? true : profile?.autoplay_audio !== false}
-      />
-
-      {done && (
-        <div className="one-bar__progress">
-          {correct ? (
-            <div className="one-bar__solved">
-              <p className="one-bar__solved-label">Solved with</p>
-              <p className="one-bar__solved-figure">
-                <span className="one-bar__solved-value">{revealSeconds}s</span>
-                <span className="one-bar__solved-total">of {MAX_REVEAL}s</span>
-              </p>
-              {/* Half a second only reads as good against the thirty it could
-                  have taken, so the figure gets something to sit against. */}
-              <div className="one-bar__solved-track">
-                <div
-                  className="one-bar__solved-fill"
-                  style={{ width: `${Math.max(2, (revealSeconds / MAX_REVEAL) * 100)}%` }}
-                />
-              </div>
-            </div>
-          ) : (
-            <p className="one-bar__progress-label">Better luck tomorrow</p>
-          )}
-        </div>
-      )}
-
-      {!done && (
-        <div className="one-bar__play">
-          <GuessInput ref={guessInputRef} onGuess={handleGuess} disabled={done} />
-          {notice && <p className="one-bar__notice" role="status">{notice}</p>}
-
-          <div className="one-bar__actions">
-            {/* On the last guess there is nothing left to unlock, so the button
-                forfeits the round, and should say so rather than inviting a tap
-                that reads as harmless. */}
-            <button
-              type="button"
-              onClick={handleSkip}
-              className={`one-bar__skip btn-press${remainingGuesses === 1 ? ' one-bar__skip--final' : ''}`}
-            >
-              <Icon name={remainingGuesses === 1 ? 'alert' : 'skipForward'} size={14} />
-              {remainingGuesses === 1 ? 'Give up and reveal the answer' : `Skip to hear ${nextReveal}s`}
-            </button>
-            <p className="one-bar__left" aria-live="polite">
-              <span className="one-bar__left-count">{remainingGuesses}</span>
-              {remainingGuesses === 1 ? ' guess left' : ' guesses left'}
-              <GuessTally challenge={challenge} />
-            </p>
-          </div>
-        </div>
-      )}
-
-      {attempts.length > 0 && !done && (
-        <ol className="one-bar__guesses">
-          {attempts.map((a, i) => (
-            <li
-              key={i}
-              className={[
-                'one-bar__guess',
-                a.skipped ? 'one-bar__guess--skipped' : '',
-                a.hint ? 'one-bar__guess--close' : '',
-                i === attempts.length - 1 ? 'one-bar__guess--latest' : '',
-              ].filter(Boolean).join(' ')}
-            >
-              <span className="one-bar__guess-mark">
-                <Icon name={a.skipped ? 'skipForward' : 'x'} size={11} strokeWidth={a.skipped ? 2.5 : 3} />
-              </span>
-              <span className="one-bar__guess-text">
-                {a.skipped ? `Skipped at ${REVEAL_TIMINGS[i]}s` : `${a.title} by ${a.artist}`}
-              </span>
-              {a.hint && <span className="one-bar__guess-tag">{HINTS[a.hint]}</span>}
-            </li>
-          ))}
-        </ol>
-      )}
-
-      {done && (
-        <ResultCard
-          justFinished={justFinished}
-          correct={correct}
-          answer={puzzle.answer}
-          artist={puzzle.metadata?.artist}
-          artwork={{
-            title: puzzle.answer,
-            artist: puzzle.metadata?.artist,
-            src: resultArtwork || puzzle.metadata?.artwork_url,
-          }}
-          emojiGrid={buildEmojiGrid()}
-          attempts={attempts.length}
-          maxGuesses={MAX_ATTEMPTS}
-          gameSlug="one-bar"
-          puzzleDate={dateParam}
-          nextGame={custom ? customNext(custom) : nextGameAfter('one-bar', puzzleDate)}
-          showLeaderboard={profile?.competitive_mode !== false}
-          custom={custom && { ...custom, posted: record.posted }}
+        <GameHeader
+          slug="one-bar"
+          name="one bar"
+          puzzleDate={puzzleDate}
+          title="Name the song from a short clip. Each wrong guess unlocks a bit more."
+          tag={custom?.tag}
         />
-      )}
+
+        <AudioPlayer
+          ref={audioRef}
+          key={done ? 'done' : 'playing'}
+          variant="stage"
+          visual="bars"
+          src={puzzle.audio_url}
+          maxDuration={done ? undefined : revealSeconds}
+          trackSpan={done ? undefined : MAX_REVEAL}
+          segmentStops={done ? undefined : REVEAL_TIMINGS}
+          segmentLabels={done ? undefined : ladder}
+          freshSegment={done ? null : freshSegment}
+          autoplay={done ? true : profile?.autoplay_audio !== false}
+        />
+      </div>
+
+      <div className="game-screen__answer">
+        {done && (
+          <div className="one-bar__progress">
+            {correct ? (
+              <div className="one-bar__solved">
+                <p className="one-bar__solved-label">Solved with</p>
+                <p className="one-bar__solved-figure">
+                  <span className="one-bar__solved-value">{revealSeconds}s</span>
+                  <span className="one-bar__solved-total">of {MAX_REVEAL}s</span>
+                </p>
+                {/* Half a second only reads as good against the thirty it could
+                    have taken, so the figure gets something to sit against. */}
+                <div className="one-bar__solved-track">
+                  <div
+                    className="one-bar__solved-fill"
+                    style={{ width: `${Math.max(2, (revealSeconds / MAX_REVEAL) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="one-bar__progress-label">Better luck tomorrow</p>
+            )}
+          </div>
+        )}
+
+        {!done && (
+          <div className="one-bar__play">
+            <GuessInput ref={guessInputRef} onGuess={handleGuess} disabled={done} />
+            {notice && <p className="one-bar__notice" role="status">{notice}</p>}
+
+            <div className="one-bar__actions">
+              {/* On the last guess there is nothing left to unlock, so the button
+                  forfeits the round, and should say so rather than inviting a tap
+                  that reads as harmless. */}
+              <button
+                type="button"
+                onClick={handleSkip}
+                className={`one-bar__skip btn-press${remainingGuesses === 1 ? ' one-bar__skip--final' : ''}`}
+              >
+                <Icon name={remainingGuesses === 1 ? 'alert' : 'skipForward'} size={14} />
+                {remainingGuesses === 1 ? 'Give up and reveal the answer' : `Skip to hear ${nextReveal}s`}
+              </button>
+              <p className="one-bar__left" aria-live="polite">
+                <span className="one-bar__left-count">{remainingGuesses}</span>
+                {remainingGuesses === 1 ? ' guess left' : ' guesses left'}
+                <GuessTally challenge={challenge} />
+              </p>
+            </div>
+          </div>
+        )}
+
+        {attempts.length > 0 && !done && (
+          <ol className="one-bar__guesses">
+            {attempts.map((a, i) => (
+              <li
+                key={i}
+                className={[
+                  'one-bar__guess',
+                  a.skipped ? 'one-bar__guess--skipped' : '',
+                  a.hint ? 'one-bar__guess--close' : '',
+                  i === attempts.length - 1 ? 'one-bar__guess--latest' : '',
+                ].filter(Boolean).join(' ')}
+              >
+                <span className="one-bar__guess-mark">
+                  <Icon name={a.skipped ? 'skipForward' : 'x'} size={11} strokeWidth={a.skipped ? 2.5 : 3} />
+                </span>
+                <span className="one-bar__guess-text">
+                  {a.skipped ? `Skipped at ${REVEAL_TIMINGS[i]}s` : `${a.title} by ${a.artist}`}
+                </span>
+                {a.hint && <span className="one-bar__guess-tag">{HINTS[a.hint]}</span>}
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {done && (
+          <ResultCard
+            justFinished={justFinished}
+            correct={correct}
+            answer={puzzle.answer}
+            artist={puzzle.metadata?.artist}
+            artwork={{
+              title: puzzle.answer,
+              artist: puzzle.metadata?.artist,
+              src: resultArtwork || puzzle.metadata?.artwork_url,
+            }}
+            emojiGrid={buildEmojiGrid()}
+            attempts={attempts.length}
+            maxGuesses={MAX_ATTEMPTS}
+            gameSlug="one-bar"
+            puzzleDate={dateParam}
+            nextGame={custom ? customNext(custom) : nextGameAfter('one-bar', puzzleDate)}
+            showLeaderboard={profile?.competitive_mode !== false}
+            custom={custom && { ...custom, posted: record.posted }}
+          />
+        )}
+      </div>
     </GameShell>
   )
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell page-shell--game game-theme--one-bar">{children}</div>
+  return <GameScreen slug="one-bar" fill={false}>{children}</GameScreen>
 }

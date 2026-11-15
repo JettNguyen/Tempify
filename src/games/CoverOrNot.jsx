@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useGameTimer } from '../hooks/useGameTimer'
+import { useSwipeChoice } from '../hooks/useSwipeChoice'
 import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
@@ -17,6 +18,7 @@ import GameHeader from '../components/GameHeader'
 import StageSong from '../components/StageSong'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
+import GameScreen from '../components/GameScreen'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Dial from '../components/Dial'
 import { ROUND_MAX, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
@@ -104,6 +106,13 @@ export default function CoverOrNot() {
   const posOf = (year) => (year - range[0]) / (range[1] - range[0])
 
   const { stop, display } = useGameTimer(!done, 250, `tempify_game_cover-or-not_${puzzleDate}`)
+  // The song can be swiped toward an answer card as well as the card tapped:
+  // left for the card on the left, right for the one on the right.
+  const swipe = useSwipeChoice({
+    enabled: !done && !chosen,
+    onPick: (side) => handleGuess(side === 'left' ? CHOICES[0].value : CHOICES[1].value),
+  })
+  const leaning = swipe.dx < 0 ? CHOICES[0] : swipe.dx > 0 ? CHOICES[1] : null
 
   useEffect(() => {
     // Already seeded from cache, since refetching would only re-run derived
@@ -263,163 +272,184 @@ export default function CoverOrNot() {
 
   return (
     <GameShell className={yearView ? 'cover-or-not--year' : undefined}>
-      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
-
-      <GameHeader
-        slug="cover-or-not"
-        name="cover or not"
-        puzzleDate={puzzleDate}
-        title="Is this song a cover of an earlier track?"
-        timer={!done && profile?.competitive_mode !== false ? { text: display, running: !chosen } : null}
-      />
-
-      <AudioPlayer
-        ref={coverRef}
-        variant="stage"
-        visual="rings"
-        src={puzzle.audio_url}
-        onPlay={() => originalRef.current?.pause()}
-        autoplay={profile?.autoplay_audio !== false}
+      <div
+        className={[
+          'game-screen__listen cover-or-not__listen',
+          swipe.active && 'cover-or-not__listen--swiping',
+          !done && !chosen && 'cover-or-not__listen--open',
+        ].filter(Boolean).join(' ')}
+        style={{ '--swipe': swipe.dx }}
+        {...swipe.handlers}
       >
-        <StageSong
-          title={m.song_title}
-          artist={m.song_artist}
-          meta={m.song_year}
-          src={m.artwork_url || m.song_artwork_url}
+        <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
+
+        <GameHeader
+          slug="cover-or-not"
+          name="cover or not"
+          puzzleDate={puzzleDate}
+          title="Is this song a cover of an earlier track?"
+          timer={!done && profile?.competitive_mode !== false ? { text: display, running: !chosen } : null}
         />
-      </AudioPlayer>
 
-      {yearView ? (
-        <>
-          <div className={`cover-or-not__call cover-or-not__call--${correct ? 'right' : 'wrong'}`}>
-            <span className="cover-or-not__call-mark">
-              <Icon name={correct ? 'check' : 'x'} size={13} strokeWidth={3} />
+        <AudioPlayer
+          ref={coverRef}
+          variant="stage"
+          visual="rings"
+          src={puzzle.audio_url}
+          onPlay={() => originalRef.current?.pause()}
+          autoplay={profile?.autoplay_audio !== false}
+        >
+          <StageSong
+            title={m.song_title}
+            artist={m.song_artist}
+            meta={m.song_year}
+            src={m.artwork_url || m.song_artwork_url}
+          />
+          {leaning && (
+            <span
+              className={`cover-or-not__stamp cover-or-not__stamp--${swipe.dx < 0 ? 'right' : 'left'}`}
+              style={{ '--lean': swipe.progress }}
+              aria-hidden="true"
+            >
+              {leaning.label}
             </span>
-            <span className="cover-or-not__call-text">
-              <span className="cover-or-not__call-label">{correct ? 'You called it: a cover' : "Not quite: it's a cover"}</span>
-              <span className="cover-or-not__call-sub">
-                of {m.original_title ? `"${m.original_title}"` : 'an earlier song'}{m.original_artist ? ` by ${m.original_artist}` : ''}
+          )}
+        </AudioPlayer>
+      </div>
+
+      <div className="game-screen__answer">
+        {yearView ? (
+          <>
+            <div className={`cover-or-not__call cover-or-not__call--${correct ? 'right' : 'wrong'}`}>
+              <span className="cover-or-not__call-mark">
+                <Icon name={correct ? 'check' : 'x'} size={13} strokeWidth={3} />
               </span>
-            </span>
-            <span className="cover-or-not__call-points">+{fmtPoints(steps[0]?.points || 0)}</span>
-          </div>
+              <span className="cover-or-not__call-text">
+                <span className="cover-or-not__call-label">{correct ? 'You called it: a cover' : "Not quite: it's a cover"}</span>
+                <span className="cover-or-not__call-sub">
+                  of {m.original_title ? `"${m.original_title}"` : 'an earlier song'}{m.original_artist ? ` by ${m.original_artist}` : ''}
+                </span>
+              </span>
+              <span className="cover-or-not__call-points">+{fmtPoints(steps[0]?.points || 0)}</span>
+            </div>
 
-          <Dial
-            position={yearDone ? posOf(steps[1].year) : yearPos}
-            steps={range[1] - range[0]}
-            onMove={setYearPos}
-            answerAt={yearDone ? posOf(m.original_year) : null}
-            tier={yearDone ? roundTier(steps[1].points) : null}
-            locking={yearLocking}
-            ticks={yearTicks(range)}
-            value={yearDone ? m.original_year : yearAt(yearPos)}
-            sub={yearDone ? `You said ${steps[1].year}` : 'Bonus: when did the original come out?'}
-            label="When the original came out"
-            valueText={String(yearAt(yearPos))}
+            <Dial
+              position={yearDone ? posOf(steps[1].year) : yearPos}
+              steps={range[1] - range[0]}
+              onMove={setYearPos}
+              answerAt={yearDone ? posOf(m.original_year) : null}
+              tier={yearDone ? roundTier(steps[1].points) : null}
+              locking={yearLocking}
+              ticks={yearTicks(range)}
+              value={yearDone ? m.original_year : yearAt(yearPos)}
+              sub={yearDone ? `You said ${steps[1].year}` : 'Bonus: when did the original come out?'}
+              label="When the original came out"
+              valueText={String(yearAt(yearPos))}
+            >
+              {yearDone ? (
+                <div className="dial__outcome">
+                  <p className="dial__verdict">
+                    <span className="dial__points">+{fmtPoints(steps[1].points)}</span>
+                    <span>{yearOff === 0 ? 'Right on the year' : `${yearOff} year${yearOff === 1 ? '' : 's'} off`}</span>
+                  </p>
+                  {!done && (
+                    <button type="button" className="dial__action btn-press" onClick={showResult}>
+                      See how you did
+                      <Icon name="chevronRight" size={15} strokeWidth={2.5} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button type="button" className="dial__action btn-press" onClick={lockYear} disabled={yearLocking}>
+                  Lock in {yearAt(yearPos)}
+                </button>
+              )}
+            </Dial>
+          </>
+        ) : (
+        <div className="choices">
+          {CHOICES.map(({ value, label, sub, Art }, i) => {
+            let mod = ''
+            let mark = null
+            if (done) {
+              if (value === puzzle.answer) { mod = ' choice--correct'; mark = 'check' }
+              else if (value === chosen) { mod = ' choice--wrong'; mark = 'x' }
+              else mod = ' choice--faded'
+            } else if (chosen) {
+              mod = value === chosen ? ' choice--locked' : ' choice--waiting'
+            }
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => handleGuess(value)}
+                disabled={done || Boolean(chosen)}
+                className={`choice${mod}${leaning?.value === value ? ' choice--leaning' : ''}`}
+                style={{ '--i': i, '--lean': leaning?.value === value ? swipe.progress : 0 }}
+              >
+                <Art className="choice__art" />
+                <span>
+                  <span className="choice__label">{label}</span>
+                  <span className="choice__sub">{sub}</span>
+                </span>
+                {mark && (
+                  <span className="choice__mark">
+                    <Icon name={mark} size={14} strokeWidth={3} />
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+        )}
+
+        {done && (
+          <ResultCard
+            justFinished={justFinished}
+            correct={correct}
+            status={scored ? `${fmtPoints(total)} points` : undefined}
+            emojiGrid={scored ? shareSquares(steps.map(st => st.points)) : undefined}
+            shareLine={scored ? `${correct ? 'Spotted the cover' : 'Got fooled'}, then ${yearOff === 0 ? 'nailed the year' : `${yearOff} year${yearOff === 1 ? '' : 's'} off the original`} · ${fmtPoints(total)} / ${fmtPoints(ROUND_MAX * 2)}` : undefined}
+            points={scored ? total : undefined}
+            maxPoints={scored ? ROUND_MAX * 2 : undefined}
+            rounds={scored ? { date: puzzleDate, points: steps.map(st => st.points), labels: ['The call', 'The year'] } : undefined}
+            answer={isCover
+              ? `It's a cover${m.original_title ? ` of "${m.original_title}"` : ''}${m.original_artist ? ` by ${m.original_artist}` : ''}`
+              : "It's an original"
+            }
+            artwork={isCover ? {
+              title: m.original_title,
+              artist: m.original_artist,
+              src: originalResultArtwork || m.original_artwork_url,
+            } : undefined}
+            detail={m.note || undefined}
+            gameSlug="cover-or-not"
+            puzzleDate={dateParam}
+            timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
+            nextGame={nextGameAfter('cover-or-not', puzzleDate)}
+            showLeaderboard={profile?.competitive_mode !== false}
           >
-            {yearDone ? (
-              <div className="dial__outcome">
-                <p className="dial__verdict">
-                  <span className="dial__points">+{fmtPoints(steps[1].points)}</span>
-                  <span>{yearOff === 0 ? 'Right on the year' : `${yearOff} year${yearOff === 1 ? '' : 's'} off`}</span>
-                </p>
-                {!done && (
-                  <button type="button" className="dial__action btn-press" onClick={showResult}>
-                    See how you did
-                    <Icon name="chevronRight" size={15} strokeWidth={2.5} />
-                  </button>
+            {isCover && (
+              <div className="cover-or-not__original-reveal">
+                <p className="cover-or-not__original-label">The original</p>
+                {m.original_title && <p className="cover-or-not__original-name">{m.original_title}</p>}
+                {m.original_artist && (
+                  <p className="cover-or-not__original-meta">
+                    {m.original_artist}{m.original_year ? ` · ${m.original_year}` : ''}
+                  </p>
+                )}
+                {m.original_audio_url && (
+                  <AudioPlayer ref={originalRef} src={m.original_audio_url} onPlay={() => coverRef.current?.pause()} />
                 )}
               </div>
-            ) : (
-              <button type="button" className="dial__action btn-press" onClick={lockYear} disabled={yearLocking}>
-                Lock in {yearAt(yearPos)}
-              </button>
             )}
-          </Dial>
-        </>
-      ) : (
-      <div className="choices">
-        {CHOICES.map(({ value, label, sub, Art }, i) => {
-          let mod = ''
-          let mark = null
-          if (done) {
-            if (value === puzzle.answer) { mod = ' choice--correct'; mark = 'check' }
-            else if (value === chosen) { mod = ' choice--wrong'; mark = 'x' }
-            else mod = ' choice--faded'
-          } else if (chosen) {
-            mod = value === chosen ? ' choice--locked' : ' choice--waiting'
-          }
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => handleGuess(value)}
-              disabled={done || Boolean(chosen)}
-              className={`choice${mod}`}
-              style={{ '--i': i }}
-            >
-              <Art className="choice__art" />
-              <span>
-                <span className="choice__label">{label}</span>
-                <span className="choice__sub">{sub}</span>
-              </span>
-              {mark && (
-                <span className="choice__mark">
-                  <Icon name={mark} size={14} strokeWidth={3} />
-                </span>
-              )}
-            </button>
-          )
-        })}
+          </ResultCard>
+        )}
       </div>
-      )}
-
-      {done && (
-        <ResultCard
-          justFinished={justFinished}
-          correct={correct}
-          status={scored ? `${fmtPoints(total)} points` : undefined}
-          emojiGrid={scored ? shareSquares(steps.map(st => st.points)) : undefined}
-          shareLine={scored ? `${correct ? 'Spotted the cover' : 'Got fooled'}, then ${yearOff === 0 ? 'nailed the year' : `${yearOff} year${yearOff === 1 ? '' : 's'} off the original`} · ${fmtPoints(total)} / ${fmtPoints(ROUND_MAX * 2)}` : undefined}
-          points={scored ? total : undefined}
-          maxPoints={scored ? ROUND_MAX * 2 : undefined}
-          rounds={scored ? { date: puzzleDate, points: steps.map(st => st.points), labels: ['The call', 'The year'] } : undefined}
-          answer={isCover
-            ? `It's a cover${m.original_title ? ` of "${m.original_title}"` : ''}${m.original_artist ? ` by ${m.original_artist}` : ''}`
-            : "It's an original"
-          }
-          artwork={isCover ? {
-            title: m.original_title,
-            artist: m.original_artist,
-            src: originalResultArtwork || m.original_artwork_url,
-          } : undefined}
-          detail={m.note || undefined}
-          gameSlug="cover-or-not"
-          puzzleDate={dateParam}
-          timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
-          nextGame={nextGameAfter('cover-or-not', puzzleDate)}
-          showLeaderboard={profile?.competitive_mode !== false}
-        >
-          {isCover && (
-            <div className="cover-or-not__original-reveal">
-              <p className="cover-or-not__original-label">The original</p>
-              {m.original_title && <p className="cover-or-not__original-name">{m.original_title}</p>}
-              {m.original_artist && (
-                <p className="cover-or-not__original-meta">
-                  {m.original_artist}{m.original_year ? ` · ${m.original_year}` : ''}
-                </p>
-              )}
-              {m.original_audio_url && (
-                <AudioPlayer ref={originalRef} src={m.original_audio_url} onPlay={() => coverRef.current?.pause()} />
-              )}
-            </div>
-          )}
-        </ResultCard>
-      )}
     </GameShell>
   )
 }
 
 function GameShell({ children, className }) {
-  return <div className={`page-shell page-shell--fill page-shell--game game-theme--cover-or-not${className ? ` ${className}` : ''}`}>{children}</div>
+  return <GameScreen slug="cover-or-not" className={className}>{children}</GameScreen>
 }

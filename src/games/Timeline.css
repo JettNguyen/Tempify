@@ -260,6 +260,63 @@
   }
 }
 
+/* A phone on its side gives the line the whole right half, about 300 points,
+   and the last song's four rows and five gaps only fit it a little closer
+   together. The gaps stay a full-width target. */
+@media (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
+  .timeline__line {
+    margin-top: 0;
+    gap: 2px;
+  }
+
+  .timeline__line:has(.timeline__gap) .timeline__song {
+    min-height: 28px;
+    padding-block: 2px;
+  }
+
+  .timeline__line:has(.timeline__gap) .timeline__gap {
+    min-height: 32px;
+  }
+}
+
+/* Folded, in the app, where the notch and the home bar take a little more of
+   that height, the gaps give up a few points more. */
+@media (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
+  .page-shell--tight .timeline__line:has(.timeline__gap) .timeline__gap {
+    min-height: 28px;
+  }
+}
+
+/* Folded to fit (useFitScreen): every song on the line takes one row, except
+   the one that just landed, which keeps its "you said" line. */
+@media (max-width: 640px), (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
+  .page-shell--tight .timeline__line:not(:has(.timeline__gap)) .timeline__song:not(.timeline__song--fresh) {
+    min-height: 36px;
+    padding-block: 4px;
+  }
+
+  .page-shell--tight .timeline__line:not(:has(.timeline__gap)) .timeline__song:not(.timeline__song--fresh) .timeline__name {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .page-shell--tight .timeline__line:not(:has(.timeline__gap)) .timeline__song:not(.timeline__song--fresh) .timeline__title {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .page-shell--tight .timeline__line:not(:has(.timeline__gap)) .timeline__song:not(.timeline__song--fresh) .timeline__artist {
+    flex: 1 1 0;
+    min-width: 4em;
+    font-size: var(--fs-xs);
+  }
+
+  .page-shell--tight .timeline__next {
+    margin-top: 0.5rem;
+  }
+}
+
 @keyframes timelineLand {
   0%   { opacity: 0; transform: translateY(-8px) scale(0.96); }
   60%  { opacity: 1; transform: translateY(0) scale(1.03); }

@@ -73,7 +73,7 @@
 
 /* On a phone the card takes the spare height, so the pad lands low. */
 @media (max-width: 640px) {
-  .page-shell--fill > .tempo__song {
+  .page-shell--fill .game-screen__listen > .tempo__song {
     flex: 1 0 auto;
   }
 }
@@ -415,6 +415,50 @@
   }
 }
 
+/* Folded to fit (useFitScreen): the finished day's rows close up, to the
+   44 points a thumb needs. */
+@media (max-width: 640px), (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
+  .page-shell--tight .tempo__summary {
+    margin-top: 0.6rem;
+    gap: 5px;
+  }
+
+  .page-shell--tight .tempo__summary-row {
+    min-height: 44px;
+    padding-block: 5px;
+  }
+
+  /* The song card keeps its cover, smaller. */
+  .page-shell--tight .tempo__song {
+    padding: 0.75rem 1rem;
+  }
+
+  .page-shell--tight .tempo__song .track-artwork {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+    flex-basis: 64px;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-shell--tight .tempo__song :is(.track-artwork__img, .track-artwork__fallback) {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+  }
+}
+
+/* A phone on its side, folded, with a finished day of five songs: the rows
+   give up a few points more to keep the day and its result on one screen. */
+@media (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
+  .page-shell--tight .tempo__summary-row {
+    min-height: 40px;
+    padding-block: 3px;
+  }
+}
+
 /* On its side, the right half of the screen is wider than it is tall, so the
    pad and its buttons sit side by side, with the pad on the outside edge
    where the right thumb already is. */
@@ -442,4 +486,55 @@
   .tempo__verdict {
     margin: 8px 0;
   }
+}
+
+/* The switch for your beat clicking over the song (useYourBeat). */
+.tempo__hear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  margin: 10px auto 0;
+  padding: 4px 12px 4px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: scale var(--press-up), border-color 0.2s ease, color 0.2s ease;
+}
+
+.tempo__hear-switch {
+  position: relative;
+  width: 30px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--border);
+  transition: background-color 0.2s ease;
+}
+
+.tempo__hear-switch span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: translate 0.2s ease, background-color 0.2s ease;
+}
+
+.tempo__hear--on {
+  border-color: rgba(var(--game-color-rgb), 0.45);
+  color: var(--text-primary);
+}
+
+.tempo__hear--on .tempo__hear-switch {
+  background: var(--game-color);
+}
+
+.tempo__hear--on .tempo__hear-switch span {
+  translate: 12px 0;
+  background: #0f0f0f;
 }

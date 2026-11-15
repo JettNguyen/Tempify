@@ -16,6 +16,7 @@ import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
+import GameScreen from '../components/GameScreen'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Timeline from './Timeline'
 import CustomGame from './CustomGame'
@@ -162,80 +163,84 @@ function OneSong({ puzzle, puzzleDate, dateParam }) {
 
   return (
     <GameShell>
-      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
+      <div className="game-screen__listen">
+        <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <GameHeader
-        slug="era"
-        name="era"
-        puzzleDate={puzzleDate}
-        title="What decade is this song from?"
-        timer={timer}
-      />
+        <GameHeader
+          slug="era"
+          name="era"
+          puzzleDate={puzzleDate}
+          title="What decade is this song from?"
+          timer={timer}
+        />
 
-      <AudioPlayer
-        variant="stage"
-        visual="record"
-        src={puzzle.audio_url}
-        onPlay={() => setHasStarted(true)}
-        autoplay={profile?.autoplay_audio !== false}
-      />
-
-      <div className="choices era__decades">
-        {DECADES.map((decade, i) => {
-          const isAnswer = decade === puzzle.answer
-          let mod = ''
-          let mark = null
-          if (done) {
-            if (isAnswer) { mod = ' choice--correct'; mark = 'check' }
-            else if (decade === chosen) { mod = ' choice--wrong'; mark = 'x' }
-            else mod = ' choice--faded'
-          } else if (chosen) {
-            mod = decade === chosen ? ' choice--locked' : ' choice--waiting'
-          }
-
-          return (
-            <button
-              key={decade}
-              type="button"
-              onClick={() => handleGuess(decade)}
-              disabled={done || Boolean(chosen)}
-              className={`choice era__decade${mod}`}
-              style={{ '--i': i }}
-            >
-              <span className="era__decade-century">{centuryOf(decade)}</span>
-              <span className="era__decade-years">{decade}</span>
-              {mark && (
-                <span className="choice__mark">
-                  <Icon name={mark} size={10} strokeWidth={3.5} />
-                </span>
-              )}
-            </button>
-          )
-        })}
+        <AudioPlayer
+          variant="stage"
+          visual="record"
+          src={puzzle.audio_url}
+          onPlay={() => setHasStarted(true)}
+          autoplay={profile?.autoplay_audio !== false}
+        />
       </div>
 
-      {done && (
-        <ResultCard
-          justFinished={justFinished}
-          correct={correct}
-          answer={puzzle.metadata?.title}
-          artist={`${puzzle.metadata?.artist} · ${puzzle.metadata?.year}`}
-          artwork={{
-            title: puzzle.metadata?.title,
-            artist: puzzle.metadata?.artist,
-            src: resultArtwork || puzzle.metadata?.artwork_url,
-          }}
-          gameSlug="era"
-          puzzleDate={dateParam}
-          timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
-          nextGame={nextGameAfter('era', puzzleDate)}
-          showLeaderboard={profile?.competitive_mode !== false}
-        />
-      )}
+      <div className="game-screen__answer">
+        <div className="choices era__decades">
+          {DECADES.map((decade, i) => {
+            const isAnswer = decade === puzzle.answer
+            let mod = ''
+            let mark = null
+            if (done) {
+              if (isAnswer) { mod = ' choice--correct'; mark = 'check' }
+              else if (decade === chosen) { mod = ' choice--wrong'; mark = 'x' }
+              else mod = ' choice--faded'
+            } else if (chosen) {
+              mod = decade === chosen ? ' choice--locked' : ' choice--waiting'
+            }
+
+            return (
+              <button
+                key={decade}
+                type="button"
+                onClick={() => handleGuess(decade)}
+                disabled={done || Boolean(chosen)}
+                className={`choice era__decade${mod}`}
+                style={{ '--i': i }}
+              >
+                <span className="era__decade-century">{centuryOf(decade)}</span>
+                <span className="era__decade-years">{decade}</span>
+                {mark && (
+                  <span className="choice__mark">
+                    <Icon name={mark} size={10} strokeWidth={3.5} />
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {done && (
+          <ResultCard
+            justFinished={justFinished}
+            correct={correct}
+            answer={puzzle.metadata?.title}
+            artist={`${puzzle.metadata?.artist} · ${puzzle.metadata?.year}`}
+            artwork={{
+              title: puzzle.metadata?.title,
+              artist: puzzle.metadata?.artist,
+              src: resultArtwork || puzzle.metadata?.artwork_url,
+            }}
+            gameSlug="era"
+            puzzleDate={dateParam}
+            timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
+            nextGame={nextGameAfter('era', puzzleDate)}
+            showLeaderboard={profile?.competitive_mode !== false}
+          />
+        )}
+      </div>
     </GameShell>
   )
 }
 
 function GameShell({ children, className }) {
-  return <div className={`page-shell page-shell--fill page-shell--game game-theme--era${className ? ` ${className}` : ''}`}>{children}</div>
+  return <GameScreen slug="era" className={className}>{children}</GameScreen>
 }

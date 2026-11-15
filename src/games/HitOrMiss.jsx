@@ -14,6 +14,7 @@ import GameHeader from '../components/GameHeader'
 import StageSong from '../components/StageSong'
 import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
+import GameScreen from '../components/GameScreen'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Peak from './Peak'
 import CustomGame from './CustomGame'
@@ -153,79 +154,83 @@ function OneSong({ puzzle, puzzleDate, dateParam }) {
 
   return (
     <GameShell>
-      <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
+      <div className="game-screen__listen">
+        <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <GameHeader
-        slug="hit-or-miss"
-        name="hit or miss"
-        puzzleDate={puzzleDate}
-        title="Did this song ever chart on the Billboard Hot 100?"
-        timer={!done && profile?.competitive_mode !== false ? { text: display, running: !chosen } : null}
-      />
+        <GameHeader
+          slug="hit-or-miss"
+          name="hit or miss"
+          puzzleDate={puzzleDate}
+          title="Did this song ever chart on the Billboard Hot 100?"
+          timer={!done && profile?.competitive_mode !== false ? { text: display, running: !chosen } : null}
+        />
 
-      <AudioPlayer variant="stage" visual="chart" src={puzzle.audio_url} autoplay={profile?.autoplay_audio !== false}>
-        <StageSong title={puzzle.answer} artist={puzzle.metadata?.artist} src={puzzle.metadata?.artwork_url} />
-      </AudioPlayer>
-
-      <div className="choices">
-        {CHOICES.map(({ value, label, sub, Art }, i) => {
-          let mod = ''
-          let mark = null
-          if (done) {
-            if (value === verdict) { mod = ' choice--correct'; mark = 'check' }
-            else if (value === chosen) { mod = ' choice--wrong'; mark = 'x' }
-            else mod = ' choice--faded'
-          } else if (chosen) {
-            mod = value === chosen ? ' choice--locked' : ' choice--waiting'
-          }
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => handleGuess(value)}
-              disabled={done || Boolean(chosen)}
-              className={`choice${mod}`}
-              style={{ '--i': i }}
-            >
-              <Art className="choice__art" />
-              <span>
-                <span className="choice__label">{label}</span>
-                <span className="choice__sub">{sub}</span>
-              </span>
-              {mark && (
-                <span className="choice__mark">
-                  <Icon name={mark} size={14} strokeWidth={3} />
-                </span>
-              )}
-            </button>
-          )
-        })}
+        <AudioPlayer variant="stage" visual="chart" src={puzzle.audio_url} autoplay={profile?.autoplay_audio !== false}>
+          <StageSong title={puzzle.answer} artist={puzzle.metadata?.artist} src={puzzle.metadata?.artwork_url} />
+        </AudioPlayer>
       </div>
 
-      {done && (
-        <ResultCard
-          justFinished={justFinished}
-          correct={correct}
-          answer={correct
-            ? isHit
-              ? `Peak #${puzzle.metadata?.peak_position} (${puzzle.metadata?.year})`
-              : `Missed the charts (${puzzle.metadata?.year})`
-            : isHit
-              ? `It was a hit. It peaked at #${puzzle.metadata?.peak_position} in ${puzzle.metadata?.year}`
-              : `It missed. It never entered the Hot 100 (${puzzle.metadata?.year})`
-          }
-          detail={[puzzle.metadata?.hint, puzzle.metadata?.note].filter(Boolean).join(' · ')}
-          gameSlug="hit-or-miss"
-          puzzleDate={dateParam}
-          timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
-          nextGame={nextGameAfter('hit-or-miss', puzzleDate)}
-          showLeaderboard={profile?.competitive_mode !== false}
-        />
-      )}
+      <div className="game-screen__answer">
+        <div className="choices">
+          {CHOICES.map(({ value, label, sub, Art }, i) => {
+            let mod = ''
+            let mark = null
+            if (done) {
+              if (value === verdict) { mod = ' choice--correct'; mark = 'check' }
+              else if (value === chosen) { mod = ' choice--wrong'; mark = 'x' }
+              else mod = ' choice--faded'
+            } else if (chosen) {
+              mod = value === chosen ? ' choice--locked' : ' choice--waiting'
+            }
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => handleGuess(value)}
+                disabled={done || Boolean(chosen)}
+                className={`choice${mod}`}
+                style={{ '--i': i }}
+              >
+                <Art className="choice__art" />
+                <span>
+                  <span className="choice__label">{label}</span>
+                  <span className="choice__sub">{sub}</span>
+                </span>
+                {mark && (
+                  <span className="choice__mark">
+                    <Icon name={mark} size={14} strokeWidth={3} />
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {done && (
+          <ResultCard
+            justFinished={justFinished}
+            correct={correct}
+            answer={correct
+              ? isHit
+                ? `Peak #${puzzle.metadata?.peak_position} (${puzzle.metadata?.year})`
+                : `Missed the charts (${puzzle.metadata?.year})`
+              : isHit
+                ? `It was a hit. It peaked at #${puzzle.metadata?.peak_position} in ${puzzle.metadata?.year}`
+                : `It missed. It never entered the Hot 100 (${puzzle.metadata?.year})`
+            }
+            detail={[puzzle.metadata?.hint, puzzle.metadata?.note].filter(Boolean).join(' · ')}
+            gameSlug="hit-or-miss"
+            puzzleDate={dateParam}
+            timeSeconds={profile?.competitive_mode !== false ? finalTime : null}
+            nextGame={nextGameAfter('hit-or-miss', puzzleDate)}
+            showLeaderboard={profile?.competitive_mode !== false}
+          />
+        )}
+      </div>
     </GameShell>
   )
 }
 
 function GameShell({ children, className }) {
-  return <div className={`page-shell page-shell--fill page-shell--game game-theme--hit-or-miss${className ? ` ${className}` : ''}`}>{children}</div>
+  return <GameScreen slug="hit-or-miss" className={className}>{children}</GameScreen>
 }

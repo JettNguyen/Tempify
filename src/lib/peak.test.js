@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dialAt, peakAt, peakPoints, NEVER, NEVER_FROM } from './peak.js'
+import { dialAt, peakAt, peakPoints, NEVER, NEVER_FROM, stepPeak } from './peak.js'
 import { roundTier, shareSquares, isWin } from './points.js'
 
 describe('the peak dial', () => {
@@ -67,5 +67,30 @@ describe('round tiers', () => {
   it('wins a day from half the points', () => {
     expect(isWin(2500, 5000)).toBe(true)
     expect(isWin(2499, 5000)).toBe(false)
+  })
+})
+
+describe('stepPeak', () => {
+  it('moves up the chart toward #1 and stops there', () => {
+    expect(stepPeak(25, -1)).toBe(24)
+    expect(stepPeak(2, -1)).toBe(1)
+    expect(stepPeak(1, -1)).toBe(1)
+    expect(stepPeak(5, -10)).toBe(1)
+  })
+
+  it('moves down past #100 to never charted, and no further', () => {
+    expect(stepPeak(99, 1)).toBe(100)
+    expect(stepPeak(100, 1)).toBe(NEVER)
+    expect(stepPeak(NEVER, 1)).toBe(NEVER)
+  })
+
+  it('comes back up from never charted at #100', () => {
+    expect(stepPeak(NEVER, -1)).toBe(100)
+    expect(stepPeak(NEVER, -10)).toBe(91)
+  })
+
+  it('lands where the bar draws it', () => {
+    expect(peakAt(dialAt(stepPeak(25, -1)))).toBe(24)
+    expect(peakAt(dialAt(stepPeak(100, 1)))).toBe(NEVER)
   })
 })

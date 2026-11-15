@@ -177,114 +177,118 @@ export default function Timeline({ puzzle, puzzleDate, dateParam, Shell, custom 
 
   return (
     <Shell className="timeline">
-      <Link to={custom ? custom.back : exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
+      <div className="game-screen__listen">
+        <Link to={custom ? custom.back : exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <GameHeader
-        slug={SLUG}
-        name="era"
-        puzzleDate={puzzleDate}
-        title={done ? 'How the line came out' : 'Where does this one go?'}
-        timer={timer}
-        tag={custom?.tag}
-      />
+        <GameHeader
+          slug={SLUG}
+          name="era"
+          puzzleDate={puzzleDate}
+          title={done ? 'How the line came out' : 'Where does this one go?'}
+          timer={timer}
+          tag={custom?.tag}
+        />
 
-      <div className="timeline__progress">
-        <span className="timeline__pips" role="img" aria-label={`Song ${index} of ${toPlace}`}>
-          {rounds.slice(1).map((_, i) => {
-            const r = results[i]
-            const state = r ? roundTier(r.points) : i + 1 === index && !done ? 'now' : 'todo'
-            return <span key={i} className={`timeline__pip timeline__pip--${state}`} />
-          })}
-        </span>
-        <span className="timeline__total">
-          {fmtPoints(done ? finalPoints : total)} pts
-          <ChallengeTally challenge={challenge} played={results.length} />
-        </span>
+        <div className="timeline__progress">
+          <span className="timeline__pips" role="img" aria-label={`Song ${index} of ${toPlace}`}>
+            {rounds.slice(1).map((_, i) => {
+              const r = results[i]
+              const state = r ? roundTier(r.points) : i + 1 === index && !done ? 'now' : 'todo'
+              return <span key={i} className={`timeline__pip timeline__pip--${state}`} />
+            })}
+          </span>
+          <span className="timeline__total">
+            {fmtPoints(done ? finalPoints : total)} pts
+            <ChallengeTally challenge={challenge} played={results.length} />
+          </span>
+        </div>
+
+        <AudioPlayer
+          key={index}
+          variant="stage"
+          visual="record"
+          src={round.audio_url}
+          onPlay={() => setHasStarted(true)}
+          autoplay={!done && profile?.autoplay_audio !== false}
+        >
+          {showSong && <StageSong title={round.title} artist={round.artist} meta={round.year} src={round.artwork_url} />}
+        </AudioPlayer>
       </div>
 
-      <AudioPlayer
-        key={index}
-        variant="stage"
-        visual="record"
-        src={round.audio_url}
-        onPlay={() => setHasStarted(true)}
-        autoplay={!done && profile?.autoplay_audio !== false}
-      >
-        {showSong && <StageSong title={round.title} artist={round.artist} meta={round.year} src={round.artwork_url} />}
-      </AudioPlayer>
-
-      <ol ref={lineRef} className={`timeline__line${picked != null ? ' timeline__line--locking' : ''}`}>
-        {onLine.map((r, pos) => {
-          const state = rowState(r.i)
-          const fresh = revealed && !done && r.i === index
-          const gapHere = !revealed && !done
-          const mine = r.i > 0 ? results[r.i - 1] : null
-          return (
-            <li key={r.i} className="timeline__item">
-              {gapHere && (
-                <Gap gap={pos} label={gapLabel(before, pos)} picked={picked} onPick={place} />
-              )}
-              <button
-                type="button"
-                className={`timeline__song btn-press${state ? ` timeline__song--${state}` : ''}${fresh ? ' timeline__song--fresh' : ''}${done && r.i === index ? ' timeline__song--on' : ''}`}
-                onClick={() => { if (done) { hapticSelection(); setIndex(r.i) } }}
-                disabled={!done}
-                aria-label={done ? `Play ${r.title}` : undefined}
-              >
-                <span className="timeline__year">{r.year}</span>
-                <span className="timeline__name">
-                  <span className="timeline__title">{r.title}</span>
-                  <span className="timeline__artist">
-                    {r.artist}
-                    {fresh && mine && mine.points < ROUND_MAX && ` · you said ${gapLabel(rounds.slice(0, r.i).map(x => x.year).sort((a, b) => a - b), mine.gap).toLowerCase()}`}
-                  </span>
-                </span>
-                {mine && (done || fresh) && (
-                  <span className={`timeline__points timeline__points--${state}`}>{fmtPoints(mine.points)}</span>
+      <div className="game-screen__answer">
+        <ol ref={lineRef} className={`timeline__line${picked != null ? ' timeline__line--locking' : ''}`}>
+          {onLine.map((r, pos) => {
+            const state = rowState(r.i)
+            const fresh = revealed && !done && r.i === index
+            const gapHere = !revealed && !done
+            const mine = r.i > 0 ? results[r.i - 1] : null
+            return (
+              <li key={r.i} className="timeline__item">
+                {gapHere && (
+                  <Gap gap={pos} label={gapLabel(before, pos)} picked={picked} onPick={place} />
                 )}
-                {state === 'anchor' && <span className="timeline__start">Start</span>}
-              </button>
+                <button
+                  type="button"
+                  className={`timeline__song btn-press${state ? ` timeline__song--${state}` : ''}${fresh ? ' timeline__song--fresh' : ''}${done && r.i === index ? ' timeline__song--on' : ''}`}
+                  onClick={() => { if (done) { hapticSelection(); setIndex(r.i) } }}
+                  disabled={!done}
+                  aria-label={done ? `Play ${r.title}` : undefined}
+                >
+                  <span className="timeline__year">{r.year}</span>
+                  <span className="timeline__name">
+                    <span className="timeline__title">{r.title}</span>
+                    <span className="timeline__artist">
+                      {r.artist}
+                      {fresh && mine && mine.points < ROUND_MAX && ` · you said ${gapLabel(rounds.slice(0, r.i).map(x => x.year).sort((a, b) => a - b), mine.gap).toLowerCase()}`}
+                    </span>
+                  </span>
+                  {mine && (done || fresh) && (
+                    <span className={`timeline__points timeline__points--${state}`}>{fmtPoints(mine.points)}</span>
+                  )}
+                  {state === 'anchor' && <span className="timeline__start">Start</span>}
+                </button>
+              </li>
+            )
+          })}
+          {!revealed && !done && (
+            <li className="timeline__item">
+              <Gap gap={onLine.length} label={gapLabel(before, onLine.length)} picked={picked} onPick={place} />
             </li>
-          )
-        })}
-        {!revealed && !done && (
-          <li className="timeline__item">
-            <Gap gap={onLine.length} label={gapLabel(before, onLine.length)} picked={picked} onPick={place} />
-          </li>
+          )}
+        </ol>
+
+        {revealed && !done && (
+          <button type="button" className="timeline__next btn-press" onClick={advance}>
+            {isLast ? 'See how you did' : 'Next song'}
+            <Icon name="chevronRight" size={15} strokeWidth={2.5} />
+          </button>
         )}
-      </ol>
 
-      {revealed && !done && (
-        <button type="button" className="timeline__next btn-press" onClick={advance}>
-          {isLast ? 'See how you did' : 'Next song'}
-          <Icon name="chevronRight" size={15} strokeWidth={2.5} />
-        </button>
-      )}
-
-      {done && (
-        <ResultCard
-          justFinished={justFinished}
-          correct={isWin(finalPoints, maxPoints)}
-          status={`${fmtPoints(finalPoints)} points`}
-          answer={results.length === toPlace ? `${right} of ${toPlace} in the right place` : `Out of ${fmtPoints(maxPoints)}`}
-          artist={[...rounds].sort(byYear).map(r => r.year).join(' · ')}
-          emojiGrid={squares}
-          shareLine={`${fmtPoints(finalPoints)} / ${fmtPoints(maxPoints)} points`}
-          points={finalPoints}
-          maxPoints={maxPoints}
-          rounds={{
-            date: puzzleDate,
-            points: results.length === toPlace ? results.map(r => r.points) : [],
-            labels: rounds.slice(1).map(r => r.title),
-          }}
-          gameSlug={SLUG}
-          puzzleDate={dateParam}
-          timeSeconds={competitive ? finalTime : null}
-          nextGame={custom ? customNext(custom) : nextGameAfter('era', puzzleDate)}
-          showLeaderboard={competitive}
-          custom={custom && { ...custom, posted: record.posted }}
-        />
-      )}
+        {done && (
+          <ResultCard
+            justFinished={justFinished}
+            correct={isWin(finalPoints, maxPoints)}
+            status={`${fmtPoints(finalPoints)} points`}
+            answer={results.length === toPlace ? `${right} of ${toPlace} in the right place` : `Out of ${fmtPoints(maxPoints)}`}
+            artist={[...rounds].sort(byYear).map(r => r.year).join(' · ')}
+            emojiGrid={squares}
+            shareLine={`${fmtPoints(finalPoints)} / ${fmtPoints(maxPoints)} points`}
+            points={finalPoints}
+            maxPoints={maxPoints}
+            rounds={{
+              date: puzzleDate,
+              points: results.length === toPlace ? results.map(r => r.points) : [],
+              labels: rounds.slice(1).map(r => r.title),
+            }}
+            gameSlug={SLUG}
+            puzzleDate={dateParam}
+            timeSeconds={competitive ? finalTime : null}
+            nextGame={custom ? customNext(custom) : nextGameAfter('era', puzzleDate)}
+            showLeaderboard={competitive}
+            custom={custom && { ...custom, posted: record.posted }}
+          />
+        )}
+      </div>
     </Shell>
   )
 }

@@ -627,6 +627,15 @@ body.is-scrolling button:not(:disabled):active {
   padding-left: 1.25rem;
 }
 
+/* A game screen is two parts: what you listen to (the back link, the question,
+   the progress and the stage) and what you answer with. Upright they are one
+   column and the parts don't show; on its side they become the two halves of
+   the screen (below). */
+.game-screen__listen,
+.game-screen__answer {
+  display: contents;
+}
+
 /* A game screen on a phone fills the screen as a column, so its stage can take
    whatever height a tall phone has to spare (AudioPlayer.css). Left to its
    content, the play button and the answers sat in the top two thirds with the
@@ -650,7 +659,7 @@ body.is-scrolling button:not(:disabled):active {
 
   /* A column would otherwise stretch the link, and its touch area, across the
      whole width of the screen. */
-  .page-shell--fill > .game-back-link {
+  .page-shell--fill .game-back-link {
     align-self: flex-start;
   }
 }
@@ -662,11 +671,11 @@ body.is-scrolling button:not(:disabled):active {
     padding-top: calc(72px + var(--safe-top));
   }
 
-  .page-shell--game > .game-back-link {
+  .page-shell--game .game-back-link {
     margin-bottom: 0.75rem;
   }
 
-  .page-shell--game > .game-header {
+  .page-shell--game .game-header {
     margin-bottom: 0.85rem;
   }
 
@@ -675,72 +684,91 @@ body.is-scrolling button:not(:disabled):active {
   }
 }
 
-/* A phone or a tablet on its side: the player on the left, and the question
-   and its controls on the right. One above the other, a phone turned sideways
-   (393 points tall, navbar and all) showed the stage and had to scroll for
-   everything you play with.
+/* A phone or a tablet on its side: the question and the player on the left,
+   and everything you answer with on the right, the side the thumb is on. One
+   above the other, a phone turned sideways (393 points tall, navbar and all)
+   showed the stage and had to scroll for everything you play with.
 
-   Only once there is a stage, so loading and errors stay a plain column. A
-   mouse keeps the column too: a big window zooms it to fit
-   (useBigScreenScale), and a desktop isn't turned on its side. The 860 takes
-   in every iPad in landscape, which the column was a little too tall for. */
+   The left half is one screen tall and pinned, and the stage takes whatever
+   height the question leaves it. If the right half runs long (Era's line by
+   its last song) only that side moves and the player stays put, though the
+   screen folds to fit first (useFitScreen).
+
+   A mouse keeps the column: a big window zooms it to fit (useBigScreenScale),
+   and a desktop isn't turned on its side. The 860 takes in every iPad in
+   landscape, which the column was a little too tall for. */
 @media (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
-  .page-shell--game:has(> .audio-stage, > .tempo__song) {
+  .page-shell--game:has(> .game-screen__listen) {
     --land-top: calc(52px + var(--safe-top) + 1rem);
     --land-bottom: max(1rem, calc(0.5rem + env(safe-area-inset-bottom)));
-    /* Room for the back link above the stage. */
-    --land-link: 2.25rem;
     max-width: 1000px;
     min-height: 100svh;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    /* A row for each thing stacked on the right, and a last one that takes
-       the rest. The stage spans them all, and since one of them is flexible
-       it stretches none of the others. */
-    grid-template-rows: repeat(10, auto) 1fr;
+    align-items: center;
     column-gap: 1.5rem;
     padding-top: var(--land-top);
     padding-bottom: var(--land-bottom);
   }
 
-  .page-shell--game:has(> .audio-stage, > .tempo__song) > * {
-    grid-column: 2;
-    min-width: 0;
-  }
-
-  .page-shell--game:has(> .audio-stage, > .tempo__song) > .game-back-link {
-    grid-column: 1;
-    grid-row: 1;
-    align-self: start;
-    justify-self: start;
-    margin-bottom: 0;
-  }
-
-  /* One screen tall and pinned, so if the right side runs long (Era's line
-     by its last song, a finished day's summary) only that side scrolls and
-     the player stays where it is. */
-  .page-shell--game:has(> .audio-stage, > .tempo__song) > :is(.audio-stage, .tempo__song) {
-    grid-column: 1;
-    grid-row: 1 / -1;
-    align-self: start;
+  .page-shell--game > .game-screen__listen {
     position: sticky;
     top: var(--land-top);
-    margin-top: var(--land-link);
-    height: calc(100svh - var(--land-top) - var(--land-link) - var(--land-bottom));
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    height: calc(100svh - var(--land-top) - var(--land-bottom));
+    /* Never shorter than what's in it, so a page that can't fit shows up as
+       too tall, and folds. */
+    min-height: min-content;
+  }
+
+  .game-screen__listen > .game-back-link {
+    align-self: flex-start;
+    margin-bottom: 0.75rem;
+  }
+
+  .game-screen__listen > :is(.audio-stage, .tempo__song) {
+    flex: 1 1 auto;
     min-height: 0;
+  }
+
+  .page-shell--game > .game-screen__answer {
+    display: block;
+    min-width: 0;
+  }
+}
+
+/* Folded (useFitScreen), on a phone either way up or a tablet on its side:
+   once a day is finished its question has been answered, so it steps aside
+   for the songs, and the gaps around the lists close up. */
+@media (max-width: 640px), (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
+  .page-shell--tight:has(.result-stub) .game-header__title {
+    display: none;
+  }
+
+  .page-shell--tight .game-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .page-shell--tight .result-stub {
+    margin-top: 0.75rem;
   }
 }
 
 /* A phone on its side has about 300 points under the navbar, so the space
    around the question tightens. */
 @media (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
-  .page-shell--game:has(> .audio-stage, > .tempo__song) {
+  .page-shell--game:has(> .game-screen__listen) {
     --land-top: calc(52px + var(--safe-top) + 0.75rem);
-    --land-link: 2rem;
   }
 
-  .page-shell--game > .game-header {
-    margin-bottom: 0.6rem;
+  .game-screen__listen > .game-back-link {
+    margin-bottom: 0.5rem;
+  }
+
+  .page-shell--game .game-header {
+    margin-bottom: 0.5rem;
   }
 
   .page-shell--game .game-header__top {
@@ -749,6 +777,15 @@ body.is-scrolling button:not(:disabled):active {
 
   .page-shell--game .game-header__title {
     font-size: var(--fs-md);
+  }
+}
+
+/* Folded on a phone on its side, the result strip under a finished day's
+   songs comes in closer and slimmer. */
+@media (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
+  .page-shell--tight .result-stub {
+    margin-top: 0.5rem;
+    padding-block: 0.5rem;
   }
 }
 

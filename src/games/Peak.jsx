@@ -10,7 +10,7 @@ import { prefetchClip } from '../lib/audioEngine'
 import { hapticImportantTap, hapticSelection } from '../lib/haptics'
 import { playSound, playVerdict } from '../lib/sounds'
 import { lockInDelay } from '../lib/lockIn'
-import { NEVER_FROM, dialAt, peakAt, peakPoints, peakLabel } from '../lib/peak'
+import { NEVER_FROM, dialAt, peakAt, peakPoints, peakLabel, stepPeak } from '../lib/peak'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
 import { readChallenge } from '../lib/challenge'
 import { nextGameAfter } from '../lib/games'
@@ -21,7 +21,7 @@ import StageSong from '../components/StageSong'
 import ResultCard from '../components/ResultCard'
 import { ChallengeTally } from '../components/Challenge'
 import Icon from '../components/Icon'
-import Dial from '../components/Dial'
+import ChartBar from '../components/ChartBar'
 import './Peak.css'
 
 const SLUG = 'hit-or-miss'
@@ -30,11 +30,11 @@ const SLUG = 'hit-or-miss'
 // no first guess is pulled toward either end, and a number that looks chosen.
 const START_AT = dialAt(25)
 
-// The top ten take up as much of the dial as #40 to #100, so the marks
-// crowd the top. #100 goes unmarked: it sits right against "Never".
+// The top ten take up as much of the bar as #40 to #100, so the marks
+// crowd the top. #100 goes unmarked: the chart's floor sits right on it.
 const TICKS = [1, 10, 25, 50]
 
-// Where a peak sits going down the dial, with never-charted past #100.
+// Where a peak sits going down the bar, with never-charted past #100.
 const dialRank = (peak) => (peak === 0 ? 101 : peak)
 
 /** Whether a move lands on a mark, or Never, or skips over one. */
@@ -62,8 +62,9 @@ function verdictText(round) {
 }
 
 /**
- * Hit or Miss, a few songs at a time (three from 11/17/2026), as a dial: drag to where each one peaked
- * on the Hot 100, or past #100 to say it never charted. Each lock-in shows how
+ * Hit or Miss, a few songs at a time (three from 11/17/2026), as a chart bar:
+ * push it up to where each one peaked on the Hot 100, or down past #100 to
+ * say it never charted. Each lock-in shows how
  * far off it was and pays up to 1,000 for being close.
  *
  * `custom` is set for a game a player made: `puzzleDate` is then its key
@@ -131,6 +132,12 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell, custom }) {
     setPosition(next)
   }
 
+  // The arrows and the keyboard move whole places on the chart, up to #1 and
+  // down past #100 to never charted.
+  function step(places) {
+    move(dialAt(stepPeak(peakAt(position), places)))
+  }
+
   async function finish(all, elapsed) {
     const points = all.reduce((sum, r) => sum + r.points, 0)
     const won = isWin(points, maxPoints)
@@ -192,134 +199,139 @@ export default function Peak({ puzzle, puzzleDate, dateParam, Shell, custom }) {
 
   return (
     <Shell className="peak">
-      <Link to={custom ? custom.back : exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
+      <div className="game-screen__listen">
+        <Link to={custom ? custom.back : exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
-      <GameHeader
-        slug={SLUG}
-        name="hit or miss"
-        puzzleDate={puzzleDate}
-        title="How high did it chart?"
-        timer={!done && competitive ? { text: display, running: !locking && !revealed } : null}
-        tag={custom?.tag}
-      />
+        <GameHeader
+          slug={SLUG}
+          name="hit or miss"
+          puzzleDate={puzzleDate}
+          title="How high did it chart?"
+          timer={!done && competitive ? { text: display, running: !locking && !revealed } : null}
+          tag={custom?.tag}
+        />
 
-      <div className="peak__progress">
-        <span className="peak__pips" role="img" aria-label={`Song ${index + 1} of ${rounds.length}`}>
-          {rounds.map((_, i) => {
-            const r = results[i]
-            const state = r ? roundTier(r.points) : i === index && !done ? 'now' : 'todo'
-            return <span key={i} className={`peak__pip peak__pip--${state}`} />
-          })}
-        </span>
-        <span className="peak__total">
-          {fmtPoints(done ? finalPoints : total)} pts
-          <ChallengeTally challenge={challenge} played={results.length} />
-        </span>
+        <div className="peak__progress">
+          <span className="peak__pips" role="img" aria-label={`Song ${index + 1} of ${rounds.length}`}>
+            {rounds.map((_, i) => {
+              const r = results[i]
+              const state = r ? roundTier(r.points) : i === index && !done ? 'now' : 'todo'
+              return <span key={i} className={`peak__pip peak__pip--${state}`} />
+            })}
+          </span>
+          <span className="peak__total">
+            {fmtPoints(done ? finalPoints : total)} pts
+            <ChallengeTally challenge={challenge} played={results.length} />
+          </span>
+        </div>
+
+        <AudioPlayer
+          key={index}
+          variant="stage"
+          visual="chart"
+          src={round.audio_url}
+          autoplay={!done && profile?.autoplay_audio !== false}
+        >
+          <StageSong title={round.title} artist={round.artist} src={round.artwork_url} />
+        </AudioPlayer>
       </div>
 
-      <AudioPlayer
-        key={index}
-        variant="stage"
-        visual="chart"
-        src={round.audio_url}
-        autoplay={!done && profile?.autoplay_audio !== false}
-      >
-        <StageSong title={round.title} artist={round.artist} src={round.artwork_url} />
-      </AudioPlayer>
-
-      {done ? (
-        <ol className="peak__summary">
-          {rounds.map((r, i) => {
-            const mine = results[i]
-            return (
-              <li key={i}>
-                <button
-                  type="button"
-                  className={`peak__summary-row btn-press${i === index ? ' peak__summary-row--on' : ''}`}
-                  onClick={() => { hapticSelection(); setIndex(i) }}
-                  aria-label={`Play ${r.title}`}
-                >
-                  <span className="peak__summary-song">
-                    <span className="peak__summary-title">{r.title}</span>
-                    <span className="peak__summary-artist">{r.artist}</span>
-                  </span>
-                  <span className="peak__summary-call">
-                    {mine && <span className="peak__summary-guess">You said {mine.guess ? `#${mine.guess}` : 'never'}</span>}
-                    <span className="peak__summary-peak">{r.peak ? `Peak #${r.peak}` : 'Never charted'}</span>
-                  </span>
-                  {mine && (
-                    <span className={`peak__summary-points peak__summary-points--${roundTier(mine.points)}`}>
-                      {fmtPoints(mine.points)}
+      <div className="game-screen__answer">
+        {done ? (
+          <ol className="peak__summary">
+            {rounds.map((r, i) => {
+              const mine = results[i]
+              return (
+                <li key={i}>
+                  <button
+                    type="button"
+                    className={`peak__summary-row btn-press${i === index ? ' peak__summary-row--on' : ''}`}
+                    onClick={() => { hapticSelection(); setIndex(i) }}
+                    aria-label={`Play ${r.title}`}
+                  >
+                    <span className="peak__summary-song">
+                      <span className="peak__summary-title">{r.title}</span>
+                      <span className="peak__summary-artist">{r.artist}</span>
                     </span>
-                  )}
+                    <span className="peak__summary-call">
+                      {mine && <span className="peak__summary-guess">You said {mine.guess ? `#${mine.guess}` : 'never'}</span>}
+                      <span className="peak__summary-peak">{r.peak ? `Peak #${r.peak}` : 'Never charted'}</span>
+                    </span>
+                    {mine && (
+                      <span className={`peak__summary-points peak__summary-points--${roundTier(mine.points)}`}>
+                        {fmtPoints(mine.points)}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+        ) : (
+          <ChartBar
+            position={revealed ? dialAt(result.guess) : position}
+            steps={1000}
+            onMove={move}
+            onStep={step}
+            answerAt={revealed ? dialAt(round.peak || 0) : null}
+            tier={tier}
+            locking={locking}
+            floor={NEVER_FROM}
+            ticks={[
+              ...TICKS.map(t => ({ at: dialAt(t), label: `#${t}` })),
+              { at: (NEVER_FROM + 1) / 2, label: 'Never', zone: true },
+            ]}
+            value={revealed ? peakLabel(round.peak || 0) : peakLabel(guess)}
+            sub={revealed ? `You said ${saidText(result.guess)}` : 'Push the bar up to where it peaked'}
+            label="Where it peaked on the Hot 100"
+            valueText={peakLabel(guess)}
+          >
+            {revealed ? (
+              <div className="chart-bar__outcome">
+                <p className="chart-bar__verdict">
+                  <span className="chart-bar__points">+{fmtPoints(result.points)}</span>
+                  <span>{verdictText(round)}</span>
+                </p>
+                <button type="button" className="chart-bar__action btn-press" onClick={advance}>
+                  {isLast ? 'See how you did' : 'Next song'}
+                  <Icon name="chevronRight" size={15} strokeWidth={2.5} />
                 </button>
-              </li>
-            )
-          })}
-        </ol>
-      ) : (
-        <Dial
-          position={revealed ? dialAt(result.guess) : position}
-          steps={1000}
-          onMove={move}
-          answerAt={revealed ? dialAt(round.peak || 0) : null}
-          tier={tier}
-          locking={locking}
-          zoneFrom={NEVER_FROM}
-          ticks={[
-            ...TICKS.map(t => ({ at: dialAt(t), label: `#${t}` })),
-            { at: (NEVER_FROM + 1) / 2, label: 'Never', zone: true },
-          ]}
-          value={revealed ? peakLabel(round.peak || 0) : peakLabel(guess)}
-          sub={revealed ? `You said ${saidText(result.guess)}` : 'Drag to where it peaked on the Hot 100'}
-          label="Where it peaked on the Hot 100"
-          valueText={peakLabel(guess)}
-        >
-          {revealed ? (
-            <div className="dial__outcome">
-              <p className="dial__verdict">
-                <span className="dial__points">+{fmtPoints(result.points)}</span>
-                <span>{verdictText(round)}</span>
-              </p>
-              <button type="button" className="dial__action btn-press" onClick={advance}>
-                {isLast ? 'See how you did' : 'Next song'}
-                <Icon name="chevronRight" size={15} strokeWidth={2.5} />
+              </div>
+            ) : (
+              <button type="button" className="chart-bar__action btn-press" onClick={lockIn} disabled={locking}>
+                Lock in {guess ? `#${guess}` : 'Never'}
               </button>
-            </div>
-          ) : (
-            <button type="button" className="dial__action btn-press" onClick={lockIn} disabled={locking}>
-              Lock in {peakLabel(guess)}
-            </button>
-          )}
-        </Dial>
-      )}
+            )}
+          </ChartBar>
+        )}
 
-      {done && (
-        <ResultCard
-          justFinished={justFinished}
-          correct={isWin(finalPoints, maxPoints)}
-          status={`${fmtPoints(finalPoints)} points`}
-          answer={best != null ? `Closest call: ${rounds[best].title}` : `Out of ${fmtPoints(maxPoints)}`}
-          artist={best != null
-            ? `You said ${saidText(results[best].guess)}, ${rounds[best].peak ? `it peaked at #${rounds[best].peak}` : results[best].guess ? 'it never charted' : "and it didn't"}`
-            : undefined}
-          emojiGrid={squares}
-          shareLine={`${fmtPoints(finalPoints)} / ${fmtPoints(maxPoints)} points`}
-          points={finalPoints}
-          maxPoints={maxPoints}
-          rounds={{
-            date: puzzleDate,
-            points: results.length === rounds.length ? results.map(r => r.points) : [],
-            labels: rounds.map(r => r.title),
-          }}
-          gameSlug={SLUG}
-          puzzleDate={dateParam}
-          timeSeconds={competitive ? finalTime : null}
-          nextGame={custom ? customNext(custom) : nextGameAfter('hit-or-miss', puzzleDate)}
-          showLeaderboard={competitive}
-          custom={custom && { ...custom, posted: record.posted }}
-        />
-      )}
+        {done && (
+          <ResultCard
+            justFinished={justFinished}
+            correct={isWin(finalPoints, maxPoints)}
+            status={`${fmtPoints(finalPoints)} points`}
+            answer={best != null ? `Closest call: ${rounds[best].title}` : `Out of ${fmtPoints(maxPoints)}`}
+            artist={best != null
+              ? `You said ${saidText(results[best].guess)}, ${rounds[best].peak ? `it peaked at #${rounds[best].peak}` : results[best].guess ? 'it never charted' : "and it didn't"}`
+              : undefined}
+            emojiGrid={squares}
+            shareLine={`${fmtPoints(finalPoints)} / ${fmtPoints(maxPoints)} points`}
+            points={finalPoints}
+            maxPoints={maxPoints}
+            rounds={{
+              date: puzzleDate,
+              points: results.length === rounds.length ? results.map(r => r.points) : [],
+              labels: rounds.map(r => r.title),
+            }}
+            gameSlug={SLUG}
+            puzzleDate={dateParam}
+            timeSeconds={competitive ? finalTime : null}
+            nextGame={custom ? customNext(custom) : nextGameAfter('hit-or-miss', puzzleDate)}
+            showLeaderboard={competitive}
+            custom={custom && { ...custom, posted: record.posted }}
+          />
+        )}
+      </div>
     </Shell>
   )
 }

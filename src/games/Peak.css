@@ -1,7 +1,7 @@
-/* Hit or Miss as a dial (Peak). A few songs, each dragged to where it peaked on
-   the Hot 100. The dial itself is components/Dial.css. */
+/* Hit or Miss (Peak). A few songs, each pushed up a chart bar to where it
+   peaked on the Hot 100. The bar itself is components/ChartBar.css. */
 
-/* Songs and a dial need more room under the stage than two answer cards
+/* Songs and a chart bar need more room under the stage than two answer cards
    did, so the stage gives some back: the lock-in button has to land on a
    phone's first screen, in reach of the thumb. */
 .peak .audio-stage__visual {
@@ -15,7 +15,7 @@
     height: 52px;
   }
 
-  .peak .dial {
+  .peak .chart-bar {
     margin-top: 0.5rem;
   }
 }
@@ -140,6 +140,29 @@
 .peak__summary-points--close { color: var(--green); }
 .peak__summary-points--near  { color: var(--amber); }
 .peak__summary-points--far   { color: var(--red); }
+
+/* Folded to fit (useFitScreen): the finished day's rows close up, to the
+   44 points a thumb needs. */
+@media (max-width: 640px), (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
+  .page-shell--tight .peak__summary {
+    margin-top: 0.6rem;
+    gap: 5px;
+  }
+
+  .page-shell--tight .peak__summary-row {
+    min-height: 44px;
+    padding-block: 5px;
+  }
+}
+
+/* A phone on its side, folded, with a finished day of five songs: the rows
+   give up a few points more to keep the day and its result on one screen. */
+@media (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
+  .page-shell--tight .peak__summary-row {
+    min-height: 40px;
+    padding-block: 3px;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .peak__summary-row {
