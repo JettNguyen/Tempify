@@ -421,5 +421,5 @@ export default function CoverOrNot() {
 }
 
 function GameShell({ children, className }) {
-  return <div className={`page-shell page-shell--fill game-theme--cover-or-not${className ? ` ${className}` : ''}`}>{children}</div>
+  return <div className={`page-shell page-shell--fill page-shell--game game-theme--cover-or-not${className ? ` ${className}` : ''}`}>{children}</div>
 }

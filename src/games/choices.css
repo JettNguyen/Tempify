@@ -178,6 +178,24 @@
   }
 }
 
+/* On its side the cards share the right half of the screen with the question,
+   so they come down to about the size a short phone gives them. */
+@media (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
+  .choices {
+    margin-top: 0.4rem;
+  }
+
+  .choice {
+    min-height: 96px;
+    gap: 10px;
+    padding: 12px 13px 12px;
+  }
+
+  .choice__art {
+    height: 24px;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .choice:not(:disabled):hover {
     border-color: rgba(var(--game-color-rgb), 0.75);

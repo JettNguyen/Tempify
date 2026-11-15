@@ -228,6 +228,38 @@
   }
 }
 
+/* By the last song the line is four songs and five gaps. While there are gaps
+   to pick, a phone shows each song on one row, title then artist, so placing
+   it doesn't mean scrolling past the stage. Once a song lands it gets its two
+   lines back, with the "you said" under it. */
+@media (max-width: 640px), (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
+  .timeline__line:has(.timeline__gap) .timeline__song {
+    min-height: 34px;
+    padding-block: 4px;
+  }
+
+  .timeline__line:has(.timeline__gap) .timeline__name {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .timeline__line:has(.timeline__gap) .timeline__title {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .timeline__line:has(.timeline__gap) .timeline__artist {
+    flex: 1 1 0;
+    min-width: 4em;
+    font-size: var(--fs-xs);
+  }
+
+  .timeline__line:has(.timeline__gap) .timeline__gap {
+    min-height: 36px;
+  }
+}
+
 @keyframes timelineLand {
   0%   { opacity: 0; transform: translateY(-8px) scale(0.96); }
   60%  { opacity: 1; transform: translateY(0) scale(1.03); }

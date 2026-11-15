@@ -427,5 +427,5 @@ function OneBarRound({ puzzle, puzzleDate, dateParam, custom }) {
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell game-theme--one-bar">{children}</div>
+  return <div className="page-shell page-shell--game game-theme--one-bar">{children}</div>
 }

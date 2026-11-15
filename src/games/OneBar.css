@@ -218,6 +218,19 @@
   white-space: nowrap;
 }
 
+/* A short phone fits more of the list on its first screen. The list goes under
+   the field and the skip button, so those never move as it grows. */
+@media (max-width: 640px) and (max-height: 760px) {
+  .one-bar__guesses {
+    margin-top: 0.75rem;
+    gap: 5px;
+  }
+
+  .one-bar__guess {
+    padding: 6px 12px;
+  }
+}
+
 /* The guess that just came back: it shakes no, and a near miss's tag pops. */
 .one-bar__guess--latest {
   animation: guessIn 0.45s ease both;

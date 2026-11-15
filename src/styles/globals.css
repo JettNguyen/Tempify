@@ -641,10 +641,114 @@ body.is-scrolling button:not(:disabled):active {
     flex-direction: column;
   }
 
+  /* Just clear of the home indicator. The 4rem the other pages keep under
+     their last line is what made a short phone scroll to reach a game's last
+     button. */
+  .page-shell--game {
+    padding-bottom: max(1rem, calc(0.5rem + env(safe-area-inset-bottom)));
+  }
+
   /* A column would otherwise stretch the link, and its touch area, across the
      whole width of the screen. */
   .page-shell--fill > .game-back-link {
     align-self: flex-start;
+  }
+}
+
+/* A short phone (an SE, Safari with its toolbars showing) gives the stage the
+   room above the question instead of keeping it as space. */
+@media (max-width: 640px) and (max-height: 760px) {
+  .page-shell--game {
+    padding-top: calc(72px + var(--safe-top));
+  }
+
+  .page-shell--game > .game-back-link {
+    margin-bottom: 0.75rem;
+  }
+
+  .page-shell--game > .game-header {
+    margin-bottom: 0.85rem;
+  }
+
+  .page-shell--game .game-header__top {
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* A phone or a tablet on its side: the player on the left, and the question
+   and its controls on the right. One above the other, a phone turned sideways
+   (393 points tall, navbar and all) showed the stage and had to scroll for
+   everything you play with.
+
+   Only once there is a stage, so loading and errors stay a plain column. A
+   mouse keeps the column too: a big window zooms it to fit
+   (useBigScreenScale), and a desktop isn't turned on its side. The 860 takes
+   in every iPad in landscape, which the column was a little too tall for. */
+@media (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
+  .page-shell--game:has(> .audio-stage, > .tempo__song) {
+    --land-top: calc(52px + var(--safe-top) + 1rem);
+    --land-bottom: max(1rem, calc(0.5rem + env(safe-area-inset-bottom)));
+    /* Room for the back link above the stage. */
+    --land-link: 2.25rem;
+    max-width: 1000px;
+    min-height: 100svh;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    /* A row for each thing stacked on the right, and a last one that takes
+       the rest. The stage spans them all, and since one of them is flexible
+       it stretches none of the others. */
+    grid-template-rows: repeat(10, auto) 1fr;
+    column-gap: 1.5rem;
+    padding-top: var(--land-top);
+    padding-bottom: var(--land-bottom);
+  }
+
+  .page-shell--game:has(> .audio-stage, > .tempo__song) > * {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  .page-shell--game:has(> .audio-stage, > .tempo__song) > .game-back-link {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    justify-self: start;
+    margin-bottom: 0;
+  }
+
+  /* One screen tall and pinned, so if the right side runs long (Era's line
+     by its last song, a finished day's summary) only that side scrolls and
+     the player stays where it is. */
+  .page-shell--game:has(> .audio-stage, > .tempo__song) > :is(.audio-stage, .tempo__song) {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    align-self: start;
+    position: sticky;
+    top: var(--land-top);
+    margin-top: var(--land-link);
+    height: calc(100svh - var(--land-top) - var(--land-link) - var(--land-bottom));
+    min-height: 0;
+  }
+}
+
+/* A phone on its side has about 300 points under the navbar, so the space
+   around the question tightens. */
+@media (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
+  .page-shell--game:has(> .audio-stage, > .tempo__song) {
+    --land-top: calc(52px + var(--safe-top) + 0.75rem);
+    --land-link: 2rem;
+  }
+
+  .page-shell--game > .game-header {
+    margin-bottom: 0.6rem;
+  }
+
+  .page-shell--game .game-header__top {
+    margin-bottom: 0.15rem;
+  }
+
+  .page-shell--game .game-header__title {
+    font-size: var(--fs-md);
   }
 }
 

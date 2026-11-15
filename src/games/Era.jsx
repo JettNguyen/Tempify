@@ -237,5 +237,5 @@ function OneSong({ puzzle, puzzleDate, dateParam }) {
 }
 
 function GameShell({ children, className }) {
-  return <div className={`page-shell page-shell--fill game-theme--era${className ? ` ${className}` : ''}`}>{children}</div>
+  return <div className={`page-shell page-shell--fill page-shell--game game-theme--era${className ? ` ${className}` : ''}`}>{children}</div>
 }

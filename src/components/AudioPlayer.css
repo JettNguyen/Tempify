@@ -58,7 +58,12 @@
 /* In a game screen that fills a phone (.page-shell--fill), the stage takes the
    spare height and hands it all to the visual. The play button, the timeline
    and the answers under them move down toward the thumb, and the visual grows
-   to fill the room instead of leaving a gap. */
+   to fill the room instead of leaving a gap.
+
+   It gives the room back too. The visual starts from nothing and only grows,
+   so when what's under the stage gets taller (Era's line as songs land on it,
+   an answer revealed under the dial) the visual shrinks, down to the play
+   button and its ring, before the page has to scroll. */
 @media (max-width: 640px) {
   .page-shell--fill > .audio-stage {
     flex: 1 0 auto;
@@ -73,7 +78,31 @@
   }
 
   .page-shell--fill .audio-stage__visual {
-    flex: 1 0 auto;
+    flex: 1 1 0;
+    height: auto;
+    min-height: 88px;
+  }
+}
+
+/* On its side (globals.css), the stage is the left half of the screen, one
+   screen tall, and the visual takes whatever the song and the timeline leave. */
+@media (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
+  .page-shell--game > .audio-stage {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-shell--game > .audio-stage > .audio-stage__card {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-shell--game .audio-stage__visual {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 76px;
   }
 }
 

@@ -332,5 +332,5 @@ function Beat({ label, bpm, mine }) {
 }
 
 function GameShell({ children }) {
-  return <div className="page-shell page-shell--fill game-theme--tempo">{children}</div>
+  return <div className="page-shell page-shell--fill page-shell--game game-theme--tempo">{children}</div>
 }
