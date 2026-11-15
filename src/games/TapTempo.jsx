@@ -115,7 +115,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   const round = rounds[index]
   const result = results[index]
   const revealed = Boolean(result)
-  const yourBeat = useYourBeat({ bpm: result?.bpm, on: revealed && !done && hearBeat })
+  const yourBeat = useYourBeat({ bpm: result?.bpm, songBpm: round?.bpm, on: revealed && !done && hearBeat })
   const bpm = bpmFromTaps(taps)
   const total = results.reduce((sum, r) => sum + (r.points || 0), 0)
   const savedPoints = completions[`${SLUG}|${puzzleDate}`]?.points
@@ -212,7 +212,6 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
             src={round.audio_url}
             autoplay={!done && profile?.autoplay_audio !== false}
             onPlayingChange={yourBeat.onPlayingChange}
-            onBeat={yourBeat.onBeat}
           >
             <StageSong title={round.title} artist={round.artist} meta={round.year} src={round.artwork_url} />
           </AudioPlayer>

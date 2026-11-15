@@ -54,13 +54,14 @@ function reducedMotion() {
  * @param variant        'stage' for a game's main player; small otherwise
  * @param visual         what the stage draws: bars | chart | record | rings
  * @param onPlayingChange called with true when the clip starts sounding and
- *                       false when it stops, however it stopped
- * @param onBeat         called on each beat the stage hears in the clip
+ *                       false when it stops, however it stopped, and the voice
+ *                       playing it (see audioEngine), whose clock says when
+ *                       each moment of the clip is heard
  * @param children       drawn at the top of the stage, over the light
  */
 const AudioPlayer = forwardRef(function AudioPlayer({
   src, maxDuration, trackSpan, segmentStops, segmentLabels, freshSegment,
-  label, onPlay, onPlayingChange, onBeat, autoplay, variant, visual = 'bars', children,
+  label, onPlay, onPlayingChange, autoplay, variant, visual = 'bars', children,
 }, ref) {
   const stage = variant === 'stage'
   const voiceRef = useRef(null)
@@ -224,7 +225,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({
   // ================================
 
   function setPlayingState(next) {
-    if (playingRef.current !== next) onPlayingChangeRef.current?.(next)
+    if (playingRef.current !== next) onPlayingChangeRef.current?.(next, voiceRef.current)
     playingRef.current = next
     setPlaying(next)
   }
@@ -698,7 +699,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({
         <div className="audio-stage__card">
           {children && <div className="audio-stage__head">{children}</div>}
           <div className="audio-stage__visual">
-            <AudioVisual kind={visual} playing={playing} voiceRef={voiceRef} stageRef={stageRef} onBeat={onBeat} className="audio-stage__canvas" />
+            <AudioVisual kind={visual} playing={playing} voiceRef={voiceRef} stageRef={stageRef} className="audio-stage__canvas" />
             {playButton}
           </div>
           {timeline}

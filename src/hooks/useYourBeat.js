@@ -1,24 +1,20 @@
 import { useEffect, useRef } from 'react'
 import { runningContext } from '../lib/audioEngine'
+import { beatAfter, beatGrid } from '../lib/beatGrid'
 import { playSoundAt } from '../lib/sounds'
-
-// The beat the stage hears comes in a little after the song played it: the
-// analyser looks at a window of sound and the visual checks it once a frame.
-// The click starts this much earlier to land with the beat, not after it.
-export const HEARD_LATE = 0.05
 
 // Clicks are booked this far ahead on the audio clock, so a busy moment on the
 // page can't make one late, and checked for this often.
 const AHEAD = 0.25
 const EVERY_MS = 60
 
-// The first beats of a clip are the detector settling in; the click waits
-// this long after the clip starts before taking one as the downbeat.
-const SETTLE = 0.4
+// The first click waits for a beat at least this far into what's playing, past
+// the clip's fade in.
+const LEAD_IN = 0.2
 
 /**
- * The clicks at `bpm` from `anchor`, from the moment `from` up to `until`, on
- * the audio clock. One every 60 / bpm seconds, the first on the anchor itself.
+ * The clicks at `bpm` from `anchor`, from the moment `from` up to `until`, in
+ * seconds of the clip. One every 60 / bpm seconds, the first on the anchor.
  */
 export function clickTimes(anchor, bpm, from, until) {
   if (!(bpm > 0) || until <= from) return []
@@ -31,33 +27,51 @@ export function clickTimes(anchor, bpm, from, until) {
 
 /**
  * Tap the Tempo, once a song's answer is in: a click at the tempo you tapped,
- * played over the song. It starts on the song's first clear beat and keeps
- * your tempo from there, so a tempo that was right stays on the beat and one
- * that was off drifts ahead or behind where you can hear it.
+ * played over the song. It starts on one of the song's beats (`songBpm` says
+ * where they fall; see beatGrid) and keeps your tempo from there, so a tempo
+ * that was right stays on the beat and one that was off drifts ahead or behind
+ * where you can hear it. Playing from somewhere else starts it again there.
  *
- * Hand `onPlayingChange` and `onBeat` to the stage's AudioPlayer.
+ * Hand `onPlayingChange` to the stage's AudioPlayer.
  */
-export function useYourBeat({ bpm, on }) {
-  const state = useRef({ playing: false, startedAt: 0, anchor: null, next: 0, timer: 0, sources: [] })
+export function useYourBeat({ bpm, songBpm, on }) {
+  const state = useRef({ voice: null, playing: false, anchor: null, shift: 0, next: 0, timer: 0, sources: [] })
 
-  function stop() {
+  function silence() {
     const s = state.current
-    clearInterval(s.timer)
-    s.timer = 0
-    s.anchor = null
     for (const source of s.sources) {
       try { source.stop() } catch { /* already finished */ }
     }
     s.sources = []
   }
 
+  function stop() {
+    const s = state.current
+    clearInterval(s.timer)
+    s.timer = 0
+    s.anchor = null
+    silence()
+  }
+
   function book() {
     const s = state.current
     const c = runningContext()
-    if (!c || s.anchor == null) return
-    const now = c.currentTime
-    for (const t of clickTimes(s.anchor, bpm, Math.max(s.next, now), now + AHEAD)) {
-      const source = playSoundAt('beat', t, 0.9)
+    const voice = s.voice
+    // Only a clip decoded into a buffer can be read for its beats, and only
+    // once it is actually sounding is its clock known.
+    if (!c || !voice?.buffer || !voice.playing) return
+    // Where the clip is on the audio clock: its moment t plays at t + shift.
+    const shift = voice.startedAt - voice.from
+    if (s.anchor == null || Math.abs(shift - s.shift) > 0.02) {
+      // Started, or moved to another point in the clip: begin again there.
+      silence()
+      s.shift = shift
+      s.anchor = beatAfter(beatGrid(voice.buffer, songBpm), voice.from + LEAD_IN)
+      s.next = s.anchor
+    }
+    const now = c.currentTime - shift
+    for (const t of clickTimes(s.anchor, bpm, Math.max(s.next, now), Math.min(now + AHEAD, voice.until))) {
+      const source = playSoundAt('beat', t + shift, 0.9)
       if (source) s.sources.push(source)
       s.next = t + 0.001
     }
@@ -65,29 +79,27 @@ export function useYourBeat({ bpm, on }) {
     if (s.sources.length > 16) s.sources = s.sources.slice(-8)
   }
 
-  function onPlayingChange(playing) {
+  function run() {
+    const s = state.current
+    if (s.timer || !on || !s.playing || !(bpm > 0) || !(songBpm > 0)) return
+    s.timer = setInterval(book, EVERY_MS)
+    book()
+  }
+
+  function onPlayingChange(playing, voice) {
     const s = state.current
     s.playing = playing
-    if (playing) s.startedAt = runningContext()?.currentTime ?? 0
+    s.voice = voice ?? null
+    if (playing) run()
     else stop()
   }
 
-  function onBeat() {
-    const s = state.current
-    if (!on || !s.playing || s.anchor != null) return
-    const c = runningContext()
-    if (!c || c.currentTime - s.startedAt < SETTLE) return
-    s.anchor = c.currentTime - HEARD_LATE
-    s.next = s.anchor
-    book()
-    s.timer = setInterval(book, EVERY_MS)
-  }
-
   useEffect(() => {
-    if (!on) stop()
+    if (on) run()
+    else stop()
   }, [on])
 
   useEffect(() => stop, [])
 
-  return { onPlayingChange, onBeat }
+  return { onPlayingChange }
 }
