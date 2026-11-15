@@ -63,7 +63,9 @@ export function loadSounds() {
   loading = Promise.all(Object.keys(SOUNDS).map((name) => (
     fetch(`${base}sounds/${name}.wav`)
       .then((res) => {
-        if (!res.ok) throw new Error(`Sound request failed: ${res.status}`)
+        // The iPhone app hands over its own files with a status of 0, not 200,
+        // body and all. Anything actually missing fails to decode below.
+        if (!res.ok && res.status !== 0) throw new Error(`Sound request failed: ${res.status}`)
         return res.arrayBuffer()
       })
       .then(decodeSound)
