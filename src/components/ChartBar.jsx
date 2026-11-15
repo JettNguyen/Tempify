@@ -16,8 +16,10 @@ export function positionAt(clientY, top, height, steps) {
  * in, the real peak rises in the lane beside yours, in green, amber or red for
  * how close you were, with the distance between the two shaded across both.
  *
- * Drag anywhere on the track, or tap a spot to jump there. The arrows beside
- * the number move one place at a time, for the last bit of aim.
+ * The bar stands at the right of the card, under the right thumb, and is as
+ * tall as the number and the buttons beside it. Drag anywhere on the track, or
+ * tap a spot to jump there. The arrows under the number move one place at a
+ * time, for the last bit of aim.
  *
  * @param position  where your bar's top sits, 0 (top of the track) to 1
  * @param steps     how finely a drag lands, in stops along the track
@@ -103,13 +105,13 @@ export default function ChartBar({
       style={{ '--guess': position, '--actual': answerAt ?? position, '--floor': floor }}
     >
       <div className="chart-bar__scale">
-        <div className="chart-bar__ticks" aria-hidden="true">
-          {ticks.map(t => (
-            <span key={t.label} className={t.zone ? 'chart-bar__tick-zone' : undefined} style={{ '--at': t.at }}>{t.label}</span>
-          ))}
-        </div>
+        <div className="chart-bar__body">
+          <div className="chart-bar__ticks" aria-hidden="true">
+            {ticks.map(t => (
+              <span key={t.label} className={t.zone ? 'chart-bar__tick-zone' : undefined} style={{ '--at': t.at }}>{t.label}</span>
+            ))}
+          </div>
 
-        <div className="chart-bar__column">
           <div
             ref={trackRef}
             className="chart-bar__track"
@@ -146,11 +148,11 @@ export default function ChartBar({
 
             {revealed && <span className="chart-bar__gap" aria-hidden="true" />}
           </div>
+        </div>
 
-          <div className="chart-bar__lane-labels" aria-hidden="true">
-            <span>{lanes[0]}</span>
-            <span>{lanes[1]}</span>
-          </div>
+        <div className="chart-bar__lane-labels" aria-hidden="true">
+          <span>{lanes[0]}</span>
+          <span>{lanes[1]}</span>
         </div>
       </div>
 

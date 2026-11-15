@@ -1,6 +1,8 @@
-/* Hit or Miss's chart bar (ChartBar.jsx). The track on the left, two lanes
-   side by side: yours, and the real peak's once it's revealed. The number and
-   the buttons on the right, with the button at the bottom where the thumb is.
+/* Hit or Miss's chart bar (ChartBar.jsx). The number and the buttons on the
+   left, the button at the bottom; the track on the right, under the right
+   thumb, with two lanes side by side: yours, and the real peak's once it's
+   revealed. The track is as tall as what's beside it, never shorter than
+   --chart-min, so the card holds no empty space.
 
    Positions are fractions of the track's height, 0 at the top (#1), so every
    piece is placed with the same calc. */
@@ -8,12 +10,13 @@
 .chart-bar {
   position: relative;
   --tier: var(--game-color);
-  --chart-h: clamp(150px, 24svh, 210px);
+  --chart-min: clamp(150px, 20svh, 165px);
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "side scale";
+  column-gap: 14px;
   margin-top: 0.75rem;
-  padding: 14px 14px 12px 10px;
+  padding: 14px 10px 12px 14px;
   border-radius: 16px;
   border: 1px solid var(--border);
   background:
@@ -26,17 +29,24 @@
 .chart-bar--near  { --tier: var(--amber); }
 .chart-bar--far   { --tier: var(--red); }
 
-/* ---- The scale: marks, then the track ---- */
+/* ---- The scale: marks, then the track, then the lanes' names ---- */
 
 .chart-bar__scale {
+  grid-area: scale;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-bar__body {
+  flex: 1 1 auto;
   display: flex;
   gap: 6px;
+  min-height: var(--chart-min);
 }
 
 .chart-bar__ticks {
   position: relative;
   width: 40px;
-  height: var(--chart-h);
 }
 
 .chart-bar__ticks span {
@@ -55,16 +65,9 @@
   color: var(--text-muted);
 }
 
-.chart-bar__column {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
 .chart-bar__track {
   position: relative;
   width: 88px;
-  height: var(--chart-h);
   border-radius: 10px;
   background: rgba(var(--game-color-rgb), 0.04);
   touch-action: none;
@@ -245,11 +248,13 @@
   animation: fadeIn 0.4s ease 0.45s both;
 }
 
+/* Under the track, past the marks beside it. */
 .chart-bar__lane-labels {
   display: flex;
   justify-content: space-between;
   padding: 0 4px;
   margin-top: 5px;
+  margin-left: 46px;
 }
 
 .chart-bar__lane-labels span {
@@ -267,8 +272,10 @@
 /* ---- The number and the buttons ---- */
 
 .chart-bar__side {
+  grid-area: side;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   min-width: 0;
 }
 
@@ -330,9 +337,8 @@
   opacity: 0.4;
 }
 
-/* Pushed to the bottom of the card, under the thumb. */
+/* At the bottom of the card, under the thumb. */
 .chart-bar__actions {
-  margin-top: auto;
   padding-top: 10px;
 }
 
@@ -382,11 +388,11 @@
   }
 }
 
-/* On its side the bar has the whole right half to itself, so it stands as
-   tall as the screen allows, which also makes it easier to aim. */
+/* On its side the card sits in the right half, centered up and down. A short
+   phone gets a shorter floor for the track. */
 @media (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
   .chart-bar {
-    --chart-h: clamp(140px, calc(100svh - var(--land-top, 80px) - var(--land-bottom, 16px) - 70px), 380px);
+    --chart-min: min(165px, calc(100svh - var(--land-top, 80px) - var(--land-bottom, 16px) - 60px));
     margin-top: 0;
   }
 }
