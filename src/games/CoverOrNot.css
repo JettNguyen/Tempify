@@ -180,13 +180,12 @@
   z-index: 2;
 }
 
-/* On a phone held upright the song is as wide as the screen, so swiping it
-   right would push the page wider and let it slide sideways. The shell is
-   the screen's width there, so clipping it hides nothing else. */
-@media (max-width: 640px) {
-  .page-shell--game.game-theme--cover-or-not {
-    overflow-x: clip;
-  }
+/* A song swiped off the side would push the page wider and let it slide
+   sideways. Clipped at the page's own wrapper (App.jsx), which is as wide as
+   the screen: the shell is narrower than that on an open iPhone Duo or an
+   iPad, and clipping there would cut the song off short of the screen's edge. */
+.page-enter:has(> .game-theme--cover-or-not) {
+  overflow-x: clip;
 }
 
 /* Once, a moment after the screen opens: a nudge each way, so the song reads
