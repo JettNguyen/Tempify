@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { hapticSelection } from '../lib/haptics'
 
-/** How far a swipe has to go, as a share of the stage's width, to count. */
+/** How far a swipe has to go, as a share of the width of what's swiped, to count. */
 export const PICK_AT = 0.28
 
 /**
@@ -39,34 +39,37 @@ export function flickVelocity(points) {
 }
 
 /**
- * The stage as something to swipe toward an answer card: Cover or Not's song,
- * left toward one answer and right toward the other. The cards stay tappable;
- * this is the other way in.
+ * Cover or Not's answer: swipe the song left for one answer and right for the
+ * other. The stage can be swiped, and so can anything marked `data-swipe`
+ * (the rail under it, nearer the thumb).
  *
- * Put `handlers` on an element holding the stage. A press on the stage that
+ * Put `handlers` on each element holding something to swipe. A press that
  * moves sideways is a swipe; one that moves up or down is left alone, and so
  * is anything starting on the scrubber, which has its own sideways drag.
  *
  * @returns dx (how far it's out, to move the stage by), progress (0 to 1, how
- *          close it is to counting), active, and handlers
+ *          close it is to counting), active, swiped() (whether the last press
+ *          was a swipe rather than a tap), and handlers
  */
 export function useSwipeChoice({ enabled, onPick }) {
   const [dx, setDx] = useState(0)
   const [active, setActive] = useState(false)
   const [width, setWidth] = useState(1)
   const gesture = useRef(null)
+  const swipedRef = useRef(false)
 
   function onPointerDown(e) {
     if (!enabled) return
-    const stage = e.target.closest?.('.audio-stage')
-    if (!stage || e.target.closest('.audio-timeline')) return
+    const surface = e.target.closest?.('.audio-stage, [data-swipe]')
+    if (!surface || e.target.closest('.audio-timeline')) return
+    swipedRef.current = false
     gesture.current = {
       id: e.pointerId,
       x: e.clientX,
       y: e.clientY,
       points: [{ x: e.clientX, t: e.timeStamp }],
-      width: stage.getBoundingClientRect().width || 1,
-      stage,
+      width: surface.getBoundingClientRect().width || 1,
+      surface,
       on: false,
       past: false,
     }
@@ -85,7 +88,8 @@ export function useSwipeChoice({ enabled, onPick }) {
       }
       if (Math.abs(mx) < 10) return
       g.on = true
-      g.stage.setPointerCapture?.(e.pointerId)
+      swipedRef.current = true
+      g.surface.setPointerCapture?.(e.pointerId)
       setWidth(g.width)
       setActive(true)
     }
@@ -116,6 +120,7 @@ export function useSwipeChoice({ enabled, onPick }) {
     dx,
     active,
     progress: Math.min(1, Math.abs(dx) / (width * PICK_AT)),
+    swiped: () => swipedRef.current,
     handlers: { onPointerDown, onPointerMove, onPointerUp: end, onPointerCancel: end },
   }
 }

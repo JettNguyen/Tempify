@@ -10,7 +10,7 @@ import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { findArtwork } from '../lib/deezer'
 import { prefetchArtworkUrls } from '../lib/artwork'
 import { saveScore, updateStreak } from '../lib/scores'
-import { hapticImportantTap } from '../lib/haptics'
+import { hapticImportantTap, hapticSelection } from '../lib/haptics'
 import { playSound, playVerdict } from '../lib/sounds'
 import { lockInDelay } from '../lib/lockIn'
 import AudioPlayer from '../components/AudioPlayer'
@@ -24,7 +24,6 @@ import Dial from '../components/Dial'
 import { ROUND_MAX, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
 import { yearPoints, yearRange } from '../lib/yearGuess'
 import { nextGameAfter } from '../lib/games'
-import './choices.css'
 import './CoverOrNot.css'
 
 // The game's symbol split in two: a cover is two takes on one song, overlapping;
@@ -47,9 +46,10 @@ function OriginalArt(props) {
   )
 }
 
+// Left to right as they sit on the rail: swipe left for a cover, right for an original.
 const CHOICES = [
-  { value: 'cover', label: "It's a cover", sub: 'Someone recorded it first', Art: CoverArt },
-  { value: 'original', label: "It's original", sub: 'This is the first version', Art: OriginalArt },
+  { value: 'cover', side: 'left', label: "It's a cover", sub: 'Someone recorded it first', Art: CoverArt },
+  { value: 'original', side: 'right', label: "It's original", sub: 'This is the first version', Art: OriginalArt },
 ]
 
 const SLUG = 'cover-or-not'
@@ -93,9 +93,14 @@ export default function CoverOrNot() {
   const [callShown, setCallShown] = useState(false)
   const [yearPos, setYearPos] = useState(0.5)
   const [yearLocking, setYearLocking] = useState(false)
+  // A tap on the rail, which answers nothing, nudges the song the way it was
+  // tapped to show what to do instead: { side, n }. Each tap swaps between
+  // two copies of the animation, so a second tap plays it again.
+  const [nudge, setNudge] = useState(null)
   const coverRef = useRef(null)
   const originalRef = useRef(null)
   const revealRef = useRef(0)
+  const nudgeRef = useRef(0)
 
   // A cover has a second question: when did the original come out? Every
   // cover carries the original's year. An original doesn't get one: its year
@@ -106,11 +111,11 @@ export default function CoverOrNot() {
   const posOf = (year) => (year - range[0]) / (range[1] - range[0])
 
   const { stop, display } = useGameTimer(!done, 250, `tempify_game_cover-or-not_${puzzleDate}`)
-  // The song can be swiped toward an answer card as well as the card tapped:
-  // left for the card on the left, right for the one on the right.
+  // The answer is a swipe, of the song or of the rail under it: left for a
+  // cover, right for an original.
   const swipe = useSwipeChoice({
     enabled: !done && !chosen,
-    onPick: (side) => handleGuess(side === 'left' ? CHOICES[0].value : CHOICES[1].value),
+    onPick: (side) => handleGuess(CHOICES.find(c => c.side === side).value),
   })
   const leaning = swipe.dx < 0 ? CHOICES[0] : swipe.dx > 0 ? CHOICES[1] : null
 
@@ -145,7 +150,21 @@ export default function CoverOrNot() {
     }
   }, [puzzle, completions])
 
-  useEffect(() => () => clearTimeout(revealRef.current), [])
+  useEffect(() => () => {
+    clearTimeout(revealRef.current)
+    clearTimeout(nudgeRef.current)
+  }, [])
+
+  /** A tap on the rail: the song leans the way it was tapped, and back. */
+  function tapRail(e) {
+    if (done || chosen || swipe.swiped()) return
+    const box = e.currentTarget.getBoundingClientRect()
+    const side = e.clientX < box.left + box.width / 2 ? 'left' : 'right'
+    hapticSelection('tick')
+    setNudge((n) => ({ side, n: (n?.n ?? 0) + 1 }))
+    clearTimeout(nudgeRef.current)
+    nudgeRef.current = setTimeout(() => setNudge(null), 700)
+  }
 
   useEffect(() => {
     if (!puzzle) return
@@ -277,6 +296,7 @@ export default function CoverOrNot() {
           'game-screen__listen cover-or-not__listen',
           swipe.active && 'cover-or-not__listen--swiping',
           !done && !chosen && 'cover-or-not__listen--open',
+          nudge && `cover-or-not--nudge-${nudge.side} cover-or-not--nudge-${nudge.n % 2 ? 'a' : 'b'}`,
         ].filter(Boolean).join(' ')}
         style={{ '--swipe': swipe.dx }}
         {...swipe.handlers}
@@ -367,40 +387,16 @@ export default function CoverOrNot() {
             </Dial>
           </>
         ) : (
-        <div className="choices">
-          {CHOICES.map(({ value, label, sub, Art }, i) => {
-            let mod = ''
-            let mark = null
-            if (done) {
-              if (value === puzzle.answer) { mod = ' choice--correct'; mark = 'check' }
-              else if (value === chosen) { mod = ' choice--wrong'; mark = 'x' }
-              else mod = ' choice--faded'
-            } else if (chosen) {
-              mod = value === chosen ? ' choice--locked' : ' choice--waiting'
-            }
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => handleGuess(value)}
-                disabled={done || Boolean(chosen)}
-                className={`choice${mod}${leaning?.value === value ? ' choice--leaning' : ''}`}
-                style={{ '--i': i, '--lean': leaning?.value === value ? swipe.progress : 0 }}
-              >
-                <Art className="choice__art" />
-                <span>
-                  <span className="choice__label">{label}</span>
-                  <span className="choice__sub">{sub}</span>
-                </span>
-                {mark && (
-                  <span className="choice__mark">
-                    <Icon name={mark} size={14} strokeWidth={3} />
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
+        <SwipeRail
+          choices={CHOICES}
+          answer={done ? puzzle.answer : null}
+          chosen={chosen}
+          swipe={swipe}
+          leaning={leaning}
+          nudge={nudge}
+          onTap={tapRail}
+          onPick={handleGuess}
+        />
         )}
 
         {done && (
@@ -452,4 +448,85 @@ export default function CoverOrNot() {
 
 function GameShell({ children, className }) {
   return <GameScreen slug="cover-or-not" className={className}>{children}</GameScreen>
+}
+
+/**
+ * Cover or Not's answer: a rail to swipe, "It's a cover" at its left end and
+ * "It's original" at its right. The knob in the middle follows a swipe of the
+ * rail or of the song, and reaches the end just as letting go would count.
+ * Before the first swipe it sways, and a tap only nudges the song the way it
+ * was tapped. Once answered the knob stays on the pick, and the answer is
+ * marked right or wrong.
+ *
+ * The answers are also buttons, out of sight, for VoiceOver and a keyboard.
+ */
+function SwipeRail({ choices, answer, chosen, swipe, leaning, nudge, onTap, onPick }) {
+  const open = !answer && !chosen
+  const picked = choices.find(c => c.value === chosen)
+  const pull = picked ? (picked.side === 'left' ? -1 : 1) : Math.sign(swipe.dx) * swipe.progress
+  const [touched, setTouched] = useState(false)
+  if (swipe.active && !touched) setTouched(true)
+
+  return (
+    <div className="cover-or-not__answer">
+      <div
+        data-swipe
+        className={[
+          'cover-or-not__rail',
+          open && 'cover-or-not__rail--open',
+          open && !touched && 'cover-or-not__rail--idle',
+          swipe.active && 'cover-or-not__rail--swiping',
+          answer && !picked && 'cover-or-not__rail--unpicked',
+          picked && answer && (picked.value === answer ? 'cover-or-not__rail--right' : 'cover-or-not__rail--wrong'),
+          nudge && `cover-or-not--nudge-${nudge.side} cover-or-not--nudge-${nudge.n % 2 ? 'a' : 'b'}`,
+        ].filter(Boolean).join(' ')}
+        style={{ '--pull': pull }}
+        onClick={onTap}
+        {...swipe.handlers}
+        aria-hidden="true"
+      >
+        <div className="cover-or-not__track">
+          <Icon name="chevronLeft" size={16} strokeWidth={2.5} className="cover-or-not__tip cover-or-not__tip--left" />
+          <span className="cover-or-not__line" />
+          <Icon name="chevronRight" size={16} strokeWidth={2.5} className="cover-or-not__tip cover-or-not__tip--right" />
+          <span className="cover-or-not__knob">
+            {picked && answer
+              ? <Icon name={picked.value === answer ? 'check' : 'x'} size={18} strokeWidth={3} />
+              : <><Icon name="chevronLeft" size={14} strokeWidth={2.5} /><Icon name="chevronRight" size={14} strokeWidth={2.5} /></>}
+          </span>
+        </div>
+
+        <div className="cover-or-not__ends">
+          {choices.map(({ value, side, label, sub, Art }) => {
+            let state = ''
+            if (answer) state = value === answer ? ' cover-or-not__end--correct' : value === chosen ? ' cover-or-not__end--wrong' : ' cover-or-not__end--faded'
+            else if (chosen) state = value === chosen ? ' cover-or-not__end--picked' : ' cover-or-not__end--faded'
+            return (
+              <span
+                key={value}
+                className={`cover-or-not__end cover-or-not__end--${side}${state}`}
+                style={{ '--lean': leaning?.value === value ? swipe.progress : 0 }}
+              >
+                <Art className="cover-or-not__end-art" />
+                <span className="cover-or-not__end-text">
+                  <span className="cover-or-not__end-label">{label}</span>
+                  <span className="cover-or-not__end-sub">{sub}</span>
+                </span>
+              </span>
+            )
+          })}
+        </div>
+      </div>
+
+      {open && <p className="cover-or-not__rail-hint">Swipe the song or the bar toward your answer</p>}
+
+      {open && (
+        <div className="cover-or-not__keys">
+          {choices.map(c => (
+            <button key={c.value} type="button" onClick={() => onPick(c.value)}>{c.label}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
