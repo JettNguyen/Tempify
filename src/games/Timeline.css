@@ -289,7 +289,7 @@
 
 /* Folded to fit (useFitScreen): every song on the line takes one row, except
    the one that just landed, which keeps its "you said" line. */
-@media (max-width: 640px), (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
+@media (max-width: 640px), (min-width: 641px) and (pointer: coarse) {
   .page-shell--tight .timeline__line:not(:has(.timeline__gap)) .timeline__song:not(.timeline__song--fresh) {
     min-height: 36px;
     padding-block: 4px;

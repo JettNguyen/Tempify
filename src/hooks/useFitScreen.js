@@ -22,7 +22,11 @@ function screenSize() {
   const scroller = document.body.classList.contains('ios-native-app')
     ? document.querySelector('.app-scroll-container')
     : null
-  return { width: window.innerWidth, height: scroller ? scroller.clientHeight : window.innerHeight }
+  if (scroller) return { width: window.innerWidth, height: scroller.clientHeight }
+  // A tablet's page is zoomed (useBigScreenScale), and the game is measured
+  // in the page's own units, so the window is too.
+  const zoom = parseFloat(getComputedStyle(document.body).getPropertyValue('--big-screen-scale')) || 1
+  return { width: window.innerWidth, height: window.innerHeight / zoom }
 }
 
 /**
@@ -30,7 +34,8 @@ function screenSize() {
  * guesses stack up, a finished day lists every song. When the page would run
  * past the bottom of the screen, the shell gets `page-shell--tight`, which
  * folds the stage into a compact player and tightens the lists (the CSS is
- * with each of them, phones only). When there's room again it comes off.
+ * with each of them, for phones and touch screens; a desktop window just
+ * scrolls). When there's room again it comes off.
  *
  * It decides with the class off every time, and it runs after every render,
  * before the browser draws, so the page never shows the overflowing layout
@@ -50,8 +55,6 @@ export function useFitScreen(ref) {
     const turned = sizeRef.current !== before
     const folded = shell.classList.contains(TIGHT)
     shell.classList.remove(TIGHT)
-    // A big window or a tablet is zoomed to fit already (useBigScreenScale).
-    if (document.body.classList.contains('big-screen')) return
     if (overflows(shell.offsetHeight, sizeRef.current.height) || (folded && !mayUnfold && !turned)) {
       shell.classList.add(TIGHT)
     }

@@ -739,10 +739,10 @@ body.is-scrolling button:not(:disabled):active {
   }
 }
 
-/* Folded (useFitScreen), on a phone either way up or a tablet on its side:
+/* Folded (useFitScreen), on a phone or a tablet, either way up:
    once a day is finished its question has been answered, so it steps aside
    for the songs, and the gaps around the lists close up. */
-@media (max-width: 640px), (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
+@media (max-width: 640px), (min-width: 641px) and (pointer: coarse) {
   .page-shell--tight:has(.result-stub) .game-header__title {
     display: none;
   }

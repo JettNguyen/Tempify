@@ -417,7 +417,7 @@
 
 /* Folded to fit (useFitScreen): the finished day's rows close up, to the
    44 points a thumb needs. */
-@media (max-width: 640px), (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
+@media (max-width: 640px), (min-width: 641px) and (pointer: coarse) {
   .page-shell--tight .tempo__summary {
     margin-top: 0.6rem;
     gap: 5px;
