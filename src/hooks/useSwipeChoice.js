@@ -19,6 +19,25 @@ export function swipePick(dx, width, velocity) {
   return dx < 0 ? 'left' : 'right'
 }
 
+// How far back a flick's speed is measured, and the least time that says
+// anything: two touch reports a few milliseconds apart make any small step
+// look fast.
+const FLICK_WINDOW = 100
+const FLICK_MIN_TIME = 20
+
+/**
+ * How fast a drag was going as it ended, in pixels a millisecond, from the
+ * points it passed ({ x, t }, oldest first) over its last tenth of a second.
+ * Zero when that's too short to tell, or the finger had stopped.
+ */
+export function flickVelocity(points) {
+  if (points.length < 2) return 0
+  const last = points[points.length - 1]
+  const first = points.find((p) => last.t - p.t <= FLICK_WINDOW) ?? last
+  const dt = last.t - first.t
+  return dt >= FLICK_MIN_TIME ? (last.x - first.x) / dt : 0
+}
+
 /**
  * The stage as something to swipe toward an answer card: Cover or Not's song,
  * left toward one answer and right toward the other. The cards stay tappable;
@@ -45,9 +64,7 @@ export function useSwipeChoice({ enabled, onPick }) {
       id: e.pointerId,
       x: e.clientX,
       y: e.clientY,
-      lastX: e.clientX,
-      lastT: e.timeStamp,
-      velocity: 0,
+      points: [{ x: e.clientX, t: e.timeStamp }],
       width: stage.getBoundingClientRect().width || 1,
       stage,
       on: false,
@@ -72,10 +89,8 @@ export function useSwipeChoice({ enabled, onPick }) {
       setWidth(g.width)
       setActive(true)
     }
-    const dt = e.timeStamp - g.lastT
-    if (dt > 0) g.velocity = (e.clientX - g.lastX) / dt
-    g.lastX = e.clientX
-    g.lastT = e.timeStamp
+    g.points.push({ x: e.clientX, t: e.timeStamp })
+    g.points = g.points.filter((p) => e.timeStamp - p.t <= FLICK_WINDOW * 2)
     // A tick as it crosses the line where letting go counts.
     const past = Math.abs(mx) >= g.width * PICK_AT
     if (past !== g.past) {
@@ -90,7 +105,8 @@ export function useSwipeChoice({ enabled, onPick }) {
     if (!g || g.id !== e.pointerId) return
     gesture.current = null
     if (!g.on) return
-    const side = e.type === 'pointerup' ? swipePick(e.clientX - g.x, g.width, g.velocity) : null
+    g.points.push({ x: e.clientX, t: e.timeStamp })
+    const side = e.type === 'pointerup' ? swipePick(e.clientX - g.x, g.width, flickVelocity(g.points)) : null
     setActive(false)
     setDx(0)
     if (side) onPick(side)

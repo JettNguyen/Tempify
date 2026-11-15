@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { swipePick, PICK_AT } from './useSwipeChoice.js'
+import { swipePick, flickVelocity, PICK_AT } from './useSwipeChoice.js'
 
 describe('swipePick', () => {
   const width = 360
@@ -22,5 +22,24 @@ describe('swipePick', () => {
   it("doesn't count a flick back the other way, or a twitch", () => {
     expect(swipePick(60, width, -0.9)).toBe(null)
     expect(swipePick(10, width, 2)).toBe(null)
+  })
+})
+
+describe('flickVelocity', () => {
+  it('measures the last tenth of a second', () => {
+    const points = [{ x: 0, t: 0 }, { x: 10, t: 200 }, { x: 40, t: 250 }, { x: 70, t: 300 }]
+    expect(flickVelocity(points)).toBeCloseTo(60 / 100)
+  })
+
+  it('reads nothing from reports a few milliseconds apart', () => {
+    expect(flickVelocity([{ x: 0, t: 100 }, { x: 40, t: 101 }])).toBe(0)
+  })
+
+  it('reads nothing once the finger has stopped', () => {
+    expect(flickVelocity([{ x: 0, t: 0 }, { x: 80, t: 40 }, { x: 80, t: 400 }])).toBe(0)
+  })
+
+  it('is zero for a single point', () => {
+    expect(flickVelocity([{ x: 5, t: 0 }])).toBe(0)
   })
 })
