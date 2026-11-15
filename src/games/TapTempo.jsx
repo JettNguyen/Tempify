@@ -3,13 +3,14 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
 import { useYourBeat } from '../hooks/useYourBeat'
+import { useTapBeat } from '../hooks/useTapBeat'
 import { todayEST } from '../lib/date'
 import { exitTarget } from '../lib/gameExit'
 import { getPuzzle, getCachedPuzzle } from '../lib/puzzles'
 import { saveScore, updateStreak } from '../lib/scores'
-import { prefetchClip } from '../lib/audioEngine'
+import { armAudioContext, prefetchClip, primeAudioContext } from '../lib/audioEngine'
 import { hapticImportantTap, hapticSelection } from '../lib/haptics'
-import { playVerdict } from '../lib/sounds'
+import { loadSounds, playVerdict } from '../lib/sounds'
 import { lockInDelay } from '../lib/lockIn'
 import { addTap, bpmFromTaps, readTap, tempoPoints, MIN_TAPS } from '../lib/tempo'
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
@@ -93,6 +94,9 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   // Your tapped tempo clicking over the song once it's revealed. On unless
   // it's switched off, and then off for the rest of this game.
   const [hearBeat, setHearBeat] = useState(true)
+  // The last beat that carried on from the taps by itself (useTapBeat), so the
+  // pad's ripple goes with it the way it goes with a tap.
+  const [carried, setCarried] = useState(0)
   const revealRef = useRef(0)
   const playedRef = useRef(false)
 
@@ -102,6 +106,14 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   useEffect(() => {
     rounds.forEach((r) => prefetchClip(r.audio_url))
   }, [rounds])
+
+  // The tap sounds, and the beat that carries on after them, need the sounds
+  // loaded and the audio running before there's a player on screen: the stage
+  // that does both elsewhere only shows up here once a beat is locked in.
+  useEffect(() => {
+    armAudioContext()
+    loadSounds()
+  }, [])
 
   useEffect(() => {
     if (done || playedRef.current) return
@@ -117,12 +129,14 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   const revealed = Boolean(result)
   const yourBeat = useYourBeat({ bpm: result?.bpm, songBpm: round?.bpm, on: revealed && !done && hearBeat })
   const bpm = bpmFromTaps(taps)
+  useTapBeat({ taps, bpm, on: !revealed && !locking && !done, onBeat: setCarried })
   const total = results.reduce((sum, r) => sum + (r.points || 0), 0)
   const savedPoints = completions[`${SLUG}|${puzzleDate}`]?.points
   const finalPoints = results.length === rounds.length ? total : (savedPoints ?? total)
 
   function tap() {
     if (revealed || locking || done) return
+    primeAudioContext()
     hapticSelection('beat')
     setTaps(prev => addTap(prev, performance.now()))
   }
@@ -295,8 +309,9 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
               {/* No aria-label: the pad's own words ("Tap the beat here", then the
                   taps left, then the BPM) are its name, so what a screen reader
                   says matches what's on it. */}
-              {/* Restarted on every tap, so each one lands as a ripple. */}
-              {taps.length > 0 && <span key={taps[taps.length - 1]} className="tempo__ripple" aria-hidden="true" />}
+              {/* Restarted on every tap, and on every beat that carries on
+                  after the taps stop, so each one lands as a ripple. */}
+              {taps.length > 0 && <span key={Math.max(taps[taps.length - 1], carried)} className="tempo__ripple" aria-hidden="true" />}
               <span className="tempo__bpm" aria-live="polite">
                 {bpm ?? (taps.length ? MIN_TAPS - taps.length : 'Tap')}
               </span>
