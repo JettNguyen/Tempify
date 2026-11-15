@@ -72,7 +72,7 @@
 }
 
 /* On a phone the card takes the spare height, so the pad lands low. */
-@media (max-width: 640px) {
+@media (max-width: 640px), (orientation: portrait) and (min-width: 641px) and (max-width: 743px) and (pointer: coarse) {
   .page-shell--fill .game-screen__listen > .tempo__song {
     flex: 1 0 auto;
   }

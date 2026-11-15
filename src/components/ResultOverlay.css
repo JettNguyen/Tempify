@@ -70,7 +70,7 @@ body.ios-native-app.result-open .app-scroll-container {
    handed. The result keeps room at the bottom so the end of a long one scrolls
    clear of the button, and keeps its top padding so a short one stays centered
    where it was. Tapping anywhere outside the card still closes it too. */
-@media (max-width: 640px) {
+@media (max-width: 640px), (orientation: portrait) and (min-width: 641px) and (max-width: 743px) and (pointer: coarse) {
   .result-overlay {
     padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
   }

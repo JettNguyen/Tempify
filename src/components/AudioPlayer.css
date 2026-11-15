@@ -63,8 +63,9 @@
    It gives the room back too. The visual starts from nothing and only grows,
    so when what's under the stage gets taller (Era's line as songs land on it,
    an answer revealed under the dial) the visual shrinks, down to the play
-   button and its ring, before the page has to scroll. */
-@media (max-width: 640px) {
+   button and its ring, before the page has to scroll. The open iPhone Duo
+   standing up counts as a phone (globals.css). */
+@media (max-width: 640px), (orientation: portrait) and (min-width: 641px) and (max-width: 743px) and (pointer: coarse) {
   .page-shell--fill .game-screen__listen > .audio-stage {
     flex: 1 0 auto;
     display: flex;
@@ -111,8 +112,9 @@
    moves down beside the song and the scrubber, the cover steps out, and the
    visual stays on as a faint backdrop across the card. Any height the card
    still has goes above the player, so the controls stay low. After the rules
-   above, which it has to win over. On a phone, and on a screen on its side. */
-@media (max-width: 640px), (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
+   above, which it has to win over. On a phone (the open Duo standing up
+   included), and on a screen on its side. */
+@media (max-width: 640px), (orientation: portrait) and (min-width: 641px) and (max-width: 743px) and (pointer: coarse), (orientation: landscape) and (min-width: 641px) and (max-height: 860px) and (pointer: coarse) {
   .page-shell--tight .game-screen__listen > .audio-stage > .audio-stage__card {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -156,8 +158,9 @@
 }
 
 /* A tablet standing up has the height to keep the stage a stage: folded, the
-   visual only gets shorter, and the lists under it close up. */
-@media (min-width: 641px) and (orientation: portrait) and (pointer: coarse), (min-width: 641px) and (min-height: 861px) and (pointer: coarse) {
+   visual only gets shorter, and the lists under it close up. From the iPad
+   mini's 744: the open Duo below that folds the way a phone does. */
+@media (min-width: 744px) and (orientation: portrait) and (pointer: coarse), (min-width: 744px) and (min-height: 861px) and (pointer: coarse) {
   .page-shell--tight .audio-stage__visual {
     height: 96px;
   }

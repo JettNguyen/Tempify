@@ -232,7 +232,7 @@
    to pick, a phone shows each song on one row, title then artist, so placing
    it doesn't mean scrolling past the stage. Once a song lands it gets its two
    lines back, with the "you said" under it. */
-@media (max-width: 640px), (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
+@media (max-width: 640px), (orientation: portrait) and (min-width: 641px) and (max-width: 743px) and (pointer: coarse), (orientation: landscape) and (min-width: 641px) and (max-height: 500px) and (pointer: coarse) {
   .timeline__line:has(.timeline__gap) .timeline__song {
     min-height: 34px;
     padding-block: 4px;
