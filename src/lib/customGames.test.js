@@ -48,6 +48,7 @@ describe('how a made game is named', () => {
   it('says how many songs are in it', () => {
     expect(inviteText(game)).toBe('I picked 4 songs for you on Tempify. Can you put them in order by year?')
     expect(inviteText({ ...game, slug: 'one-bar', rounds: [{}] })).toMatch(/^I picked a song/)
+    expect(inviteText({ ...game, slug: 'tempo' })).toBe("I picked 4 songs for you on Tempify. Can you tap each one's beat from memory?")
   })
 
   it('sends the maker back to their games, and a friend to make one', () => {

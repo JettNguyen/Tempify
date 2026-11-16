@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { roundFrom, whatsMissing, toRounds, validYear, validPeak, sameSong, taggedTitle } from './customSongs.js'
+import { roundFrom, whatsMissing, toRounds, validYear, validPeak, validBpm, sameSong, taggedTitle } from './customSongs.js'
 
 const track = { title: 'Dreams (Remastered)', artist: 'Fleetwood Mac', artworkUrl: 'https://cdn-images.dzcdn.net/a.jpg' }
 const clip = { audio_url: 'https://audio-ssl.itunes.apple.com/a.m4a', artwork_url: 'https://is1-ssl.mzstatic.com/a.jpg', storeYear: 2004 }
@@ -23,6 +23,21 @@ describe('a picked song as a round', () => {
   it("gives Hit or Miss the chart's peak, or never charted", () => {
     expect(roundFrom('hit-or-miss', track, clip, chart)).toMatchObject({ peak: 1, weeks_on_chart: 16, weeks_at_one: 1, from: 'chart' })
     expect(roundFrom('hit-or-miss', track, clip, null)).toMatchObject({ peak: 0, weeks_on_chart: null, from: 'none' })
+  })
+
+  it("gives Tap the Tempo Deezer's tempo, or none to tap in", () => {
+    expect(roundFrom('tempo', track, clip, chart, 120.4)).toEqual({
+      title: 'Dreams',
+      artist: 'Fleetwood Mac',
+      audio_url: clip.audio_url,
+      artwork_url: clip.artwork_url,
+      year: 1977,
+      bpm: 120,
+      from: 'deezer',
+    })
+    expect(roundFrom('tempo', track, clip, null, null)).toMatchObject({ year: 2004, bpm: null, from: 'none' })
+    // Outside what a person can tap, Deezer's number is more likely a misread.
+    expect(roundFrom('tempo', track, clip, null, 300)).toMatchObject({ bpm: null, from: 'none' })
   })
 
   it("keeps One Bar's answer the way the guess search writes it", () => {
@@ -68,11 +83,15 @@ describe('what a game still needs', () => {
       .toBe('Add the year for "Dreams"')
     expect(whatsMissing('hit-or-miss', [song({ peak: 1 }), song({ peak: '' }), song({ peak: 0 })]))
       .toBe('Fix the peak for "Dreams"')
+    expect(whatsMissing('tempo', [song({ bpm: 120 }), song({ bpm: null }), song({ bpm: 90 })]))
+      .toBe('Tap in the tempo for "Dreams"')
+    expect(whatsMissing('tempo', [song({ bpm: 120 }), song({ bpm: 90 })])).toBe('Pick 1 more song')
   })
 
   it('lets a full game save', () => {
     expect(whatsMissing('era', [song({ year: 1977 }), song({ year: 1985 }), song({ year: 1990 })])).toBe(null)
     expect(whatsMissing('one-bar', [song()])).toBe(null)
+    expect(whatsMissing('tempo', [song({ bpm: 120 }), song({ bpm: 96 }), song({ bpm: 174 })])).toBe(null)
   })
 
   it('takes years and peaks the database takes', () => {
@@ -84,6 +103,12 @@ describe('what a game still needs', () => {
     expect(validPeak(101)).toBe(false)
     expect(validPeak('')).toBe(false)
     expect(validPeak(null)).toBe(false)
+    expect(validBpm(40)).toBe(true)
+    expect(validBpm(240)).toBe(true)
+    expect(validBpm(39)).toBe(false)
+    expect(validBpm(241)).toBe(false)
+    expect(validBpm('')).toBe(false)
+    expect(validBpm(null)).toBe(false)
   })
 })
 
@@ -98,6 +123,15 @@ describe('the rounds that get saved', () => {
     expect(changed[0]).toMatchObject({ peak: 4, weeks_on_chart: null, weeks_at_one: null })
     const kept = toRounds('hit-or-miss', [{ title: 'Dreams', artist: 'Fleetwood Mac', peak: 1, weeks_on_chart: 16, weeks_at_one: 1, from: 'chart' }])
     expect(kept[0]).toMatchObject({ peak: 1, weeks_on_chart: 16, weeks_at_one: 1 })
+  })
+})
+
+describe("Tap the Tempo's saved rounds", () => {
+  it('keeps a whole tempo and the year, and nothing about where they came from', () => {
+    const [round] = toRounds('tempo', [{ title: 'Dreams', artist: 'Fleetwood Mac', year: 1977, bpm: 120.4, from: 'deezer' }])
+    expect(round).toEqual({ title: 'Dreams', artist: 'Fleetwood Mac', year: 1977, bpm: 120 })
+    const [noYear] = toRounds('tempo', [{ title: 'Dreams', artist: 'Fleetwood Mac', year: null, bpm: 96, from: 'hand' }])
+    expect(noYear).toEqual({ title: 'Dreams', artist: 'Fleetwood Mac', year: null, bpm: 96 })
   })
 })
 

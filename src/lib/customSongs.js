@@ -3,14 +3,17 @@
 // friend can pick. Each one then gets an Apple clip, the kind the daily
 // games play, since Deezer's expire. The answers come from the Hot 100 list
 // the app ships: the year a song first charted, the way Admin's drafts date
-// Era, and how high it got.
+// Era, and how high it got. Tap the Tempo's come from Deezer's tempo for the
+// song, the way Admin's drafts get theirs, and the maker can tap one in.
 
 import { findClip, loadChartSongs, songKey } from './drafts.js'
-import { stripVariant } from './deezer.js'
+import { stripVariant, findTrackBpm } from './deezer.js'
 import { SONG_LIMITS } from './customGames.js'
 
 const THIS_YEAR = new Date().getFullYear()
 export const FIRST_YEAR = 1900
+// Tempos a person can tap. The database holds a made game to the same range.
+export const BPM_RANGE = [40, 240]
 
 let chartIndex = null
 
@@ -36,7 +39,7 @@ export async function chartEntry(title, artist) {
  * 'none'. The database keeps only the fields a game reads, so `from` stays
  * here.
  */
-export function roundFrom(slug, track, clip, chart) {
+export function roundFrom(slug, track, clip, chart, bpm = null) {
   const song = {
     title: stripVariant(track.title),
     artist: track.artist,
@@ -49,6 +52,11 @@ export function roundFrom(slug, track, clip, chart) {
   song.title = taggedTitle(song.title) || song.title
   const year = chart?.year ?? clip.storeYear ?? null
   if (slug === 'era') return { ...song, year, from: chart ? 'chart' : year ? 'store' : 'none' }
+  // The year only shows beside the song in Tap the Tempo, so a store's is fine.
+  if (slug === 'tempo') {
+    const found = validBpm(bpm) ? Math.round(bpm) : null
+    return { ...song, year, bpm: found, from: found ? 'deezer' : 'none' }
+  }
   return {
     ...song,
     year,
@@ -62,11 +70,13 @@ export function roundFrom(slug, track, clip, chart) {
 /** A picked song made ready for a game, or null when Apple has no clip of it. */
 export async function prepareSong(slug, track) {
   const title = stripVariant(track.title)
-  const [clip, chart] = await Promise.all([
+  const [clip, chart, bpm] = await Promise.all([
     findClip(title, track.artist),
     slug === 'one-bar' ? null : chartEntry(title, track.artist),
+    // A missing tempo isn't a missing song: the maker taps it in.
+    slug === 'tempo' ? findTrackBpm(title, track.artist).catch(() => null) : null,
   ])
-  return clip ? roundFrom(slug, track, clip, chart) : null
+  return clip ? roundFrom(slug, track, clip, chart, bpm) : null
 }
 
 /**
@@ -90,6 +100,11 @@ export function validYear(year) {
   return Number.isInteger(n) && n >= FIRST_YEAR && n <= THIS_YEAR + 1
 }
 
+export function validBpm(bpm) {
+  const n = Number(bpm)
+  return bpm !== '' && bpm != null && Number.isFinite(n) && n >= BPM_RANGE[0] && n <= BPM_RANGE[1]
+}
+
 export function validPeak(peak) {
   const n = Number(peak)
   return peak !== '' && peak != null && Number.isInteger(n) && n >= 0 && n <= 100
@@ -107,6 +122,8 @@ export function whatsMissing(slug, songs) {
   if (noYear) return `Add the year for "${noYear.title}"`
   const noPeak = slug === 'hit-or-miss' && songs.find(s => !validPeak(s.peak))
   if (noPeak) return `Fix the peak for "${noPeak.title}"`
+  const noBpm = slug === 'tempo' && songs.find(s => !validBpm(s.bpm))
+  if (noBpm) return `Tap in the tempo for "${noBpm.title}"`
   return null
 }
 
@@ -126,6 +143,9 @@ export function toRounds(slug, songs) {
         weeks_on_chart: peak && chartRun ? song.weeks_on_chart : null,
         weeks_at_one: peak === 1 && chartRun ? song.weeks_at_one : null,
       }
+    }
+    if (slug === 'tempo') {
+      return { ...song, year: validYear(song.year) ? Number(song.year) : null, bpm: Math.round(Number(song.bpm)) }
     }
     return song
   })

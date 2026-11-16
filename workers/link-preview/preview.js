@@ -43,6 +43,7 @@ const MADE_LINES = {
   era: 'Put the songs in order, oldest to newest.',
   'hit-or-miss': 'Guess how high each song got on the Hot 100.',
   'one-bar': 'Name the song from half a second of it.',
+  tempo: "Tap each song's beat from memory.",
 }
 
 /**

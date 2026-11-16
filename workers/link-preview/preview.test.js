@@ -48,6 +48,12 @@ describe('challenge link previews', () => {
       url: 'https://tempify.me/game/era?c=3f9a01b2ce&m=dana',
     })
     expect(at('/game/hit-or-miss?c=3f9a01b2ce').title).toBe("A friend's Hit or Miss on Tempify")
+    expect(at('/game/tempo?c=3f9a01b2ce&m=dana')).toEqual({
+      title: "dana's Tap the Tempo on Tempify",
+      description: "Tap each song's beat from memory.",
+      replace: true,
+      url: 'https://tempify.me/game/tempo?c=3f9a01b2ce&m=dana',
+    })
   })
 
   it('counts a challenge on a made game against its own songs', () => {
@@ -62,7 +68,7 @@ describe('challenge link previews', () => {
   })
 
   it('treats a made-game code on a game that has none as a daily link', () => {
-    expect(at('/game/tempo?c=3f9a01b2ce&date=2026-10-30&s=share').title).toBe('Tap the Tempo #186 on Tempify')
+    expect(at('/game/cover-or-not?c=3f9a01b2ce&date=2026-10-30&s=share').title).toBe('Cover or Not #186 on Tempify')
     expect(at('/game/era?c=nope&date=2026-10-30&s=share').title).toBe('Era #186 on Tempify')
   })
 

@@ -12,13 +12,14 @@ import { siteUrl, challengeValue } from './challenge.js'
 //   /game/era?c=3f9a01b2ce&m=dana&vs=1000.500.0.1000&by=sam
 
 /** The games that can be made, in the order the builder offers them. */
-export const CUSTOM_SLUGS = ['era', 'hit-or-miss', 'one-bar']
+export const CUSTOM_SLUGS = ['era', 'hit-or-miss', 'one-bar', 'tempo']
 
 /** How many songs each one takes. The database holds the same limits. */
 export const SONG_LIMITS = {
   era: { min: 3, max: 5 },
   'hit-or-miss': { min: 3, max: 5 },
   'one-bar': { min: 1, max: 1 },
+  tempo: { min: 3, max: 5 },
 }
 
 const CODE = /^[a-f0-9]{10}$/
@@ -73,6 +74,7 @@ export function inviteText(game) {
   const n = game.rounds?.length || 0
   if (game.slug === 'one-bar') return 'I picked a song for you on Tempify. Can you name it from half a second?'
   if (game.slug === 'hit-or-miss') return `I picked ${n} songs for you on Tempify. Can you guess how high each one got on the Hot 100?`
+  if (game.slug === 'tempo') return `I picked ${n} songs for you on Tempify. Can you tap each one's beat from memory?`
   return `I picked ${n} songs for you on Tempify. Can you put them in order by year?`
 }
 

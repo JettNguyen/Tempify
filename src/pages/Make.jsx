@@ -7,12 +7,15 @@ import { isNativeApp } from '../lib/oauth'
 import { copyText } from '../lib/clipboard'
 import { hapticSelection, hapticRejected, hapticImportantTap } from '../lib/haptics'
 import { stripVariant } from '../lib/deezer'
+import { addTap, bpmFromTaps, MIN_TAPS } from '../lib/tempo'
+import { armAudioContext, primeAudioContext } from '../lib/audioEngine'
+import { loadSounds } from '../lib/sounds'
 import {
   CUSTOM_SLUGS, SONG_LIMITS, createCustomGame, listMyCustomGames, deleteCustomGame,
   customUrl, customTitle, inviteText,
 } from '../lib/customGames'
 import {
-  chartEntry, prepareSong, sameSong, whatsMissing, toRounds, validYear, validPeak, taggedTitle, FIRST_YEAR,
+  chartEntry, prepareSong, sameSong, whatsMissing, toRounds, validYear, validPeak, validBpm, taggedTitle, FIRST_YEAR,
 } from '../lib/customSongs'
 import AudioPlayer from '../components/AudioPlayer'
 import GameGlyph from '../components/GameGlyph'
@@ -31,12 +34,14 @@ const PICK_LINES = {
   era: 'Pick 3 to 5 songs. Friends put them in order by year.',
   'hit-or-miss': 'Pick 3 to 5 songs. Friends guess how high each one charted.',
   'one-bar': 'Pick one song. Friends name it from half a second.',
+  tempo: "Pick 3 to 5 songs. Friends tap each one's beat from memory.",
 }
 
 const BUILD_HELP = {
   era: 'The first song starts on the line with its year showing, and friends place the rest. Years are when each song first made the Hot 100.',
   'hit-or-miss': "Peaks come from the Hot 100. A song that isn't on it counts as never charted.",
   'one-bar': 'Friends hear half a second of it, and each wrong guess plays a bit more.',
+  tempo: "Friends see each song without hearing it and tap its beat from memory. Tempos come from Deezer. If one is missing or sounds wrong, tap along with the clip to set it.",
 }
 
 const THIS_YEAR = new Date().getFullYear()
@@ -320,6 +325,10 @@ function Builder({ slug, onMade }) {
 /** The answer a song carries, the way the builder says it. `open` is whether its panel is. */
 function answerLine(slug, song, open) {
   const add = open ? '' : ' Tap Change to add it.'
+  if (slug === 'tempo') {
+    if (!validBpm(song.bpm)) return { text: `Needs a tempo. ${open ? 'Play the clip and tap along below.' : 'Tap Change to tap it in.'}`, warn: true }
+    return { text: song.from === 'deezer' ? `${song.bpm} BPM, from Deezer` : `${song.bpm} BPM, tapped in` }
+  }
   if (slug === 'era') {
     if (!validYear(song.year)) return { text: `Needs a year.${add}`, warn: true }
     if (song.from === 'chart') return { text: `First charted in ${song.year}` }
@@ -431,6 +440,8 @@ function SongRow({ slug, song, first, open, onOpen, onChange, onRemove, onMoveTo
             </div>
           )}
 
+          {slug === 'tempo' && <TapAlong current={song.bpm} onSet={(bpm) => onChange({ bpm })} />}
+
           {slug === 'era' && !first && (
             <div className="make-song__tools">
               <button type="button" className="make-text-btn btn-press" onClick={onMoveToStart}>
@@ -441,6 +452,70 @@ function SongRow({ slug, song, first, open, onOpen, onChange, onRemove, onMoveTo
         </div>
       )}
     </li>
+  )
+}
+
+/**
+ * Setting a song's tempo by tapping along with its clip, with the same tap
+ * math the game scores a friend's beat with. Each tap clicks, the way the
+ * game's pad does.
+ */
+function TapAlong({ current, onSet }) {
+  const [taps, setTaps] = useState([])
+  const bpm = bpmFromTaps(taps)
+  const left = MIN_TAPS - taps.length
+
+  // The clicks need their sounds loaded and the audio running, as on the
+  // game's own pad.
+  useEffect(() => {
+    armAudioContext()
+    loadSounds()
+  }, [])
+
+  function tap() {
+    primeAudioContext()
+    hapticSelection('beat')
+    setTaps(prev => addTap(prev, performance.now()))
+  }
+
+  function use() {
+    if (!bpm) return
+    hapticSelection()
+    onSet(bpm)
+    setTaps([])
+  }
+
+  return (
+    <div className="make-field">
+      <span className="make-field__label">
+        Tempo{validBpm(current) ? `: ${Math.round(current)} BPM` : ''}
+      </span>
+      <div className="make-tap">
+        <button
+          type="button"
+          className={`make-tap__pad${bpm ? ' make-tap__pad--steady' : ''}`}
+          style={bpm ? { '--bpm': bpm } : undefined}
+          onPointerDown={tap}
+          onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); tap() } }}
+        >
+          <span className="make-tap__bpm" aria-live="polite">{bpm ?? (taps.length ? left : 'Tap')}</span>
+          <span className="make-tap__unit">
+            {bpm ? 'BPM' : taps.length ? `more tap${left === 1 ? '' : 's'}` : 'along'}
+          </span>
+        </button>
+        <div className="make-tap__side">
+          <p className="make-tap__help">Play the clip and tap with its beat.</p>
+          <button type="button" className="make-chip btn-press" onClick={use} disabled={!bpm}>
+            {bpm ? `Use ${bpm} BPM` : `Tap ${MIN_TAPS} times`}
+          </button>
+          {taps.length > 0 && (
+            <button type="button" className="make-text-btn btn-press" onClick={() => setTaps([])}>
+              Start over
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 

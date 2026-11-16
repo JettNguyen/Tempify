@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCompletion } from '../hooks/useCompletion'
+import { useCustomRecord } from '../hooks/useCustomRecord'
 import { useYourBeat } from '../hooks/useYourBeat'
 import { useTapBeat } from '../hooks/useTapBeat'
 import { todayEST } from '../lib/date'
@@ -16,6 +17,7 @@ import { addTap, bpmFromTaps, readTap, tempoPoints, MIN_TAPS } from '../lib/temp
 import { ROUND_MAX, isWin, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
 import { readChallenge } from '../lib/challenge'
 import { nextGameAfter } from '../lib/games'
+import { customNext } from '../lib/customGames'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import StageSong from '../components/StageSong'
@@ -25,6 +27,7 @@ import { ChallengeTally } from '../components/Challenge'
 import Icon from '../components/Icon'
 import GameScreen from '../components/GameScreen'
 import DelayedSpinner from '../components/DelayedSpinner'
+import CustomGame from './CustomGame'
 import './TapTempo.css'
 
 const SLUG = 'tempo'
@@ -45,7 +48,21 @@ function speedNote(speed, actual) {
     : `Double ${actual} is ${actual * 2}, and double speed still counts`
 }
 
+// A link with c= opens a game a player made; anything else, the day's.
 export default function TapTempo() {
+  const [searchParams] = useSearchParams()
+  const code = searchParams.get('c')
+  if (code) {
+    return (
+      <CustomGame code={code} slug={SLUG} Shell={GameShell}>
+        {(puzzle, custom) => <TempoRounds puzzle={puzzle} puzzleDate={custom.key} custom={custom} />}
+      </CustomGame>
+    )
+  }
+  return <DailyTempo />
+}
+
+function DailyTempo() {
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get('date') || undefined
   const puzzleDate = dateParam || todayEST()
@@ -74,10 +91,14 @@ export default function TapTempo() {
  * A few famous songs (three a day from 11/17/2026), named but not played. Tap each one's beat from memory,
  * lock it in, and then the clip plays with your beat clicking over it and
  * pulsing beside the song's.
+ *
+ * `custom` is set for a game a player made: `puzzleDate` is then its key
+ * on this device, and the finish goes to its own board, not the day's.
  */
-function TempoRounds({ puzzle, puzzleDate, dateParam }) {
+function TempoRounds({ puzzle, puzzleDate, dateParam, custom }) {
   const { user, profile } = useAuth()
   const { markComplete, isComplete, completions } = useCompletion(user?.id)
+  const record = useCustomRecord(custom)
   const [searchParams] = useSearchParams()
   const rounds = puzzle.metadata.rounds
   const maxPoints = rounds.length * ROUND_MAX
@@ -117,7 +138,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
 
   useEffect(() => {
     if (done || playedRef.current) return
-    if (isComplete(SLUG, puzzleDate) || results.length >= rounds.length) {
+    if ((record ? record.finished : isComplete(SLUG, puzzleDate)) || results.length >= rounds.length) {
       setDone(true)
     }
   }, [completions])
@@ -131,7 +152,7 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   const bpm = bpmFromTaps(taps)
   useTapBeat({ taps, bpm, on: !revealed && !locking && !done, onBeat: setCarried })
   const total = results.reduce((sum, r) => sum + (r.points || 0), 0)
-  const savedPoints = completions[`${SLUG}|${puzzleDate}`]?.points
+  const savedPoints = record ? record.saved?.points : completions[`${SLUG}|${puzzleDate}`]?.points
   const finalPoints = results.length === rounds.length ? total : (savedPoints ?? total)
 
   function tap() {
@@ -144,6 +165,10 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   async function finish(all) {
     const points = all.reduce((sum, r) => sum + r.points, 0)
     const won = isWin(points, maxPoints)
+    if (record) {
+      record.finish({ attempts: 1, completed: won, points })
+      return
+    }
     markComplete(SLUG, puzzleDate, 1, won, points)
     if (!user) return
     try {
@@ -195,13 +220,14 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
   return (
     <GameShell>
       <div className="game-screen__listen">
-        <Link to={exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
+        <Link to={custom ? custom.back : exitTarget(searchParams)} replace className="game-back-link tap-target"><Icon name="chevronLeft" size={14} />Back</Link>
 
         <GameHeader
           slug={SLUG}
           name="tap the tempo"
           puzzleDate={puzzleDate}
           title={showClip ? 'How close was your beat?' : 'Tap its beat from memory'}
+          tag={custom?.tag}
         />
 
         <div className="tempo__progress">
@@ -350,8 +376,9 @@ function TempoRounds({ puzzle, puzzleDate, dateParam }) {
             }}
             gameSlug={SLUG}
             puzzleDate={dateParam}
-            nextGame={nextGameAfter('tempo', puzzleDate)}
+            nextGame={custom ? customNext(custom) : nextGameAfter('tempo', puzzleDate)}
             showLeaderboard={competitive}
+            custom={custom && { ...custom, posted: record.posted }}
           />
         )}
       </div>
