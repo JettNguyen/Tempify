@@ -354,15 +354,32 @@ function SongRow({ slug, song, first, open, onOpen, onChange, onRemove, onMoveTo
       <div className="make-song__row">
         <TrackArtwork title={song.title} artist={song.artist} src={song.artwork_url} size="small" />
         <div className="make-song__text">
-          <p className="make-song__title">
-            {song.title}
-            {slug === 'era' && first && <span className="make-song__start">Starts on the line</span>}
-          </p>
+          <p className="make-song__title">{song.title}</p>
           <p className="make-song__artist">{song.artist}</p>
-          {answer && <p className={`make-song__answer${answer.warn ? ' make-song__answer--warn' : ''}`}>{answer.text}</p>}
+          {/* The tag rides on the answer's line, not the title's: beside the
+              title it was cut off on a phone once the row had its remove
+              button. */}
+          {(answer || (slug === 'era' && first)) && (
+            <p className={`make-song__answer${answer?.warn ? ' make-song__answer--warn' : ''}`}>
+              {slug === 'era' && first && <span className="make-song__start">Starts on the line</span>}
+              {answer?.text}
+            </p>
+          )}
         </div>
         <button type="button" className="make-song__change btn-press tap-target" onClick={onOpen}>
           {open ? 'Done' : slug === 'one-bar' ? 'Hear it' : 'Change'}
+        </button>
+        {/* Out in the open, not inside the panel: a pick you change your mind
+            about shouldn't take a hunt to undo, and One Bar's only song hides
+            the search until it's gone. */}
+        <button
+          type="button"
+          className="make-song__remove btn-press tap-target"
+          onClick={onRemove}
+          aria-label={`Take out ${song.title}`}
+          title="Take it out"
+        >
+          <Icon name="x" size={15} strokeWidth={2.25} />
         </button>
       </div>
 
@@ -414,17 +431,13 @@ function SongRow({ slug, song, first, open, onOpen, onChange, onRemove, onMoveTo
             </div>
           )}
 
-          <div className="make-song__tools">
-            {slug === 'era' && !first && (
+          {slug === 'era' && !first && (
+            <div className="make-song__tools">
               <button type="button" className="make-text-btn btn-press" onClick={onMoveToStart}>
                 Start with this song
               </button>
-            )}
-            <button type="button" className="make-text-btn make-text-btn--danger btn-press" onClick={onRemove}>
-              <Icon name="trash" size={13} />
-              Take it out
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       )}
     </li>

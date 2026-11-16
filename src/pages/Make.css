@@ -133,10 +133,6 @@
   cursor: pointer;
 }
 
-.make-text-btn--danger {
-  color: var(--red);
-}
-
 .make-chip {
   display: inline-flex;
   align-items: center;
@@ -322,9 +318,6 @@
 }
 
 .make-song__title {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
   font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text-primary);
@@ -334,7 +327,8 @@
 }
 
 .make-song__start {
-  flex-shrink: 0;
+  display: table;
+  margin: 0.1rem 0 0.2rem;
   padding: 1px 6px;
   border-radius: 999px;
   background: rgba(var(--game-color-rgb), 0.15);
@@ -371,6 +365,35 @@
   color: var(--text-primary);
   font-size: var(--fs-xs);
   cursor: pointer;
+}
+
+/* Outlined like Change beside it, so it reads as a button and not a mark, but
+   in a quieter color. Red only under the finger or the pointer. */
+.make-song__remove {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  margin-left: -0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.make-song__remove:active {
+  color: var(--red);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+@media (hover: hover) {
+  .make-song__remove:hover {
+    color: var(--red);
+    border-color: rgba(239, 68, 68, 0.35);
+  }
 }
 
 .make-song__panel {
