@@ -32,6 +32,9 @@ import { useNativeSplash } from './hooks/useNativeSplash'
 import { initKeyboard } from './lib/keyboard'
 import { useKeyboardDismiss } from './hooks/useKeyboardDismiss'
 import { useAuth } from './hooks/useAuth'
+import { useOpenedLinks } from './hooks/useOpenedLinks'
+import { useShallowHistory } from './hooks/useShallowHistory'
+import { isNativeApp } from './lib/oauth'
 
 // Admin is a large, single-user screen, so keep it out of everyone else's bundle.
 const Admin = lazy(() => import('./pages/Admin'))
@@ -44,6 +47,15 @@ const Make = lazy(() => import('./pages/Make'))
 function SplashGate() {
   const { loading } = useAuth()
   useNativeSplash(!loading)
+  return null
+}
+
+// The iPhone app's own ways around: a tapped tempify.me link opens its page,
+// and swiping back stops at the tab you're on (lib/backStack).
+function AppNavigation() {
+  const native = isNativeApp()
+  useOpenedLinks(native)
+  useShallowHistory(native)
   return null
 }
 
@@ -80,6 +92,7 @@ export default function App() {
     <BrowserRouter basename={import.meta.env.BASE_URL} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <SplashGate />
+        <AppNavigation />
         <Navbar />
         <UsernameSetupModal />
         <IOSAppPrompt />

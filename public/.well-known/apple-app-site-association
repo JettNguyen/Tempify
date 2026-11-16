@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["5SLXY6F2CD.me.tempify"],
+        "components": [
+          { "/": "/", "?": { "code": "*" }, "exclude": true, "comment": "A web sign-in coming back with its code finishes in the browser it started in." },
+          { "/": "/", "#": "*access_token*", "exclude": true, "comment": "Same, for a sign-in or a confirmed email that comes back with its token." },
+          { "/": "/", "#": "*error*", "exclude": true, "comment": "And for one that comes back with an error to show." },
+          { "/": "/", "comment": "Home." },
+          { "/": "/game/*", "comment": "The games, with challenge links, shared days and games made for friends." },
+          { "/": "/archive/*", "comment": "A past day." },
+          { "/": "/explore", "comment": "Explore." },
+          { "/": "/u/*", "comment": "A player's profile." },
+          { "/": "/make", "comment": "Making a game." },
+          { "/": "/profile", "comment": "Your own profile." }
+        ]
+      }
+    ]
+  }
+}

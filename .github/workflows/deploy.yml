@@ -78,6 +78,9 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      # v3 uploads dot folders, which .well-known/apple-app-site-association
+      # (links opening the iPhone app) needs. v4 leaves them out unless
+      # include-hidden-files is set, so moving up means setting that too.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

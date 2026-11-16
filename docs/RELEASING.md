@@ -34,6 +34,16 @@ The API key can't use Apple's cloud-managed certificates, which is why the expor
 with the certificate above. The team's other distribution certificate belongs to EAS for the Expo
 apps and isn't used here.
 
+**Links that open the app** (November 15, 2026, the first build after 1.13): the app claims
+tempify.me through the `com.apple.developer.associated-domains` entitlement in
+`ios/App/App.entitlements`, and the site says which pages in
+`public/.well-known/apple-app-site-association`. The App ID `me.tempify` needs the Associated
+Domains capability turned on (`POST /v1/bundleIdCapabilities`, type `ASSOCIATED_DOMAINS`), and a
+profile made before that doesn't carry it: the export then stops saying the profile doesn't include
+the entitlement. Make the profile again as below, under the same name. Apple reads the site file
+through its own copy, which can lag a day behind the site; see what it has with
+`curl https://app-site-association.cdn-apple.com/a/v1/tempify.me`.
+
 **When they expire,** make a new certificate and profile through the API (a certificate signing
 request from `openssl`, then `POST /v1/certificates` with type `DISTRIBUTION`, then
 `POST /v1/profiles` with type `IOS_APP_STORE`), import the certificate into the same keychain, and
