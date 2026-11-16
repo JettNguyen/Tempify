@@ -1,29 +1,10 @@
 import { setSubscriptionStatus } from '../_shared/subscription.ts'
+import { changesFor, type RcEvent } from './changes.ts'
 
 declare const Deno: {
   env: { get(key: string): string | undefined }
   serve(handler: (req: Request) => Promise<Response>): unknown
 }
-
-// These event types mean the entitlement is now active.
-const ACTIVE_EVENTS = new Set([
-  'INITIAL_PURCHASE',
-  'RENEWAL',
-  'UNCANCELLATION',
-  'PRODUCT_CHANGE',
-  'TRANSFER',
-])
-
-// These event types mean the entitlement has ended immediately.
-const INACTIVE_EVENTS = new Set([
-  'EXPIRATION', // billing period ended after cancellation
-  'REFUND',     // Apple issued a refund, immediate revocation
-])
-
-// CANCELLATION: user cancelled but access continues until period end.
-//   RC fires EXPIRATION when access actually ends, so we handle that instead.
-// BILLING_ISSUE: grace period still active; EXPIRATION fires if unresolved.
-//   Both are intentionally ignored here.
 
 export async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
@@ -47,7 +28,7 @@ export async function handler(req: Request): Promise<Response> {
     return json({ error: 'unauthorized' }, 401)
   }
 
-  let body: { event?: { type?: string; app_user_id?: string } }
+  let body: { event?: RcEvent }
   try {
     body = await req.json()
   } catch {
@@ -59,22 +40,16 @@ export async function handler(req: Request): Promise<Response> {
     return json({ error: 'missing_event_type' }, 400)
   }
 
-  const { type, app_user_id: appUserId } = event
-
-  if (!appUserId) {
-    // RC anonymous user, so no Supabase account to update.
-    console.warn(`[rc-webhook] ${type} has no app_user_id, skipping`)
-    return json({ ok: true, skipped: 'no_app_user_id' })
+  // ./changes.ts decides whose Premium each event turns on or off.
+  const changes = changesFor(event)
+  if (changes.length === 0) {
+    console.info(`[rc-webhook] Nothing to change for ${event.type}`)
+    return json({ ok: true, skipped: event.type })
   }
 
-  if (ACTIVE_EVENTS.has(type)) {
-    await setSubscriptionStatus(appUserId, 'rc', true)
-    console.info(`[rc-webhook] ${type} → rc_subscribed=true  user=${appUserId}`)
-  } else if (INACTIVE_EVENTS.has(type)) {
-    await setSubscriptionStatus(appUserId, 'rc', false)
-    console.info(`[rc-webhook] ${type} → rc_subscribed=false user=${appUserId}`)
-  } else {
-    console.info(`[rc-webhook] Ignoring event type: ${type}`)
+  for (const { userId, active } of changes) {
+    await setSubscriptionStatus(userId, 'rc', active)
+    console.info(`[rc-webhook] ${event.type} → rc_subscribed=${active}  user=${userId}`)
   }
 
   return json({ ok: true })

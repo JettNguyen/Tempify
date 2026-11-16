@@ -186,14 +186,14 @@ export function AuthProvider({ children }) {
     }
 
     if (data) {
-      // iOS: combine live RC check with stripe_subscribed from DB so a web
-      // subscription also unlocks premium in the iOS app.
-      // Web: DB is authoritative (managed by Stripe webhook).
-      if (isNativeApp()) {
-        data.paid_subscribed = Boolean(emailBasedPremium || nativePremium || data.stripe_subscribed)
-      } else {
-        data.paid_subscribed = Boolean(data.is_subscribed || emailBasedPremium)
-      }
+      // One rule on every device: Premium is on when the database says so
+      // (is_subscribed, set by the Stripe and RevenueCat webhooks), and in the
+      // app also when RevenueCat says so live, which covers the moments before
+      // the webhook lands. The app used to skip the database's App Store record
+      // and trust the live check alone, so a player the database counted as
+      // Premium wore the badge everyone else sees (profiles, search, the
+      // boards) while their own app kept Premium locked.
+      data.paid_subscribed = Boolean(data.is_subscribed || emailBasedPremium || (isNativeApp() && nativePremium))
       // A gift adds to a paid plan here only, never in the database, so it
       // runs out on its own.
       data.comp_until = await compUntil(userId)
