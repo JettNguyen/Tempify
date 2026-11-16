@@ -27,7 +27,7 @@ account signed in.
 | Certificate | Apple Distribution: Jett Nguyen, id `DP55FA2P5M`, expires October 24, 2027 |
 | Its private key | Only in `~/Library/Keychains/tempify-signing.keychain-db` on this Mac |
 | That keychain's password | In the login keychain, item `tempify-signing-keychain` (the script reads it) |
-| Profile | `Tempify App Store`, id `UNV2372WZY`, for `me.tempify`, expires October 24, 2027 |
+| Profile | `Tempify App Store`, id `3LZ26962HM`, for `me.tempify`, expires October 24, 2027 (made again November 15, 2026, for Associated Domains) |
 | API key | The shared App Store Connect key at `../asc-api-key.p8` (App Manager) |
 
 The API key can't use Apple's cloud-managed certificates, which is why the export signs by hand
@@ -37,11 +37,12 @@ apps and isn't used here.
 **Links that open the app** (November 15, 2026, the first build after 1.13): the app claims
 tempify.me through the `com.apple.developer.associated-domains` entitlement in
 `ios/App/App.entitlements`, and the site says which pages in
-`public/.well-known/apple-app-site-association`. The App ID `me.tempify` needs the Associated
-Domains capability turned on (`POST /v1/bundleIdCapabilities`, type `ASSOCIATED_DOMAINS`), and a
-profile made before that doesn't carry it: the export then stops saying the profile doesn't include
-the entitlement. Make the profile again as below, under the same name. Apple reads the site file
-through its own copy, which can lag a day behind the site; see what it has with
+`public/.well-known/apple-app-site-association`. The App ID `me.tempify` has the Associated Domains
+capability (turned on through the API, `POST /v1/bundleIdCapabilities`), and the profile above was
+made again to carry it. Adding a capability later means the same two steps: turning one on marks
+every profile for the App ID invalid. The archive signs with Xcode's own development profile, which
+the script's `-allowProvisioningUpdates` and API key let Xcode make again by itself. Apple reads the
+site file through its own copy, which can lag a day behind the site; see what it has with
 `curl https://app-site-association.cdn-apple.com/a/v1/tempify.me`.
 
 **When they expire,** make a new certificate and profile through the API (a certificate signing

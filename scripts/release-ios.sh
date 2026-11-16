@@ -27,12 +27,19 @@ npx cap copy ios
 security unlock-keychain -p "$(security find-generic-password -s tempify-signing-keychain -w)" \
   "$HOME/Library/Keychains/tempify-signing.keychain-db"
 
+# The archive signs automatically, with Xcode's own development profile. The
+# API key lets Xcode make that profile again when the app's capabilities change
+# (Associated Domains did on November 15, 2026), with no account signed in.
 xcodebuild archive \
   -project ios/App/App.xcodeproj \
   -scheme Tempify \
   -configuration Release \
   -destination 'generic/platform=iOS' \
-  -archivePath "$OUT/Tempify.xcarchive"
+  -archivePath "$OUT/Tempify.xcarchive" \
+  -allowProvisioningUpdates \
+  -authenticationKeyPath "$KEY_PATH" \
+  -authenticationKeyID "$KEY_ID" \
+  -authenticationKeyIssuerID "$ISSUER_ID"
 
 cat > "$OUT/exportOptions.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
