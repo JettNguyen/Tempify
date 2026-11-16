@@ -132,8 +132,11 @@ export default function ResultCard({
     setCelebrate(false)
   }
 
+  // The dialog is the whole overlay, so the bar pinned under the card counts as
+  // part of it: a screen reader kept inside the card alone could never reach
+  // Close or the next game.
   const overlay = (
-    <div className="result-overlay">
+    <div className="result-overlay" role="dialog" aria-modal="true" aria-label={`${status}. ${answer}`}>
       <div className="result-overlay__scrim" onClick={close} />
 
       <div
@@ -165,18 +168,7 @@ export default function ResultCard({
         )}
       </div>
 
-      <button type="button" className="result-overlay__close btn-press" onClick={close} aria-label="Close results">
-        <Icon name="x" size={17} strokeWidth={2.25} />
-      </button>
-
-      <div
-        ref={panelRef}
-        className="result-overlay__panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label={`${status}. ${answer}`}
-        tabIndex={-1}
-      >
+      <div ref={panelRef} className="result-overlay__panel" tabIndex={-1}>
         <div className={`result-card stagger-list${correct ? ' result-card--correct' : ''}`}>
           <div className="result-card__crest">
             <span
@@ -215,29 +207,13 @@ export default function ResultCard({
 
           {emojiGrid && <div className="result-card__emoji">{emojiGrid}</div>}
 
-          <div className="result-card__actions">
-            <ShareButton
-              emojiGrid={emojiGrid}
-              gameSlug={gameSlug}
-              correct={correct}
-              attempts={attempts}
-              timeSeconds={timeLabel ? timeSeconds : null}
-              puzzleDate={rounds?.date || puzzleDate}
-              resultLine={shareLine}
-              score={score}
-              total={points}
-              answering={challenge}
-              custom={custom}
-            />
-            {action && (
-              <Link to={action.to} replace className="result-card__next btn-press btn-amber">
-                {action.label}
-              </Link>
-            )}
-          </div>
+          {/* How you stand against everyone comes straight after your own
+              result. A game a player made has its own board in place of the
+              day's leaderboard and stats, which its plays never reach. */}
+          {gameSlug && !custom && showLeaderboard !== false && <Leaderboard gameSlug={gameSlug} puzzleDate={puzzleDate} />}
 
-          {/* A game a player made has its own board in place of the day's
-              stats and leaderboard, which its plays never reach. */}
+          {custom && showLeaderboard !== false && <CustomScoreboard custom={custom} />}
+
           {gameSlug && !custom && (
             <PuzzleStats
               gameSlug={gameSlug}
@@ -249,10 +225,34 @@ export default function ResultCard({
               maxPoints={maxPoints}
             />
           )}
+        </div>
+      </div>
 
-          {gameSlug && !custom && showLeaderboard !== false && <Leaderboard gameSlug={gameSlug} puzzleDate={puzzleDate} />}
-
-          {custom && showLeaderboard !== false && <CustomScoreboard custom={custom} />}
+      {/* Pinned to the bottom of the screen, under the thumb, however far the
+          board scrolls. */}
+      <div className="result-overlay__bar">
+        <div className="result-overlay__bar-row">
+          <button type="button" className="result-overlay__close btn-press" onClick={close} aria-label="Close results">
+            <Icon name="x" size={17} strokeWidth={2.25} />
+          </button>
+          <ShareButton
+            emojiGrid={emojiGrid}
+            gameSlug={gameSlug}
+            correct={correct}
+            attempts={attempts}
+            timeSeconds={timeLabel ? timeSeconds : null}
+            puzzleDate={rounds?.date || puzzleDate}
+            resultLine={shareLine}
+            score={score}
+            total={points}
+            answering={challenge}
+            custom={custom}
+          />
+          {action && (
+            <Link to={action.to} replace className="result-overlay__next btn-press">
+              <span className="result-overlay__next-label">{action.label}</span>
+            </Link>
+          )}
         </div>
       </div>
     </div>

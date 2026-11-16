@@ -230,28 +230,6 @@
   margin-bottom: 0.25rem;
 }
 
-.result-card__actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-.result-card__next {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 8px 18px;
-  border-radius: 8px;
-  background: var(--amber);
-  color: #0f0f0f;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-}
-
 @media (max-width: 420px) {
   .result-card {
     padding: 1.1rem;
@@ -263,18 +241,5 @@
   }
   .result-card__answer {
     font-size: var(--fs-md);
-  }
-}
-
-/* Every phone held upright, the big ones included, gets the next game as a
-   full-width button with Share under it. */
-@media (max-width: 480px) {
-  .result-card__actions {
-    align-items: stretch;
-    flex-direction: column-reverse;
-  }
-  .result-card__next,
-  .result-card__actions .share-btn {
-    width: 100%;
   }
 }

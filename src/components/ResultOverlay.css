@@ -28,12 +28,13 @@ body.ios-native-app.result-open .app-scroll-container {
   /* A flick that runs out of result shouldn't start scrolling the game behind it. */
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  /* Room at the top for the close button to sit clear of the card once the
-     stats and the board make the result long enough to scroll. */
+  /* Room at the bottom for the bar pinned there, so the end of a long result
+     scrolls clear of it. The top keeps the same breathing room, so a short
+     result still sits in the middle of the screen. */
   padding:
     calc(3.75rem + var(--safe-top))
     max(1rem, env(safe-area-inset-right))
-    calc(2rem + env(safe-area-inset-bottom))
+    calc(7.5rem + env(safe-area-inset-bottom))
     max(1rem, env(safe-area-inset-left));
 }
 
@@ -46,13 +47,52 @@ body.ios-native-app.result-open .app-scroll-container {
   animation: fadeIn 0.22s ease both;
 }
 
-.result-overlay__close {
+/* ================================
+   THE BAR
+   ================================ */
+
+/* Close, Share and the next game, pinned to the bottom of the screen on every
+   size: under the thumb on a phone, the hardest place to reach being the top
+   corner where Close used to sit. Tapping anywhere outside the card still
+   closes it too.
+
+   A long result scrolls under the bar, so the bottom of the screen fades to
+   the backdrop behind it. Without the fade the buttons sat on a row of the
+   board, which read as a mistake rather than as more to scroll to. The fade
+   lets touches through, so the board scrolls from there as well. */
+.result-overlay__bar {
   position: fixed;
-  top: calc(0.75rem + var(--safe-top));
-  right: calc(0.75rem + env(safe-area-inset-right));
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 2;
-  width: 40px;
-  height: 40px;
+  padding:
+    2.5rem
+    max(1rem, env(safe-area-inset-right))
+    calc(1.25rem + env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  background: linear-gradient(to bottom, rgba(8, 8, 8, 0), rgba(8, 8, 8, 0.92) 50%);
+  pointer-events: none;
+  animation: fadeIn 0.22s ease both;
+}
+
+/* As wide as the card and between the same sides, so the buttons line up
+   under it. The iPhone Duo's status bar down the right edge moves the card
+   left of the screen's middle, and the bar moves with it. */
+.result-overlay__bar-row {
+  max-width: 440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  pointer-events: auto;
+  animation: resultBar 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+
+.result-overlay__close {
+  flex: none;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,48 +102,46 @@ body.ios-native-app.result-open .app-scroll-container {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   color: var(--text-muted);
-  animation: fadeIn 0.3s ease 0.35s both;
 }
 
-/* On a phone the close button sits at the bottom, under the thumb holding it,
-   rather than in the top corner, the hardest place on the screen to reach one
-   handed. The result keeps room at the bottom so the end of a long one scrolls
-   clear of the button, and keeps its top padding so a short one stays centered
-   where it was. Tapping anywhere outside the card still closes it too. */
-@media (max-width: 640px), (orientation: portrait) and (min-width: 641px) and (max-width: 743px) and (pointer: coarse) {
-  .result-overlay {
-    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
-  }
+.result-overlay__bar .share-btn {
+  flex: none;
+  min-height: 48px;
+  min-width: 0;
+  padding-inline: 1.1rem;
+  background: rgba(20, 20, 20, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
 
-  /* A long result starts with the board under the button, so the bottom of the
-     screen fades to the backdrop behind it. Without it the button sat on a row
-     of the board, which read as a mistake rather than as more to scroll to.
-     The same height as the padding above, so the end of the result scrolls
-     clear of the fade as well as the button. */
-  .result-overlay::after {
-    content: '';
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1;
-    height: calc(7.5rem + env(safe-area-inset-bottom));
-    background: linear-gradient(to bottom, rgba(8, 8, 8, 0), rgba(8, 8, 8, 0.92) 50%);
-    pointer-events: none;
-    animation: fadeIn 0.22s ease both;
-  }
+/* The way on, so it takes the rest of the row. A long label ("← Back to
+   Explore" on a small phone) trims rather than wrapping the bar to two lines. */
+.result-overlay__next {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.1rem;
+  border-radius: 999px;
+  background: var(--amber);
+  color: #0f0f0f;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.22);
+  transition: scale var(--press-up), filter 0.2s ease;
+}
 
-  /* Centered between the same sides as the card rather than on the screen. The
-     iPhone Duo's status bar down the right edge moves the card left of the
-     screen's middle, and a button centered on the screen sat off to one side. */
-  .result-overlay__close {
-    top: auto;
-    right: max(1rem, env(safe-area-inset-right));
-    bottom: calc(1.25rem + env(safe-area-inset-bottom));
-    left: max(1rem, env(safe-area-inset-left));
-    margin-inline: auto;
-    width: 48px;
-    height: 48px;
+.result-overlay__next-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (hover: hover) {
+  .result-overlay__next:hover {
+    filter: brightness(1.08);
   }
 }
 
@@ -353,6 +391,11 @@ body.ios-native-app.result-open .app-scroll-container {
 
 @keyframes resultPanel {
   from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes resultBar {
+  from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: none; }
 }
 
