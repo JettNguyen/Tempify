@@ -32,7 +32,7 @@ const KINDS = {
   tempo: {
     draft: draftTempo,
     redraft: redraftTempoRound,
-    help: (level, n) => `${countWord(n)} top-ten hits with a tempo from Deezer. Deezer sometimes reads a slow song at double time, so play each clip and tap along: if your tap is about half or double the stored tempo, use yours. Pick songs with a steady beat; players count half or double time as right either way.`,
+    help: (level, n) => `${countWord(n)} top-ten hits with a tempo from Deezer, read against each clip: when the clip is sure Deezer is a few percent off, the clip's tempo is used and the song says so. Deezer sometimes reads a slow song at double time, so play each clip and tap along: if your tap is about half or double the stored tempo, use yours. Pick songs with a steady beat; players count half or double time as right either way.`,
   },
 }
 
@@ -218,7 +218,9 @@ export default function RoundsFields({ kind, date, count, rounds, setRounds, set
   }
 
   function edit(i, key, value) {
-    setRounds(rounds.map((r, j) => (j === i ? { ...r, [key]: value } : r)))
+    // A tempo set by hand replaces the one read from the clip, so its note goes.
+    const note = key === 'bpm' ? { listed_bpm: undefined } : {}
+    setRounds(rounds.map((r, j) => (j === i ? { ...r, ...note, [key]: value } : r)))
   }
 
   function remove(i) {
@@ -277,6 +279,11 @@ export default function RoundsFields({ kind, date, count, rounds, setRounds, set
                     <input value={r.bpm ?? ''} onChange={e => edit(i, 'bpm', e.target.value)} type="number" style={{ ...inputStyle, width: '80px' }} />
                   </Mini>
                   <TapAlong onUse={bpm => edit(i, 'bpm', bpm)} />
+                  {r.listed_bpm && (
+                    <span style={{ alignSelf: 'flex-end', paddingBottom: '8px', fontSize: '12px', color: 'var(--amber-light)' }}>
+                      Deezer lists {r.listed_bpm}; the clip reads {Math.round(Number(r.bpm))}
+                    </span>
+                  )}
                 </>
               )}
               {kind === 'peak' && (

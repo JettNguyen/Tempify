@@ -38,6 +38,28 @@ export function settleTempo(listed, read) {
   return { bpm: null, check: true }
 }
 
+// For the daily game's drafts, where the listed tempo stays unless the clip is
+// sure it's a small miscount. A bigger gap, like two thirds or four thirds,
+// is usually a song in threes (a waltz, a 6/8 ballad) that can be counted
+// either way, and there the listing's count is the one people know.
+const FIX_SURE = 1.1
+const FIX_WITHIN = 0.1
+
+/**
+ * The listed tempo, or the clip's when the clip is sure the listing is a few
+ * percent off, as { bpm, replaced }. Keeps the listing's speed (half or double).
+ * Tried 11/15/2026: it changed none of the 114 checked daily songs, and of 41
+ * other hits it changed only Love Story (Taylor's Version), from 111 to 119.
+ */
+export function correctListed(listed, read) {
+  if (!inRange(listed) || !read || !(read.sure >= FIX_SURE) || !inRange(read.bpm)) return { bpm: listed, replaced: false }
+  const near = [read.bpm / 2, read.bpm, read.bpm * 2]
+    .reduce((best, c) => (Math.abs(Math.log(c / listed)) < Math.abs(Math.log(best / listed)) ? c : best))
+  const gap = Math.abs(near / listed - 1)
+  if (gap <= 0.03 || gap > FIX_WITHIN) return { bpm: listed, replaced: false }
+  return { bpm: Math.round(near), replaced: true }
+}
+
 /** The tempo the clip itself keeps, or null when it can't be read. */
 export async function readClipTempo(audioUrl) {
   const buffer = await loadClip(audioUrl)

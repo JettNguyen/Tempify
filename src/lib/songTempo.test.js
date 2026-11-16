@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { settleTempo, sameBeat } from './songTempo.js'
+import { settleTempo, sameBeat, correctListed } from './songTempo.js'
 
 const read = (bpm, sure = 1.3) => ({ bpm, sure })
 
@@ -42,5 +42,37 @@ describe('sameBeat', () => {
     expect(sameBeat(241, 120)).toBe(true)
     expect(sameBeat(80, 120)).toBe(false)
     expect(sameBeat(125, 120)).toBe(false)
+  })
+})
+
+describe('correctListed', () => {
+  it("fixes a listing a few percent off when the clip is sure", () => {
+    // Love Story (Taylor's Version): listed 111, the record runs at 119.
+    expect(correctListed(111, read(119, 1.24))).toEqual({ bpm: 119, replaced: true })
+  })
+
+  it("keeps the listing's speed", () => {
+    expect(correctListed(222, read(119, 1.24))).toEqual({ bpm: 238, replaced: true })
+  })
+
+  it('leaves a listing the clip agrees with', () => {
+    expect(correctListed(126, read(127, 1.5))).toEqual({ bpm: 126, replaced: false })
+    expect(correctListed(170, read(85, 1.5))).toEqual({ bpm: 170, replaced: false })
+  })
+
+  it('leaves it when the clip is a close call', () => {
+    expect(correctListed(143, read(150, 1.05))).toEqual({ bpm: 143, replaced: false })
+  })
+
+  it('leaves a gap the size of counting in threes', () => {
+    // Lucille: listed 142, the clip read two thirds of it.
+    expect(correctListed(142, read(95, 1.19))).toEqual({ bpm: 142, replaced: false })
+    // Love Hurts: listed 141, the clip read 80.
+    expect(correctListed(141, read(80, 1.64))).toEqual({ bpm: 141, replaced: false })
+  })
+
+  it('leaves it with no clip read or no listing', () => {
+    expect(correctListed(126, null)).toEqual({ bpm: 126, replaced: false })
+    expect(correctListed(null, read(119))).toEqual({ bpm: null, replaced: false })
   })
 })

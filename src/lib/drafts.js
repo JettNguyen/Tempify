@@ -9,6 +9,7 @@
 
 import { searchSongs, stripVariant } from './itunes'
 import { findTrackBpm } from './deezer'
+import { correctListed, readClipTempo } from './songTempo'
 import { artistNames, sharesArtist } from './matching'
 
 let chartSongs = null
@@ -369,16 +370,21 @@ async function pickTempoSong(pool, { used, artists, tries = 8 }) {
     const lead = artistNames(song.artist)[0]
     if (used.has(songKey(song.title, song.artist)) || artists.has(lead)) continue
     tried++
-    const bpm = await findTrackBpm(stripVariant(song.title), leadArtist(song.artist))
-    if (!bpm || bpm < TAPPABLE[0] || bpm > TAPPABLE[1]) continue
+    const listed = await findTrackBpm(stripVariant(song.title), leadArtist(song.artist))
+    if (!listed || listed < TAPPABLE[0] || listed > TAPPABLE[1]) continue
     const clip = await findClip(song.title, song.artist)
     if (!clip) continue
+    // Deezer's tempo, unless the clip is sure it's a few percent off.
+    const fixed = correctListed(listed, await readClipTempo(clip.audio_url).catch(() => null))
+    if (fixed.bpm < TAPPABLE[0] || fixed.bpm > TAPPABLE[1]) continue
     artists.add(lead)
     return {
       title: song.title,
       artist: displayArtist(song.artist),
       year: song.year,
-      bpm,
+      bpm: fixed.bpm,
+      // Shown in Admin beside a fixed tempo. Saving keeps only `bpm`.
+      ...(fixed.replaced ? { listed_bpm: listed } : {}),
       audio_url: clip.audio_url,
       artwork_url: clip.artwork_url,
       itunes_url: clip.itunes_url,
