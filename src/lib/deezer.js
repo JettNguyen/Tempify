@@ -1,3 +1,6 @@
+import { remember } from './remember'
+import { artworkKey, knownArtwork, keepArtwork } from './artworkLookups'
+
 const PROXY_URL = import.meta.env.VITE_DEEZER_PROXY_URL
   ? import.meta.env.VITE_DEEZER_PROXY_URL.replace(/\/$/, '')
   : null
@@ -7,51 +10,9 @@ const BASE = PROXY_URL
     ? '/deezer'
     : 'https://api.deezer.com'
 
+// Searches made this session, the latest SEARCH_KEEP of them.
 const cache = new Map()
-const artworkLookupCache = new Map()
-const ARTWORK_CACHE_STORAGE_KEY = 'tempify_artwork_lookup_cache_v1'
-const ARTWORK_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 14
-
-function artworkKey({ title, artist }) {
-  return `${(title || '').trim().toLowerCase()}|||${(artist || '').trim().toLowerCase()}`
-}
-
-function hydrateArtworkCache() {
-  if (typeof window === 'undefined') return
-  if (artworkLookupCache.size > 0) return
-
-  try {
-    const raw = window.localStorage.getItem(ARTWORK_CACHE_STORAGE_KEY)
-    if (!raw) return
-
-    const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object') return
-
-    const now = Date.now()
-    Object.entries(parsed).forEach(([key, entry]) => {
-      if (!entry?.url || !entry?.savedAt) return
-      if (now - entry.savedAt > ARTWORK_CACHE_TTL_MS) return
-      artworkLookupCache.set(key, entry.url)
-    })
-  } catch {
-    // Ignore localStorage parse errors.
-  }
-}
-
-function persistArtworkCache() {
-  if (typeof window === 'undefined') return
-
-  try {
-    const now = Date.now()
-    const payload = {}
-    artworkLookupCache.forEach((url, key) => {
-      payload[key] = { url, savedAt: now }
-    })
-    window.localStorage.setItem(ARTWORK_CACHE_STORAGE_KEY, JSON.stringify(payload))
-  } catch {
-    // Ignore quota/storage errors.
-  }
-}
+const SEARCH_KEEP = 100
 
 const GENRE_MAP = {
   'pop':               'Pop',
@@ -231,7 +192,7 @@ export async function searchSongsWithStatus(query, { signal } = {}) {
 
     const json = await res.json()
     const results = rankResults(deduplicate(toTracks(json.data)), query).slice(0, 8)
-    cache.set(key, results)
+    remember(cache, key, results, SEARCH_KEEP)
     return { tracks: results, failed: false }
   } catch {
     // A cancelled request isn't a failure, since the caller moved on.
@@ -268,12 +229,9 @@ export async function fetchTrackDetails(albumId) {
 }
 
 export async function findArtwork({ title, artist }) {
-  hydrateArtworkCache()
-
   const key = artworkKey({ title, artist })
-  if (artworkLookupCache.has(key)) {
-    return artworkLookupCache.get(key)
-  }
+  const known = knownArtwork(key)
+  if (known) return known
 
   const queries = [
     [title, artist].filter(Boolean).join(' '),
@@ -284,8 +242,7 @@ export async function findArtwork({ title, artist }) {
     try {
       const [match] = await searchSongs(query)
       if (match?.artworkUrl) {
-        artworkLookupCache.set(key, match.artworkUrl)
-        persistArtworkCache()
+        keepArtwork(key, match.artworkUrl)
         return match.artworkUrl
       }
     } catch {

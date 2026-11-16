@@ -1,10 +1,13 @@
 import { supabase } from './supabase'
 import { todayEST } from './date'
 import { getPuzzleArtworkUrls, prefetchArtworkUrls } from './artwork'
+import { remember } from './remember'
 
 // Puzzles for a given day don't change while the app is open, so hold them for
 // the session. Warming this from the home screen makes opening a game instant.
+// A few weeks of the archive's days at most: one dropped is fetched again.
 const puzzleCache = new Map()
+const PUZZLE_KEEP = 120
 
 const cacheKey = (gameSlug, date) => `${gameSlug}|${date}`
 
@@ -28,7 +31,7 @@ export async function getPuzzle(gameSlug, date) {
   if (error) throw error
   if (!data || data.length === 0) throw new Error('No puzzle found')
   const puzzle = data[0]
-  puzzleCache.set(cacheKey(gameSlug, target), puzzle)
+  remember(puzzleCache, cacheKey(gameSlug, target), puzzle, PUZZLE_KEEP)
   prefetchArtworkUrls(getPuzzleArtworkUrls(puzzle))
   return puzzle
 }
@@ -41,7 +44,7 @@ export async function prefetchPuzzlesForDate(date) {
     const puzzles = await getPuzzlesForDate(target)
     puzzles.forEach((p) => {
       const key = cacheKey(p.game_slug, target)
-      if (!puzzleCache.has(key)) puzzleCache.set(key, p)
+      if (!puzzleCache.has(key)) remember(puzzleCache, key, p, PUZZLE_KEEP)
     })
     return puzzles
   } catch {

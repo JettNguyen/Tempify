@@ -19,6 +19,8 @@
 // refuses cross-origin reads, a codec the browser lacks) falls back to an
 // element, so it always plays, even where it can't play this well.
 
+import { remember } from './remember'
+
 let ctx = null
 let armed = false
 // Every clip plays through this on its way out, so a sound effect can dip the
@@ -180,13 +182,6 @@ export function heardTime(c) {
 const decoded = new Map()
 const fetched = new Map()
 
-/** Map insertion order doubles as recency: re-inserting moves a key to the end. */
-function keep(map, key, value, limit) {
-  map.delete(key)
-  map.set(key, value)
-  while (map.size > limit) map.delete(map.keys().next().value)
-}
-
 function fetchClip(url) {
   return fetch(url, { credentials: 'omit' }).then((res) => {
     if (!res.ok) throw new Error(`Clip request failed: ${res.status}`)
@@ -219,14 +214,14 @@ export function prefetchClip(url) {
   if (!url || !hasWebAudio() || decoded.has(url) || fetched.has(url)) return
   const bytes = fetchClip(url)
   bytes.catch(() => { if (fetched.get(url) === bytes) fetched.delete(url) })
-  keep(fetched, url, bytes, FETCHED_KEEP)
+  remember(fetched, url, bytes, FETCHED_KEEP)
 }
 
 /** The decoded clip, from memory if it is still held. */
 export function loadClip(url) {
   const hit = decoded.get(url)
   if (hit) {
-    keep(decoded, url, hit, DECODED_KEEP)
+    remember(decoded, url, hit, DECODED_KEEP)
     return hit
   }
   const c = getContext()
@@ -236,7 +231,7 @@ export function loadClip(url) {
   fetched.delete(url)
   const buffer = bytes.then((b) => decode(c, b))
   buffer.catch(() => { if (decoded.get(url) === buffer) decoded.delete(url) })
-  keep(decoded, url, buffer, DECODED_KEEP)
+  remember(decoded, url, buffer, DECODED_KEEP)
   return buffer
 }
 

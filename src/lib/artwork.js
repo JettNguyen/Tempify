@@ -1,4 +1,9 @@
-const prefetched = new Set()
+import { remember } from './remember'
+
+// Covers already asked for this session, so each is fetched once. The list
+// itself is only addresses; the browser keeps the pictures in its own cache.
+const prefetched = new Map()
+const PREFETCHED_KEEP = 400
 
 function normalizeUrl(url) {
   return typeof url === 'string' ? url.trim() : ''
@@ -55,7 +60,7 @@ export function prefetchArtworkUrls(urls = []) {
   urls.forEach((rawUrl) => {
     const url = optimizeArtworkUrl(rawUrl, 'medium')
     if (!url || prefetched.has(url)) return
-    prefetched.add(url)
+    remember(prefetched, url, true, PREFETCHED_KEEP)
 
     const img = new Image()
     img.decoding = 'async'
