@@ -3,11 +3,13 @@
 // friend can pick. Each one then gets an Apple clip, the kind the daily
 // games play, since Deezer's expire. The answers come from the Hot 100 list
 // the app ships: the year a song first charted, the way Admin's drafts date
-// Era, and how high it got. Tap the Tempo's come from Deezer's tempo for the
-// song, the way Admin's drafts get theirs, and the maker can tap one in.
+// Era, and how high it got. Tap the Tempo's are read from each song's clip
+// and checked against the store's listing (lib/songTempo), and the maker can
+// tap one in.
 
 import { findClip, loadChartSongs, songKey } from './drafts.js'
-import { stripVariant, findTrackBpm } from './deezer.js'
+import { stripVariant } from './deezer.js'
+import { findSongTempo } from './songTempo.js'
 import { SONG_LIMITS } from './customGames.js'
 
 const THIS_YEAR = new Date().getFullYear()
@@ -39,7 +41,7 @@ export async function chartEntry(title, artist) {
  * 'none'. The database keeps only the fields a game reads, so `from` stays
  * here.
  */
-export function roundFrom(slug, track, clip, chart, bpm = null) {
+export function roundFrom(slug, track, clip, chart, tempo = null) {
   const song = {
     title: stripVariant(track.title),
     artist: track.artist,
@@ -53,9 +55,11 @@ export function roundFrom(slug, track, clip, chart, bpm = null) {
   const year = chart?.year ?? clip.storeYear ?? null
   if (slug === 'era') return { ...song, year, from: chart ? 'chart' : year ? 'store' : 'none' }
   // The year only shows beside the song in Tap the Tempo, so a store's is fine.
+  // `from` is 'check' when the clip and the listing disagreed or the read was
+  // a close call, so the builder asks the maker to tap along.
   if (slug === 'tempo') {
-    const found = validBpm(bpm) ? Math.round(bpm) : null
-    return { ...song, year, bpm: found, from: found ? 'deezer' : 'none' }
+    const bpm = validBpm(tempo?.bpm) ? Math.round(tempo.bpm) : null
+    return { ...song, year, bpm, from: !bpm ? 'none' : tempo.check ? 'check' : 'found' }
   }
   return {
     ...song,
@@ -70,13 +74,14 @@ export function roundFrom(slug, track, clip, chart, bpm = null) {
 /** A picked song made ready for a game, or null when Apple has no clip of it. */
 export async function prepareSong(slug, track) {
   const title = stripVariant(track.title)
-  const [clip, chart, bpm] = await Promise.all([
+  const [clip, chart] = await Promise.all([
     findClip(title, track.artist),
     slug === 'one-bar' ? null : chartEntry(title, track.artist),
-    // A missing tempo isn't a missing song: the maker taps it in.
-    slug === 'tempo' ? findTrackBpm(title, track.artist).catch(() => null) : null,
   ])
-  return clip ? roundFrom(slug, track, clip, chart, bpm) : null
+  if (!clip) return null
+  // Read from the clip just found, so it needs the clip first.
+  const tempo = slug === 'tempo' ? await findSongTempo(title, track.artist, clip.audio_url) : null
+  return roundFrom(slug, track, clip, chart, tempo)
 }
 
 /**

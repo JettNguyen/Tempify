@@ -25,19 +25,19 @@ describe('a picked song as a round', () => {
     expect(roundFrom('hit-or-miss', track, clip, null)).toMatchObject({ peak: 0, weeks_on_chart: null, from: 'none' })
   })
 
-  it("gives Tap the Tempo Deezer's tempo, or none to tap in", () => {
-    expect(roundFrom('tempo', track, clip, chart, 120.4)).toEqual({
+  it('gives Tap the Tempo the tempo found, marked when the maker should check it', () => {
+    expect(roundFrom('tempo', track, clip, chart, { bpm: 120.4, check: false })).toEqual({
       title: 'Dreams',
       artist: 'Fleetwood Mac',
       audio_url: clip.audio_url,
       artwork_url: clip.artwork_url,
       year: 1977,
       bpm: 120,
-      from: 'deezer',
+      from: 'found',
     })
-    expect(roundFrom('tempo', track, clip, null, null)).toMatchObject({ year: 2004, bpm: null, from: 'none' })
-    // Outside what a person can tap, Deezer's number is more likely a misread.
-    expect(roundFrom('tempo', track, clip, null, 300)).toMatchObject({ bpm: null, from: 'none' })
+    expect(roundFrom('tempo', track, clip, chart, { bpm: 119, check: true })).toMatchObject({ bpm: 119, from: 'check' })
+    expect(roundFrom('tempo', track, clip, null, { bpm: null, check: true })).toMatchObject({ year: 2004, bpm: null, from: 'none' })
+    expect(roundFrom('tempo', track, clip, null, null)).toMatchObject({ bpm: null, from: 'none' })
   })
 
   it("keeps One Bar's answer the way the guess search writes it", () => {
@@ -128,7 +128,7 @@ describe('the rounds that get saved', () => {
 
 describe("Tap the Tempo's saved rounds", () => {
   it('keeps a whole tempo and the year, and nothing about where they came from', () => {
-    const [round] = toRounds('tempo', [{ title: 'Dreams', artist: 'Fleetwood Mac', year: 1977, bpm: 120.4, from: 'deezer' }])
+    const [round] = toRounds('tempo', [{ title: 'Dreams', artist: 'Fleetwood Mac', year: 1977, bpm: 120.4, from: 'found' }])
     expect(round).toEqual({ title: 'Dreams', artist: 'Fleetwood Mac', year: 1977, bpm: 120 })
     const [noYear] = toRounds('tempo', [{ title: 'Dreams', artist: 'Fleetwood Mac', year: null, bpm: 96, from: 'hand' }])
     expect(noYear).toEqual({ title: 'Dreams', artist: 'Fleetwood Mac', year: null, bpm: 96 })

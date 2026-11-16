@@ -41,7 +41,7 @@ const BUILD_HELP = {
   era: 'The first song starts on the line with its year showing, and friends place the rest. Years are when each song first made the Hot 100.',
   'hit-or-miss': "Peaks come from the Hot 100. A song that isn't on it counts as never charted.",
   'one-bar': 'Friends hear half a second of it, and each wrong guess plays a bit more.',
-  tempo: "Friends see each song without hearing it and tap its beat from memory. Tempos come from Deezer. If one is missing or sounds wrong, tap along with the clip to set it.",
+  tempo: "Friends see each song without hearing it and tap its beat from memory. Tempify works out each song's tempo; if one sounds wrong, tap along with the clip to set it.",
 }
 
 const THIS_YEAR = new Date().getFullYear()
@@ -327,7 +327,10 @@ function answerLine(slug, song, open) {
   const add = open ? '' : ' Tap Change to add it.'
   if (slug === 'tempo') {
     if (!validBpm(song.bpm)) return { text: `Needs a tempo. ${open ? 'Play the clip and tap along below.' : 'Tap Change to tap it in.'}`, warn: true }
-    return { text: song.from === 'deezer' ? `${song.bpm} BPM, from Deezer` : `${song.bpm} BPM, tapped in` }
+    if (song.from === 'check') {
+      return { text: `${song.bpm} BPM. ${open ? 'Play the clip and tap along to check it.' : 'Tap Change to check it.'}`, warn: true }
+    }
+    return { text: `${song.bpm} BPM` }
   }
   if (slug === 'era') {
     if (!validYear(song.year)) return { text: `Needs a year.${add}`, warn: true }

@@ -7,7 +7,7 @@
 // mix, and doesn't run at all when the phone asks for less motion.
 
 // About 11.6 milliseconds a frame at 44.1 kHz.
-const HOP = 512
+export const HOP = 512
 
 // Below this the kick drum and the bass, where a beat is easiest to hear.
 const LOW_HZ = 180
@@ -59,7 +59,7 @@ const TEMPO_SLACK = 0.03
 const TEMPO_STEP = 0.05
 
 /** How well a grid lands on the onsets: their average strength under its beats. */
-function gridScore(strength, phase, period) {
+export function gridScore(strength, phase, period) {
   let score = 0
   let beats = 0
   for (let at = phase; at < strength.length; at += period) {
