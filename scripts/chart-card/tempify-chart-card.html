@@ -356,7 +356,8 @@ const VOICE = {
     : `${weeksSaid(d.weeks)} on the chart, in ${sayYear(d.firstYear)}.`),
   biggest: (b, d) => {
     const who = d.sayArtist || b.artist, theirs = `${who}${/s$/i.test(who) ? "'" : "'s"}`;
-    return d.missed && d.missed.biggest ? `${theirs} biggest ever.` : `${theirs} biggest? ${b.title}.`;
+    // sayBiggest: how the biggest hit's title is said, when the voice gets it wrong ("Fuck you mean" for Fukumean)
+    return d.missed && d.missed.biggest ? `${theirs} biggest ever.` : `${theirs} biggest? ${d.sayBiggest || b.title}.`;
   },
   url: "Play today's game at tempify dot me.",   // "game": "at tempify" alone ran its two t's together into "ah tempify" (11/18/2026)
 };

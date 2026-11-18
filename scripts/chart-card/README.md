@@ -59,6 +59,7 @@ The Tempify bot makes one every day, a week ahead, from its own copy of this rep
    | `year` | With `never_charted`: the round's `year`, shown as "Released in 1971". The voice doesn't say the year: it says what the index has on the artist that year, like "But A Night To Remember did, that same year." |
    | `index_title` | Only when the index spells the title differently (the script tells you). |
    | `say_song`, `say_artist` | Only when the voice says a name wrong: the name spelled the way it's said ("Pink" for P!nk). Keep the same number of words, so the words still land as they're said. |
+   | `say_biggest` | Only when the voice says the artist's biggest hit wrong: its title spelled the way it's said ("Fuck you mean" for Fukumean). Any number of words. |
    | `poll` | `false` only if Instagram turns the poll down. The question then says "Pick a letter" and "Comment your letter". |
    | `art` | `false` to leave the cover out. |
    | `art_release_group` | A MusicBrainz release group id, when the cover it found is the wrong record. |

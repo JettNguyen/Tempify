@@ -667,6 +667,7 @@ def main():
         "year": post.get("year"),
         "saySong": post.get("say_song"),
         "sayArtist": post.get("say_artist"),
+        "sayBiggest": post.get("say_biggest"),
     }
 
     started = time.time()
