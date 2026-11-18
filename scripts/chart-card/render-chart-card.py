@@ -24,13 +24,15 @@ reads another copy of the index.
 
 How the Reel is made: tempify-chart-card.html is the whole template, with the words the voice
 says, when everything happens, the motion and the sounds. This speaks the template's lines with
-Kokoro, a voice that runs on this Mac, tells the page how long each one took, then has Chrome lay
-out each frame (seek) and ffmpeg join them with the voice and the sounds. The pictures are drawn at
-twice the size and brought down, which keeps the words sharp.
+Ming-3.0-tts, a voice model that runs on this Mac, in the voice of voice.wav, tells the page how
+long each one took, then has Chrome lay out each frame (seek) and ffmpeg join them with the voice
+and the sounds. The pictures are drawn at twice the size and brought down, which keeps the words
+sharp.
 
 Needs Google Chrome, ffmpeg (brew install ffmpeg) and its own Python packages, set up once (the
-README has the line). The voice itself, about 350 MB, comes down by itself on the first run.
-Written November 2, 2026; the Reel moved and talked from November 3.
+README has the line). The voice model itself, about 3 GB, comes down by itself on the first run.
+Written November 2, 2026; the Reel moved and talked from November 3, and Ming took over the voice
+from Kokoro on November 18.
 """
 import base64
 import io
@@ -44,7 +46,6 @@ import sys
 import tempfile
 import time
 from datetime import date, timedelta
-from hashlib import sha256
 from pathlib import Path
 from urllib.parse import quote
 from urllib.error import HTTPError
@@ -55,11 +56,15 @@ VENV = Path.home() / ".venvs" / "tempify-chart-card"
 SETUP = f"python3 -m venv {VENV} && {VENV}/bin/pip install -r {HERE / 'requirements.txt'}"
 
 # The packages live in their own environment, so a plain "python3 render-chart-card.py" moves
-# itself into it.
+# itself into it. The voice model's loaders print progress bars and warnings that mean nothing here.
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
 try:
+    import mlx.core as mx
     import numpy as np
     import soundfile
-    from kokoro_onnx import Kokoro
+    from huggingface_hub import snapshot_download
+    from mlx_audio.tts.utils import load_model
     from PIL import Image, ImageCms
     from playwright.sync_api import sync_playwright
 except ImportError:
@@ -73,15 +78,19 @@ SOUNDS = HERE.parent.parent / "public" / "sounds"
 POST, REEL, SCALE, FPS = (1080, 1350), (1080, 1920), 2, 30
 SRGB = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
 
-# The voice: Kokoro's af_heart, a little quicker than it talks on its own. Its other voices, such
-# as am_michael or af_bella, are one word away here.
-VOICE, SPEED = "af_heart", 1.2
-VOICE_FILES = {  # Kokoro's model and voices, checked against these once they're down
-    "kokoro-v1.0.onnx": "7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5",
-    "voices-v1.0.bin": "bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d",
-}
-VOICE_FROM = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/"
-VOICE_CACHE = Path.home() / ".cache" / "tempify-chart-card"
+# The voice: Ming-3.0-tts 0.5B (Ant Group, MIT license) speaking in the voice it copies from
+# voice.wav, Kokoro's af_heart at 1.2 reading VOICE_SAYS. Jett picked it on November 18, 2026,
+# over Kokoro reading for itself and over Phonon's Hadley ("a bit too nasally") and Ming's own
+# US_Emma ("too sharp"). Kokoro needed the t softened in twenty, seventy and ninety (11/3), the
+# stress moved onto "teen" so thirteen wasn't "thirdeen" (11/8), and "A, B, C, or D?" recorded,
+# since it ran the letters together (11/4). Ming reads the words as written and got all of those
+# right by itself, at about af_heart's pace, which it takes from voice.wav too.
+VOICE = HERE / "voice.wav"
+VOICE_SAYS = ("Every day we pick a song from yesterday's game and ask where it peaked on the chart. "
+              "Vote in the poll, and the answer comes right after the countdown.")
+VOICE_MODEL = "mlx-community/Ming-3.0-tts-0.5B-bf16"
+VOICE_VERSION = "283b3c342c6fb69a7a87832c97f9799567efe05d"  # held to one version, so the voice can't change under us
+VOICE_RATE = 44100
 
 FIRST_DAY = date(2026, 4, 28)  # Tempify's day #1, as in src/lib/date.js
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August",
@@ -350,87 +359,126 @@ def save_jpeg(image, path):
 
 
 def voice_model():
-    """Kokoro's files, fetched once into ~/.cache and checked against the hashes above."""
-    VOICE_CACHE.mkdir(parents=True, exist_ok=True)
-    for name, want in VOICE_FILES.items():
-        path = VOICE_CACHE / name
-        if path.exists():
-            continue
-        print(f"Getting the voice's {name} once, into {VOICE_CACHE} (it's big; this takes a minute).")
-        part = path.with_suffix(".part")
-        digest = sha256()
-        with urlopen(Request(VOICE_FROM + name, headers={"User-Agent": AGENT}), timeout=60, context=tls()) as res, open(part, "wb") as f:
-            while chunk := res.read(1 << 20):
-                digest.update(chunk)
-                f.write(chunk)
-        if digest.hexdigest() != want:
-            part.unlink()
-            fail(f"The voice's {name} didn't match what was expected, so it wasn't kept. Try again later.")
-        part.rename(path)
-    return Kokoro(str(VOICE_CACHE / "kokoro-v1.0.onnx"), str(VOICE_CACHE / "voices-v1.0.bin"))
+    """Ming, fetched once into ~/.cache/huggingface at the version above, and read from there after."""
+    try:
+        path = snapshot_download(VOICE_MODEL, revision=VOICE_VERSION, local_files_only=True)
+    except Exception:
+        print("Getting the voice model once, into ~/.cache/huggingface (about 3 GB; this takes a few minutes).")
+        path = snapshot_download(VOICE_MODEL, revision=VOICE_VERSION)
+    model = load_model(path)
+    if model.sample_rate != VOICE_RATE:
+        fail(f"The voice model talks at {model.sample_rate} Hz, not the {VOICE_RATE} this expects.")
+    return model
 
 
-# The voice says "thirty", "forty" and "eighty" with an American "d"-ish flap, but "twenty",
-# "seventy" and "ninety" with a hard "t". Jett wants the flap in all of them (11/3/2026).
-# The t softened in these words. "seventy" gets a full d: a flap there came out
-# "sevun-ay" at the end of a line (Jett, November 3, 2026), which speech
-# recognition heard as "7-ry", and with a d it hears 70.
-SOFTENED = {"twenty": "nɾ", "seventy": "nd", "ninety": "nɾ"}
-
-# The -teens are the other way round: they take a hard t. The voice puts the stress on the front,
-# "THIR-teen", and the t after it went soft, so "13 years earlier" came out "thirdeen", close to
-# "thirty" (Jett, November 8, 2026). With the stress on "teen", as when counting, the t is hard.
-TEENS = "thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
-
-# "A, B, C, or D?" is a recording, not a fresh read. Kokoro ran the letters together in one breath,
-# and said one at a time they came out on one flat note with rough endings. letters.wav is her
-# own takes, each letter finished, its pitch reshaped and its level matched to her talking, until
-# Jett picked it (November 4, 2026). Don't shift its formants: with the "ee"s widened, the letters
-# sounded processed next to the other lines. The times are when each word of the line starts in it.
-LETTERS_SAID = "A, B, C, or D?"
-LETTERS_FILE = HERE / "letters.wav"
-LETTERS_START = [0.0, 0.453, 0.932, 1.406, 1.585]
+# Ming reads digits badly ("17 weeks" came out "shisty weeks"), so every number is written out for
+# it the way it's said. A year in a title is said like one: "1999" is "nineteen ninety-nine".
+ONES = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen "
+        "fifteen sixteen seventeen eighteen nineteen").split()
+TENS = "_ _ twenty thirty forty fifty sixty seventy eighty ninety".split()
 
 
-def sounds_of(kokoro, text):
-    """The line's sounds, with the t softened in SOFTENED (not "nineteen", which starts the same)
-    and the stress moved onto "teen" in TEENS."""
-    said = kokoro.tokenizer.phonemize(text, "en-us")
-    for word, soft in SOFTENED.items():
-        hard = kokoro.tokenizer.phonemize(word, "en-us")
-        said = re.sub(re.escape(hard) + "(?!ː)", hard.replace("nt", soft), said)
-    for word in TEENS:
-        front = kokoro.tokenizer.phonemize(word, "en-us")           # θˈɜːtiːn
-        teen = re.sub(r"t[ˈˌ]?iːn$", "tˈiːn", front.replace("ˈ", "ˌ"))  # θˌɜːtˈiːn
-        said = said.replace(front, teen)
-    return said
+def spell(n):
+    if n < 20:
+        return ONES[n]
+    if n < 100:
+        return TENS[n // 10] + ("-" + ONES[n % 10] if n % 10 else "")
+    if n < 1000:
+        return ONES[n // 100] + " hundred" + (" " + spell(n % 100) if n % 100 else "")
+    return spell(n // 1000) + " thousand" + (" " + spell(n % 1000) if n % 1000 else "")
+
+
+def say_number(digits):
+    n = int(digits)
+    if len(digits) == 4 and 1100 <= n <= 2099 and not 2000 <= n <= 2009:
+        hi, lo = divmod(n, 100)
+        return spell(hi) + " " + (spell(lo) if lo >= 10 else f"oh {ONES[lo]}" if lo else "hundred")
+    return spell(n)
+
+
+def words_for(text):
+    """The line as the voice is given it: the same, with its numbers written out."""
+    return re.sub(r"\d+", lambda m: say_number(m.group()), text)
+
+
+def trimmed(audio, rate):
+    """The line without the quiet Ming leaves before and after it, which would otherwise count as
+    talking when the page times the Reel."""
+    hop = rate // 100
+    frames = len(audio) // hop
+    loud = np.sqrt(np.mean(audio[:frames * hop].reshape(frames, hop) ** 2, axis=1))
+    on = np.flatnonzero(loud > loud.max() * 10 ** (-45 / 20))
+    return audio[max(0, (on[0] - 2) * hop):min(len(audio), (on[-1] + 4) * hop)]
+
+
+# "A? B? C? Or D?" asks each letter, which Ming says well but slowly (about 2.5 seconds), so the
+# pauses between the letters are cut to this long. The letters themselves are left as she says
+# them. 0.18 s makes it about 2 seconds, as long as the recording it replaced.
+LETTER_PAUSE = 0.18
+
+
+def tightened(audio, rate, longest):
+    """The line with every pause inside it cut to `longest` seconds, and a 5 ms fade at each join."""
+    hop = rate // 100
+    frames = len(audio) // hop
+    loud = np.sqrt(np.mean(audio[:frames * hop].reshape(frames, hop) ** 2, axis=1))
+    quiet = loud < loud.max() * 10 ** (-35 / 20)
+    keep, fade = round(longest * 100), int(0.005 * rate)
+    pieces, start, i = [], 0, 0
+    while i < frames:
+        j = i
+        while j < frames and quiet[j]:
+            j += 1
+        if j - i > keep and i > 0 and j < frames:
+            piece = audio[start:(i + keep // 2) * hop].copy()
+            piece[-fade:] *= np.linspace(1, 0, fade, dtype=np.float32)
+            pieces.append(piece)
+            start = (j - (keep - keep // 2)) * hop
+        i = max(j, i + 1)
+    rest = audio[start:].copy()
+    if pieces:
+        rest[:fade] *= np.linspace(0, 1, fade, dtype=np.float32)
+    return np.concatenate(pieces + [rest])
+
+
+def say(model, text):
+    """One line in the voice. The same line comes out the same every time, since the seed is fixed.
+    Now and then Ming runs on past a line or stops short of it, so a take far from the line's
+    length is made again with the next seed."""
+    said = words_for(text)
+    count = len(said.split())
+    for seed in range(4):
+        mx.random.seed(seed)
+        audio = trimmed(np.concatenate([np.array(part.audio, dtype=np.float32) for part in model.generate(
+            text=said, ref_audio=str(VOICE), ref_text=VOICE_SAYS)]), VOICE_RATE)
+        if 0.12 * count <= len(audio) / VOICE_RATE <= 0.6 * count + 1:
+            return audio
+    fail(f'The voice couldn\'t say "{text}" at a sensible length in four tries.')
 
 
 def speak(lines):
     """Says each of the template's lines. Returns each one's sound, and for the page how long it
     takes and, for the lines whose words land one at a time, when each word starts."""
-    kokoro = voice_model()
+    model = voice_model()
     spoken = {}
     for line in lines:
-        if line["text"] == LETTERS_SAID:
-            audio, rate = soundfile.read(LETTERS_FILE, dtype="float32")
-            spoken[line["key"]] = (audio, {"dur": round(len(audio) / rate, 3), "words": LETTERS_START})
-            continue
-        audio, rate = kokoro.create(sounds_of(kokoro, line["text"]), voice=VOICE, speed=SPEED,
-                                    is_phonemes=True)
-        info = {"dur": round(len(audio) / rate, 3)}
+        audio = say(model, line["text"])
+        if line["key"] == "options":
+            audio = tightened(audio, VOICE_RATE, LETTER_PAUSE)
+        info = {"dur": round(len(audio) / VOICE_RATE, 3)}
         if line.get("words"):
-            info["words"] = word_starts(kokoro, line["text"], audio, rate)
+            info["words"] = word_starts(line["text"], audio, VOICE_RATE)
         spoken[line["key"]] = (audio, info)
     return spoken
 
 
-def word_starts(kokoro, text, audio, rate):
-    """When each word of a line starts. Kokoro doesn't say, so the line's time is shared out by how
-    many sounds each word has, and each break moves to the quietest moment near it, which is where
-    one word gives way to the next."""
+def word_starts(text, audio, rate):
+    """When each word of a line starts. Ming doesn't say, so the line's time is shared out by how
+    many letters each word has as it's said (numbers as their words, and at least two, so a lone
+    "B" gets its share), and each break moves to the quietest moment near it, which is where one
+    word gives way to the next."""
     words = text.split()
-    sounds = [max(1, len(re.sub(r"[ˈˌː]|[^\w]", "", kokoro.tokenizer.phonemize(w, "en-us")))) for w in words]
+    sounds = [max(2, len(re.sub(r"[^a-z]", "", words_for(w).lower()))) for w in words]
     hop = rate // 100  # 10 ms
     frames = len(audio) // hop
     loud = np.sqrt(np.mean(np.asarray(audio[:frames * hop], dtype=float).reshape(frames, hop) ** 2, axis=1))
@@ -513,7 +561,7 @@ def cue_sound(cue, made={}):
 
 def write_audio(plan, spoken, scratch):
     """The voice on one track and the sounds on another, each put where the page said."""
-    voice_rate = 24000
+    voice_rate = VOICE_RATE
     voice = np.zeros(int((plan["end"] + 1) * voice_rate), dtype=np.float32)
     for line in plan["voice"]:
         audio = spoken[line["key"]][0]

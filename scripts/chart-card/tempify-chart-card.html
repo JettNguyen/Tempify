@@ -339,13 +339,17 @@ function play() {
 // The Reel. Everything below draws one moment of it: seek(t) lays out the frame at t seconds.
 
 // What the voice says. render-chart-card.py speaks each line and times the Reel around them. Years
-// are written out, since the voice reads 1979 as "nineteen hundred seventy nine", and no line has
-// a "#", which it reads as "hash". The song and the question are the words on screen, so each
-// word lands as it's said, and each letter pops in as it's said. Short lines keep it moving.
+// are written out the way people say them ("seventy-nine"), render-chart-card.py writes any other
+// number out in words for the voice, and no line has a "#", which a voice reads as "hash". The
+// song and the question are the words on screen, so each word lands as it's said, and each
+// letter pops in as it's said. Short lines keep it moving.
 const VOICE = {
   hook: d => `${d.saySong || d.song}, by ${d.sayArtist || d.artist}.`,   // say*: how a name is said, when the voice gets it wrong
   ask: COPY.ask,
-  options: "A, B, C, or D?",
+  // Each letter asked, so a lone "A" is the letter, not "uh" (Jett, 11/18/2026). The pauses between
+  // them are shortened in render-chart-card.py (LETTER_PAUSE). The letters stay capitals: T.options
+  // finds them by that.
+  options: "A? B? C? Or D?",
   peak: d => (d.peak === null ? "It never charted!" : `Number ${d.peak}!`),
   facts: d => (d.peak === null ? (d.missed ? MISSED[d.missed.kind](d.missed) : "")
     : d.peak === 1 ? `${weeksSaid(d.weeksAt1)} at the top, in ${sayYear(d.firstYear)}.`
@@ -354,7 +358,7 @@ const VOICE = {
     const who = d.sayArtist || b.artist, theirs = `${who}${/s$/i.test(who) ? "'" : "'s"}`;
     return d.missed && d.missed.biggest ? `${theirs} biggest ever.` : `${theirs} biggest? ${b.title}.`;
   },
-  url: "Play today's at tempify dot me.",
+  url: "Play today's game at tempify dot me.",   // "game": "at tempify" alone ran its two t's together into "ah tempify" (11/18/2026)
 };
 // After "It never charted!", the payoff: what the index says about the artist, picked by
 // render-chart-card.py's missed_for. Not the year alone, which is no payoff, and never "even
