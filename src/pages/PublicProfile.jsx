@@ -7,123 +7,19 @@ import {
   getFollowerProfiles, getFollowingProfiles,
   getAllScores, getStreaks,
 } from '../lib/scores'
-import { GAME_SLUGS, ALL_GAME_SLUGS, getGameSlugsForDate, getGameName, isTimedGame } from '../lib/games'
-import { fmtPoints, ACCURACY_GAMES, dayAccuracy, dayMax } from '../lib/points'
-import { fmtTime, fmtMonthDayYear, todayEST } from '../lib/date'
+import { GAME_SLUGS } from '../lib/games'
+import { todayEST } from '../lib/date'
+import { getCoverPuzzles } from '../lib/puzzles'
+import { profileStats, coverDatesToCheck } from '../lib/profileStats'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import Avatar from '../components/Avatar'
-import StreakDisplay from '../components/StreakDisplay'
 import DelayedSpinner from '../components/DelayedSpinner'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
-import './Dashboard.css'
+import ProfileStats from '../components/ProfileStats'
 import './PublicProfile.css'
 
-function pct(v) { return `${Math.round(v * 100)}%` }
-
-function formatDate(dateString) {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  if (Number.isNaN(date.getTime())) return dateString
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-}
-
-function avg(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null }
-function minOf(arr) { return arr.length ? Math.min(...arr) : null }
-function maxOf(arr) { return arr.length ? Math.max(...arr) : null }
-
-function buildStats(scores, streaks = []) {
-  if (!scores.length) return null
-
-  const wins = scores.filter(s => s.completed)
-  const uniqueDays = new Set(scores.map(s => s.date_played)).size
-  const longestStreak = streaks.reduce((max, s) => Math.max(max, s.longest_streak || 0), 0)
-  const oneTryWins = scores.filter(s => s.completed && s.attempts === 1).length
-
-  // Perfect days - every game in that day's lineup won. Measured against the
-  // lineup as it stood on the date, so retiring a game doesn't retroactively
-  // turn old near-misses into perfect days.
-  const byDate = {}
-  scores.forEach(s => {
-    if (!byDate[s.date_played]) byDate[s.date_played] = []
-    byDate[s.date_played].push(s)
-  })
-  const perfectDays = Object.entries(byDate).filter(([date, day]) => {
-    const slugs = new Set(day.filter(s => s.completed).map(s => s.game_slug))
-    return getGameSlugsForDate(date).every(g => slugs.has(g))
-  }).length
-
-  // Consistency - % of days since first play that they actually played
-  const sortedDates = [...new Set(scores.map(s => s.date_played))].sort()
-  const firstPlay = sortedDates[0]
-  const today = new Date().toISOString().split('T')[0]
-  const totalDaysSinceFirst = firstPlay
-    ? Math.max(1, Math.round((new Date(today) - new Date(firstPlay)) / 86400000) + 1)
-    : 1
-  const consistency = Math.round((uniqueDays / totalDaysSinceFirst) * 100)
-
-  // Per-game stats
-  // Includes retired games, and they're filtered to played-only below, so a
-  // player's Sampled history stays visible without adding an empty row.
-  const byGame = ALL_GAME_SLUGS.map(slug => {
-    const plays = scores.filter(s => s.game_slug === slug)
-    const w = plays.filter(s => s.completed)
-    const allAttempts = plays.map(s => s.attempts).filter(Boolean)
-    const winAttempts = w.map(s => s.attempts).filter(Boolean)
-    // Only a game played against a clock has times worth showing.
-    const timed = isTimedGame(slug)
-    const winTimes = timed ? w.filter(s => s.time_seconds != null).map(s => s.time_seconds) : []
-    const allTimes = timed ? plays.filter(s => s.time_seconds != null).map(s => s.time_seconds) : []
-    // A points game is measured by how close it got, so its points say how a
-    // player does. Days before a game scored points have none, and are left out.
-    const allPoints = plays.filter(s => s.points != null).map(s => s.points)
-
-    const avgAttempts = avg(allAttempts)
-    const bestAttempts = minOf(winAttempts)   // fewest guesses on a win
-    const avgTime = avg(allTimes)
-    const bestTime = minOf(winTimes)          // fastest winning time
-    const avgPoints = avg(allPoints)
-    const bestPoints = maxOf(allPoints)
-    // The games played in rounds are shown by accuracy, once there are days of
-    // them: their single-song days from before have no points to measure. Each
-    // day is measured against its own number of songs, three or five.
-    const dayShares = plays.filter(s => s.points != null).map(s => dayAccuracy(s.points, dayMax(slug, s.date_played)))
-    const accuracy = ACCURACY_GAMES.has(slug) && dayShares.length
-      ? { days: dayShares.length, avg: avg(dayShares), best: maxOf(dayShares) }
-      : null
-    const oneTryRate = plays.length ? plays.filter(s => s.completed && s.attempts === 1).length / plays.length : 0
-    const sub10sRate = winTimes.length ? winTimes.filter(t => t < 10).length / winTimes.length : 0
-
-    return {
-      slug, name: getGameName(slug),
-      plays: plays.length, wins: w.length,
-      winRate: plays.length ? w.length / plays.length : 0,
-      avgAttempts, bestAttempts, avgTime, bestTime, avgPoints, bestPoints, accuracy,
-      oneTryRate, sub10sRate,
-    }
-  })
-
-  const activeGames = byGame.filter(g => g.plays > 0)
-  const bestGame = [...activeGames].sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)[0]
-
-  // Fastest single win across all timed games
-  const fastestWin = scores
-    .filter(s => s.completed && s.time_seconds != null && isTimedGame(s.game_slug))
-    .reduce((best, s) => (!best || s.time_seconds < best.time) ? { time: s.time_seconds, game: getGameName(s.game_slug), date: s.date_played } : best, null)
-
-  // One Bar mastery - % solved in 1-2 guesses
-  const obPlays = scores.filter(s => s.game_slug === 'one-bar')
-  const obMastery = obPlays.length
-    ? Math.round(obPlays.filter(s => s.completed && s.attempts <= 2).length / obPlays.length * 100)
-    : null
-
-  return {
-    plays: scores.length, wins: wins.length,
-    winRate: scores.length ? wins.length / scores.length : 0,
-    uniqueDays, oneTryWins, longestStreak, bestGame,
-    perfectDays, consistency, fastestWin, obMastery,
-    byGame,
-  }
-}
+// Each game's streak can be frozen twice a month with Tempify+.
+const FREEZES_PER_GAME = 2
 
 export default function PublicProfile() {
   const { username } = useParams()
@@ -132,6 +28,9 @@ export default function PublicProfile() {
   const [target, setTarget] = useState(null)
   const [scores, setScores] = useState([])
   const [streaks, setStreaks] = useState([])
+  // Cover or Not's puzzles for the days played, to tell a cover's 2,000 from
+  // an original's 1,000.
+  const [coverPuzzles, setCoverPuzzles] = useState({})
   const [following, setFollowing] = useState(false)
   const [followerCount, setFollowerCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
@@ -166,6 +65,7 @@ export default function PublicProfile() {
     ])
     setScores(sc)
     setStreaks(st)
+    setCoverPuzzles(await getCoverPuzzles(coverDatesToCheck(sc)))
     setFollowerCount(followers.length)
     setFollowingCount(followingIds.length)
 
@@ -233,38 +133,25 @@ export default function PublicProfile() {
   if (loadingProfile) return <Shell><DelayedSpinner active={loadingProfile} label="Loading profile..." /></Shell>
   if (!target) return (
     <Shell>
-      <p style={{ color: 'var(--text-muted)' }}>User not found.</p>
-      <Link to="/" style={{ color: 'var(--amber)', fontSize: 'var(--fs-sm)' }}>← Home</Link>
+      <p className="pubprofile__missing">No one has that username.</p>
+      <Link to="/" className="profile-back">← Home</Link>
     </Shell>
   )
 
-  const stats = buildStats(scores, streaks)
-  // Derived highlight flags (make conditions explicit so highlight logic is predictable)
-  const highlightFirstTry = (stats?.oneTryWins ?? 0) > 0
-  const highlightBestStreak = (stats?.longestStreak ?? 0) > 0
-  const highlightPerfectDays = (stats?.perfectDays ?? 0) > 0
-  const highlightConsistency = (stats?.consistency ?? 0) >= 50
-  const highlightOBMastery = (stats?.obMastery ?? 0) >= 50
-  const highlightSpeed = !!stats?.fastestWin
+  const stats = profileStats(scores, streaks, coverPuzzles)
+  // A Tempify+ player's own page says how many streak freezes are left.
+  const freezesLeft = isMe && isTargetPremium ? Math.max(0, GAME_SLUGS.length * FREEZES_PER_GAME - freezesUsed) : null
 
   return (
     <Shell pullDistance={pullDistance} isRefreshing={isRefreshing} isDragging={isDragging}>
       <Link to="/" className="profile-back">← Home</Link>
 
-      {/* Header */}
       <div className="pubprofile__header">
         <Avatar iconKey={target.avatar_icon} color={target.avatar_color} initial={target.username?.[0]?.toUpperCase() ?? '?'} size={56} />
         <div className="pubprofile__info">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div className="pubprofile__name-row">
             <h1 className="pubprofile__name">@{target.username}</h1>
-            {isTargetPremium && (
-              <span style={{
-                fontSize: 'var(--fs-2xs)', fontWeight: 600, letterSpacing: '0.06em',
-                textTransform: 'uppercase', color: '#0f0f0f',
-                background: 'var(--amber)', borderRadius: '999px',
-                padding: '2px 8px', lineHeight: 1.6, flexShrink: 0,
-              }}>Premium</span>
-            )}
+            {isTargetPremium && <span className="pubprofile__badge">Premium</span>}
           </div>
           <div className="pubprofile__meta">
             <button className="pubprofile__meta-btn" onClick={() => openPanel('followers')}>
@@ -282,18 +169,17 @@ export default function PublicProfile() {
             {following ? 'Following' : 'Follow'}
           </button>
         )}
-        {isMe && <Link to="/profile" className="pubprofile__follow-btn pubprofile__follow-btn--edit">Edit profile</Link>}
-        {!user && <Link to="/login" className="pubprofile__follow-btn">Follow</Link>}
+        {isMe && <Link to="/profile" className="pubprofile__follow-btn pubprofile__follow-btn--edit btn-press">Edit profile</Link>}
+        {!user && <Link to="/login" className="pubprofile__follow-btn btn-press">Follow</Link>}
       </div>
 
-      {/* Followers / Following panel */}
       {panel && (
         <div className="pubprofile__panel">
           <p className="pubprofile__panel-title">{panel === 'followers' ? 'Followers' : 'Following'}</p>
           {panelLoading ? (
             <DelayedSpinner active={panelLoading} inline label="Loading..." />
           ) : panelUsers.length === 0 ? (
-            <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)' }}>
+            <p className="pubprofile__panel-empty">
               {panel === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
             </p>
           ) : (
@@ -316,136 +202,14 @@ export default function PublicProfile() {
         </div>
       )}
 
-      {/* Streaks */}
-      <section className="dashboard-section">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <p className="dashboard-section-label" style={{ marginBottom: 0 }}>current streaks</p>
-          {isMe && isTargetPremium && (
-            <span style={{ fontSize: 'var(--fs-2xs)', color: freezesUsed >= GAME_SLUGS.length * 2 ? 'var(--text-dim)' : 'var(--amber)' }}>
-              🧊 {Math.max(0, GAME_SLUGS.length * 2 - freezesUsed)} freeze token{Math.max(0, GAME_SLUGS.length * 2 - freezesUsed) !== 1 ? 's' : ''} left this month
-            </span>
-          )}
-        </div>
-        <StreakDisplay streaks={streaks} />
-      </section>
-
-      {/* Stats */}
-      <section className="dashboard-section">
-        <p className="dashboard-section-label">stats</p>
-
-        {/* Always-visible basics */}
-        <div className="dashboard-stat-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: '1rem' }}>
-          <StatCard label="Win rate"    value={pct(stats?.winRate ?? 0)}  detail={`${stats?.wins ?? 0} of ${stats?.plays ?? 0} won`} />
-          <StatCard label="Days played" value={stats?.uniqueDays ?? 0}     detail="Unique puzzle days" />
-        </div>
-
-        {!isTargetPremium ? (
-          <div className="pubprofile__premium-lock">
-            <span className="pubprofile__lock-icon">🔒</span>
-            <div>
-              <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-primary)', fontWeight: 500, marginBottom: '2px' }}>
-                Premium stats locked
-              </p>
-              <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--text-muted)' }}>
-                Detailed stats are exclusive to premium members.
-              </p>
-            </div>
-          </div>
-        ) : !stats ? (
-          <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-dim)' }}>No games played yet.</p>
-        ) : (
-          <>
-            {/* Premium-exclusive stat cards */}
-            <p className="pubprofile__premium-label">★ Premium</p>
-            <div className="dashboard-stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '1.25rem' }}>
-              <StatCard label="First-try wins"   value={stats.oneTryWins}                         detail="Correct on first guess" highlight={highlightFirstTry} />
-              <StatCard label="Best streak"      value={`${stats.longestStreak}d`}                 detail={stats.bestGame ? `Best in ${stats.bestGame.name}` : 'Keep playing'} highlight={highlightBestStreak} />
-              <StatCard label="Perfect days"     value={stats.perfectDays}                         detail="Every game that day" highlight={highlightPerfectDays} />
-              <StatCard label="Consistency"      value={`${stats.consistency}%`}                   detail="Days played since first game" highlight={highlightConsistency} />
-              <StatCard label="One Bar mastery"  value={stats.obMastery != null ? `${stats.obMastery}%` : '-'} detail="Solved in ≤2 guesses" highlight={highlightOBMastery} />
-              <StatCard label="Speed record"     value={stats.fastestWin ? fmtTime(stats.fastestWin.time) : '-'} detail={stats.fastestWin ? `in ${stats.fastestWin.game} on ${fmtMonthDayYear(stats.fastestWin.date)}` : 'No timed wins yet'} highlight={highlightSpeed} />
-            </div>
-
-            {/* Per-game breakdown */}
-            <div className="dashboard-game-stats">
-              {stats.byGame.filter(g => g.plays > 0).map(game => {
-                const isOneBar = game.slug === 'one-bar'
-                if (game.accuracy) {
-                  const { days, avg: mean, best } = game.accuracy
-                  return (
-                    <div key={game.slug} className={`dashboard-game-stat dashboard-game-stat--${game.slug}`}>
-                      <div className="dashboard-game-stat__top">
-                        <span>{game.name}</span>
-                        <strong>{pct(mean)}<span className="dashboard-game-stat__unit"> accuracy</span></strong>
-                      </div>
-                      <div className="dashboard-game-stat__bar">
-                        <span style={{ width: `${mean * 100}%` }} />
-                      </div>
-                      <div className="dashboard-game-stat__meta">
-                        <span>{days} {days === 1 ? 'day' : 'days'}</span>
-                        <span>best {pct(best)}</span>
-                      </div>
-                    </div>
-                  )
-                }
-                return (
-                  <div key={game.slug} className={`dashboard-game-stat dashboard-game-stat--${game.slug}`}>
-                    <div className="dashboard-game-stat__top">
-                      <span>{game.name}</span>
-                      <strong>{pct(game.winRate)}</strong>
-                    </div>
-                    <div className="dashboard-game-stat__bar">
-                      <span style={{ width: `${game.winRate * 100}%` }} />
-                    </div>
-                    <div className="dashboard-game-stat__meta">
-                      <span>{game.wins}/{game.plays} wins</span>
-                      {isOneBar ? (
-                        <span>
-                          {game.avgAttempts != null ? `${game.avgAttempts.toFixed(1)} avg · ` : ''}
-                          {game.bestAttempts != null ? `best ${game.bestAttempts} · ` : ''}
-                          {`${Math.round(game.oneTryRate * 100)}% first-try`}
-                        </span>
-                      ) : game.avgPoints != null ? (
-                        <span>
-                          {`avg ${fmtPoints(game.avgPoints)} · best ${fmtPoints(game.bestPoints)} pts`}
-                        </span>
-                      ) : (
-                        <span>
-                          {game.avgTime != null ? `avg ${fmtTime(game.avgTime)}` : ''}
-                          {game.bestTime != null ? ` · best ${fmtTime(game.bestTime)}` : ''}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </>
-        )}
-      </section>
-
-      {/* Recent plays */}
-      {isTargetPremium && scores.length > 0 && (
-        <section className="dashboard-section">
-          <p className="dashboard-section-label">recent plays</p>
-          <div>
-            {[...scores].sort((a, b) => b.date_played.localeCompare(a.date_played)).slice(0, 10).map(score => (
-              <div key={score.id} className="dashboard-score-row">
-                <div className="dashboard-score-left">
-                  <span className={`dashboard-score-dot${score.completed ? ' dashboard-score-dot--complete' : ''}`} />
-                  <div>
-                    <div className="dashboard-score-name">{getGameName(score.game_slug)}</div>
-                    <div className="dashboard-score-date">{formatDate(score.date_played)}</div>
-                  </div>
-                </div>
-                <span className={`dashboard-score-result${score.completed ? ' dashboard-score-result--win' : ''}`}>
-                  {score.completed ? 'Win' : 'Loss'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <ProfileStats
+        stats={stats}
+        streaks={streaks}
+        isMe={Boolean(isMe)}
+        full={Boolean(isTargetPremium)}
+        username={target.username}
+        freezesLeft={freezesLeft}
+      />
     </Shell>
   )
 }
@@ -461,18 +225,6 @@ function Shell({ children, pullDistance = 0, isRefreshing = false, isDragging = 
     >
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       {children}
-    </div>
-  )
-}
-
-function StatCard({ label, value, detail, highlight }) {
-  return (
-    <div className="dashboard-stat-card">
-      <p className="dashboard-stat-card__label">{label}</p>
-      <p className={"dashboard-stat-card__value" + (highlight ? ' dashboard-stat-card__value--highlight' : '')}>
-        {value}
-      </p>
-      <p className="dashboard-stat-card__detail">{detail}</p>
     </div>
   )
 }

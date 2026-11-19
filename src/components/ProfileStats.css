@@ -1,0 +1,286 @@
+.pstats-section {
+  margin-bottom: 2.25rem;
+}
+
+/* Section names, lowercase like the rest of the profile and settings. */
+.pstats-label {
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.pstats-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.pstats-label-row .pstats-label {
+  margin-bottom: 0;
+}
+
+.pstats-caption {
+  margin: -0.4rem 0 0.75rem;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.pstats-empty {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.pstats-empty a {
+  color: var(--amber);
+}
+
+/* ─── The totals ───────────────────────────────────────────────────────── */
+
+.pstats-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+@media (min-width: 560px) {
+  .pstats-tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.pstats-tile {
+  padding: 0.85rem 0.95rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.pstats-tile__label {
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.pstats-tile__value {
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pstats-tile__value--accent {
+  color: var(--amber);
+}
+
+.pstats-tile__detail {
+  margin-top: 0.3rem;
+  font-size: var(--fs-2xs);
+  color: var(--text-dim);
+}
+
+/* ─── Streaks ──────────────────────────────────────────────────────────── */
+
+.pstats-freezes {
+  font-size: var(--fs-2xs);
+  color: var(--amber);
+  text-align: right;
+}
+
+.pstats-freezes--none {
+  color: var(--text-dim);
+}
+
+/* ─── Without Tempify+ ─────────────────────────────────────────────────── */
+
+.pstats-lock {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.pstats-lock__icon {
+  flex-shrink: 0;
+  color: var(--text-dim);
+}
+
+.pstats-lock__text {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.pstats-lock__title {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.pstats-lock__body {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.pstats-lock__btn {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--amber);
+  color: #0f0f0f;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ─── Lists: by game, and recent days ──────────────────────────────────── */
+
+.pstats-list {
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pstats-list > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.pstats-game {
+  padding: 0.85rem 1rem;
+}
+
+.pstats-game__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.pstats-game__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* The game's colour, the same as its tile and streak. */
+.pstats-game__name::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--game-color);
+}
+
+.pstats-game__share {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--game-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.pstats-game__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+  margin-bottom: 0.45rem;
+}
+
+.pstats-game__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--game-color);
+}
+
+.pstats-game__meta {
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pstats-day {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.pstats-day__when {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.pstats-day__date {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.pstats-day__games {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--fs-2xs);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.pstats-day__dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+/* One dot a game in that day's lineup, filled in the game's colour if played. */
+.pstats-day__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--text-dim);
+  opacity: 0.6;
+}
+
+.pstats-day__dot--played {
+  border-color: var(--game-color);
+  background: var(--game-color);
+  opacity: 1;
+}
+
+.pstats-day__points {
+  flex-shrink: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pstats-day__unit {
+  font-size: var(--fs-2xs);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+@media (max-width: 400px) {
+  .pstats-game,
+  .pstats-day {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+}

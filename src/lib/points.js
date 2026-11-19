@@ -92,6 +92,18 @@ export function gameMax(slug, date, puzzle) {
 }
 
 /**
+ * The most one saved play could have scored, to measure it against. A play
+ * saved without points was scored right or wrong, or by One Bar's guesses,
+ * out of 1,000; that's every play from before 11/1/2026, when Cover or Not's
+ * year question and the days of rounds came in. Cover or Not needs its
+ * puzzle to know a cover's 2,000; without it, it's taken as 1,000.
+ */
+export function playMax(slug, play, puzzle) {
+  const top = play?.points == null ? ROUND_MAX : gameMax(slug, play.date_played, puzzle)
+  return Math.max(playPoints(slug, play), top)
+}
+
+/**
  * How a day is going across its games: the points so far, and the most the
  * games played so far could have given. Only played games count toward
  * `max`, so it never gives away a game still to play: a Cover or Not worth

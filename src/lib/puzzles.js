@@ -64,3 +64,26 @@ export async function getPuzzlesForDate(date) {
   prefetchArtworkUrls(puzzles.flatMap((p) => getPuzzleArtworkUrls(p)))
   return puzzles
 }
+
+/**
+ * Whether each of these days' Cover or Not was a cover with a year question,
+ * as the bits of its puzzle `hasYearQuestion` reads, keyed
+ * `cover-or-not|<date>`. A profile measures its plays with them. Empty when
+ * the lookup fails, so the plays are measured out of 1,000 instead.
+ */
+export async function getCoverPuzzles(dates) {
+  if (!dates?.length) return {}
+  const { data, error } = await supabase
+    .from('puzzles')
+    .select('scheduled_date, answer, original_year:metadata->original_year')
+    .eq('game_slug', 'cover-or-not')
+    .in('scheduled_date', dates)
+  if (error) {
+    console.warn('[Tempify] getCoverPuzzles failed:', error.message)
+    return {}
+  }
+  return Object.fromEntries((data || []).map(p => [
+    `cover-or-not|${p.scheduled_date}`,
+    { answer: p.answer, metadata: { original_year: p.original_year } },
+  ]))
+}
