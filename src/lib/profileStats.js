@@ -1,5 +1,5 @@
-import { ALL_GAMES, getGameSlugsForDate } from './games.js'
-import { playPoints, playMax } from './points.js'
+import { ALL_GAMES, getGameSlugsForDate, isTimedGame } from './games.js'
+import { playPoints, playMax, ACCURACY_GAMES } from './points.js'
 
 // What a profile says about how someone plays, all of it in points: the
 // total, the best day, each game measured the same way, and the latest days.
@@ -57,11 +57,26 @@ export function profileStats(scores, streaks = [], puzzles = {}) {
     }
   }).filter(Boolean)
 
+  // The fastest win in a game played against the clock.
+  const speedRecord = scores
+    .filter(s => s.completed && s.time_seconds != null && isTimedGame(s.game_slug))
+    .reduce((best, s) => (!best || s.time_seconds < best.seconds
+      ? { seconds: s.time_seconds, slug: s.game_slug, date: s.date_played }
+      : best), null)
+
+  // Right on the first try: One Bar on its first guess, or a right call in
+  // Cover or Not and the old one-song days. A day of rounds has no single
+  // try, so it isn't one, however well it went.
+  const firstTryWins = scores.filter(s => s.completed && s.attempts === 1 &&
+    !(ACCURACY_GAMES.has(s.game_slug) && s.points != null)).length
+
   return {
     total: days.reduce((sum, day) => sum + day.points, 0),
     daysPlayed: days.length,
     bestDay,
     bestStreak,
+    speedRecord,
+    firstTryWins,
     byGame,
     recentDays: days.slice(0, RECENT_DAYS),
   }

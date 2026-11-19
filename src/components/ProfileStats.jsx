@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import StreakDisplay from './StreakDisplay'
 import { fmtPoints } from '../lib/points'
 import { getGameName } from '../lib/games'
-import { todayEST, yesterdayEST, fmtDayShort, fmtDayNumber, fmtMonthDayYear } from '../lib/date'
+import { todayEST, yesterdayEST, fmtDayShort, fmtDayNumber, fmtMonthDayYear, fmtTime } from '../lib/date'
 import './ProfileStats.css'
 
 // A profile's stats, in points like the games: the totals first, then
@@ -49,7 +49,7 @@ export default function ProfileStats({ stats, streaks, isMe, full, username, fre
             {isMe ? <>No games played yet. <Link to="/">Play today's games</Link> and your points show up here.</> : 'No games played yet.'}
           </p>
         ) : (
-          <div className="pstats-tiles">
+          <div className={`pstats-tiles${full ? ' pstats-tiles--full' : ''}`}>
             <Tile label="All time" value={fmtPoints(stats.total)} accent />
             <Tile label="Days played" value={stats.daysPlayed.toLocaleString('en-US')} />
             {full && stats.bestDay && (
@@ -61,6 +61,18 @@ export default function ProfileStats({ stats, streaks, isMe, full, username, fre
                 value={stats.bestStreak ? `${stats.bestStreak.days} day${stats.bestStreak.days === 1 ? '' : 's'}` : '0 days'}
                 detail={stats.bestStreak ? `in ${getGameName(stats.bestStreak.slug)}` : null}
               />
+            )}
+            {full && (
+              <Tile
+                label="Speed record"
+                value={stats.speedRecord ? fmtTime(stats.speedRecord.seconds) : '-'}
+                detail={stats.speedRecord
+                  ? `in ${getGameName(stats.speedRecord.slug)}, ${fmtMonthDayYear(stats.speedRecord.date)}`
+                  : 'No timed wins yet'}
+              />
+            )}
+            {full && (
+              <Tile label="First-try wins" value={stats.firstTryWins.toLocaleString('en-US')} detail="Right on the first try" />
             )}
           </div>
         )}

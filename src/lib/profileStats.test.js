@@ -76,6 +76,30 @@ describe('profileStats', () => {
   })
 })
 
+describe('speed record and first-try wins', () => {
+  const plays = [
+    play('cover-or-not', '2026-11-18', { points: 1000, completed: true, time_seconds: 4.2 }),
+    play('cover-or-not', '2026-11-17', { points: 0, completed: false, time_seconds: 2.1 }),
+    play('era', '2026-11-18', { points: 3500, completed: true, time_seconds: 61 }),
+    play('one-bar', '2026-11-18', { attempts: 1, completed: true }),
+    play('one-bar', '2026-11-17', { attempts: 3, completed: true }),
+    play('tempo', '2026-11-18', { points: 2900, completed: true }),
+    play('hit-or-miss', '2026-10-20', { completed: true, time_seconds: 3.5 }),
+  ]
+
+  it('takes the fastest win in a timed game, never a loss or an untimed game', () => {
+    expect(profileStats(plays).speedRecord).toEqual({ seconds: 3.5, slug: 'hit-or-miss', date: '2026-10-20' })
+  })
+
+  it('counts One Bar on the first guess and right calls, not days of rounds', () => {
+    expect(profileStats(plays).firstTryWins).toBe(3)
+  })
+
+  it('has no speed record without a timed win', () => {
+    expect(profileStats([play('one-bar', '2026-11-18', { attempts: 1, completed: true })]).speedRecord).toBeNull()
+  })
+})
+
 describe('coverDatesToCheck', () => {
   it("only asks for Cover or Not days that saved points", () => {
     expect(coverDatesToCheck([
