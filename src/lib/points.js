@@ -154,8 +154,8 @@ export function withOwnPlay(entries, own, { timed = false } = {}) {
   return rankByPoints([...entries, own], { timed })
 }
 
-// A day counts as a win, for streaks and the profile's win rate, from half
-// the points on offer. Below that it still has a place on the leaderboard.
+// A day of rounds counts as a win, for streaks and the speed record, from
+// half the points on offer. Below that it still has a place on the leaderboard.
 export const WIN_SHARE = 0.5
 
 export function isWin(points, max) {
