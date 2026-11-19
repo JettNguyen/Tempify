@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
 import { GENRE_COLORS } from '../lib/genres'
 import GameGlyph from './GameGlyph'
+import { fmtPoints } from '../lib/points'
 import './GameTile.css'
 
-export default function GameTile({ slug, name, description, path, complete, featured, genre, className = '' }) {
+export default function GameTile({ slug, name, description, path, complete, points, featured, genre, className = '' }) {
   const genreStyle = genre && GENRE_COLORS[genre]
 
   return (
@@ -42,6 +43,11 @@ export default function GameTile({ slug, name, description, path, complete, feat
           )}
           {complete ? 'Admire' : 'Play'}
         </span>
+
+        {/* What this game added to the day's points at the top. */}
+        {complete && points != null && (
+          <span className="game-tile__points">{fmtPoints(points)} pts</span>
+        )}
 
         {genreStyle && (
           <span

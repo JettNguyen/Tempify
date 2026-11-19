@@ -1,5 +1,14 @@
+/* The date and title on the left, the day's points on the right. */
 .home-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 2rem;
+}
+
+.home-header__text {
+  min-width: 0;
 }
 
 .home-date {

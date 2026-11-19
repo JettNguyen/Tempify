@@ -21,7 +21,7 @@ import Icon from '../components/Icon'
 import GameScreen from '../components/GameScreen'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Dial from '../components/Dial'
-import { ROUND_MAX, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds } from '../lib/points'
+import { ROUND_MAX, fmtPoints, roundTier, shareSquares, loadRounds, saveRounds, hasYearQuestion, playPoints } from '../lib/points'
 import { yearPoints, yearRange } from '../lib/yearGuess'
 import { nextGameAfter } from '../lib/games'
 import './CoverOrNot.css'
@@ -102,10 +102,8 @@ export default function CoverOrNot() {
   const revealRef = useRef(0)
   const nudgeRef = useRef(0)
 
-  // A cover has a second question: when did the original come out? Every
-  // cover carries the original's year. An original doesn't get one: its year
-  // is on the stage already.
-  const hasYear = puzzle?.answer === 'cover' && Number(puzzle?.metadata?.original_year) > 0
+  // A cover has a second question: when did the original come out?
+  const hasYear = hasYearQuestion(puzzle)
   const range = hasYear ? yearRange(puzzle.metadata.original_year, puzzle.metadata.song_year) : null
   const yearAt = (pos) => Math.round(range[0] + pos * (range[1] - range[0]))
   const posOf = (year) => (year - range[0]) / (range[1] - range[0])
@@ -288,6 +286,9 @@ export default function CoverOrNot() {
   const total = (steps[0]?.points || 0) + (steps[1]?.points || 0)
   const yearOff = yearDone ? Math.abs(steps[1].year - m.original_year) : null
   const scored = hasYear && yearDone
+  // What the day scored, for the result: a day played on another device has
+  // no steps here, only the play it saved.
+  const dayPoints = steps[0] ? total : playPoints(SLUG, completions[`${SLUG}|${puzzleDate}`])
 
   return (
     <GameShell className={yearView ? 'cover-or-not--year' : undefined}>
@@ -403,7 +404,7 @@ export default function CoverOrNot() {
           <ResultCard
             justFinished={justFinished}
             correct={correct}
-            status={scored ? `${fmtPoints(total)} points` : undefined}
+            status={`${fmtPoints(dayPoints)} points`}
             emojiGrid={scored ? shareSquares(steps.map(st => st.points)) : undefined}
             shareLine={scored ? `${correct ? 'Spotted the cover' : 'Got fooled'}, then ${yearOff === 0 ? 'nailed the year' : `${yearOff} year${yearOff === 1 ? '' : 's'} off the original`} · ${fmtPoints(total)} / ${fmtPoints(ROUND_MAX * 2)}` : undefined}
             points={scored ? total : undefined}

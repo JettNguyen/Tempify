@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getLeaderboard } from '../lib/scores'
 import { hapticSelection } from '../lib/haptics'
-import { todayEST, fmtTime } from '../lib/date'
+import { todayEST } from '../lib/date'
+import { fmtPoints } from '../lib/points'
 import DelayedSpinner from './DelayedSpinner'
 import Icon from './Icon'
 import './Leaderboard.css'
@@ -28,8 +29,6 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
     // Switching tabs mid-fetch must not let the slower response win.
     return () => { cancelled = true }
   }, [user, gameSlug, date, tab])
-
-  const isTimeBased = gameSlug !== 'one-bar'
 
   return (
     <div className="leaderboard">
@@ -65,20 +64,16 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
         </p>
       ) : (
         <ol className="leaderboard__list">
-          {entries.map((entry, i) => {
+          {entries.map((entry) => {
             const isMe = entry.userId === user?.id
             return (
               <li key={entry.userId} className={`leaderboard__row${isMe ? ' leaderboard__row--me' : ''}`}>
-                <span className="leaderboard__rank">{i + 1}</span>
+                <span className="leaderboard__rank">{entry.place}</span>
                 <Link to={`/u/${entry.username}`} className="leaderboard__name">
                   {entry.username}
                   {isMe && <span className="leaderboard__you"> (you)</span>}
                 </Link>
-                <span className="leaderboard__score">
-                  {entry.points != null
-                    ? `${entry.points.toLocaleString('en-US')} pts`
-                    : isTimeBased ? (fmtTime(entry.timeSeconds) ?? '-') : `${entry.attempts} guess${entry.attempts !== 1 ? 'es' : ''}`}
-                </span>
+                <span className="leaderboard__score">{fmtPoints(entry.points)} pts</span>
               </li>
             )
           })}

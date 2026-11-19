@@ -20,7 +20,7 @@ import GameScreen from '../components/GameScreen'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Timeline from './Timeline'
 import CustomGame from './CustomGame'
-import { hasRounds } from '../lib/points'
+import { hasRounds, ROUND_MAX, fmtPoints } from '../lib/points'
 import { nextGameAfter } from '../lib/games'
 import './choices.css'
 import './Era.css'
@@ -222,6 +222,7 @@ function OneSong({ puzzle, puzzleDate, dateParam }) {
           <ResultCard
             justFinished={justFinished}
             correct={correct}
+            status={`${fmtPoints(correct ? ROUND_MAX : 0)} points`}
             answer={puzzle.metadata?.title}
             artist={`${puzzle.metadata?.artist} · ${puzzle.metadata?.year}`}
             artwork={{

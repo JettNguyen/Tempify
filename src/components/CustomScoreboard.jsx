@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getCustomScores } from '../lib/customGames'
-import { fmtPoints } from '../lib/points'
+import { fmtPoints, oneBarPoints } from '../lib/points'
 import DelayedSpinner from './DelayedSpinner'
 import Icon from './Icon'
 import './Leaderboard.css'
 
+// One Bar's board keeps guesses, and puts them in the same order its points
+// would, so the points are worked out from them here.
 function scoreText(row) {
-  if (row.points != null) return `${fmtPoints(row.points)} pts`
-  if (!row.guesses) return 'Missed'
-  return `${row.guesses} guess${row.guesses === 1 ? '' : 'es'}`
+  const points = row.points ?? oneBarPoints(row.guesses)
+  return `${fmtPoints(points)} pts`
 }
 
 /**

@@ -139,6 +139,15 @@ body.big-screen .game-tile--featured .game-tile__glyph {
   border-color: var(--green);
 }
 
+.game-tile__points {
+  position: relative;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .game-tile__genre-pill {
   font-size: var(--fs-2xs);
   padding: 4px 9px;
@@ -184,6 +193,9 @@ body.big-screen .game-tile--featured .game-tile__glyph {
   }
   .game-tile__genre-pill {
     padding: 3px 7px;
+  }
+  .game-tile__points {
+    font-size: var(--fs-xs);
   }
 }
 

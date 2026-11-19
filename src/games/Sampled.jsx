@@ -14,6 +14,7 @@ import ResultCard from '../components/ResultCard'
 import Icon from '../components/Icon'
 import TrackArtwork from '../components/TrackArtwork'
 import DelayedSpinner from '../components/DelayedSpinner'
+import { ROUND_MAX, fmtPoints } from '../lib/points'
 import './Sampled.css'
 
 // Fisher-Yates shuffle algorithm for unbiased randomization
@@ -184,6 +185,7 @@ export default function Sampled() {
           <ResultCard
           justFinished={justFinished}
             correct={correct}
+            status={`${fmtPoints(correct ? ROUND_MAX : 0)} points`}
             answer={puzzle.answer}
             artist={puzzle.metadata?.sample_artist || puzzle.metadata?.options?.[0]?.artist}
             artwork={{

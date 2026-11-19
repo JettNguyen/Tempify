@@ -14,6 +14,7 @@ import { sharesArtist } from '../lib/matching'
 import { hapticImportantTap, hapticWrong, hapticRejected, hapticThreshold } from '../lib/haptics'
 import { nextGameAfter } from '../lib/games'
 import { customNext } from '../lib/customGames'
+import { fmtPoints, oneBarPoints } from '../lib/points'
 import AudioPlayer from '../components/AudioPlayer'
 import GameHeader from '../components/GameHeader'
 import GuessInput from '../components/GuessInput'
@@ -220,10 +221,11 @@ function OneBarRound({ puzzle, puzzleDate, dateParam, custom }) {
         record.finish({ attempts: newAttempts.length, completed: attempt.correct, guesses: attempt.correct ? newAttempts.length : 0 })
         return
       }
-      markComplete('one-bar', puzzleDate, newAttempts.length, attempt.correct)
+      const points = oneBarPoints(attempt.correct ? newAttempts.length : 0)
+      markComplete('one-bar', puzzleDate, newAttempts.length, attempt.correct, points)
       if (user) {
         try {
-          await saveScore({ userId: user.id, gameSlug: 'one-bar', puzzleDate, attempts: newAttempts.length, completed: attempt.correct })
+          await saveScore({ userId: user.id, gameSlug: 'one-bar', puzzleDate, attempts: newAttempts.length, completed: attempt.correct, points })
           if (attempt.correct) await updateStreak(user.id, 'one-bar')
         } catch (err) {
           console.error('[Tempify] OneBar score save error:', err.message)
@@ -409,6 +411,7 @@ function OneBarRound({ puzzle, puzzleDate, dateParam, custom }) {
           <ResultCard
             justFinished={justFinished}
             correct={correct}
+            status={`${fmtPoints(oneBarPoints(correct ? attempts.length : 0))} points`}
             answer={puzzle.answer}
             artist={puzzle.metadata?.artist}
             artwork={{

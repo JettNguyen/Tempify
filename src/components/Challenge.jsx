@@ -1,4 +1,4 @@
-import { fmtPoints } from '../lib/points'
+import { fmtPoints, oneBarPoints } from '../lib/points'
 import { compareGuesses } from '../lib/challenge'
 import './Challenge.css'
 
@@ -102,6 +102,9 @@ export function GuessChallengeResult({ challenge, mine }) {
         <span className="challenge-result__label">Guesses</span>
         <span className={`challenge-result__points${result > 0 ? ' challenge-result__points--ahead' : ''}`}>{said(mine)}</span>
         <span className={`challenge-result__points${result < 0 ? ' challenge-result__points--ahead' : ''}`}>{said(theirs)}</span>
+        <span className="challenge-result__label challenge-result__label--total">Points</span>
+        <span className="challenge-result__points challenge-result__points--total">{fmtPoints(oneBarPoints(mine))}</span>
+        <span className="challenge-result__points challenge-result__points--total">{fmtPoints(oneBarPoints(theirs))}</span>
       </div>
     </section>
   )

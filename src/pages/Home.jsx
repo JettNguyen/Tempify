@@ -7,7 +7,9 @@ import { todayEST, fmtDayNumber } from '../lib/date'
 import { prefetchPuzzlesForDate } from '../lib/puzzles'
 import { prefetchClip } from '../lib/audioEngine'
 import { GAMES, GAME_SLUGS } from '../lib/games'
+import { dayTally, playPoints } from '../lib/points'
 import GameGrid from '../components/GameGrid'
+import DayScore from '../components/DayScore'
 import DailyCompleteCta from '../components/DailyCompleteCta'
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator'
 import Icon from '../components/Icon'
@@ -18,8 +20,9 @@ const dateLabel = () =>
 
 export default function Home() {
   const { user, profile } = useAuth()
-  const { isComplete, refresh: refreshCompletions } = useCompletion(user?.id)
+  const { isComplete, completions, refresh: refreshCompletions } = useCompletion(user?.id)
   const [genres, setGenres] = useState({})
+  const [puzzlesBySlug, setPuzzlesBySlug] = useState({})
   const [scheduledSlugs, setScheduledSlugs] = useState([])
 
   // Doubles as a warm-up: the puzzles land in the shared cache, so tapping a
@@ -29,11 +32,14 @@ export default function Home() {
   const fetchGenres = useCallback(async () => {
     const puzzles = await prefetchPuzzlesForDate(todayEST())
     const map = {}
+    const bySlug = {}
     puzzles.forEach((p) => {
       if (p.genre) map[p.game_slug] = p.genre
+      bySlug[p.game_slug] = p
       if (GAME_SLUGS.includes(p.game_slug)) prefetchClip(p.audio_url)
     })
     setGenres(map)
+    setPuzzlesBySlug(bySlug)
     setScheduledSlugs(GAMES.map(g => g.slug).filter(slug => puzzles.some(p => p.game_slug === slug)))
   }, [])
 
@@ -46,16 +52,25 @@ export default function Home() {
 
   const { pullDistance, isRefreshing, isDragging } = usePullToRefresh(onRefresh)
 
+  const today = todayEST()
+  // Today's play of each game played so far.
+  const plays = Object.fromEntries(
+    GAMES.filter(game => isComplete(game.slug, today))
+      .map(game => [game.slug, completions[`${game.slug}|${today}`] || {}]),
+  )
+  const tally = dayTally(GAME_SLUGS, plays, puzzlesBySlug, today)
+
   const tiles = GAMES.map((game) => ({
     ...game,
-    complete: isComplete(game.slug, todayEST()),
+    complete: Boolean(plays[game.slug]),
+    points: plays[game.slug] ? playPoints(game.slug, plays[game.slug]) : null,
     genre: genres[game.slug],
   }))
 
   // Measured against what was actually scheduled, so a missing puzzle doesn't
   // leave someone who played everything available with nothing to move on to.
   const allComplete = scheduledSlugs.length > 0 &&
-    scheduledSlugs.every(slug => isComplete(slug, todayEST()))
+    scheduledSlugs.every(slug => isComplete(slug, today))
 
   return (
     <div
@@ -68,8 +83,11 @@ export default function Home() {
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
 
       <div className="home-header">
-        <p className="home-date">{dateLabel()}<span className="home-number">{fmtDayNumber(todayEST())}</span></p>
-        <h1 className="home-title">Today's games</h1>
+        <div className="home-header__text">
+          <p className="home-date">{dateLabel()}<span className="home-number">{fmtDayNumber(today)}</span></p>
+          <h1 className="home-title">Today's games</h1>
+        </div>
+        <DayScore date={today} points={tally.points} max={tally.max} played={tally.played} done={allComplete} />
       </div>
 
       {allComplete && (

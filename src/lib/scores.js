@@ -1,5 +1,7 @@
 import { supabase } from './supabase'
 import { todayEST, yesterdayEST } from './date'
+import { playPoints, rankByPoints } from './points'
+import { isTimedGame } from './games'
 
 export async function saveScore({ userId, gameSlug, puzzleDate, attempts, completed, timeSeconds, points }) {
   const row = {
@@ -10,8 +12,9 @@ export async function saveScore({ userId, gameSlug, puzzleDate, attempts, comple
     completed,
     time_seconds: timeSeconds ?? null,
   }
-  // Only the points games send points, so the pick-one games never touch the
-  // column at all.
+  // Today's games all send points. The old one-song days, and builds from
+  // before One Bar scored, send none, and theirs are worked out wherever
+  // they're read (playPoints).
   if (points != null) row.points = points
 
   let { error } = await supabase.from('scores').upsert(row, { onConflict: 'user_id,game_slug,date_played' })
@@ -240,8 +243,8 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
   if (eligibleUserIds.length === 0) return []
 
   // `*` rather than a column list, so a project without migration 010's points
-  // column still gets a board. A points play ranks whether it won or not, the
-  // way a low score still has a place on a scoreboard.
+  // column still gets a board. Every play ranks, won or not, the way a low
+  // score still has a place on a scoreboard.
   const { data: rows, error } = await supabase
     .from('scores')
     .select('*')
@@ -250,7 +253,7 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
     .in('user_id', eligibleUserIds)
 
   if (error) { console.error('[leaderboard] scores query failed:', error.message); return [] }
-  const scores = (rows || []).filter(s => s.completed || s.points != null)
+  const scores = rows || []
   if (!scores.length) return []
 
   const userIds = [...new Set(scores.map(s => s.user_id))]
@@ -269,19 +272,12 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
     avatarColor: profileMap[s.user_id]?.avatar_color,
     attempts: s.attempts,
     timeSeconds: s.time_seconds,
-    points: s.points ?? null,
+    // Worked out for the plays saved without points, so every game ranks
+    // the same way.
+    points: playPoints(gameSlug, s),
   }))
 
-  // A day's puzzle is either all points or none, so one scored row settles it.
-  if (entries.some(e => e.points != null)) {
-    entries.sort((a, b) => (b.points ?? -1) - (a.points ?? -1) || (a.timeSeconds ?? Infinity) - (b.timeSeconds ?? Infinity))
-  } else if (gameSlug === 'one-bar') {
-    entries.sort((a, b) => a.attempts - b.attempts)
-  } else {
-    entries.sort((a, b) => (a.timeSeconds ?? Infinity) - (b.timeSeconds ?? Infinity))
-  }
-
-  return entries
+  return rankByPoints(entries, { timed: isTimedGame(gameSlug) })
 }
 
 /**

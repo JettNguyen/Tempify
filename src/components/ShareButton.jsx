@@ -7,6 +7,7 @@ import { siteUrl, shareQuery, replyLine } from '../lib/challenge'
 import { copyText } from '../lib/clipboard'
 import { customUrl, customTitle } from '../lib/customGames'
 import { GAME_BY_SLUG } from '../lib/games'
+import { fmtPoints, oneBarPoints } from '../lib/points'
 import { countShare } from '../lib/plays'
 import { useAuth } from '../hooks/useAuth'
 import './ShareButton.css'
@@ -19,7 +20,7 @@ function fmtShareDate(dateStr) {
 
 const RESULT_LINES = {
   'one-bar': {
-    win:  (n) => `Got it in ${n} guess${n !== 1 ? 'es' : ''} 🎯`,
+    win:  (n) => `Got it in ${n} guess${n !== 1 ? 'es' : ''} · ${fmtPoints(oneBarPoints(n))} points 🎯`,
     loss: ()  => `Couldn't name it`,
   },
   'hit-or-miss': {
