@@ -64,6 +64,11 @@
   font-size: var(--fs-sm);
 }
 
+.leaderboard__time {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
 .leaderboard__row--me {
   background: rgba(251, 191, 36, 0.07);
 }

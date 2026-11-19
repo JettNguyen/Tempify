@@ -210,7 +210,13 @@ export default function ResultCard({
           {/* How you stand against everyone comes straight after your own
               result. A game a player made has its own board in place of the
               day's leaderboard and stats, which its plays never reach. */}
-          {gameSlug && !custom && showLeaderboard !== false && <Leaderboard gameSlug={gameSlug} puzzleDate={puzzleDate} />}
+          {gameSlug && !custom && showLeaderboard !== false && (
+            <Leaderboard
+              gameSlug={gameSlug}
+              puzzleDate={puzzleDate}
+              mine={{ attempts, completed: correct, timeSeconds, points }}
+            />
+          )}
 
           {custom && showLeaderboard !== false && <CustomScoreboard custom={custom} />}
 

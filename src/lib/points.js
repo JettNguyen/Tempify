@@ -144,6 +144,16 @@ export function rankByPoints(entries, { timed = false } = {}) {
   })
 }
 
+/**
+ * A board with the player's own play on it. The result, and the board in it,
+ * opens while the score is still saving, so the server may not have it yet;
+ * one it does have is left as it is.
+ */
+export function withOwnPlay(entries, own, { timed = false } = {}) {
+  if (!own || entries.some(e => e.userId === own.userId)) return entries
+  return rankByPoints([...entries, own], { timed })
+}
+
 // A day counts as a win, for streaks and the profile's win rate, from half
 // the points on offer. Below that it still has a place on the leaderboard.
 export const WIN_SHARE = 0.5

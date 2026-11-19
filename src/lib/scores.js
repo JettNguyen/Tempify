@@ -232,19 +232,22 @@ export async function getLeaderboard(userId, gameSlug, date, scope = 'friends') 
       .filter(u => u.id === userId || ['followers', 'public'].includes(u.leaderboard_visibility))
       .map(u => u.id)
   } else {
-    // global - users who opted into public
+    // global - users who opted into public, and always the player looking,
+    // who should see where they'd stand whatever their own setting.
     const { data: users } = await supabase
       .from('profiles')
       .select('id')
       .eq('leaderboard_visibility', 'public')
-    eligibleUserIds = (users || []).map(u => u.id)
+    eligibleUserIds = [...new Set([...(users || []).map(u => u.id), ...(userId ? [userId] : [])])]
   }
 
   if (eligibleUserIds.length === 0) return []
 
   // `*` rather than a column list, so a project without migration 010's points
   // column still gets a board. Every play ranks, won or not, the way a low
-  // score still has a place on a scoreboard.
+  // score still has a place on a scoreboard. Other players' plays that
+  // weren't wins can be read from migration 021 on; before it, only their
+  // wins come back.
   const { data: rows, error } = await supabase
     .from('scores')
     .select('*')

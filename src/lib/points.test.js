@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ACCURACY_GAMES, FIVE_SONG_MAX, dayAccuracy, dayMax, closeness, oneBarPoints, playPoints, gameMax, dayTally, rankByPoints } from './points.js'
+import { ACCURACY_GAMES, FIVE_SONG_MAX, dayAccuracy, dayMax, closeness, oneBarPoints, playPoints, gameMax, dayTally, rankByPoints, withOwnPlay } from './points.js'
 
 describe('dayAccuracy', () => {
   it('is a five-song day out of 5,000', () => {
@@ -149,5 +149,29 @@ describe('rankByPoints', () => {
       { name: 'dana', points: 800, timeSeconds: 4 },
     ])
     expect(ranked.map(e => e.place)).toEqual([1, 1])
+  })
+})
+
+describe('withOwnPlay', () => {
+  const board = rankByPoints([
+    { userId: 'dana', points: 900 },
+    { userId: 'todd', points: 400 },
+  ])
+
+  it("puts the player's play on a board the server didn't have it on yet", () => {
+    const rows = withOwnPlay(board, { userId: 'sam', points: 700 })
+    expect(rows.map(r => [r.userId, r.place])).toEqual([['dana', 1], ['sam', 2], ['todd', 3]])
+  })
+
+  it('leaves the board alone once the server has it', () => {
+    const saved = rankByPoints([...board, { userId: 'sam', points: 700 }])
+    expect(withOwnPlay(saved, { userId: 'sam', points: 1000 })).toBe(saved)
+    expect(withOwnPlay(board, null)).toBe(board)
+  })
+
+  it('breaks a tie by time in a timed game', () => {
+    const timed = rankByPoints([{ userId: 'dana', points: 1000, timeSeconds: 9 }], { timed: true })
+    const rows = withOwnPlay(timed, { userId: 'sam', points: 1000, timeSeconds: 5 }, { timed: true })
+    expect(rows.map(r => r.userId)).toEqual(['sam', 'dana'])
   })
 })

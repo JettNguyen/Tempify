@@ -3,13 +3,19 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getLeaderboard } from '../lib/scores'
 import { hapticSelection } from '../lib/haptics'
-import { todayEST } from '../lib/date'
-import { fmtPoints } from '../lib/points'
+import { todayEST, fmtTime } from '../lib/date'
+import { fmtPoints, playPoints, withOwnPlay } from '../lib/points'
+import { isTimedGame } from '../lib/games'
 import DelayedSpinner from './DelayedSpinner'
 import Icon from './Icon'
 import './Leaderboard.css'
 
-export default function Leaderboard({ gameSlug, puzzleDate }) {
+/**
+ * The day's board for one game. `mine` is the play just shown in the result
+ * ({ attempts, completed, timeSeconds, points }), which goes on the board if
+ * the server doesn't have it yet.
+ */
+export default function Leaderboard({ gameSlug, puzzleDate, mine }) {
   const { user, profile } = useAuth()
   const isPremium = profile?.is_subscribed
   const date = puzzleDate || todayEST()
@@ -29,6 +35,18 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
     // Switching tabs mid-fetch must not let the slower response win.
     return () => { cancelled = true }
   }, [user, gameSlug, date, tab])
+
+  // Ties in a game played against the clock go to the faster play, so the
+  // time shows beside the points.
+  const timed = isTimedGame(gameSlug)
+  const own = user && mine ? {
+    userId: user.id,
+    username: profile?.username || 'anonymous',
+    attempts: mine.attempts,
+    timeSeconds: mine.timeSeconds ?? null,
+    points: playPoints(gameSlug, { attempts: mine.attempts, completed: mine.completed, points: mine.points }),
+  } : null
+  const rows = loading ? entries : withOwnPlay(entries, own, { timed })
 
   return (
     <div className="leaderboard">
@@ -55,7 +73,7 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
         </p>
       ) : loading ? (
         <DelayedSpinner active={loading} inline label="Loading leaderboard..." />
-      ) : entries.length === 0 ? (
+      ) : rows.length === 0 ? (
         <p className="leaderboard__empty">
           <Icon name="users" size={20} className="leaderboard__empty-icon" />
           {tab === 'friends'
@@ -64,7 +82,7 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
         </p>
       ) : (
         <ol className="leaderboard__list">
-          {entries.map((entry) => {
+          {rows.map((entry) => {
             const isMe = entry.userId === user?.id
             return (
               <li key={entry.userId} className={`leaderboard__row${isMe ? ' leaderboard__row--me' : ''}`}>
@@ -73,7 +91,12 @@ export default function Leaderboard({ gameSlug, puzzleDate }) {
                   {entry.username}
                   {isMe && <span className="leaderboard__you"> (you)</span>}
                 </Link>
-                <span className="leaderboard__score">{fmtPoints(entry.points)} pts</span>
+                <span className="leaderboard__score">
+                  {fmtPoints(entry.points)} pts
+                  {timed && entry.timeSeconds != null && (
+                    <span className="leaderboard__time"> · {fmtTime(entry.timeSeconds)}</span>
+                  )}
+                </span>
               </li>
             )
           })}
