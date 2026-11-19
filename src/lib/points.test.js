@@ -43,8 +43,8 @@ describe('closeness', () => {
 })
 
 describe('oneBarPoints', () => {
-  it('is 1,000 on the first guess and 200 less a guess, 100 on the last', () => {
-    expect([1, 2, 3, 4, 5, 6].map(oneBarPoints)).toEqual([1000, 800, 600, 400, 200, 100])
+  it('is 1,000 on the first guess and 150 less a guess, 250 on the last', () => {
+    expect([1, 2, 3, 4, 5, 6].map(oneBarPoints)).toEqual([1000, 850, 700, 550, 400, 250])
   })
 
   it('is nothing for a miss', () => {
@@ -56,11 +56,11 @@ describe('oneBarPoints', () => {
 describe('playPoints', () => {
   it('takes the points a play saved', () => {
     expect(playPoints('era', { points: 3420, completed: true })).toBe(3420)
-    expect(playPoints('one-bar', { points: 600, attempts: 3, completed: true })).toBe(600)
+    expect(playPoints('one-bar', { points: 700, attempts: 3, completed: true })).toBe(700)
   })
 
   it("works out One Bar's from its guesses when it saved none", () => {
-    expect(playPoints('one-bar', { attempts: 2, completed: true })).toBe(800)
+    expect(playPoints('one-bar', { attempts: 2, completed: true })).toBe(850)
     expect(playPoints('one-bar', { attempts: 6, completed: false })).toBe(0)
   })
 
@@ -107,7 +107,7 @@ describe('dayTally', () => {
       'one-bar': { attempts: 3, completed: true },
       tempo: { points: 2100, completed: true },
     }, {}, date)
-    expect(tally).toEqual({ points: 2700, max: 4000, played: 2 })
+    expect(tally).toEqual({ points: 2800, max: 4000, played: 2 })
   })
 
   it("never counts an unplayed Cover or Not's top", () => {

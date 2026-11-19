@@ -54,9 +54,10 @@ export function hasYearQuestion(puzzle) {
 }
 
 // One Bar is one song, so it's worth up to 1,000 like a song anywhere else.
-// Each guess, a skip included, opens more of the clip and costs 200, down to
-// 100 for getting it on the last one. A miss is 0.
-export const ONE_BAR_POINTS = [1000, 800, 600, 400, 200, 100]
+// Each guess, a skip included, opens more of the clip and costs 150, so
+// getting it on the last one is still worth 250. A miss is 0. Jett picked
+// this gentler ladder over 200 a guess on 11/19/2026.
+export const ONE_BAR_POINTS = [1000, 850, 700, 550, 400, 250]
 
 /** One Bar's points for the guesses it took, 0 for a miss. */
 export function oneBarPoints(guesses) {
