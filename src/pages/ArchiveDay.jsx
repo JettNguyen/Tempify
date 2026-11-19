@@ -5,7 +5,9 @@ import { supabase } from '../lib/supabase'
 import { todayEST, fmtDayNumber } from '../lib/date'
 import { GAME_BY_SLUG, ALL_GAME_SLUGS } from '../lib/games'
 import { prefetchPuzzlesForDate } from '../lib/puzzles'
+import { dayTally, playPoints } from '../lib/points'
 import ArchiveLock from '../components/ArchiveLock'
+import DayScore from '../components/DayScore'
 import DelayedSpinner from '../components/DelayedSpinner'
 import Icon from '../components/Icon'
 import GameGrid from '../components/GameGrid'
@@ -16,7 +18,8 @@ export default function ArchiveDay() {
   const { date } = useParams()
   const { user, profile, loading } = useAuth()
   const [puzzles, setPuzzles] = useState([])
-  const [completedSlugs, setCompletedSlugs] = useState(new Set())
+  // This player's play of each game that day, by slug.
+  const [plays, setPlays] = useState({})
   const [fetching, setFetching] = useState(true)
 
   const today = todayEST()
@@ -33,11 +36,11 @@ export default function ArchiveDay() {
   useEffect(() => {
     if (!user) return
     supabase.from('scores')
-      .select('game_slug')
+      .select('*')
       .eq('user_id', user.id)
       .eq('date_played', date)
       .then(({ data }) => {
-        if (data) setCompletedSlugs(new Set(data.map(s => s.game_slug)))
+        if (data) setPlays(Object.fromEntries(data.map(s => [s.game_slug, s])))
       })
   }, [user, date])
 
@@ -64,20 +67,38 @@ export default function ArchiveDay() {
       name: GAME_BY_SLUG[slug].name,
       description: GAME_BY_SLUG[slug].description,
       path: `${GAME_BY_SLUG[slug].path}?date=${date}`,
-      complete: completedSlugs.has(slug),
+      complete: Boolean(plays[slug]),
+      points: plays[slug] ? playPoints(slug, plays[slug]) : null,
       genre: puzzleMap[slug]?.genre,
     }))
+
+  // The day's points, the way the home screen gives today's.
+  const slugs = tiles.map(t => t.slug)
+  const tally = dayTally(slugs, plays, puzzleMap, date)
+  const showScore = !fetching && tiles.length > 0 && !(isPast && !isSubscribed)
 
   return (
     <div className="page-shell-wide">
       <Link to="/explore" className="archive-day-back">← Explore</Link>
 
       <div className="archive-day-header">
-        <p className="archive-day-eyebrow">
-          {isToday ? 'today' : 'archive'}
-          {dayNumber && <span className="archive-day-number">{dayNumber}</span>}
-        </p>
-        <h1 className="archive-day-title">{formatted}</h1>
+        <div className="archive-day-header__text">
+          <p className="archive-day-eyebrow">
+            {isToday ? 'today' : 'archive'}
+            {dayNumber && <span className="archive-day-number">{dayNumber}</span>}
+          </p>
+          <h1 className="archive-day-title">{formatted}</h1>
+        </div>
+        {showScore && (
+          <DayScore
+            date={date}
+            points={tally.points}
+            max={tally.max}
+            played={tally.played}
+            done={tally.played === slugs.length}
+            countUp={false}
+          />
+        )}
       </div>
 
       {isPast && !isSubscribed ? (

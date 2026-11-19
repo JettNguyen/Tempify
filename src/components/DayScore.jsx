@@ -31,10 +31,14 @@ function writeSeen(date, points) {
 const reducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-/** Counts up to `target` from the last number shown today. */
-function useCountUp(target, date) {
+/**
+ * Counts up to `target` from the last number shown for that day. Off
+ * (`enabled` false) it shows the number as it is and keeps no record, so an
+ * archive day never takes the place of today's last number.
+ */
+function useCountUp(target, date, enabled = true) {
   const [shown, setShown] = useState(() => {
-    const seen = readSeen(date)
+    const seen = enabled ? readSeen(date) : null
     return seen != null && seen < target && !reducedMotion() ? seen : target
   })
   const [landed, setLanded] = useState(false)
@@ -42,11 +46,11 @@ function useCountUp(target, date) {
   shownRef.current = shown
 
   useEffect(() => {
-    writeSeen(date, target)
+    if (enabled) writeSeen(date, target)
     const from = shownRef.current
     if (from === target) return
-    // A lower number (another account, say) or reduced motion: no count.
-    if (target < from || reducedMotion()) {
+    // A lower number (another account, say), reduced motion or no count wanted.
+    if (!enabled || target < from || reducedMotion()) {
       setShown(target)
       return
     }
@@ -65,17 +69,18 @@ function useCountUp(target, date) {
       clearTimeout(wait)
       cancelAnimationFrame(frame)
     }
-  }, [target, date])
+  }, [target, date, enabled])
 
   return { shown, landed }
 }
 
 /**
- * `points` so far today, out of `max`, the most the games played so far could
- * have given. `done` is every scheduled game played.
+ * `points` so far that day, out of `max`, the most the games played so far
+ * could have given. `done` is every scheduled game played. `countUp` false
+ * shows the number as it is, for a day other than today.
  */
-export default function DayScore({ date, points, max, played, done }) {
-  const { shown, landed } = useCountUp(points, date)
+export default function DayScore({ date, points, max, played, done, countUp = true }) {
+  const { shown, landed } = useCountUp(points, date, countUp)
 
   let note = 'Play a game to score'
   if (played) note = done ? `of ${fmtPoints(max)}` : `of ${fmtPoints(max)} so far`

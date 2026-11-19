@@ -5,8 +5,17 @@
   margin-bottom: 1.5rem;
 }
 
+/* The date on the left, the day's points on the right. */
 .archive-day-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 2rem;
+}
+
+.archive-day-header__text {
+  min-width: 0;
 }
 
 .archive-day-eyebrow {
