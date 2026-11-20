@@ -10,6 +10,9 @@
   <a href="https://apps.apple.com/us/app/tempify-me/id6765572192?ppid=f2aa16bb-7d62-49df-bafe-8c35f58c63ad">
     <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="48" />
   </a>
+  <a href="https://github.com/JettNguyen/Tempify/releases/latest/download/Tempify.apk">
+    <img src="./docs/android-badge.svg" alt="Download for Android" height="48" />
+  </a>
 </p>
 
 or [Play on the web](https://tempify.me)
@@ -24,13 +27,24 @@ Tempify is a daily music trivia app with five game modes, fresh challenges every
 - New puzzles every day
 - Free to play
 - No account required to get started
-- Available on the App Store and the web
+- Available on the App Store, on Android, and on the web
 
 ## App Store
 
 Tempify is now live on the App Store:
 
 **[Tempify Me on the App Store](https://apps.apple.com/us/app/tempify-me/id6765572192?ppid=26675011-0f5b-40a0-be60-8efcc0f6c4a1)**
+
+## Android
+
+The Android app isn't on the Play Store. It comes as a file from this repo's
+[latest release](https://github.com/JettNguyen/Tempify/releases/latest):
+
+1. On your phone, download [Tempify.apk](https://github.com/JettNguyen/Tempify/releases/latest/download/Tempify.apk).
+2. Open it when it finishes. If Android asks, let your browser install apps.
+
+A newer APK installs over the old one and keeps you signed in. Tempify+ is
+bought through Stripe in the Android app, the same way as on the web.
 
 ## Game Modes
 
@@ -112,8 +126,8 @@ Tempify is built with React and Vite. Each component has its own CSS file; Tailw
 base reset.
 
 - Backend and data: Supabase
-- Payments: Stripe on the web, RevenueCat for in-app purchases on iOS
-- iOS app packaging: Capacitor
+- Payments: Stripe on the web and Android, RevenueCat for in-app purchases on iOS
+- iOS and Android app packaging: Capacitor
 - Tests: Vitest
 
 ## Development
@@ -134,6 +148,17 @@ npm run build
 ```
 
 The build stops if `VITE_DEEZER_PROXY_URL` is missing, since song search can't work without it.
+
+### Android
+
+`./scripts/build-apk.sh` builds a signed APK on this Mac. Its version comes from the Xcode
+project, so an iOS version bump covers Android too. The release key is
+`../tempify-android.jks`, outside the repo, with its password in the login keychain under
+`tempify-android-keystore`. Every APK has to be signed with that same key, or it won't install
+over the one people already have, so keep a backup of it. After a build, upload the APK to a new
+GitHub release as `Tempify.apk`; the download links always point at the latest release.
+
+`python3 scripts/android-art.py` remakes the launcher icons and splash screens from the iOS icon.
 
 ### Supabase functions
 
