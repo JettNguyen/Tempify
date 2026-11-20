@@ -3,7 +3,7 @@ import { App as CapApp } from '@capacitor/app'
 import { Browser } from '@capacitor/browser'
 import { supabase } from '../lib/supabase'
 import { isNativeApp } from '../lib/oauth'
-import { initRevenueCat, checkPremiumEntitlement } from '../lib/billing'
+import { initRevenueCat, checkPremiumEntitlement, usesNativeIap } from '../lib/billing'
 import { todayEST } from '../lib/date'
 
 const AuthContext = createContext(null)
@@ -173,7 +173,7 @@ export function AuthProvider({ children }) {
     )
 
     let nativePremium = false
-    if (isNativeApp()) {
+    if (usesNativeIap()) {
       try {
         await initRevenueCat(userId)
         nativePremium = await checkPremiumEntitlement()
@@ -193,7 +193,7 @@ export function AuthProvider({ children }) {
       // and trust the live check alone, so a player the database counted as
       // Premium wore the badge everyone else sees (profiles, search, the
       // boards) while their own app kept Premium locked.
-      data.paid_subscribed = Boolean(data.is_subscribed || emailBasedPremium || (isNativeApp() && nativePremium))
+      data.paid_subscribed = Boolean(data.is_subscribed || emailBasedPremium || (usesNativeIap() && nativePremium))
       // A gift adds to a paid plan here only, never in the database, so it
       // runs out on its own.
       data.comp_until = await compUntil(userId)

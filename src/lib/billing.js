@@ -1,4 +1,4 @@
-import { isNativeApp } from './oauth'
+import { isNativeIos } from './oauth'
 
 const APPLE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions'
 
@@ -49,8 +49,10 @@ async function getPurchasesSdk() {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
+// The Android app is installed from an APK, not a store, so it has no in-app
+// purchases and pays through Stripe the way the website does.
 export function usesNativeIap() {
-  return isNativeApp()
+  return isNativeIos()
 }
 
 /**

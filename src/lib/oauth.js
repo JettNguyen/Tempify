@@ -8,6 +8,11 @@ export function isNativeApp() {
   return Capacitor.isNativePlatform()
 }
 
+// The iPhone app, as opposed to the Android one. Only it buys through Apple.
+export function isNativeIos() {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios'
+}
+
 export function getOAuthRedirectTo() {
   if (isNativeApp()) {
     return `${APP_SCHEME}://auth/callback`

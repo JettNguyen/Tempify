@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 import { todayEST } from './date'
-import { isNativeApp } from './oauth'
+import { isNativeApp, isNativeIos } from './oauth'
 
 // Anonymous play counts for Admin: how many people play, whether they come
 // back, and how they found Tempify. A count never says who: no account, no
@@ -90,7 +90,9 @@ function send(args) {
     supabase
       .rpc('count_play', {
         ...args,
-        p_platform: isNativeApp() ? 'ios' : 'web',
+        // The plays table takes only web and ios, and the Android app is the
+        // web build in a shell, so its plays count as web.
+        p_platform: isNativeIos() ? 'ios' : 'web',
         p_arrived: arrived,
         p_referrer: referrer,
       })

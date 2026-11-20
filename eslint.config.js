@@ -6,10 +6,10 @@ import { defineConfig } from 'eslint/config'
 
 export default defineConfig([
   {
-    // ios/ holds the native project plus the web bundle Capacitor copies into
-    // it, and .claude/ holds worktrees with their own copies of the code, so
-    // linting either just reports the same code twice.
-    ignores: ['dist/**', 'ios/**', '.claude/**', '**/*.min.js'],
+    // ios/ and android/ hold the native projects plus the web bundle Capacitor
+    // copies into them, and .claude/ holds worktrees with their own copies of
+    // the code, so linting any of them just reports the same code twice.
+    ignores: ['dist/**', 'ios/**', 'android/**', '.claude/**', '**/*.min.js'],
   },
   {
     files: ['**/*.{js,jsx,mjs,cjs}'],
