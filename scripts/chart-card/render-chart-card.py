@@ -45,6 +45,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 from datetime import date, timedelta
 from pathlib import Path
 from urllib.parse import quote
@@ -62,11 +63,15 @@ os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
 try:
     import mlx.core as mx
     import numpy as np
+    import onnxruntime
+    import phonemizer
     import soundfile
     from huggingface_hub import snapshot_download
+    from kokoro_onnx.tokenizer import Tokenizer
     from mlx_audio.tts.utils import load_model
     from PIL import Image, ImageCms
     from playwright.sync_api import sync_playwright
+    from scipy.signal import resample_poly
 except ImportError:
     if (VENV / "bin" / "python").exists() and Path(sys.prefix).resolve() != VENV.resolve():
         os.execv(VENV / "bin" / "python", [str(VENV / "bin" / "python"), "-I", str(Path(__file__).resolve()), *sys.argv[1:]])
@@ -441,35 +446,337 @@ def tightened(audio, rate, longest):
     return np.concatenate(pieces + [rest])
 
 
-def say(model, text):
-    """One line in the voice. The same line comes out the same every time, since the seed is fixed.
-    Now and then Ming runs on past a line or stops short of it, so a take far from the line's
-    length is made again with the next seed."""
-    said = words_for(text)
-    count = len(said.split())
-    for seed in range(4):
+# ------------------------------------------------------------------------------------ the ear
+#
+# Ming says a name its own way from one line to the next and from one take to the next. On
+# 11/22/2026 Jett sent back Aaliyah said wrong in the first line and right in the "biggest" line,
+# Gunna right in the first and wrong in the "biggest" line, the "Bout" of "Bout A Million" as
+# "boot", and "Luvin", a respelling espeak reads right, as "loo-vin". Nothing listened to Ming
+# before then: respellings were checked with espeak, which is not the voice. Speech recognition
+# that knows words can't hear these either, since it hears the word it expects. This ear knows no
+# words: wav2vec2 taught to write down espeak's phonemes for Common Voice (Meta, Apache 2.0), run
+# through onnxruntime, so "boot" comes back as b uː t. Tried on those send-backs it heard what
+# Jett heard in all seven lines, and another seed or a respelling it heard as right was right.
+EAR_MODEL = "onnx-community/wav2vec2-lv-60-espeak-cv-ft-ONNX"
+EAR_VERSION = "c69750f5043e5e1f8a71ab95dd3b98338c280c92"  # held to one version, as the voice is
+EAR_FILES = ["vocab.json", "onnx/model.onnx"]
+
+
+def ear():
+    """The recognizer and its sounds by number, fetched once (about 1.3 GB) into the same cache."""
+    try:
+        path = Path(snapshot_download(EAR_MODEL, revision=EAR_VERSION, allow_patterns=EAR_FILES,
+                                      local_files_only=True))
+        if not all((path / f).exists() for f in EAR_FILES):
+            raise FileNotFoundError
+    except Exception:
+        print("Getting the ear once, into ~/.cache/huggingface (about 1.3 GB).")
+        path = Path(snapshot_download(EAR_MODEL, revision=EAR_VERSION, allow_patterns=EAR_FILES))
+    vocab = {n: s for s, n in json.loads((path / "vocab.json").read_text()).items()}
+    session = onnxruntime.InferenceSession(str(path / "onnx" / "model.onnx"), providers=["CPUExecutionProvider"])
+    return session, vocab
+
+
+def heard(listener, audio):
+    """The sounds the ear hears in a take, in the same symbols sounds_in gives."""
+    session, vocab = listener
+    x = resample_poly(audio, 160, 441)  # Ming's 44.1 kHz to the ear's 16
+    x = ((x - x.mean()) / (x.std() + 1e-7)).astype(np.float32)[None]
+    ids = session.run(None, {session.get_inputs()[0].name: x})[0][0].argmax(-1)
+    out, last = [], -1
+    for n in ids:
+        if n != last and not vocab[int(n)].startswith("<"):
+            out += [s for s, _, _ in sounds_in(vocab[int(n)])]
+        last = n
+    return out
+
+
+# IPA, from espeak or from Claude, as single sounds: "aɪ" or "tʃ" is one, the r in "ɑːɹ" is its own.
+PAIRS = ("aɪ", "aʊ", "eɪ", "oʊ", "ɔɪ", "tʃ", "dʒ")
+SAME_SOUND = {"r": "ɹ", "ɫ": "l", "g": "ɡ", "ɝ": "ɚ", "ɜ": "ɚ", "ɜː": "ɚ", "ʤ": "dʒ", "ʧ": "tʃ",
+              "ɒ": "ɑ", "ɒː": "ɑː"}
+VOWEL = set("aeiouyæɑɐɒɔəɘɚɛɜɞɤɪʊʌᵻɨʉøœɵ")
+REDUCED = {"ə", "ɐ", "ᵻ"}  # what an unstressed vowel turns into in ordinary speech
+STRESS = {"ˈ": 2.0, "ˌ": 1.5}  # how much a vowel under it counts, against 1 for any other sound
+
+
+def sounds_in(ipa):
+    """[(sound, weight, word)] for an IPA string, word counting the words from 0. A vowel under ˈ
+    weighs 2, since a wrong vowel or a wrong stress is what a listener hears first; every other
+    sound weighs 1."""
+    ipa = unicodedata.normalize("NFC", ipa.replace(":", "ː").replace("'", "ˈ"))
+    out, stress, word, i = [], 1.0, 0, 0
+    while i < len(ipa):
+        c = ipa[i]
+        if c.isspace():
+            word += bool(out) and out[-1][2] == word
+            i += 1
+            continue
+        if c in STRESS:
+            stress, i = STRESS[c], i + 1
+            continue
+        if not c.isalpha():
+            i += 1
+            continue
+        s = ipa[i:i + 2] if ipa[i:i + 2] in PAIRS else c
+        i += len(s)
+        while i < len(ipa) and (ipa[i] in "ːʲ" or unicodedata.category(ipa[i]) == "Mn"):
+            s, i = s + ipa[i], i + 1
+        s = SAME_SOUND.get(s, s)
+        vowel = any(ch in VOWEL for ch in s)
+        out.append((s, stress if vowel else 1.0, word))
+        if vowel:
+            stress = 1.0
+    return out
+
+
+_espeak = []
+
+
+def espeak(text):
+    """How espeak reads a piece of a line (American English), as sounds_in gives it."""
+    if not _espeak:
+        _espeak.append(Tokenizer())  # sets up the espeak-ng that kokoro-onnx carries
+    text = words_for(text).strip()
+    return sounds_in(phonemizer.phonemize(text, "en-us", with_stress=True)) if text else []
+
+
+# Sounds a listener takes for each other, or nearly, and what swapping one for the other costs
+# (any other swap is 1). Unstressed vowels drift toward "uh" in ordinary speech, and a t or d
+# between vowels is a flap, so those cost little; i against ɪ ("gimmee" against "gimmeh") or
+# aʊ against uː ("bout" against "boot") cost most or all of the sound.
+NEAR = {frozenset(pair): cost for pair, cost in [
+    (("ə", "ɐ"), 0.1), (("ə", "ʌ"), 0.2), (("ɐ", "ʌ"), 0.2), (("ə", "ᵻ"), 0.2), (("ɪ", "ᵻ"), 0.2),
+    (("ə", "ɪ"), 0.4), (("ə", "ɚ"), 0.4), (("ə", "ʊ"), 0.5), (("ɐ", "ɑ"), 0.6), (("ɪ", "i"), 0.8),
+    (("ɪ", "ɛ"), 0.5), (("ɛ", "e"), 0.2), (("e", "eɪ"), 0.2), (("ɛ", "eɪ"), 0.5), (("ɛ", "æ"), 0.5),
+    (("æ", "a"), 0.3), (("a", "ɑ"), 0.3), (("ɑ", "ɔ"), 0.3), (("ɑ", "ʌ"), 0.6), (("ʊ", "u"), 0.4),
+    (("o", "oʊ"), 0.2), (("o", "ɔ"), 0.3), (("oʊ", "ɔ"), 0.6),
+    (("t", "ɾ"), 0.2), (("d", "ɾ"), 0.2), (("t", "d"), 0.4), (("s", "z"), 0.3), (("f", "v"), 0.4),
+    (("θ", "ð"), 0.3), (("ʃ", "ʒ"), 0.3), (("tʃ", "dʒ"), 0.3), (("k", "ɡ"), 0.4), (("p", "b"), 0.4),
+    (("n", "ŋ"), 0.5), (("ɹ", "ɚ"), 0.4), (("j", "i"), 0.5), (("w", "u"), 0.5), (("t", "ʔ"), 0.3),
+    (("θ", "t"), 0.6), (("ð", "d"), 0.6), (("m", "n"), 0.6)]}
+LIGHT = {"ʔ": 0.2, "h": 0.5, "ə": 0.6, "ɐ": 0.6}  # a sound dropped or put in that's easy to miss
+
+
+def swap_cost(meant, weight, said):
+    """What hearing `said` for the meant sound costs, before its weight. The ear writes a vowel
+    under stress long (iː) and a vowel out of it short or as "uh", the way espeak does, so on a
+    stressed vowel the length is the stress: Aaliyah heard ɑː l i ə is AH-lee-uh, said wrong, and
+    ɐ l iː ɐ is uh-LEE-uh, said right (11/22/2026). Off the stress, "uh" for a full vowel is just
+    ordinary speech."""
+    if meant == said:
+        return 0.0
+    a, b = meant.replace("ː", ""), said.replace("ː", "")
+    vowel = any(ch in VOWEL for ch in a)
+    if a == b:
+        return 0.5 if weight > 1 else 0.1
+    # Not the "ee" at the end of "Gimme", though: "gim-muh" was what Jett sent back (11/21/2026).
+    if vowel and weight == 1 and said in REDUCED and a not in ("i", "u"):
+        return min(0.2, NEAR.get(frozenset((a, b)), 1.0))
+    return NEAR.get(frozenset((a, b)), 1.0)
+
+
+def misses(meant, said):
+    """Lines the heard sounds up with the meant ones (the fewest, cheapest changes) and says what
+    each meant sound cost: miss[i] for the sound itself, said wrong or not said, weighted, and
+    extra[i] for sounds heard that weren't meant, just before meant sound i (extra[n] after the
+    last)."""
+    n, m = len(meant), len(said)
+    swap = lambda i, j: meant[i][1] * swap_cost(meant[i][0], meant[i][1], said[j])
+    drop = lambda i: meant[i][1] * LIGHT.get(meant[i][0], 1.0)
+    add = lambda j: LIGHT.get(said[j], 1.0)
+    dist = np.zeros((n + 1, m + 1))
+    dist[1:, 0] = np.cumsum([drop(i) for i in range(n)])
+    dist[0, 1:] = np.cumsum([add(j) for j in range(m)])
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            dist[i, j] = min(dist[i - 1, j - 1] + swap(i - 1, j - 1), dist[i - 1, j] + drop(i - 1),
+                             dist[i, j - 1] + add(j - 1))
+    miss, extra = [0.0] * n, [0.0] * (n + 1)
+    i, j = n, m
+    while i or j:
+        if i and j and np.isclose(dist[i, j], dist[i - 1, j - 1] + swap(i - 1, j - 1)):
+            miss[i - 1] = swap(i - 1, j - 1)
+            i, j = i - 1, j - 1
+        elif i and np.isclose(dist[i, j], dist[i - 1, j] + drop(i - 1)):
+            miss[i - 1] = drop(i - 1)
+            i -= 1
+        else:
+            extra[i] += add(j - 1)
+            j -= 1
+    return miss, extra
+
+
+def line_meant(text, names):
+    """The sounds a line should have, and where each word of each name is in them: espeak for the
+    template's words, and each name the way it's meant. names: [(the name as the voice reads it,
+    its meant sounds, its key)]. Returns (sounds, {key: [(start, end) of each word]})."""
+    spots = []
+    for said, sounds, key in sorted(names, key=lambda n: -len(n[0])):
+        for m in re.finditer(rf"(?<![\w']){re.escape(said)}(?!\w)", text):
+            if all(m.end() <= a or m.start() >= b for a, b, _, _ in spots):
+                spots.append((m.start(), m.end(), sounds, key))
+    spots.sort()
+    meant, where, at = [], {}, 0
+    for start, end, sounds, key in spots:
+        meant += espeak(text[at:start])
+        for w in sorted({s[2] for s in sounds}):
+            word = [k for k, s in enumerate(sounds) if s[2] == w]
+            where.setdefault(key, []).append((len(meant) + word[0], len(meant) + word[-1] + 1))
+        meant += sounds
+        at = end
+        if text.startswith("'s", at):  # "Gunna's": the s after the name
+            meant, at = meant + [("z", 1.0, -1)], at + 2
+        elif text.startswith("'", at):
+            at += 1
+    return meant + espeak(text[at:]), where
+
+
+def name_costs(meant, where, said):
+    """How far off each name was, from 0 (said as meant) up: its worst word's cost, which is what
+    its sounds cost, with anything extra heard inside or on either side of it, over how much its
+    sounds weigh (at least 3, so "A" heard as ɐ for ə isn't a word said wrong). A word at a time,
+    so one word said wrong in a long title ("Bout" in "Bout A Million") isn't lost among the ones
+    said right."""
+    miss, extra = misses(meant, said)
+    word = lambda a, b: (sum(miss[a:b]) + sum(extra[a:b + 1])) / max(3, sum(s[1] for s in meant[a:b]))
+    return {key: round(max(word(a, b) for a, b in spans), 3) for key, spans in where.items()}
+
+
+# How far off a name may be (name_costs) and still be taken. A name whose sounds were given in
+# post.json (from Jett's note, or the look) has to be close to them; one going by espeak's
+# reading only has to be near it, since espeak gets names wrong too and Ming is often right
+# where it isn't. A take is made again, up to NAME_TAKES seeds, until every name is within its
+# bar, and the closest is kept when none is. A given name still further off than OFF in that
+# take is flagged, so the card says to listen before posting. Set on Jett's send-backs of
+# 11/19 to 11/22/2026: names he heard as right came to 0.08 or less, wrong ones 0.16 or more.
+GIVEN, GUESSED, OFF = 0.12, 0.25, 0.15
+NAME_TAKES = 6
+SAY_KEYS = {"song": "saySong", "artist": "sayArtist", "biggest": "sayBiggest", "missed": "sayMissed"}
+
+_takes = {}
+
+
+def voiced(model, text, seed):
+    """One take of a line, with its seed: the same line and seed come out the same every time."""
+    if (text, seed) not in _takes:
         mx.random.seed(seed)
-        audio = trimmed(np.concatenate([np.array(part.audio, dtype=np.float32) for part in model.generate(
-            text=said, ref_audio=str(VOICE), ref_text=VOICE_SAYS)]), VOICE_RATE)
-        if 0.12 * count <= len(audio) / VOICE_RATE <= 0.6 * count + 1:
-            return audio
-    fail(f'The voice couldn\'t say "{text}" at a sensible length in four tries.')
+        _takes[text, seed] = trimmed(np.concatenate([np.array(part.audio, dtype=np.float32) for part in model.generate(
+            text=words_for(text), ref_audio=str(VOICE), ref_text=VOICE_SAYS)]), VOICE_RATE)
+    return _takes[text, seed]
 
 
-def speak(lines):
-    """Says each of the template's lines. Returns each one's sound, and for the page how long it
-    takes and, for the lines whose words land one at a time, when each word starts."""
-    model = voice_model()
-    spoken = {}
+def plain_quotes(text):
+    return text.replace("’", "'").replace("‘", "'")
+
+
+def said_in(name, text):
+    return re.search(rf"(?<![\w']){re.escape(plain_quotes(name))}(?!\w)", text) is not None
+
+
+def take(model, listener, text, names):
+    """The take of a line to use, as (audio, seed, what the ear heard, {name key: how far off}).
+    Now and then Ming runs on past a line or stops short of it, so a take far from the line's
+    length is never used. A line with no name in it keeps the first take that isn't, as it always
+    has; one with names (here: the names dicts said in it, each with "said", how the voice is given
+    it) keeps the first whose names are all within their bars, or the closest."""
+    count = len(words_for(text).split())
+    best = None
+    for seed in range(NAME_TAKES if names else 4):
+        audio = voiced(model, text, seed)
+        if not 0.12 * count <= len(audio) / VOICE_RATE <= 0.6 * count + 1:
+            continue
+        said = heard(listener, audio)
+        if not names:
+            return audio, seed, said, {}
+        meant, where = line_meant(text, [(n["said"], n["meant"], n["key"]) for n in names])
+        costs = name_costs(meant, where, said)
+        score = max(costs.get(n["key"], 0) / n["bar"] for n in names)
+        if best is None or score < best[0]:
+            best = (score, audio, seed, said, costs)
+        if score <= 1:
+            break
+    if best is None:
+        fail(f'The voice couldn\'t say "{text}" at a sensible length in {NAME_TAKES if names else 4} tries.')
+    return best[1:]
+
+
+def names_for(post, data):
+    """The names the voice says, each as a dict: key (song, artist, biggest, missed), name as
+    written, tries (how to give it to the voice, best first: post.json's say_<key>, one spelling
+    or a list, else the name as written), meant (its sounds: post.json's "sounds" for it, else
+    espeak's reading) and bar (GIVEN or GUESSED)."""
+    found = [("song", post["song"]), ("artist", post["artist"])]
+    missed = data.get("missed") or {}
+    if data.get("biggest") and not missed.get("biggest"):
+        found.append(("biggest", data["biggest"]["title"]))
+    if missed.get("title"):
+        found.append(("missed", missed["title"]))
+    out = []
+    for key, name in found:
+        say = post.get(f"say_{key}")
+        tries = [plain_quotes(t) for t in ([say] if isinstance(say, str) else say or []) if t] or [plain_quotes(name)]
+        given = (post.get("sounds") or {}).get(name)
+        # Never espeak's reading of a respelling: it reads "Aliyah", which Ming says as
+        # uh-LEE-uh, as AL-ih-yuh, and "Bowt" as "boat".
+        meant = sounds_in(given) if given else espeak(name)
+        out.append({"key": key, "name": name, "tries": tries, "meant": meant,
+                    "bar": GIVEN if given else GUESSED})
+    return out
+
+
+def lines_for(page, picks):
+    """The template's lines with these spellings for the names (picks: {key: spelling})."""
+    return page.evaluate("p => { Object.assign(data, p); return voiceLines(); }",
+                         {SAY_KEYS[k]: v for k, v in picks.items()})
+
+
+def names_said(names, picks, text):
+    """The names said in a line, each with "said", the spelling the voice is given."""
+    return [{**n, "said": picks[n["key"]]} for n in names if said_in(picks[n["key"]], text)]
+
+
+def pick_spellings(page, model, listener, names):
+    """For each name with more than one spelling to try, the first that the voice says within its
+    bar in every line it's in, or else the closest. Returns {key: spelling}."""
+    picks = {n["key"]: n["tries"][0] for n in names}
+    for n in names:
+        if len(n["tries"]) < 2:
+            continue
+        best = None
+        for spelling in n["tries"]:
+            trial = {**picks, n["key"]: spelling}
+            score = 0
+            for line in lines_for(page, trial):
+                here = names_said(names, trial, line["text"])
+                if any(m["key"] == n["key"] for m in here):
+                    score = max(score, take(model, listener, line["text"], here)[3].get(n["key"], 0) / n["bar"])
+            if best is None or score < best[0]:
+                best = (score, spelling)
+            if score <= 1:
+                break
+        picks[n["key"]] = best[1]
+    return picks
+
+
+def speak(page, model, listener, names, picks):
+    """Says each of the template's lines, with these spellings for the names. Returns the lines;
+    each one's sound, and for the page how long it takes and, for the lines whose words land one
+    at a time, when each word starts; and for facts.json what the ear heard in each line and how
+    far off each name was."""
+    spoken, heard_lines = {}, []
+    lines = lines_for(page, picks)
     for line in lines:
-        audio = say(model, line["text"])
+        audio, seed, said, costs = take(model, listener, line["text"], names_said(names, picks, line["text"]))
+        heard_lines.append({"key": line["key"], "said": line["text"], "heard": " ".join(said),
+                            "take": seed, **({"names": costs} if costs else {})})
         if line["key"] == "options":
             audio = tightened(audio, VOICE_RATE, LETTER_PAUSE)
         info = {"dur": round(len(audio) / VOICE_RATE, 3)}
         if line.get("words"):
             info["words"] = word_starts(line["text"], audio, VOICE_RATE)
         spoken[line["key"]] = (audio, info)
-    return spoken
+    return lines, spoken, heard_lines
 
 
 def word_starts(text, audio, rate):
@@ -665,9 +972,11 @@ def main():
         "weeksAt1": row[4] if row else None,
         "firstYear": int(row[5][:4]) if row else None,
         "year": post.get("year"),
-        "saySong": post.get("say_song"),
-        "sayArtist": post.get("say_artist"),
-        "sayBiggest": post.get("say_biggest"),
+        # How the names are given to the voice: set once the ear has picked (pick_spellings).
+        "saySong": None,
+        "sayArtist": None,
+        "sayBiggest": None,
+        "sayMissed": None,
     }
 
     started = time.time()
@@ -681,11 +990,17 @@ def main():
             # The page says what the voice reads; the voice says how long it takes; the page
             # times the Reel around that.
             page = open_card(browser, data, "?format=reel", REEL)
-            lines = page.evaluate("voiceLines()")
+            model, listener = voice_model(), ear()
+            names = names_for(post, data)
+            picks = pick_spellings(page, model, listener, names)
+            lines, spoken, heard_lines = speak(page, model, listener, names, picks)
             page.context.close()
-            spoken = speak(lines)
+            for n in names:
+                data[SAY_KEYS[n["key"]]] = None if picks[n["key"]] == plain_quotes(n["name"]) else picks[n["key"]]
             data["voice"] = {key: info for key, (_, info) in spoken.items()}
             page = open_card(browser, data, "?format=reel", REEL)
+            if [line["text"] for line in page.evaluate("voiceLines()")] != [line["text"] for line in lines]:
+                fail("The template's lines came out differently for the Reel than for the voice.")
             plan = page.evaluate("plan()")
             make_reel(page, plan, write_audio(plan, spoken, scratch), folder / "reel.mp4")
             page.context.close()
@@ -694,7 +1009,17 @@ def main():
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
 
-    facts = {**data, "art": art, "said": [line["text"] for line in lines]}
+    # What the ear heard, for the bot's look and for anyone checking a name Jett says is wrong:
+    # each name's spelling for the voice, the sounds it was meant to have when they were given,
+    # and how far off it was at worst (name_costs). "unsure" is a name the voice kept missing.
+    said_names = []
+    for n in names:
+        off = max((h["names"].get(n["key"], 0) for h in heard_lines if "names" in h), default=0)
+        given = (post.get("sounds") or {}).get(n["name"])
+        said_names.append({"key": n["key"], "name": n["name"], "said_as": data[SAY_KEYS[n["key"]]],
+                           "sounds": given, "off": off, "unsure": off > (OFF if given else GUESSED)})
+    facts = {**data, "art": art, "said": [line["text"] for line in lines], "heard": heard_lines,
+             "names": said_names}
     del facts["voice"]
     (folder / "facts.json").write_text(json.dumps(facts, indent=2, ensure_ascii=False) + "\n")
     choices = {f"option_{z.lower()}": f"{z}. {label}" for z, label in ZONES}
@@ -709,6 +1034,9 @@ def main():
     if data["biggest"]:
         b = data["biggest"]
         print(f"Their biggest: {b['title']}, {b['detail']}")
+    for n in said_names:
+        print(f"Said {n['name']}" + (f" as {n['said_as']}" if n["said_as"] else "") + f": {n['off']} off"
+              + (", so it may be said wrong: listen to it" if n["unsure"] else ""))
     print(f"Cover: Cover Art Archive release group {art}" if art else "Cover: none")
     print(f"The Reel is {plan['end']:.1f} seconds. Made in {time.time() - started:.0f} seconds.")
     print(f"Wrote reel.mp4, reel-cover.jpg, 1.jpg to 3.jpg, caption.txt, poll.json and facts.json in {folder}")

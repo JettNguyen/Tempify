@@ -351,7 +351,8 @@ const VOICE = {
   // finds them by that.
   options: "A? B? C? Or D?",
   peak: d => (d.peak === null ? "It never charted!" : `Number ${d.peak}!`),
-  facts: d => (d.peak === null ? (d.missed ? MISSED[d.missed.kind](d.missed) : "")
+  // sayMissed: how the other song's title is said, when the voice gets it wrong
+  facts: d => (d.peak === null ? (d.missed ? MISSED[d.missed.kind]({ ...d.missed, title: d.sayMissed || d.missed.title }) : "")
     : d.peak === 1 ? `${weeksSaid(d.weeksAt1)} at the top, in ${sayYear(d.firstYear)}.`
     : `${weeksSaid(d.weeks)} on the chart, in ${sayYear(d.firstYear)}.`),
   biggest: (b, d) => {

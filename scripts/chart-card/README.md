@@ -29,6 +29,7 @@ The Tempify bot makes one every day, a week ahead, from its own copy of this rep
   ```
 
 - **The voice** is Ming-3.0-tts 0.5B (MIT license), which runs on the Mac's own chip through mlx-audio: free, no account, no key. It speaks in the voice it copies from `voice.wav`, a 7.6 second clip of Kokoro's af_heart; the words of that clip are `VOICE_SAYS` in the script, and the two must match. The first run fetches the model (about 3 GB) from Hugging Face into `~/.cache/huggingface/`, always at the one version the script names, and keeps it for every run after. It takes about 5 seconds to say a Reel's lines. It reads digits badly, so the script writes every number out in words for it. Needs an Apple Silicon Mac.
+- **The ear** listens to every line the voice says, since Ming says a name its own way from one line to the next and from one take to the next (11/22/2026: Aaliyah wrong in the first line and right in the "biggest" line, "Bout" as "boot"). It's wav2vec2 taught to write down the sounds it hears in espeak's phonemes (Meta, Apache 2.0), run through onnxruntime, with no words to guess from, so it hears "boot" as b uː t. It comes down by itself on the first run too (about 1.3 GB, at one version). For a line with a name in it (the song, the artist, their biggest hit, or the other song named after "It never charted!"), the script makes takes with the next seed, up to six, until each name sounds the way it's meant, and keeps the closest when none does. A name is meant to sound the way `sounds` in `post.json` gives it, or else the way espeak reads it as written. What the ear heard in each line is in `facts.json`, under `heard`, and how far off each name was, under `names` (`unsure` when the voice kept missing it).
 
 ## Making a day's post
 
@@ -58,8 +59,9 @@ The Tempify bot makes one every day, a week ahead, from its own copy of this rep
    | `never_charted` | `true` when the round's `peak` is 0. The script checks the index agrees. |
    | `year` | With `never_charted`: the round's `year`, shown as "Released in 1971". The voice doesn't say the year: it says what the index has on the artist that year, like "But A Night To Remember did, that same year." |
    | `index_title` | Only when the index spells the title differently (the script tells you). |
-   | `say_song`, `say_artist` | Only when the voice says a name wrong: the name spelled the way it's said ("Pink" for P!nk). Keep the same number of words, so the words still land as they're said. |
-   | `say_biggest` | Only when the voice says the artist's biggest hit wrong: its title spelled the way it's said ("Fuck you mean" for Fukumean). Any number of words. |
+   | `sounds` | Only when a name has to be said a certain way: how, in IPA with ˈ before each stressed syllable and the unstressed vowels as they're said (usually ə), keyed by the name as written: `{"Aaliyah": "əˈliːə"}`. The ear picks the take that sounds closest. |
+   | `say_song`, `say_artist` | Only when the voice still says a name wrong: the name spelled so the voice says it right ("Bowt A Million"), or a list of spellings to try, best first. Change only the words it says wrong, and keep the same number of words, so the words still land as they're said. With `sounds`, the ear picks the first spelling that sounds right in every line. Spell for Ming, not espeak: "Luvin" came out "loo-vin". |
+   | `say_biggest`, `say_missed` | The same for the artist's biggest hit ("Fuck you mean" for Fukumean) and for the other song named after "It never charted!". Any number of words. |
    | `poll` | `false` only if Instagram turns the poll down. The question then says "Pick a letter" and "Comment your letter". |
    | `art` | `false` to leave the cover out. |
    | `art_release_group` | A MusicBrainz release group id, when the cover it found is the wrong record. |
@@ -67,11 +69,11 @@ The Tempify bot makes one every day, a week ahead, from its own copy of this rep
 4. **Run** `python3 scripts/chart-card/render-chart-card.py <the day's folder>`. It moves itself into its own Python, and takes about half a minute.
    - It looks the song up in the index, so the peak, weeks and dates are never typed by hand.
    - It takes the cover from the Cover Art Archive: the song's single first, else the artist's own studio album. Never a greatest-hits, live or various-artists record.
-   - It writes `reel.mp4`, `reel-cover.jpg`, `1.jpg` to `3.jpg`, `art.jpg` (when it found a cover), `caption.txt`, `poll.json` and `facts.json`. `facts.json` lists every line the voice said, under `said`.
+   - It writes `reel.mp4`, `reel-cover.jpg`, `1.jpg` to `3.jpg`, `art.jpg` (when it found a cover), `caption.txt`, `poll.json` and `facts.json`. `facts.json` lists every line the voice said, under `said`, and what the ear heard, under `heard`. It prints how far off each name was.
    - If it stops, read what it says and fix `post.json`. When it can't find the song, it lists the artist's titles from the index. Never get past a stop by changing the facts; pick another song instead.
 5. **Look at it and listen to it.**
    - Watch the whole Reel with the sound on: nothing cut off, every word inside the picture.
-   - The voice says the song and the artist right. If not, use `say_song` or `say_artist`.
+   - The voice says every name right, in every line it's in. If not, give its `sounds`, and if that isn't enough, a `say_` spelling.
    - The cover is the song's own record.
    - Check the three pictures too.
 6. **Upload** to Tempify's Supabase storage, bucket `agent`, under `posts/<date>/`: `reel.mp4`, `reel-cover.jpg` and `1.jpg` to `3.jpg`. The bucket is private: only the admin and the service role can read it.

@@ -1,9 +1,11 @@
 pillow==13.0.0
 # The voice: Ming-3.0-tts through mlx-audio, on the Mac's own chip.
 mlx-audio==0.6.6
-# Not the voice any more, but the Tempify bot's dashboard.py reads how a line will sound with its
-# dictionary, for the look before Jett sees a card and to check a name's respelling.
+# Not the voice any more: it carries espeak-ng and phonemizer, which say how each line should
+# sound for the ear to check it against, and onnxruntime, which runs the ear.
 kokoro-onnx==0.6.1
+onnxruntime==1.31.1
+scipy==1.18.1
 soundfile==0.14.0
 playwright==1.64.1
 numpy==2.5.4
