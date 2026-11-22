@@ -401,9 +401,14 @@ def say_number(digits):
     return spell(n)
 
 
+# "feat." is said "featuring" (Jett, 11/21/2026: "Say feat as featuring"); Ming reads it "feet".
+FEATURING = re.compile(r"\b(?:feat|ft)\.(?=\s)|(?<=\()(?:feat|ft)\b(?=\s)", re.I)
+
+
 def words_for(text):
-    """The line as the voice is given it: the same, with its numbers written out."""
-    return re.sub(r"\d+", lambda m: say_number(m.group()), text)
+    """The line as the voice is given it: the same, with "feat." as "featuring" and its numbers
+    written out."""
+    return re.sub(r"\d+", lambda m: say_number(m.group()), FEATURING.sub("featuring", text))
 
 
 def trimmed(audio, rate):
@@ -650,7 +655,8 @@ def name_costs(meant, where, said):
 # bar, and the closest is kept when none is. A given name still further off than OFF in that
 # take is flagged, so the card says to listen before posting. Set on Jett's send-backs of
 # 11/19 to 11/22/2026: names he heard as right came to 0.08 or less, wrong ones 0.16 or more.
-GIVEN, GUESSED, OFF = 0.12, 0.25, 0.15
+# GUESSED was 0.25 until Cher heard as "chair" (tʃ for ʃ, 0.25) got through on 12/2's card.
+GIVEN, GUESSED, OFF = 0.12, 0.2, 0.15
 NAME_TAKES = 6
 SAY_KEYS = {"song": "saySong", "artist": "sayArtist", "biggest": "sayBiggest", "missed": "sayMissed"}
 
